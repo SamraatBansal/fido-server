@@ -1,0 +1,13 @@
+[build]
+# Enforce strict compilation standards
+rustflags = ["-D", "warnings"]
+
+[target.x86_64-unknown-linux-gnu]
+rustflags = ["-C", "link-arg=-fuse-ld=lld"]
+
+[alias]
+# Custom cargo commands
+check-strict = "clippy --all-targets --all-features -- -D warnings"
+fmt-check = "fmt -- --check"
+test-all = "test --all-features --workspace"
+build-release = "build --release"
