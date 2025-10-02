@@ -3,89 +3,57 @@ name = "fido-server"
 version = "0.1.0"
 edition = "2021"
 authors = ["FIDO Server Team"]
-license = "MIT"
-repository = "https://github.com/yourorg/fido-server"
-readme = "README.md"
-
-[lib]
-name = "fido_server"
-path = "src/lib.rs"
-
-[[bin]]
-name = "fido-server"
-path = "src/main.rs"
+description = "A FIDO2/WebAuthn Relying Party Server built with Rust"
+license = "MIT OR Apache-2.0"
 
 [dependencies]
-# Web Framework
-actix-web = "4.9"
-actix-cors = "0.7"
-actix-rt = "2.10"
+# WebAuthn
+webauthn-rs = "0.5.2"
+webauthn-rs-core = "0.5.0"
 
-# FIDO/WebAuthn
-webauthn-rs = "0.5"
-webauthn-rs-proto = "0.5"
+# Web framework
+axum = "0.7.0"
+tokio = { version = "1.0", features = ["full"] }
+tower = "0.4"
+tower-http = { version = "0.5", features = ["cors", "trace"] }
 
 # Serialization
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 
 # Database
-diesel = { version = "2.1", features = ["postgres", "r2d2", "chrono", "uuid"] }
-diesel_migrations = "2.1"
-r2d2 = "0.8"
+sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "postgres", "uuid", "chrono", "migrate", "macros"], default-features = false }
+uuid = { version = "1.0", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
 
-# Async
-tokio = { version = "1.40", features = ["full"] }
-futures = "0.3"
-
-# Cryptography
+# Security
+ring = "0.17"
 base64 = "0.22"
-uuid = { version = "1.10", features = ["v4", "serde"] }
 rand = "0.8"
-sha2 = "0.10"
+url = "2.5"
+
+# Error handling
+anyhow = "1.0"
+thiserror = "1.0"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 # Configuration
 config = "0.14"
-dotenv = "0.15"
 
-# Logging
-log = "0.4"
-env_logger = "0.11"
+# HTTP client for webhooks
+reqwest = { version = "0.11", features = ["json"] }
 
-# Error Handling
-thiserror = "1.0"
-anyhow = "1.0"
-
-# Time
-chrono = { version = "0.4", features = ["serde"] }
+# Rate limiting
+governor = "0.6"
 
 [dev-dependencies]
-actix-test = "0.1"
-mockall = "0.13"
-
-[profile.dev]
-opt-level = 0
-debug = true
+tempfile = "3.0"
+testcontainers = "0.15"
 
 [profile.release]
-opt-level = 3
 lto = true
 codegen-units = 1
 panic = "abort"
-strip = true
-
-# Strict linting configuration
-[lints.rust]
-unused_must_use = "deny"
-missing_docs = "warn"
-unused_imports = "warn"
-dead_code = "warn"
-
-[lints.clippy]
-all = "deny"
-pedantic = "deny"
-nursery = "warn"
-cargo = "warn"
-# Allow some pedantic lints that are too strict
-module_name_repetitions = "allow"
-missing_errors_doc = "allow"

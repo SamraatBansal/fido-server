@@ -2,14 +2,21 @@
 //!
 //! A FIDO2/WebAuthn conformant server implementation in Rust.
 
-pub mod config;
-pub mod controllers;
-pub mod db;
-pub mod error;
-pub mod middleware;
-pub mod routes;
-pub mod schema;
-pub mod services;
-pub mod utils;
+use config::Config;
+use storage::Storage;
 
-pub use error::{AppError, Result};
+pub mod auth;
+pub mod config;
+pub mod credential;
+pub mod error;
+pub mod mapping;
+pub mod storage;
+pub mod webauthn;
+
+pub use error::AppError;
+
+#[derive(Clone)]
+pub struct AppState {
+    pub storage: Storage,
+    pub config: Config,
+}
