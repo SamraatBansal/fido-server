@@ -12,7 +12,7 @@ pub enum AppError {
     /// Database error
     DatabaseError(String),
     /// WebAuthn error
-    WebAuthnError(String),
+    WebAuthn(String),
     /// Validation error
     ValidationError(String),
     /// Not found error
@@ -27,7 +27,7 @@ impl fmt::Display for AppError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::DatabaseError(msg) => write!(f, "Database error: {msg}"),
-            Self::WebAuthnError(msg) => write!(f, "WebAuthn error: {msg}"),
+            Self::WebAuthn(msg) => write!(f, "WebAuthn error: {msg}"),
             Self::ValidationError(msg) => write!(f, "Validation error: {msg}"),
             Self::NotFound(msg) => write!(f, "Not found: {msg}"),
             Self::InternalError(msg) => write!(f, "Internal error: {msg}"),
@@ -52,7 +52,7 @@ impl ResponseError for AppError {
             Self::DatabaseError(_) | Self::InternalError(_) => {
                 StatusCode::INTERNAL_SERVER_ERROR
             }
-            Self::WebAuthnError(_) => StatusCode::BAD_REQUEST,
+            Self::WebAuthn(_) => StatusCode::BAD_REQUEST,
             Self::ValidationError(_) | Self::BadRequest(_) => StatusCode::BAD_REQUEST,
             Self::NotFound(_) => StatusCode::NOT_FOUND,
         }
