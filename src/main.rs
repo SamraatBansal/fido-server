@@ -1,38 +1,57 @@
-//! FIDO Server Main Entry Point
+use axum::Router;
+use std::net::SocketAddr;
+use tower_http::trace::TraceLayer;
+use tracing::info;
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-use actix_cors::Cors;
-use actix_web::{middleware::Logger, App, HttpServer};
-use std::io;
+mod config;
+mod error;
+mod handlers;
+mod models;
+mod services;
+mod storage;
+mod webauthn;
 
-#[actix_web::main]
-async fn main() -> io::Result<()> {
-    // Initialize logger
-    env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
+use config::Config;
+use error::AppError;
 
-    log::info!("Starting FIDO Server...");
+#[tokio::main]
+async fn main() -> Result<(), AppError> {
+    // Initialize tracing
+    tracing_subscriber::registry()
+        .with(tracing_subscriber::EnvFilter::new(
+            std::env::var("RUST_LOG").unwrap_or_else(|_| "fido_server=debug,tower_http=debug".into()),
+        ))
+        .with(tracing_subscriber::fmt::layer())
+        .init();
 
-    // TODO: Load configuration from config file
-    let host = "127.0.0.1";
-    let port = 8080;
+    // Load configuration
+    let config = Config::from_env()?;
+    info!("Starting FIDO2/WebAuthn server on {}", config.server_addr);
 
-    // TODO: Initialize database connection pool
+    // Create WebAuthn instance
+    let webauthn = webauthn::create_webauthn_instance(&config)?;
 
-    log::info!("Server running at http://{}:{}", host, port);
+    // Create storage backend
+    let storage = storage::create_storage(&config).await?;
 
-    HttpServer::new(move || {
-        // Configure CORS
-        let cors = Cors::default()
-            .allow_any_origin()
-            .allow_any_method()
-            .allow_any_header()
-            .max_age(3600);
+    // Create services
+    let auth_service = services::AuthService::new(webauthn, storage);
+    let credential_service = services::CredentialService::new(storage.clone());
+    let mapping_service = services::MappingService::new(storage);
 
-        App::new()
-            .wrap(Logger::default())
-            .wrap(cors)
-            .configure(fido_server::routes::api::configure)
-    })
-    .bind((host, port))?
-    .run()
-    .await
+    // Create router
+    let app = Router::new()
+        .nest("/registration", handlers::registration::routes(auth_service.clone()))
+        .nest("/authentication", handlers::authentication::routes(auth_service.clone()))
+        .nest("/credential", handlers::credential::routes(credential_service))
+        .nest("/mapping", handlers::mapping::routes(mapping_service))
+        .layer(TraceLayer::new_for_http())
+        .layer(tower_http::cors::CorsLayer::permissive());
+
+    // Start server
+    let listener = tokio::net::TcpListener::bind(config.server_addr).await?;
+    axum::serve(listener, app).await?;
+
+    Ok(())
 }
