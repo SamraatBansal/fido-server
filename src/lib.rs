@@ -11,5 +11,9 @@ pub mod routes;
 pub mod schema;
 pub mod services;
 pub mod utils;
+pub mod webauthn;
+
+#[cfg(diesel)]
+include!(concat!(env!("OUT_DIR"), "/diesel_schema.rs"));
 
 pub use error::{AppError, Result};
