@@ -49,9 +49,7 @@ impl ResponseError for AppError {
 
     fn status_code(&self) -> StatusCode {
         match self {
-            Self::DatabaseError(_) | Self::InternalError(_) => {
-                StatusCode::INTERNAL_SERVER_ERROR
-            }
+            Self::DatabaseError(_) | Self::InternalError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             Self::WebAuthnError(_) => StatusCode::BAD_REQUEST,
             Self::ValidationError(_) | Self::BadRequest(_) => StatusCode::BAD_REQUEST,
             Self::NotFound(_) => StatusCode::NOT_FOUND,

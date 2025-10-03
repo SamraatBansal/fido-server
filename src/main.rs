@@ -2,6 +2,7 @@
 
 use actix_cors::Cors;
 use actix_web::{middleware::Logger, App, HttpServer};
+use fido_server::{config::Settings, routes::api, AppState};
 use std::io;
 
 #[actix_web::main]
@@ -11,11 +12,20 @@ async fn main() -> io::Result<()> {
 
     log::info!("Starting FIDO Server...");
 
-    // TODO: Load configuration from config file
-    let host = "127.0.0.1";
-    let port = 8080;
+    // Load configuration
+    let settings = Settings::new().unwrap_or_else(|e| {
+        eprintln!("Failed to load configuration: {}", e);
+        std::process::exit(1);
+    });
 
-    // TODO: Initialize database connection pool
+    // Initialize application state
+    let app_state = AppState::new(&settings).unwrap_or_else(|e| {
+        eprintln!("Failed to initialize application state: {}", e);
+        std::process::exit(1);
+    });
+
+    let host = settings.server.host.clone();
+    let port = settings.server.port;
 
     log::info!("Server running at http://{}:{}", host, port);
 
@@ -28,9 +38,10 @@ async fn main() -> io::Result<()> {
             .max_age(3600);
 
         App::new()
+            .app_data(actix_web::web::Data::new(app_state.clone()))
             .wrap(Logger::default())
             .wrap(cors)
-            .configure(fido_server::routes::api::configure)
+            .configure(api::configure)
     })
     .bind((host, port))?
     .run()

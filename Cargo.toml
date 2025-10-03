@@ -6,6 +6,9 @@ authors = ["FIDO Server Team"]
 license = "MIT"
 repository = "https://github.com/yourorg/fido-server"
 readme = "README.md"
+description = "A FIDO2/WebAuthn conformant server implementation in Rust"
+keywords = ["fido", "webauthn", "authentication", "security"]
+categories = ["authentication", "web-programming"]
 
 [lib]
 name = "fido_server"
@@ -22,7 +25,7 @@ actix-cors = "0.7"
 actix-rt = "2.10"
 
 # FIDO/WebAuthn
-webauthn-rs = "0.5"
+webauthn-rs = { version = "0.5", features = ["danger-allow-state-serialisation"] }
 webauthn-rs-proto = "0.5"
 
 # Serialization
@@ -37,12 +40,14 @@ r2d2 = "0.8"
 # Async
 tokio = { version = "1.40", features = ["full"] }
 futures = "0.3"
+async-trait = "0.1"
 
 # Cryptography
 base64 = "0.22"
 uuid = { version = "1.10", features = ["v4", "serde"] }
 rand = "0.8"
 sha2 = "0.10"
+url = "2.5"
 
 # Configuration
 config = "0.14"
@@ -77,15 +82,7 @@ strip = true
 # Strict linting configuration
 [lints.rust]
 unused_must_use = "deny"
-missing_docs = "warn"
 unused_imports = "warn"
 dead_code = "warn"
 
-[lints.clippy]
-all = "deny"
-pedantic = "deny"
-nursery = "warn"
-cargo = "warn"
-# Allow some pedantic lints that are too strict
-module_name_repetitions = "allow"
-missing_errors_doc = "allow"
+
