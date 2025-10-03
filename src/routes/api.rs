@@ -3,6 +3,6 @@
 use actix_web::web;
 
 /// Configure all API routes
-pub fn configure(_cfg: &mut web::ServiceConfig) {
+pub const fn configure(_cfg: &mut web::ServiceConfig) {
     // TODO: Add routes
 }

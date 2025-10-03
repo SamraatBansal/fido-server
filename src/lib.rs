@@ -13,7 +13,6 @@ pub mod services;
 pub mod utils;
 pub mod webauthn;
 
-#[cfg(diesel)]
-include!(concat!(env!("OUT_DIR"), "/diesel_schema.rs"));
+// Diesel schema is now in src/schema.rs
 
 pub use error::{AppError, Result};

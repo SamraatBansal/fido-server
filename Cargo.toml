@@ -77,7 +77,6 @@ strip = true
 # Strict linting configuration
 [lints.rust]
 unused_must_use = "deny"
-missing_docs = "warn"
 unused_imports = "warn"
 dead_code = "warn"
 

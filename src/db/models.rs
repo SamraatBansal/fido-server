@@ -5,7 +5,7 @@ use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::schema::*;
+use super::schema::{challenges, credentials, user_mappings, users};
 
 /// User model
 #[derive(Debug, Queryable, Selectable, Serialize, Deserialize)]
@@ -29,7 +29,7 @@ pub struct NewUser {
 }
 
 /// Credential model
-#[derive(Debug, Queryable, Selectable, Serialize, Deserialize)]
+#[derive(Debug, Queryable, Serialize, Deserialize)]
 #[diesel(table_name = credentials)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Credential {
@@ -38,6 +38,7 @@ pub struct Credential {
     pub credential_id: String,
     pub public_key: Vec<u8>,
     pub sign_count: i64,
+    #[diesel(deserialize_as = Option<Vec<u8>>)]
     pub attestation_data: Option<Vec<u8>>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,

@@ -1,8 +1,11 @@
 //! WebAuthn core types and configuration
 
 use serde::{Deserialize, Serialize};
-use webauthn_rs::prelude::*;
 use uuid::Uuid;
+use webauthn_rs::prelude::*;
+use webauthn_rs_proto::{
+    AuthenticatorSelectionCriteria, PubKeyCredParams, PublicKeyCredentialDescriptor, RelyingParty,
+};
 
 /// WebAuthn configuration wrapper
 #[derive(Debug, Clone)]
@@ -17,15 +20,11 @@ impl WebAuthnConfig {
     ///
     /// Returns an error if the configuration is invalid
     pub fn new(rp_id: &str, rp_name: &str, origin: &str) -> Result<Self, WebauthnError> {
-        let rp = RelyingParty {
-            id: rp_id.to_string(),
-            name: rp_name.to_string(),
-            origin: Url::parse(origin)
-                .map_err(|_| WebauthnError::Configuration)?,
-        };
+        let rp_origin = Url::parse(origin).map_err(|_| WebauthnError::Configuration)?;
 
-        let webauthn = WebauthnBuilder::new(rp)?
-            .build();
+        let mut builder = WebauthnBuilder::new(rp_id, &rp_origin)?;
+        builder = builder.rp_name(rp_name);
+        let webauthn = builder.build()?;
 
         Ok(Self { inner: webauthn })
     }
@@ -39,19 +38,15 @@ pub struct WebAuthnUser {
     pub display_name: String,
 }
 
-impl From<WebAuthnUser> for UserId {
-    fn from(user: WebAuthnUser) -> Self {
-        UserId::from_bytes(user.id.as_bytes())
-    }
-}
+// UserId conversion removed as it's not available in current webauthn-rs version
 
 /// Registration challenge response
 #[derive(Debug, Serialize)]
 pub struct RegistrationChallenge {
     pub challenge: String,
     pub user: WebAuthnUser,
-    pub rp: RelyingPartyInfo,
-    pub pub_key_cred_params: Vec<PublicKeyCredentialParameters>,
+    pub rp: RelyingParty,
+    pub pub_key_cred_params: Vec<PubKeyCredParams>,
     pub timeout: u32,
     pub attestation: String,
     pub authenticator_selection: AuthenticatorSelectionCriteria,
@@ -61,7 +56,7 @@ pub struct RegistrationChallenge {
 #[derive(Debug, Serialize)]
 pub struct AuthenticationChallenge {
     pub challenge: String,
-    pub allow_credentials: Vec<AllowCredentials>,
+    pub allow_credentials: Vec<PublicKeyCredentialDescriptor>,
     pub timeout: u32,
     pub user_verification: String,
 }
@@ -101,11 +96,14 @@ pub struct CreateMappingRequest {
 
 /// Helper functions for WebAuthn operations
 pub mod helpers {
-    use super::*;
+    use base64::engine::general_purpose::URL_SAFE_NO_PAD;
+    use base64::Engine as _;
+    use rand::RngCore;
 
     /// Convert credential ID to base64url string
+    #[must_use]
     pub fn credential_id_to_string(cred_id: &[u8]) -> String {
-        base64::encode_config(cred_id, base64::URL_SAFE_NO_PAD)
+        URL_SAFE_NO_PAD.encode(cred_id)
     }
 
     /// Convert base64url string to credential ID
@@ -114,13 +112,14 @@ pub mod helpers {
     ///
     /// Returns an error if the string is not valid base64url
     pub fn string_to_credential_id(s: &str) -> Result<Vec<u8>, base64::DecodeError> {
-        base64::decode_config(s, base64::URL_SAFE_NO_PAD)
+        URL_SAFE_NO_PAD.decode(s)
     }
 
     /// Generate a secure random challenge
+    #[must_use]
     pub fn generate_challenge() -> String {
         let mut bytes = [0u8; 32];
         rand::thread_rng().fill_bytes(&mut bytes);
-        base64::encode_config(&bytes, base64::URL_SAFE_NO_PAD)
+        URL_SAFE_NO_PAD.encode(bytes)
     }
 }

@@ -2,6 +2,9 @@
 
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+use webauthn_rs_proto::{
+    AllowCredentials, AuthenticatorSelectionCriteria, PubKeyCredParams, RelyingParty,
+};
 
 /// Registration start request
 #[derive(Debug, Deserialize)]
@@ -15,11 +18,11 @@ pub struct RegistrationStartRequest {
 pub struct RegistrationStartResponse {
     pub challenge: String,
     pub user: crate::webauthn::WebAuthnUser,
-    pub rp: webauthn_rs::proto::RelyingPartyInfo,
-    pub pub_key_cred_params: Vec<webauthn_rs::proto::PublicKeyCredentialParameters>,
+    pub rp: RelyingParty,
+    pub pub_key_cred_params: Vec<PubKeyCredParams>,
     pub timeout: u32,
     pub attestation: String,
-    pub authenticator_selection: webauthn_rs::proto::AuthenticatorSelectionCriteria,
+    pub authenticator_selection: AuthenticatorSelectionCriteria,
 }
 
 /// Registration finish request
@@ -47,7 +50,7 @@ pub struct AuthenticationStartRequest {
 #[derive(Debug, Serialize)]
 pub struct AuthenticationStartResponse {
     pub challenge: String,
-    pub allow_credentials: Vec<webauthn_rs::proto::AllowCredentials>,
+    pub allow_credentials: Vec<AllowCredentials>,
     pub timeout: u32,
     pub user_verification: String,
 }

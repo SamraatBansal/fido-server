@@ -1,16 +1,16 @@
 //! Diesel database schema
 
-table! {
+diesel::table! {
     users (id) {
         id -> Uuid,
         username -> Varchar,
         display_name -> Varchar,
-        created_at -> Timestamp,
-        updated_at -> Timestamp,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
     }
 }
 
-table! {
+diesel::table! {
     credentials (id) {
         id -> Uuid,
         user_id -> Uuid,
@@ -18,36 +18,31 @@ table! {
         public_key -> Bytea,
         sign_count -> BigInt,
         attestation_data -> Nullable<Bytea>,
-        created_at -> Timestamp,
-        updated_at -> Timestamp,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
     }
 }
 
-table! {
+diesel::table! {
     user_mappings (id) {
         id -> Uuid,
         external_id -> Varchar,
         credential_id -> Varchar,
         user_id -> Uuid,
-        created_at -> Timestamp,
-        updated_at -> Timestamp,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
     }
 }
 
-table! {
+diesel::table! {
     challenges (id) {
         id -> Uuid,
         challenge -> Varchar,
         user_id -> Nullable<Uuid>,
         challenge_type -> Varchar,
-        expires_at -> Timestamp,
-        created_at -> Timestamp,
+        expires_at -> Timestamptz,
+        created_at -> Timestamptz,
     }
 }
 
-allow_tables_to_appear_in_same_query!(
-    users,
-    credentials,
-    user_mappings,
-    challenges,
-);
+diesel::allow_tables_to_appear_in_same_query!(users, credentials, user_mappings, challenges,);
