@@ -1,5 +1,5 @@
 //! Configuration module
 
-pub mod settings;
+pub mod types;
 
-pub use settings::Settings;
+pub use types::Config;
