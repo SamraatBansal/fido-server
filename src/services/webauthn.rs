@@ -231,7 +231,7 @@ impl WebAuthnService {
         ).map_err(|e| AppError::WebAuthnError(format!("Failed to generate authentication options: {}", e)))?;
 
         // Store state for verification
-        self.authentication_states.insert(challenge.challenge_id, state);
+        self.authentication_states.lock().unwrap().insert(challenge.challenge_id, state);
 
         // Log audit event
         self.audit_service.log_event(
