@@ -1,3 +1,7 @@
-//! Routes module
+//! Route definitions
 
 pub mod api;
+pub mod health;
+
+pub use api::*;
+pub use health::*;

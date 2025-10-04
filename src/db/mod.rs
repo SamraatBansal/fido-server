@@ -1,6 +1,7 @@
-//! Database module
+//! Database layer
 
 pub mod connection;
 pub mod models;
 
-pub use connection::{establish_connection, DbPool};
+pub use connection::*;
+pub use models::*;
