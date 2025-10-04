@@ -1,9 +1,7 @@
-/// Database module
+//! Database layer
 
 pub mod connection;
 pub mod models;
-pub mod repository;
 
-pub use connection::{DbManager, DbPool, PooledDb, init_database};
+pub use connection::*;
 pub use models::*;
-pub use repository::{UserRepository, CredentialRepository, ChallengeRepository, SessionRepository, AuditLogRepository};
