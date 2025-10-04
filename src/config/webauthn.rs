@@ -1,6 +1,7 @@
 //! WebAuthn configuration module
 
 use webauthn_rs::prelude::*;
+use webauthn_rs_proto::*;
 use url::Url;
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
