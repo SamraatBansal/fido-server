@@ -1,9 +1,8 @@
 //! Credential management service
 
-use crate::error::{AppError, Result};
 use crate::db::models::Credential;
 use uuid::Uuid;
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 
 /// Credential service
 pub struct CredentialService {
