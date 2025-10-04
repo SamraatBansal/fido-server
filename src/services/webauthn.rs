@@ -261,7 +261,7 @@ impl WebAuthnService {
         user_agent: Option<&str>,
     ) -> Result<AuthenticationFinishResponse> {
         // Get stored state
-        let state = self.authentication_states
+        let state = self.authentication_states.lock().unwrap()
             .remove(&request.challenge_id)
             .ok_or(AppError::WebAuthnError("Invalid challenge ID".to_string()))?;
 
