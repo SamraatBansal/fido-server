@@ -31,7 +31,6 @@ pub fn configure_app() -> App<
 > {
     App::new()
         // Add middleware
-        .wrap(actix_web::middleware::Logger::default())
         .wrap(security_headers())
         .wrap(configure_cors())
         // Configure routes
