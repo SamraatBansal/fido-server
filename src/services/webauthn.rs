@@ -15,6 +15,7 @@ use crate::error::{AppError, Result};
 use base64::{Engine as _, engine::general_purpose};
 
 /// Main WebAuthn service
+#[derive(Clone)]
 pub struct WebAuthnService {
     webauthn: Webauthn,
     config: WebAuthnConfig,
@@ -24,8 +25,8 @@ pub struct WebAuthnService {
     session_service: SessionService,
     audit_service: AuditService,
     // In-memory storage for WebAuthn state (in production, use Redis)
-    registration_states: HashMap<Uuid, RegistrationState>,
-    authentication_states: HashMap<Uuid, AuthenticationState>,
+    registration_states: std::sync::Arc<std::sync::Mutex<HashMap<Uuid, RegistrationState>>>,
+    authentication_states: std::sync::Arc<std::sync::Mutex<HashMap<Uuid, AuthenticationState>>>,
 }
 
 impl WebAuthnService {
