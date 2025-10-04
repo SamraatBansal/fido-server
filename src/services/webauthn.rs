@@ -8,7 +8,9 @@ use std::collections::HashMap;
 pub struct WebAuthnService {
     config: WebAuthnConfig,
     // In-memory storage for states (in production, use Redis)
+    #[allow(dead_code)]
     registration_states: HashMap<Uuid, String>,
+    #[allow(dead_code)]
     authentication_states: HashMap<Uuid, String>,
 }
 
