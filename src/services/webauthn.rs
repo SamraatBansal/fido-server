@@ -1,7 +1,6 @@
 //! WebAuthn service
 
-use crate::config::webauthn::WebAuthnConfig;
-use crate::error::{AppError, Result};
+use crate::config::WebAuthnConfig;
 use uuid::Uuid;
 use std::collections::HashMap;
 
