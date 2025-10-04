@@ -16,48 +16,56 @@ name = "fido-server"
 path = "src/main.rs"
 
 [dependencies]
-# Web Framework
+# Core Web Framework
 actix-web = "4.9"
 actix-cors = "0.7"
 actix-rt = "2.10"
 
-# FIDO/WebAuthn
+# FIDO/WebAuthn (Updated to latest stable)
 webauthn-rs = "0.5"
 webauthn-rs-proto = "0.5"
 
-# Serialization
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-
-# Database
-diesel = { version = "2.1", features = ["postgres", "r2d2", "chrono", "uuid"] }
+# Database & Storage
+diesel = { version = "2.1", features = ["postgres", "r2d2", "chrono", "uuid", "serde_json"] }
 diesel_migrations = "2.1"
 r2d2 = "0.8"
 
-# Async
-tokio = { version = "1.40", features = ["full"] }
-futures = "0.3"
-
-# Cryptography
+# Security & Cryptography
 base64 = "0.22"
 uuid = { version = "1.10", features = ["v4", "serde"] }
 rand = "0.8"
 sha2 = "0.10"
+ring = "0.17"  # For secure random generation
 
-# Configuration
+# Async & Performance
+tokio = { version = "1.40", features = ["full"] }
+futures = "0.3"
+
+# Configuration & Environment
 config = "0.14"
 dotenv = "0.15"
 
-# Logging
+# Logging & Monitoring
 log = "0.4"
 env_logger = "0.11"
+tracing = "0.1"
+tracing-subscriber = "0.3"
 
 # Error Handling
 thiserror = "1.0"
 anyhow = "1.0"
 
-# Time
+# Time & Serialization
 chrono = { version = "0.4", features = ["serde"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Rate Limiting & Security
+governor = "0.6"
+actix-web-httpauth = "0.8"
+
+# Validation
+validator = { version = "0.18", features = ["derive"] }
 
 [dev-dependencies]
 actix-test = "0.1"
