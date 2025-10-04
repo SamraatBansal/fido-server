@@ -1,27 +1,46 @@
 # Rust
-target/
-Cargo.lock
+/target/
 **/*.rs.bk
-*.pdb
+Cargo.lock
 
 # IDE
-.idea/
 .vscode/
+.idea/
 *.swp
 *.swo
 *~
+
+# OS
 .DS_Store
+Thumbs.db
 
 # Environment
 .env
 .env.local
-.env.*.local
+.env.production
 
 # Database
 *.db
+*.sqlite
 
 # Logs
 *.log
+logs/
 
-# OS
-Thumbs.db
+# Diesel
+diesel.toml
+
+# Temporary files
+tmp/
+temp/
+
+# Coverage
+tarpaulin-report.html
+cobertura.xml
+
+# Docker
+.dockerignore
+
+# Backup files
+*.bak
+*.backup
