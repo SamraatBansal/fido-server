@@ -45,8 +45,8 @@ impl WebAuthnService {
             user_service: UserService::new(),
             session_service,
             audit_service: AuditService::new(),
-            registration_states: HashMap::new(),
-            authentication_states: HashMap::new(),
+            registration_states: std::sync::Arc::new(std::sync::Mutex::new(HashMap::new())),
+            authentication_states: std::sync::Arc::new(std::sync::Mutex::new(HashMap::new())),
         })
     }
 
