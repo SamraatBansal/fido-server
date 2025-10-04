@@ -9,8 +9,8 @@ use crate::error::{AppError, Result as AppResult};
 
 /// Health check endpoint
 pub async fn health_check(
-    web::Data(db_manager): web::Data<DbManager>,
-    web::Data(webauthn_service): web::Data<WebAuthnService>,
+    db_manager: web::Data<DbManager>,
+    webauthn_service: web::Data<WebAuthnService>,
 ) -> Result<HttpResponse> {
     let start_time = Instant::now();
     
