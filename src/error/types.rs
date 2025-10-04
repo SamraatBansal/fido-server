@@ -1,62 +1,135 @@
-//! Custom error types for the FIDO server
+//! Error type definitions
 
-use actix_web::{error::ResponseError, http::StatusCode, HttpResponse};
-use std::fmt;
+use actix_web::{error::ResponseError, HttpResponse};
+use thiserror::Error;
+use webauthn_rs::error::WebauthnError;
 
-/// Application result type
 pub type Result<T> = std::result::Result<T, AppError>;
 
-/// Application error types
-#[derive(Debug)]
+#[derive(Error, Debug)]
 pub enum AppError {
-    /// Database error
-    DatabaseError(String),
-    /// WebAuthn error
-    WebAuthnError(String),
-    /// Validation error
-    ValidationError(String),
-    /// Not found error
-    NotFound(String),
-    /// Internal server error
-    InternalError(String),
-    /// Bad request error
-    BadRequest(String),
-}
+    #[error("WebAuthn error: {0}")]
+    WebAuthn(#[from] WebauthnError),
 
-impl fmt::Display for AppError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::DatabaseError(msg) => write!(f, "Database error: {msg}"),
-            Self::WebAuthnError(msg) => write!(f, "WebAuthn error: {msg}"),
-            Self::ValidationError(msg) => write!(f, "Validation error: {msg}"),
-            Self::NotFound(msg) => write!(f, "Not found: {msg}"),
-            Self::InternalError(msg) => write!(f, "Internal error: {msg}"),
-            Self::BadRequest(msg) => write!(f, "Bad request: {msg}"),
-        }
-    }
+    #[error("Database error: {0}")]
+    Database(#[from] diesel::result::Error),
+
+    #[error("Database connection error: {0}")]
+    DatabaseConnection(String),
+
+    #[error("Invalid credential: {0}")]
+    InvalidCredential(String),
+
+    #[error("Authentication failed: {0}")]
+    AuthenticationFailed(String),
+
+    #[error("Authorization failed: {0}")]
+    AuthorizationFailed(String),
+
+    #[error("Rate limit exceeded")]
+    RateLimitExceeded,
+
+    #[error("Session expired")]
+    SessionExpired,
+
+    #[error("Session not found")]
+    SessionNotFound,
+
+    #[error("Invalid request: {0}")]
+    InvalidRequest(String),
+
+    #[error("Configuration error: {0}")]
+    Configuration(String),
+
+    #[error("Serialization error: {0}")]
+    Serialization(#[from] serde_json::Error),
+
+    #[error("UUID error: {0}")]
+    Uuid(#[from] uuid::Error),
+
+    #[error("URL error: {0}")]
+    Url(#[from] url::ParseError),
+
+    #[error("Base64 error: {0}")]
+    Base64(#[from] base64::DecodeError),
+
+    #[error("IO error: {0}")]
+    Io(#[from] std::io::Error),
+
+    #[error("Internal server error: {0}")]
+    Internal(String),
 }
 
 impl ResponseError for AppError {
     fn error_response(&self) -> HttpResponse {
-        let status_code = self.status_code();
-        let error_message = self.to_string();
+        use crate::schema::responses::ErrorResponse;
 
-        HttpResponse::build(status_code).json(serde_json::json!({
-            "error": error_message,
-            "status": status_code.as_u16()
-        }))
-    }
+        let (status_code, error_type, message) = match self {
+            AppError::WebAuthn(e) => {
+                log::error!("WebAuthn error: {:?}", e);
+                (actix_web::http::StatusCode::BAD_REQUEST, "webauthn_error", "WebAuthn operation failed")
+            },
+            AppError::InvalidCredential(msg) => {
+                (actix_web::http::StatusCode::BAD_REQUEST, "invalid_credential", msg)
+            },
+            AppError::AuthenticationFailed(msg) => {
+                (actix_web::http::StatusCode::UNAUTHORIZED, "authentication_failed", msg)
+            },
+            AppError::AuthorizationFailed(msg) => {
+                (actix_web::http::StatusCode::FORBIDDEN, "authorization_failed", msg)
+            },
+            AppError::RateLimitExceeded => {
+                (actix_web::http::StatusCode::TOO_MANY_REQUESTS, "rate_limit_exceeded", "Rate limit exceeded")
+            },
+            AppError::SessionExpired => {
+                (actix_web::http::StatusCode::UNAUTHORIZED, "session_expired", "Session has expired")
+            },
+            AppError::SessionNotFound => {
+                (actix_web::http::StatusCode::NOT_FOUND, "session_not_found", "Session not found")
+            },
+            AppError::InvalidRequest(msg) => {
+                (actix_web::http::StatusCode::BAD_REQUEST, "invalid_request", msg)
+            },
+            AppError::Database(e) => {
+                log::error!("Database error: {:?}", e);
+                (actix_web::http::StatusCode::INTERNAL_SERVER_ERROR, "database_error", "Database operation failed")
+            },
+            AppError::DatabaseConnection(e) => {
+                log::error!("Database connection error: {}", e);
+                (actix_web::http::StatusCode::INTERNAL_SERVER_ERROR, "database_connection_error", "Database connection failed")
+            },
+            AppError::Configuration(msg) => {
+                log::error!("Configuration error: {}", msg);
+                (actix_web::http::StatusCode::INTERNAL_SERVER_ERROR, "configuration_error", "Server configuration error")
+            },
+            AppError::Serialization(e) => {
+                log::error!("Serialization error: {:?}", e);
+                (actix_web::http::StatusCode::INTERNAL_SERVER_ERROR, "serialization_error", "Data serialization failed")
+            },
+            AppError::Uuid(e) => {
+                log::error!("UUID error: {:?}", e);
+                (actix_web::http::StatusCode::BAD_REQUEST, "uuid_error", "Invalid UUID format")
+            },
+            AppError::Url(e) => {
+                log::error!("URL error: {:?}", e);
+                (actix_web::http::StatusCode::BAD_REQUEST, "url_error", "Invalid URL format")
+            },
+            AppError::Base64(e) => {
+                log::error!("Base64 error: {:?}", e);
+                (actix_web::http::StatusCode::BAD_REQUEST, "base64_error", "Invalid base64 format")
+            },
+            AppError::Io(e) => {
+                log::error!("IO error: {:?}", e);
+                (actix_web::http::StatusCode::INTERNAL_SERVER_ERROR, "io_error", "IO operation failed")
+            },
+            AppError::Internal(msg) => {
+                log::error!("Internal error: {}", msg);
+                (actix_web::http::StatusCode::INTERNAL_SERVER_ERROR, "internal_error", "Internal server error")
+            },
+        };
 
-    fn status_code(&self) -> StatusCode {
-        match self {
-            Self::DatabaseError(_) | Self::InternalError(_) => {
-                StatusCode::INTERNAL_SERVER_ERROR
-            }
-            Self::WebAuthnError(_) => StatusCode::BAD_REQUEST,
-            Self::ValidationError(_) | Self::BadRequest(_) => StatusCode::BAD_REQUEST,
-            Self::NotFound(_) => StatusCode::NOT_FOUND,
-        }
+        let error_response = ErrorResponse::new(error_type, message);
+
+        HttpResponse::build(status_code).json(error_response)
     }
 }
-
-impl std::error::Error for AppError {}

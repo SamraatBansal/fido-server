@@ -20,6 +20,7 @@ path = "src/main.rs"
 actix-web = "4.9"
 actix-cors = "0.7"
 actix-rt = "2.10"
+actix-web-lab = "0.20"
 
 # FIDO/WebAuthn
 webauthn-rs = "0.5"
@@ -37,6 +38,8 @@ r2d2 = "0.8"
 # Async
 tokio = { version = "1.40", features = ["full"] }
 futures = "0.3"
+futures-util = "0.3"
+async-trait = "0.1"
 
 # Cryptography
 base64 = "0.22"
@@ -58,6 +61,12 @@ anyhow = "1.0"
 
 # Time
 chrono = { version = "0.4", features = ["serde"] }
+
+# URL parsing
+url = "2.5"
+
+# Regular expressions
+regex = "1.10"
 
 [dev-dependencies]
 actix-test = "0.1"
