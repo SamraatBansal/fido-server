@@ -9,6 +9,7 @@ pub mod error;
 pub mod middleware;
 pub mod routes;
 pub mod db_schema;
+pub mod schema;
 pub mod services;
 pub mod utils;
 
