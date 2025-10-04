@@ -99,7 +99,7 @@ impl CredentialService {
     }
 
     /// Delete credential
-    pub fn delete_credential(&mut self, credential_id: &[u8]) -> Result<()> {
+    pub fn delete_credential(&mut self, credential_id: &[u8]) -> crate::error::Result<()> {
         if let Some(cred_uuid) = self.credential_id_index.remove(credential_id) {
             if let Some(credential) = self.credentials.remove(&cred_uuid) {
                 // Remove from user credentials
