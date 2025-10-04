@@ -17,7 +17,7 @@ diesel::table! {
 
 diesel::table! {
     use diesel::sql_types::*;
-    use super::sql_types::*;
+    use super::sql_types::{Uuid, Jsonb, Timestamptz};
 
     credentials (id) {
         id -> Uuid,
