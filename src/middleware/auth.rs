@@ -38,6 +38,8 @@ where
     type Error = Error;
     type Future = S::Future;
 
+    actix_web::dev::forward_ready!(service);
+
     fn call(&self, req: ServiceRequest) -> Self::Future {
         // TODO: Implement authentication logic
         self.service.call(req)
