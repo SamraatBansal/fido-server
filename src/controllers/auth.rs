@@ -100,8 +100,8 @@ pub async fn finish_authentication(
 /// Validate session endpoint
 pub async fn validate_session(
     web::Json(request): web::Json<SessionValidationRequest>,
-    web::Data(session_service): web::Data<SessionService>,
-    web::Data(db_manager): web::Data<DbManager>,
+    session_service: web::Data<SessionService>,
+    db_manager: web::Data<DbManager>,
 ) -> Result<HttpResponse> {
     // Validate request
     if let Err(validation_errors) = request.validate() {
@@ -146,8 +146,8 @@ pub async fn validate_session(
 /// Logout endpoint
 pub async fn logout(
     web::Json(request): web::Json<LogoutRequest>,
-    web::Data(session_service): web::Data<SessionService>,
-    web::Data(db_manager): web::Data<DbManager>,
+    session_service: web::Data<SessionService>,
+    db_manager: web::Data<DbManager>,
     req: actix_web::HttpRequest,
 ) -> Result<HttpResponse> {
     // Validate request
@@ -194,8 +194,8 @@ pub async fn logout(
 
 /// Get current user info (protected endpoint)
 pub async fn get_current_user(
-    web::Data(session_service): web::Data<SessionService>,
-    web::Data(db_manager): web::Data<DbManager>,
+    session_service: web::Data<SessionService>,
+    db_manager: web::Data<DbManager>,
     req: actix_web::HttpRequest,
 ) -> Result<HttpResponse> {
     // Extract session token from Authorization header
