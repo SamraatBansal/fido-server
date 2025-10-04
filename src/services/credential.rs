@@ -58,7 +58,7 @@ impl CredentialService {
     }
 
     /// Get user credentials
-    pub fn get_user_credentials(&self, user_id: Uuid) -> Result<Vec<Credential>> {
+    pub fn get_user_credentials(&self, user_id: Uuid) -> crate::error::Result<Vec<Credential>> {
         if let Some(credential_ids) = self.user_credentials.get(&user_id) {
             let mut credentials = Vec::new();
             for cred_id in credential_ids {
