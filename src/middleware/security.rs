@@ -1,14 +1,12 @@
 //! Security middleware
 
-use actix_web::{dev::ServiceRequest, dev::ServiceResponse, Error, Result, http::header};
+use actix_web::{dev::ServiceRequest, dev::ServiceResponse, Error, Result};
 use actix_web::dev::{Service, Transform};
 use actix_web::middleware::DefaultHeaders;
 use std::future::{ready, Ready};
 
 /// Security headers middleware
 pub fn security_headers() -> DefaultHeaders {
-    use actix_web::http::header::{HeaderValue, HeaderName};
-    
     DefaultHeaders::new()
         .add(("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload"))
         .add(("X-Content-Type-Options", "nosniff"))
