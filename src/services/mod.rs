@@ -1,15 +1,11 @@
-//! Services module//! Services module
+//! Business logic services
 
+pub mod webauthn;
 pub mod challenge;
 pub mod user;
 pub mod credential;
-pub mod session;
-pub mod audit;
-pub mod webauthn;
 
-pub use challenge::{ChallengeService, Challenge};
-pub use user::UserService;
-pub use credential::CredentialService;
-pub use session::SessionService;
-pub use audit::AuditService;
-pub use webauthn::WebAuthnService;
+pub use webauthn::*;
+pub use challenge::*;
+pub use user::*;
+pub use credential::*;
