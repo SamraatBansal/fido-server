@@ -73,7 +73,7 @@ impl CredentialService {
     }
 
     /// Get credential by ID
-    pub fn get_credential_by_id(&self, credential_id: &[u8]) -> Result<Option<Credential>> {
+    pub fn get_credential_by_id(&self, credential_id: &[u8]) -> crate::error::Result<Option<Credential>> {
         if let Some(cred_uuid) = self.credential_id_index.get(credential_id) {
             if let Some(credential) = self.credentials.get(cred_uuid) {
                 return Ok(Some(credential.clone()));
