@@ -95,7 +95,7 @@ impl CredentialService {
                 return Ok(());
             }
         }
-        Err(AppError::NotFound("Credential not found".to_string()))
+        Err(crate::error::AppError::NotFound("Credential not found".to_string()))
     }
 
     /// Delete credential
@@ -109,6 +109,6 @@ impl CredentialService {
                 return Ok(());
             }
         }
-        Err(AppError::NotFound("Credential not found".to_string()))
+        Err(crate::error::AppError::NotFound("Credential not found".to_string()))
     }
 }
