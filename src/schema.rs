@@ -7,11 +7,11 @@ diesel::table! {
     use crate::db::models::sql_types::*;
 
     users (id) {
-        id -> Uuid,
+        id -> crate::db::models::sql_types::Uuid,
         username -> Varchar,
         display_name -> Varchar,
-        created_at -> Timestamptz,
-        updated_at -> Timestamptz,
+        created_at -> crate::db::models::sql_types::Timestamptz,
+        updated_at -> crate::db::models::sql_types::Timestamptz,
     }
 }
 
@@ -20,19 +20,19 @@ diesel::table! {
     use crate::db::models::sql_types::*;
 
     credentials (id) {
-        id -> Uuid,
-        user_id -> Uuid,
+        id -> crate::db::models::sql_types::Uuid,
+        user_id -> crate::db::models::sql_types::Uuid,
         credential_id -> Varchar,
-        public_key -> Jsonb,
+        public_key -> crate::db::models::sql_types::Jsonb,
         sign_count -> Int8,
         aaguid -> Nullable<Varchar>,
-        attestation_statement -> Nullable<Jsonb>,
+        attestation_statement -> Nullable<crate::db::models::sql_types::Jsonb>,
         backup_eligible -> Bool,
         backup_state -> Bool,
         clone_warning -> Bool,
-        created_at -> Timestamptz,
-        last_used_at -> Nullable<Timestamptz>,
-        updated_at -> Timestamptz,
+        created_at -> crate::db::models::sql_types::Timestamptz,
+        last_used_at -> Nullable<crate::db::models::sql_types::Timestamptz>,
+        updated_at -> crate::db::models::sql_types::Timestamptz,
     }
 }
 
@@ -41,15 +41,15 @@ diesel::table! {
     use crate::db::models::sql_types::*;
 
     challenges (id) {
-        id -> Uuid,
-        challenge_id -> Uuid,
+        id -> crate::db::models::sql_types::Uuid,
+        challenge_id -> crate::db::models::sql_types::Uuid,
         challenge_data -> Varchar,
-        user_id -> Nullable<Uuid>,
+        user_id -> Nullable<crate::db::models::sql_types::Uuid>,
         challenge_type -> Varchar,
-        expires_at -> Timestamptz,
+        expires_at -> crate::db::models::sql_types::Timestamptz,
         used -> Bool,
-        metadata -> Nullable<Jsonb>,
-        created_at -> Timestamptz,
+        metadata -> Nullable<crate::db::models::sql_types::Jsonb>,
+        created_at -> crate::db::models::sql_types::Timestamptz,
     }
 }
 
@@ -58,12 +58,12 @@ diesel::table! {
     use crate::db::models::sql_types::*;
 
     sessions (id) {
-        id -> Uuid,
-        user_id -> Uuid,
+        id -> crate::db::models::sql_types::Uuid,
+        user_id -> crate::db::models::sql_types::Uuid,
         session_token -> Varchar,
-        expires_at -> Timestamptz,
-        created_at -> Timestamptz,
-        last_accessed_at -> Timestamptz,
+        expires_at -> crate::db::models::sql_types::Timestamptz,
+        created_at -> crate::db::models::sql_types::Timestamptz,
+        last_accessed_at -> crate::db::models::sql_types::Timestamptz,
         ip_address -> Nullable<Varchar>,
         user_agent -> Nullable<Varchar>,
     }
@@ -74,16 +74,16 @@ diesel::table! {
     use crate::db::models::sql_types::*;
 
     audit_logs (id) {
-        id -> Uuid,
-        user_id -> Nullable<Uuid>,
+        id -> crate::db::models::sql_types::Uuid,
+        user_id -> Nullable<crate::db::models::sql_types::Uuid>,
         action -> Varchar,
         success -> Bool,
         credential_id -> Nullable<Varchar>,
         ip_address -> Nullable<Varchar>,
         user_agent -> Nullable<Varchar>,
         error_message -> Nullable<Varchar>,
-        metadata -> Nullable<Jsonb>,
-        created_at -> Timestamptz,
+        metadata -> Nullable<crate::db::models::sql_types::Jsonb>,
+        created_at -> crate::db::models::sql_types::Timestamptz,
     }
 }
 
