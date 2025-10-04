@@ -87,7 +87,7 @@ impl WebAuthnService {
         ).map_err(|e| AppError::WebAuthnError(format!("Failed to generate registration options: {}", e)))?;
 
         // Store state for verification
-        self.registration_states.insert(challenge.challenge_id, state);
+        self.registration_states.lock().unwrap().insert(challenge.challenge_id, state);
 
         // Log audit event
         self.audit_service.log_event(
