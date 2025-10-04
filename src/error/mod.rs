@@ -1,5 +1,7 @@
 //! Error handling module
 
+pub mod handlers;
 pub mod types;
 
-pub use types::{AppError, Result};
+pub use handlers::*;
+pub use types::*;
