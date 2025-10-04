@@ -1,12 +1,18 @@
 //! Integration tests for the FIDO server
 
 use actix_web::{test, App, http};
-use fido_server::configure_app;
+use fido_server::controllers::health_check;
+use fido_server::routes::{configure_api_routes, configure_health_routes};
+use fido_server::middleware::{configure_cors, security_headers};
 
 #[actix_web::test]
 async fn test_health_check() {
     let app = test::init_service(
-        App::new().configure(configure_app)
+        App::new()
+            .wrap(security_headers())
+            .wrap(configure_cors())
+            .service(configure_health_routes())
+            .route("/health", actix_web::web::get().to(health_check))
     ).await;
 
     let req = test::TestRequest::get()
@@ -20,7 +26,10 @@ async fn test_health_check() {
 #[actix_web::test]
 async fn test_api_health_check() {
     let app = test::init_service(
-        App::new().configure(configure_app)
+        App::new()
+            .wrap(security_headers())
+            .wrap(configure_cors())
+            .service(configure_api_routes())
     ).await;
 
     let req = test::TestRequest::get()
@@ -34,7 +43,10 @@ async fn test_api_health_check() {
 #[actix_web::test]
 async fn test_registration_start() {
     let app = test::init_service(
-        App::new().configure(configure_app)
+        App::new()
+            .wrap(security_headers())
+            .wrap(configure_cors())
+            .service(configure_api_routes())
     ).await;
 
     let req = test::TestRequest::post()
@@ -54,7 +66,10 @@ async fn test_registration_start() {
 #[actix_web::test]
 async fn test_authentication_start() {
     let app = test::init_service(
-        App::new().configure(configure_app)
+        App::new()
+            .wrap(security_headers())
+            .wrap(configure_cors())
+            .service(configure_api_routes())
     ).await;
 
     let req = test::TestRequest::post()
@@ -72,7 +87,10 @@ async fn test_authentication_start() {
 #[actix_web::test]
 async fn test_security_headers() {
     let app = test::init_service(
-        App::new().configure(configure_app)
+        App::new()
+            .wrap(security_headers())
+            .wrap(configure_cors())
+            .route("/health", actix_web::web::get().to(health_check))
     ).await;
 
     let req = test::TestRequest::get()
