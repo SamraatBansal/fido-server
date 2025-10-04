@@ -108,10 +108,10 @@ async fn test_authentication_start_with_service() {
             .service(configure_api_routes())
     ).await;
 
+    // Test usernameless authentication (should work even without existing user)
     let req = test::TestRequest::post()
         .uri("/api/v1/auth/start")
         .set_json(&serde_json::json!({
-            "username": "testuser",
             "user_verification": "preferred"
         }))
         .to_request();
