@@ -17,7 +17,7 @@ pub fn generate_secure_random_string(len: usize) -> crate::error::Result<String>
 }
 
 /// Hash password using PBKDF2
-pub fn hash_password(password: &str, salt: &[u8]) -> Result<String> {
+pub fn hash_password(password: &str, salt: &[u8]) -> crate::error::Result<String> {
     use pbkdf2::pbkdf2_hmac;
     use sha2::Sha256;
     use base64::{Engine as _, engine::general_purpose};
