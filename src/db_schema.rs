@@ -38,7 +38,7 @@ diesel::table! {
 
 diesel::table! {
     use diesel::sql_types::*;
-    use super::sql_types::*;
+    use super::sql_types::{Uuid, Jsonb, Timestamptz};
 
     challenges (id) {
         id -> Uuid,
