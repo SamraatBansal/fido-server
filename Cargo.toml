@@ -67,6 +67,9 @@ actix-web-httpauth = "0.8"
 # Validation
 validator = { version = "0.18", features = ["derive"] }
 
+# Async traits
+async-trait = "0.1"
+
 [dev-dependencies]
 actix-test = "0.1"
 mockall = "0.13"
