@@ -14,8 +14,8 @@ use crate::error::{AppError, Result as AppResult};
 /// Start authentication endpoint
 pub async fn start_authentication(
     web::Json(request): web::Json<AuthenticationStartRequest>,
-    web::Data(webauthn_service): web::Data<WebAuthnService>,
-    web::Data(db_manager): web::Data<DbManager>,
+    webauthn_service: web::Data<WebAuthnService>,
+    db_manager: web::Data<DbManager>,
     req: actix_web::HttpRequest,
 ) -> Result<HttpResponse> {
     // Validate request
@@ -57,8 +57,8 @@ pub async fn start_authentication(
 /// Finish authentication endpoint
 pub async fn finish_authentication(
     web::Json(request): web::Json<AuthenticationFinishRequest>,
-    web::Data(webauthn_service): web::Data<WebAuthnService>,
-    web::Data(db_manager): web::Data<DbManager>,
+    webauthn_service: web::Data<WebAuthnService>,
+    db_manager: web::Data<DbManager>,
     req: actix_web::HttpRequest,
 ) -> Result<HttpResponse> {
     // Validate request
