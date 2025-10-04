@@ -39,8 +39,10 @@ where
     type Error = Error;
     type Future = S::Future;
 
+    actix_web::dev::forward_ready!(service);
+
     fn call(&self, req: ServiceRequest) -> Self::Future {
-        let start = Instant::now();
+        let _start = Instant::now();
         let method = req.method().clone();
         let path = req.path().to_string();
         
