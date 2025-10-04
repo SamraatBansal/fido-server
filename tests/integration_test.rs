@@ -1,9 +1,12 @@
 //! Integration tests for the FIDO server
 
-use actix_web::{test, App};
+use actix_web::{test, App, web};
 use fido_server::controllers::health_check;
 use fido_server::routes::{configure_api_routes, configure_health_routes};
 use fido_server::middleware::{configure_cors, security_headers};
+use fido_server::services::{WebAuthnService, ChallengeService, CredentialService, UserService};
+use fido_server::config::WebAuthnConfig;
+use std::sync::Mutex;
 
 #[actix_web::test]
 async fn test_health_check() {
@@ -41,11 +44,25 @@ async fn test_api_health_check() {
 }
 
 #[actix_web::test]
-async fn test_registration_start() {
+async fn test_registration_start_with_service() {
+    // Initialize services
+    let config = WebAuthnConfig::default();
+    let challenge_service = ChallengeService::new();
+    let credential_service = CredentialService::new();
+    let user_service = UserService::new();
+    
+    let webauthn_service = WebAuthnService::new(
+        config,
+        challenge_service,
+        credential_service,
+        user_service,
+    ).unwrap();
+
     let app = test::init_service(
         App::new()
             .wrap(security_headers())
             .wrap(configure_cors())
+            .app_data(web::Data::new(Mutex::new(webauthn_service)))
             .service(configure_api_routes())
     ).await;
 
@@ -64,11 +81,25 @@ async fn test_registration_start() {
 }
 
 #[actix_web::test]
-async fn test_authentication_start() {
+async fn test_authentication_start_with_service() {
+    // Initialize services
+    let config = WebAuthnConfig::default();
+    let challenge_service = ChallengeService::new();
+    let credential_service = CredentialService::new();
+    let user_service = UserService::new();
+    
+    let webauthn_service = WebAuthnService::new(
+        config,
+        challenge_service,
+        credential_service,
+        user_service,
+    ).unwrap();
+
     let app = test::init_service(
         App::new()
             .wrap(security_headers())
             .wrap(configure_cors())
+            .app_data(web::Data::new(Mutex::new(webauthn_service)))
             .service(configure_api_routes())
     ).await;
 
