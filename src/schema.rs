@@ -98,3 +98,13 @@ diesel::allow_tables_to_appear_in_same_query!(
     sessions,
     audit_logs,
 );
+
+// Re-export schema modules
+pub mod auth;
+pub mod common;
+pub mod credential;
+pub mod user;
+pub mod challenge;
+pub mod registration;
+pub mod admin;
+pub mod credentials;
