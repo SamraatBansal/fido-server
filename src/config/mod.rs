@@ -1,5 +1,9 @@
-//! Configuration module
+//! Configuration management module
 
-pub mod settings;
+pub mod app;
+pub mod database;
+pub mod webauthn;
 
-pub use settings::Settings;
+pub use app::AppConfig;
+pub use database::DatabaseConfig;
+pub use webauthn::WebAuthnConfig;
