@@ -3,7 +3,6 @@
 use crate::error::{AppError, Result};
 use uuid::Uuid;
 use chrono::{DateTime, Utc, Duration};
-use base64::{Engine as _, engine::general_purpose};
 
 /// Challenge type
 #[derive(Debug, Clone)]
