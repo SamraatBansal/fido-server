@@ -20,7 +20,15 @@ pub mod utils;
 pub use error::{AppError, Result};
 
 /// Configure the Actix-web application
-pub fn configure_app() -> App<()> {
+pub fn configure_app() -> App<
+    impl actix_web::dev::ServiceFactory<
+        actix_web::dev::ServiceRequest,
+        Config = (),
+        Response = actix_web::dev::ServiceResponse,
+        Error = actix_web::Error,
+        InitError = (),
+    >,
+> {
     App::new()
         // Add middleware
         .wrap(security_headers())
