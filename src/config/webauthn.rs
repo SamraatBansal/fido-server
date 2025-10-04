@@ -54,7 +54,7 @@ impl WebAuthnConfig {
                 .map_err(|e| AppError::WebAuthnError(format!("Invalid origin URL: {}", e)))?,
         };
 
-        let config = WebauthnConfig {
+        let config = webauthn_rs::prelude::WebauthnConfig {
             rp,
             challenge_timeout: self.challenge_timeout,
             ..Default::default()
