@@ -36,12 +36,8 @@ pub async fn finish_authentication(
     web::Json(request): web::Json<AuthenticationFinishRequest>,
     web::Data(webauthn_service): web::Data<std::sync::Mutex<WebAuthnService>>,
 ) -> Result<HttpResponse> {
-    // Convert JSON value to PublicKeyCredential
-    let credential: webauthn_rs::prelude::PublicKeyCredential = serde_json::from_value(request.credential)
-        .map_err(|e| AppError::BadRequest(format!("Invalid credential format: {}", e)))?;
-
     let mut service = webauthn_service.lock().unwrap();
-    match service.finish_authentication(request.challenge_id, credential).await {
+    match service.finish_authentication(request.challenge_id, request.credential).await {
         Ok(result) => {
             Ok(HttpResponse::Ok().json(json!({
                 "user_id": result.user_id,
@@ -95,12 +91,8 @@ pub async fn finish_registration(
     web::Json(request): web::Json<RegistrationFinishRequest>,
     web::Data(webauthn_service): web::Data<std::sync::Mutex<WebAuthnService>>,
 ) -> Result<HttpResponse> {
-    // Convert JSON value to PublicKeyCredential
-    let credential: webauthn_rs::prelude::PublicKeyCredential = serde_json::from_value(request.credential)
-        .map_err(|e| AppError::BadRequest(format!("Invalid credential format: {}", e)))?;
-
     let mut service = webauthn_service.lock().unwrap();
-    match service.finish_registration(request.challenge_id, credential).await {
+    match service.finish_registration(request.challenge_id, request.credential).await {
         Ok(credential) => {
             Ok(HttpResponse::Created().json(json!({
                 "credential_id": credential.credential_id,
