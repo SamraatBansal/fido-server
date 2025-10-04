@@ -1,6 +1,6 @@
 //! Credential management service
 
-use crate::{db::models::Credential, error::AppError};
+use crate::db::models::Credential;
 use uuid::Uuid;
 use chrono::Utc;
 
