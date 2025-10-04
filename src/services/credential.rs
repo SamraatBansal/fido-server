@@ -30,7 +30,7 @@ impl CredentialService {
         public_key: Vec<u8>,
         sign_count: i32,
         aaguid: Option<Vec<u8>>,
-    ) -> Result<Credential> {
+    ) -> crate::error::Result<Credential> {
         let credential_uuid = Uuid::new_v4();
         let now = Utc::now();
         
