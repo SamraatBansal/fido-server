@@ -4,7 +4,7 @@
 
 diesel::table! {
     use diesel::sql_types::*;
-    use super::sql_types::*;
+    use super::sql_types::{Uuid, Timestamptz};
 
     users (id) {
         id -> Uuid,
