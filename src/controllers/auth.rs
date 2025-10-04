@@ -1,7 +1,6 @@
 //! Authentication controller
 
 use actix_web::{web, HttpResponse, Result};
-use crate::error::AppError;
 use crate::schema::auth::{AuthenticationStartRequest, AuthenticationFinishRequest, RegistrationStartRequest, RegistrationFinishRequest};
 use crate::services::WebAuthnService;
 use serde_json::json;
@@ -9,7 +8,7 @@ use serde_json::json;
 /// Start authentication
 pub async fn start_authentication(
     web::Json(request): web::Json<AuthenticationStartRequest>,
-    web::Data(webauthn_service): web::Data<std::sync::Mutex<WebAuthnService>>,
+    webauthn_service: web::Data<std::sync::Mutex<WebAuthnService>>,
 ) -> Result<HttpResponse> {
     let mut service = webauthn_service.lock().unwrap();
     match service.start_authentication(request).await {
@@ -34,7 +33,7 @@ pub async fn start_authentication(
 /// Finish authentication
 pub async fn finish_authentication(
     web::Json(request): web::Json<AuthenticationFinishRequest>,
-    web::Data(webauthn_service): web::Data<std::sync::Mutex<WebAuthnService>>,
+    webauthn_service: web::Data<std::sync::Mutex<WebAuthnService>>,
 ) -> Result<HttpResponse> {
     let mut service = webauthn_service.lock().unwrap();
     match service.finish_authentication(request.challenge_id, request.credential).await {
@@ -64,7 +63,7 @@ pub async fn finish_authentication(
 /// Start registration
 pub async fn start_registration(
     web::Json(request): web::Json<RegistrationStartRequest>,
-    web::Data(webauthn_service): web::Data<std::sync::Mutex<WebAuthnService>>,
+    webauthn_service: web::Data<std::sync::Mutex<WebAuthnService>>,
 ) -> Result<HttpResponse> {
     let mut service = webauthn_service.lock().unwrap();
     match service.start_registration(request).await {
@@ -89,7 +88,7 @@ pub async fn start_registration(
 /// Finish registration
 pub async fn finish_registration(
     web::Json(request): web::Json<RegistrationFinishRequest>,
-    web::Data(webauthn_service): web::Data<std::sync::Mutex<WebAuthnService>>,
+    webauthn_service: web::Data<std::sync::Mutex<WebAuthnService>>,
 ) -> Result<HttpResponse> {
     let mut service = webauthn_service.lock().unwrap();
     match service.finish_registration(request.challenge_id, request.credential).await {
