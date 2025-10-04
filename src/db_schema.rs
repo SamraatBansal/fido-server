@@ -4,7 +4,7 @@
 
 diesel::table! {
     use diesel::sql_types::*;
-    use super::sql_types::{Uuid, Timestamptz};
+    use crate::db_schema::sql_types::{Uuid, Timestamptz};
 
     users (id) {
         id -> Uuid,
@@ -17,7 +17,7 @@ diesel::table! {
 
 diesel::table! {
     use diesel::sql_types::*;
-    use super::sql_types::{Uuid, Jsonb, Timestamptz};
+    use crate::db_schema::sql_types::{Uuid, Jsonb, Timestamptz};
 
     credentials (id) {
         id -> Uuid,
@@ -38,7 +38,7 @@ diesel::table! {
 
 diesel::table! {
     use diesel::sql_types::*;
-    use super::sql_types::{Uuid, Jsonb, Timestamptz};
+    use crate::db_schema::sql_types::{Uuid, Jsonb, Timestamptz};
 
     challenges (id) {
         id -> Uuid,
@@ -55,7 +55,7 @@ diesel::table! {
 
 diesel::table! {
     use diesel::sql_types::*;
-    use super::sql_types::{Uuid, Timestamptz};
+    use crate::db_schema::sql_types::{Uuid, Timestamptz};
 
     sessions (id) {
         id -> Uuid,
@@ -71,7 +71,7 @@ diesel::table! {
 
 diesel::table! {
     use diesel::sql_types::*;
-    use super::sql_types::{Uuid, Jsonb, Timestamptz};
+    use crate::db_schema::sql_types::{Uuid, Jsonb, Timestamptz};
 
     audit_logs (id) {
         id -> Uuid,
@@ -113,7 +113,3 @@ pub mod sql_types {
     #[diesel(postgres_type(name = "jsonb"))]
     pub struct Jsonb;
 }
-
-// Implement required traits for custom types
-impl diesel::sql_types::ops::Add for sql_types::Timestamptz {}
-impl diesel::sql_types::ops::Sub for sql_types::Timestamptz {}
