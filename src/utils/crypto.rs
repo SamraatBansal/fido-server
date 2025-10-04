@@ -29,7 +29,7 @@ pub fn hash_password(password: &str, salt: &[u8]) -> crate::error::Result<String
 }
 
 /// Verify password hash
-pub fn verify_password(password: &str, salt: &[u8], hash: &str) -> Result<bool> {
+pub fn verify_password(password: &str, salt: &[u8], hash: &str) -> crate::error::Result<bool> {
     let computed_hash = hash_password(password, salt)?;
     Ok(computed_hash == hash)
 }
