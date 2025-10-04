@@ -55,7 +55,7 @@ diesel::table! {
 
 diesel::table! {
     use diesel::sql_types::*;
-    use super::sql_types::*;
+    use super::sql_types::{Uuid, Timestamptz};
 
     sessions (id) {
         id -> Uuid,
