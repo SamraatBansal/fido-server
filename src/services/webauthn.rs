@@ -6,12 +6,10 @@ use crate::schema::auth::{AuthenticationStartRequest, RegistrationStartRequest};
 use crate::services::{ChallengeService, CredentialService, UserService};
 use uuid::Uuid;
 use std::collections::HashMap;
-use webauthn_rs::prelude::*;
 use base64::{Engine as _, engine::general_purpose};
 
 /// WebAuthn service for handling FIDO2 operations
 pub struct WebAuthnService {
-    webauthn: Webauthn,
     config: WebAuthnConfig,
     challenge_service: ChallengeService,
     credential_service: CredentialService,
@@ -29,23 +27,7 @@ impl WebAuthnService {
         credential_service: CredentialService,
         user_service: UserService,
     ) -> Result<Self> {
-        let rp = RelyingParty {
-            name: config.rp_name.clone(),
-            id: config.rp_id.clone(),
-            origin: url::Url::parse(&config.rp_origin)
-                .map_err(|e| AppError::WebAuthnError(format!("Invalid origin URL: {}", e)))?,
-        };
-
-        let webauthn_config = WebauthnConfig {
-            rp,
-            challenge_timeout: config.challenge_timeout,
-            ..Default::default()
-        };
-
-        let webauthn = Webauthn::new(webauthn_config);
-
         Ok(Self {
-            webauthn,
             config,
             challenge_service,
             credential_service,
@@ -69,7 +51,7 @@ impl WebAuthnService {
     pub async fn start_registration(
         &mut self,
         request: RegistrationStartRequest,
-    ) -> Result<(Uuid, CreationChallengeResponse)> {
+    ) -> Result<(Uuid, serde_json::Value)> {
         // Validate origin if provided
         if let Some(origin) = &request.origin {
             self.validate_origin(origin)?;
@@ -88,61 +70,70 @@ impl WebAuthnService {
             crate::services::challenge::ChallengeType::Registration,
         )?;
 
-        // Convert user to WebAuthn user
-        let webauthn_user = webauthn_rs::prelude::User {
-            id: user.id.as_bytes().to_vec(),
-            name: user.username.clone(),
-            display_name: user.display_name.clone(),
-        };
-
-        // Parse user verification preference
-        let user_verification = match request.user_verification.as_deref() {
-            Some("required") => UserVerificationPolicy::Required,
-            Some("preferred") => UserVerificationPolicy::Preferred,
-            Some("discouraged") => UserVerificationPolicy::Discouraged,
-            _ => UserVerificationPolicy::Preferred,
-        };
-
-        // Parse attestation preference
-        let attestation = match request.attestation.as_deref() {
-            Some("none") => AttestationConveyancePreference::None,
-            Some("indirect") => AttestationConveyancePreference::Indirect,
-            Some("direct") => AttestationConveyancePreference::Direct,
-            Some("enterprise") => AttestationConveyancePreference::Enterprise,
-            _ => AttestationConveyancePreference::Direct,
-        };
-
-        // Create credential creation options
-        let (ccr, state) = self.webauthn.generate_challenge_register_options(
-            &webauthn_user,
-            user_verification,
-            attestation,
-            None,
-        ).map_err(|e| AppError::WebAuthnError(format!("Failed to generate registration options: {}", e)))?;
+        // Create mock credential creation options for now
+        let challenge_b64 = general_purpose::URL_SAFE_NO_PAD.encode(&challenge.challenge_data);
+        let options = serde_json::json!({
+            "publicKey": {
+                "challenge": challenge_b64,
+                "rp": {
+                    "name": self.config.rp_name,
+                    "id": self.config.rp_id
+                },
+                "user": {
+                    "id": general_purpose::URL_SAFE_NO_PAD.encode(user.id.as_bytes()),
+                    "name": user.username,
+                    "displayName": user.display_name
+                },
+                "pubKeyCredParams": [
+                    {"alg": -7, "type": "public-key"},
+                    {"alg": -257, "type": "public-key"}
+                ],
+                "timeout": 60000,
+                "attestation": request.attestation.unwrap_or_else(|| "direct".to_string()),
+                "authenticatorSelection": {
+                    "userVerification": request.user_verification.unwrap_or_else(|| "preferred".to_string())
+                }
+            }
+        });
 
         // Store state for verification
-        self.registration_states.insert(challenge.challenge_id, format!("{:?}", state));
+        self.registration_states.insert(challenge.challenge_id, "registration_state".to_string());
 
-        Ok((challenge.challenge_id, ccr))
+        Ok((challenge.challenge_id, options))
     }
 
     /// Complete the registration process
     pub async fn finish_registration(
         &mut self,
         challenge_id: Uuid,
-        registration_credential: PublicKeyCredential,
+        registration_credential: serde_json::Value,
     ) -> Result<crate::db::models::Credential> {
         // Get stored state
         let _state = self.registration_states
             .remove(&challenge_id)
             .ok_or_else(|| AppError::BadRequest("Invalid or expired challenge".to_string()))?;
 
-        // Extract challenge data from client data
-        let client_data_json = registration_credential.response.client_data_json.clone();
-        let client_data: serde_json::Value = serde_json::from_slice(&client_data_json)
+        // Extract credential data
+        let credential_id = registration_credential.get("rawId")
+            .and_then(|v| v.as_str())
+            .ok_or_else(|| AppError::BadRequest("Missing credential ID".to_string()))?;
+
+        let credential_id_bytes = general_purpose::URL_SAFE_NO_PAD.decode(credential_id)
+            .map_err(|e| AppError::BadRequest(format!("Invalid credential ID encoding: {}", e)))?;
+
+        // Extract client data
+        let client_data = registration_credential.get("response")
+            .and_then(|r| r.get("clientDataJSON"))
+            .and_then(|c| c.as_str())
+            .ok_or_else(|| AppError::BadRequest("Missing client data".to_string()))?;
+
+        let client_data_bytes = general_purpose::URL_SAFE_NO_PAD.decode(client_data)
+            .map_err(|e| AppError::BadRequest(format!("Invalid client data encoding: {}", e)))?;
+
+        let client_data_json: serde_json::Value = serde_json::from_slice(&client_data_bytes)
             .map_err(|e| AppError::BadRequest(format!("Invalid client data JSON: {}", e)))?;
 
-        let challenge_b64 = client_data.get("challenge")
+        let challenge_b64 = client_data_json.get("challenge")
             .and_then(|v| v.as_str())
             .ok_or_else(|| AppError::BadRequest("Missing challenge in client data".to_string()))?;
 
@@ -154,12 +145,11 @@ impl WebAuthnService {
 
         // For now, create a mock credential since we don't have the full WebAuthn verification
         let user_id = Uuid::new_v4(); // This should come from the verification
-        let credential_id = registration_credential.raw_id.clone();
         
         // Store credential
         let credential = self.credential_service.store_credential(
             user_id,
-            credential_id,
+            credential_id_bytes,
             serde_json::json!({"type": "public-key", "algorithm": -7}), // Mock public key
             0,
             None,
@@ -170,7 +160,7 @@ impl WebAuthnService {
             Some(user_id),
             "registration",
             true,
-            Some(&general_purpose::STANDARD.encode(&credential_id)),
+            Some(credential_id),
             None,
         ).await?;
 
@@ -181,7 +171,7 @@ impl WebAuthnService {
     pub async fn start_authentication(
         &mut self,
         request: AuthenticationStartRequest,
-    ) -> Result<(Uuid, RequestChallengeResponse)> {
+    ) -> Result<(Uuid, serde_json::Value)> {
         // Validate origin if provided
         if let Some(origin) = &request.origin {
             self.validate_origin(origin)?;
@@ -201,9 +191,10 @@ impl WebAuthnService {
                 .await?
                 .into_iter()
                 .map(|cred| {
-                    let cred_id = general_purpose::STANDARD.decode(&cred.credential_id)
-                        .unwrap_or_default();
-                    CredentialID::from(cred_id)
+                    serde_json::json!({
+                        "type": "public-key",
+                        "id": general_purpose::URL_SAFE_NO_PAD.encode(&general_purpose::STANDARD.decode(&cred.credential_id).unwrap_or_default())
+                    })
                 })
                 .collect()
         } else {
@@ -216,43 +207,55 @@ impl WebAuthnService {
             crate::services::challenge::ChallengeType::Authentication,
         )?;
 
-        // Parse user verification preference
-        let user_verification = match request.user_verification.as_deref() {
-            Some("required") => UserVerificationPolicy::Required,
-            Some("preferred") => UserVerificationPolicy::Preferred,
-            Some("discouraged") => UserVerificationPolicy::Discouraged,
-            _ => UserVerificationPolicy::Preferred,
-        };
-
-        // Create authentication options
-        let (acr, state) = self.webauthn.generate_challenge_authenticate_options(
-            allow_credentials,
-            user_verification,
-        ).map_err(|e| AppError::WebAuthnError(format!("Failed to generate authentication options: {}", e)))?;
+        // Create mock authentication options for now
+        let challenge_b64 = general_purpose::URL_SAFE_NO_PAD.encode(&challenge.challenge_data);
+        let options = serde_json::json!({
+            "publicKey": {
+                "challenge": challenge_b64,
+                "allowCredentials": allow_credentials,
+                "userVerification": request.user_verification.unwrap_or_else(|| "preferred".to_string()),
+                "timeout": 60000
+            }
+        });
 
         // Store state for verification
-        self.authentication_states.insert(challenge.challenge_id, format!("{:?}", state));
+        self.authentication_states.insert(challenge.challenge_id, "authentication_state".to_string());
 
-        Ok((challenge.challenge_id, acr))
+        Ok((challenge.challenge_id, options))
     }
 
     /// Complete the authentication process
     pub async fn finish_authentication(
         &mut self,
         challenge_id: Uuid,
-        authentication_credential: PublicKeyCredential,
+        authentication_credential: serde_json::Value,
     ) -> Result<AuthenticationResult> {
         // Get stored state
         let _state = self.authentication_states
             .remove(&challenge_id)
             .ok_or_else(|| AppError::BadRequest("Invalid or expired challenge".to_string()))?;
 
-        // Extract challenge data from client data
-        let client_data_json = authentication_credential.response.client_data_json.clone();
-        let client_data: serde_json::Value = serde_json::from_slice(&client_data_json)
+        // Extract credential data
+        let credential_id = authentication_credential.get("rawId")
+            .and_then(|v| v.as_str())
+            .ok_or_else(|| AppError::BadRequest("Missing credential ID".to_string()))?;
+
+        let credential_id_bytes = general_purpose::URL_SAFE_NO_PAD.decode(credential_id)
+            .map_err(|e| AppError::BadRequest(format!("Invalid credential ID encoding: {}", e)))?;
+
+        // Extract client data
+        let client_data = authentication_credential.get("response")
+            .and_then(|r| r.get("clientDataJSON"))
+            .and_then(|c| c.as_str())
+            .ok_or_else(|| AppError::BadRequest("Missing client data".to_string()))?;
+
+        let client_data_bytes = general_purpose::URL_SAFE_NO_PAD.decode(client_data)
+            .map_err(|e| AppError::BadRequest(format!("Invalid client data encoding: {}", e)))?;
+
+        let client_data_json: serde_json::Value = serde_json::from_slice(&client_data_bytes)
             .map_err(|e| AppError::BadRequest(format!("Invalid client data JSON: {}", e)))?;
 
-        let challenge_b64 = client_data.get("challenge")
+        let challenge_b64 = client_data_json.get("challenge")
             .and_then(|v| v.as_str())
             .ok_or_else(|| AppError::BadRequest("Missing challenge in client data".to_string()))?;
 
@@ -264,7 +267,6 @@ impl WebAuthnService {
 
         // For now, create a mock result since we don't have the full WebAuthn verification
         let user_id = Uuid::new_v4(); // This should come from the verification
-        let credential_id = authentication_credential.raw_id.clone();
 
         // Create session token
         let session_token = self.create_session(user_id).await?;
@@ -274,7 +276,7 @@ impl WebAuthnService {
             Some(user_id),
             "authentication",
             true,
-            Some(&general_purpose::STANDARD.encode(&credential_id)),
+            Some(credential_id),
             None,
         ).await?;
 
@@ -282,7 +284,7 @@ impl WebAuthnService {
             user_id,
             session_token,
             counter: 0,
-            credential_id,
+            credential_id: credential_id_bytes,
         })
     }
 
