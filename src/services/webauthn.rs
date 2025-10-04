@@ -14,7 +14,7 @@ pub struct WebAuthnService {
 
 impl WebAuthnService {
     /// Create new WebAuthn service
-    pub fn new(config: WebAuthnConfig) -> Result<Self> {
+    pub fn new(config: WebAuthnConfig) -> crate::error::Result<Self> {
         Ok(Self {
             config,
             registration_states: HashMap::new(),
