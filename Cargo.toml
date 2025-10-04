@@ -82,6 +82,12 @@ validator = { version = "0.18", features = ["derive"] }
 # Caching
 redis = { version = "0.25", features = ["tokio-comp"] }
 
+# Additional dependencies
+pbkdf2 = "0.12"
+hex = "0.4"
+num_cpus = "1.16"
+lazy_static = "1.4"
+
 [dev-dependencies]
 actix-test = "0.1"
 mockall = "0.13"
