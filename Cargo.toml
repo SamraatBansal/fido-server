@@ -70,6 +70,10 @@ validator = { version = "0.18", features = ["derive"] }
 # Async traits
 async-trait = "0.1"
 
+# API Documentation
+utoipa = { version = "4.2", features = ["actix_extras"] }
+utoipa-swagger-ui = { version = "6.0", features = ["actix-web"] }
+
 [dev-dependencies]
 actix-test = "0.1"
 mockall = "0.13"
