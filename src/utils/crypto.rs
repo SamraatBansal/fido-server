@@ -1,6 +1,5 @@
 //! Cryptographic utilities
 
-use crate::error::{AppError, Result};
 use rand::RngCore;
 
 /// Generate secure random bytes
