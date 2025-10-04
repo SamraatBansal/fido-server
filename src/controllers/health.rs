@@ -111,7 +111,7 @@ async fn check_webauthn_health(_webauthn_service: &WebAuthnService) -> HealthChe
 
 /// Readiness check endpoint (for Kubernetes)
 pub async fn readiness_check(
-    web::Data(db_manager): web::Data<DbManager>,
+    db_manager: web::Data<DbManager>,
 ) -> Result<HttpResponse> {
     // Check if the application is ready to serve traffic
     match db_manager.get_connection() {
