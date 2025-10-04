@@ -113,3 +113,7 @@ pub mod sql_types {
     #[diesel(postgres_type(name = "jsonb"))]
     pub struct Jsonb;
 }
+
+// Implement required traits for custom types
+impl diesel::sql_types::ops::Add for sql_types::Timestamptz {}
+impl diesel::sql_types::ops::Sub for sql_types::Timestamptz {}
