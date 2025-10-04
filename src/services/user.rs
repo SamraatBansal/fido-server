@@ -1,9 +1,8 @@
 //! User management service
 
-use crate::error::{AppError, Result};
 use crate::db::models::User;
 use uuid::Uuid;
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 
 /// User service
 pub struct UserService {
