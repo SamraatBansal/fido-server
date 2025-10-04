@@ -40,6 +40,14 @@ pub struct WebAuthnSettings {
     pub rp_name: String,
     /// Origin URL
     pub origin: String,
+    /// Challenge time-to-live in seconds
+    pub challenge_ttl_seconds: u64,
+    /// Attestation preference
+    pub attestation_preference: String,
+    /// User verification policy
+    pub user_verification: String,
+    /// Resident key requirement
+    pub resident_key_requirement: String,
 }
 
 impl Settings {
