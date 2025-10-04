@@ -17,70 +17,15 @@ pub fn security_headers() -> DefaultHeaders {
         .add(header::PermissionsPolicy, "geolocation=(), microphone=(), camera=()")
 }
 
-/// Rate limiting middleware
-pub struct RateLimitMiddleware {
-    // In a real implementation, you would use a proper rate limiting library
-    // like governor or implement your own with Redis
-}
-
-impl RateLimitMiddleware {
-    pub fn new() -> Self {
-        Self {}
-    }
-}
-
-impl actix_web::dev::Transform for RateLimitMiddleware {
-    type Request = ServiceRequest;
-    type Response = ServiceResponse;
-    type Error = Error;
-    type Transform = RateLimitMiddlewareService;
-    type InitError = ();
-
-    fn new_transform(&self, _service: &impl actix_web::dev::Service<Request = Self::Request, Response = Self::Response, Error = Self::Error, InitError = Self::InitError>) -> Result<Self::Transform, Self::InitError> {
-        Ok(RateLimitMiddlewareService {})
-    }
-}
-
-pub struct RateLimitMiddlewareService;
-
-impl<S, B> actix_web::dev::Service for RateLimitMiddlewareService
-where
-    S: actix_web::dev::Service<Request = ServiceRequest, Response = ServiceResponse<B>, Error = Error>,
-    S::Future: 'static,
-    B: 'static,
-{
-    type Request = ServiceRequest;
-    type Response = ServiceResponse<B>;
-    type Error = Error;
-    type Future = actix_web::dev::LocalBoxFuture<'static, Result<Self::Response, Self::Error>>;
-
-    fn poll_ready(&self, cx: &mut std::task::Context<'_>) -> std::task::Poll<Result<(), Self::Error>> {
-        std::task::Poll::Ready(Ok(()))
-    }
-
-    fn call(&self, req: ServiceRequest) -> Self::Future {
-        // Simple rate limiting logic
-        // In a real implementation, you would:
-        // 1. Extract client IP
-        // 2. Check rate limit in Redis or database
-        // 3. Return 429 Too Many Requests if exceeded
-        
-        let client_ip = req.connection_info().realip_remote_addr().unwrap_or("unknown");
-        
-        // For now, just log the request
-        log::debug!("Rate limiting check for IP: {}", client_ip);
-        
-        // In a real implementation, you would check the rate limit here
-        // For demonstration, we'll just pass through
-        
-        let fut = async move {
-            // This is a placeholder - in a real implementation, you would
-            // wrap the actual service here
-            Err(actix_web::error::ErrorInternalServerError("Rate limiting middleware not fully implemented"))
-        };
-        
-        Box::pin(fut)
-    }
+/// Rate limiting middleware (placeholder)
+pub fn rate_limit_middleware() -> impl actix_web::dev::Transform<
+    actix_web::dev::ServiceRequest,
+    Response = actix_web::dev::ServiceResponse,
+    Error = actix_web::Error,
+    InitError = (),
+> {
+    // Placeholder implementation
+    actix_web::middleware::Condition::new(false, actix_web::middleware::DefaultHeaders::new())
 }
 
 /// Request ID middleware
