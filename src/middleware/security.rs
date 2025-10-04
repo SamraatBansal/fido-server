@@ -7,12 +7,14 @@ use std::future::{ready, Ready};
 
 /// Security headers middleware
 pub fn security_headers() -> DefaultHeaders {
+    use actix_web::http::header::{HeaderValue, HeaderName};
+    
     DefaultHeaders::new()
-        .add(header::StrictTransportSecurity, "max-age=31536000; includeSubDomains; preload")
-        .add(header::XContentTypeOptions, "nosniff")
-        .add(header::XFrameOptions, "DENY")
-        .add(header::XXssProtection, "1; mode=block")
-        .add(header::ContentSecurityPolicy, "default-src 'self'; script-src 'self' 'unsafe-inline'")
+        .add(("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload"))
+        .add(("X-Content-Type-Options", "nosniff"))
+        .add(("X-Frame-Options", "DENY"))
+        .add(("X-XSS-Protection", "1; mode=block"))
+        .add(("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline'"))
 }
 
 /// Rate limiting middleware placeholder
