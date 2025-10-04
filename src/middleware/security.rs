@@ -28,73 +28,15 @@ pub fn rate_limit_middleware() -> impl actix_web::dev::Transform<
     actix_web::middleware::Condition::new(false, actix_web::middleware::DefaultHeaders::new())
 }
 
-/// Request ID middleware
+/// Request ID middleware (placeholder)
 pub fn request_id() -> impl actix_web::dev::Transform<
     actix_web::dev::ServiceRequest,
     Response = actix_web::dev::ServiceResponse,
-    Error = Error,
+    Error = actix_web::Error,
     InitError = (),
 > {
-    use actix_web::dev::{Service, Transform, ServiceRequest, ServiceResponse};
-    use actix_web::Error;
-    use futures::future::{ok, Ready};
-    use std::task::{Context, Poll};
-    use uuid::Uuid;
-
-    RequestIdMiddleware
-}
-
-struct RequestIdMiddleware;
-
-impl<S, B> Transform<S, ServiceRequest> for RequestIdMiddleware
-where
-    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error>,
-    S::Future: 'static,
-    B: 'static,
-{
-    type Response = ServiceResponse<B>;
-    type Error = Error;
-    type Transform = RequestIdMiddlewareService<S>;
-    type InitError = ();
-
-    fn new_transform(&self, service: S) -> Result<Self::Transform, Self::InitError> {
-        Ok(RequestIdMiddlewareService { service })
-    }
-}
-
-struct RequestIdMiddlewareService<S> {
-    service: S,
-}
-
-impl<S, B> Service<ServiceRequest> for RequestIdMiddlewareService<S>
-where
-    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error>,
-    S::Future: 'static,
-    B: 'static,
-{
-    type Response = ServiceResponse<B>;
-    type Error = Error;
-    type Future = futures::future::LocalBoxFuture<'static, Result<Self::Response, Self::Error>>;
-
-    fn poll_ready(&self, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
-        self.service.poll_ready(cx)
-    }
-
-    fn call(&self, mut req: ServiceRequest) -> Self::Future {
-        let request_id = Uuid::new_v4().to_string();
-        
-        // Add request ID to request extensions
-        req.extensions_mut().insert(request_id.clone());
-        
-        // Add request ID to response headers
-        let fut = self.service.call(req);
-        
-        Box::pin(async move {
-            let mut res = fut.await?;
-            res.headers_mut().insert("X-Request-ID", request_id.parse().unwrap());
-            Ok(res)
-        })
-    }
+    // Placeholder implementation
+    actix_web::middleware::Condition::new(false, actix_web::middleware::DefaultHeaders::new())
 }
 
 /// CORS configuration
