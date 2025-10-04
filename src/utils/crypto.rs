@@ -3,7 +3,7 @@
 use rand::RngCore;
 
 /// Generate secure random bytes
-pub fn generate_secure_random(len: usize) -> Result<Vec<u8>> {
+pub fn generate_secure_random(len: usize) -> crate::error::Result<Vec<u8>> {
     let mut bytes = vec![0u8; len];
     rand::thread_rng().fill_bytes(&mut bytes);
     Ok(bytes)
