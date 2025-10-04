@@ -38,12 +38,7 @@ pub async fn start_registration(
     let mut conn = db_manager.get_connection()
         .map_err(|e| AppError::DatabaseError(format!("Failed to get database connection: {}", e)))?;
 
-    // Use a mutable reference to the service
-    // Note: In a real implementation, you'd need to handle the mutability properly
-    // This is a simplified approach for demonstration
-    let mut service = webauthn_service.as_ref().clone();
-
-    match service.start_registration(&mut conn, request, ip_address, user_agent).await {
+    match webauthn_service.start_registration(&mut conn, request, ip_address, user_agent).await {
         Ok(response) => {
             let api_response = ApiResponse::success(response);
             Ok(HttpResponse::Ok().json(api_response))
