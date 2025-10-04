@@ -1,134 +1,113 @@
 //! Challenge management service
 
-use uuid::Uuid;
-use std::time::Duration;
-use chrono::{DateTime, Utc};
-use rand::{thread_rng, RngCore};
-use base64::{Engine as _, engine::general_purpose};
-use crate::db::{PooledDb, ChallengeRepository, NewChallenge};
 use crate::error::{AppError, Result};
+use uuid::Uuid;
+use chrono::{DateTime, Utc, Duration};
 
-/// Challenge service for managing WebAuthn challenges
-pub struct ChallengeService {
-    _db: std::marker::PhantomData<()>, // Placeholder for database connection
+/// Challenge type
+#[derive(Debug, Clone)]
+pub enum ChallengeType {
+    Registration,
+    Authentication,
 }
 
-impl ChallengeService {
-    /// Create a new challenge service
-    pub fn new() -> Self {
-        Self {
-            _db: std::marker::PhantomData,
+impl ChallengeType {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Registration => "registration",
+            Self::Authentication => "authentication",
         }
-    }
-
-    /// Generate a new challenge
-    pub async fn generate_challenge(
-        &self,
-        conn: &mut PooledDb,
-        user_id: Option<Uuid>,
-        challenge_type: &str,
-        timeout_seconds: u64,
-    ) -> Result<Challenge> {
-        let challenge_data = self.generate_secure_random(32);
-        let challenge_id = Uuid::new_v4();
-        let expires_at = Utc::now() + Duration::from_secs(timeout_seconds);
-        
-        let new_challenge = NewChallenge {
-            challenge_id,
-            challenge_data: general_purpose::URL_SAFE_NO_PAD.encode(&challenge_data),
-            user_id,
-            challenge_type: challenge_type.to_string(),
-            expires_at,
-            metadata: None,
-        };
-        
-        let stored_challenge = ChallengeRepository::create(conn, new_challenge)?;
-        
-        Ok(Challenge {
-            id: stored_challenge.id,
-            challenge_id: stored_challenge.challenge_id,
-            challenge_data: stored_challenge.challenge_data,
-            user_id: stored_challenge.user_id,
-            challenge_type: stored_challenge.challenge_type,
-            expires_at: stored_challenge.expires_at,
-            used: stored_challenge.used,
-            created_at: stored_challenge.created_at,
-            metadata: stored_challenge.metadata,
-        })
-    }
-    
-    /// Validate a challenge
-    pub async fn validate_challenge(
-        &self,
-        conn: &mut PooledDb,
-        challenge_id: Uuid,
-        challenge_data: &[u8],
-    ) -> Result<Challenge> {
-        let stored_challenge = ChallengeRepository::find_by_challenge_id(conn, challenge_id)?
-            .ok_or(AppError::WebAuthnError("Challenge not found".to_string()))?;
-            
-        if stored_challenge.used {
-            return Err(AppError::WebAuthnError("Challenge already used".to_string()));
-        }
-        
-        if stored_challenge.expires_at < Utc::now() {
-            return Err(AppError::WebAuthnError("Challenge expired".to_string()));
-        }
-        
-        // Decode stored challenge data and compare
-        let stored_data = general_purpose::URL_SAFE_NO_PAD
-            .decode(&stored_challenge.challenge_data)
-            .map_err(|e| AppError::WebAuthnError(format!("Invalid challenge encoding: {}", e)))?;
-        
-        if stored_data != challenge_data {
-            return Err(AppError::WebAuthnError("Challenge mismatch".to_string()));
-        }
-        
-        // Mark as used
-        ChallengeRepository::mark_used(conn, challenge_id)?;
-        
-        Ok(Challenge {
-            id: stored_challenge.id,
-            challenge_id: stored_challenge.challenge_id,
-            challenge_data: stored_challenge.challenge_data,
-            user_id: stored_challenge.user_id,
-            challenge_type: stored_challenge.challenge_type,
-            expires_at: stored_challenge.expires_at,
-            used: true,
-            created_at: stored_challenge.created_at,
-            metadata: stored_challenge.metadata,
-        })
-    }
-    
-    /// Clean up expired challenges
-    pub async fn cleanup_expired(&self, conn: &mut PooledDb) -> Result<usize> {
-        ChallengeRepository::cleanup_expired(conn)
-    }
-    
-    /// Generate cryptographically secure random bytes
-    fn generate_secure_random(&self, length: usize) -> Vec<u8> {
-        let mut bytes = vec![0u8; length];
-        thread_rng().fill_bytes(&mut bytes);
-        bytes
     }
 }
 
-/// Challenge representation
+/// Challenge data
 #[derive(Debug, Clone)]
 pub struct Challenge {
     pub id: Uuid,
     pub challenge_id: Uuid,
-    pub challenge_data: String,
+    pub challenge_data: Vec<u8>,
     pub user_id: Option<Uuid>,
-    pub challenge_type: String,
+    pub challenge_type: ChallengeType,
     pub expires_at: DateTime<Utc>,
     pub used: bool,
     pub created_at: DateTime<Utc>,
-    pub metadata: Option<serde_json::Value>,
 }
 
-impl Default for ChallengeService {
-    fn default() -> Self {
-        Self::new()
+/// Challenge service
+pub struct ChallengeService {
+    // In-memory storage (in production, use database)
+    challenges: std::collections::HashMap<Uuid, Challenge>,
+}
+
+impl ChallengeService {
+    /// Create new challenge service
+    pub fn new() -> Self {
+        Self {
+            challenges: std::collections::HashMap::new(),
+        }
     }
+
+    /// Generate new challenge
+    pub fn generate_challenge(
+        &mut self,
+        user_id: Option<Uuid>,
+        challenge_type: ChallengeType,
+    ) -> Result<Challenge> {
+        let challenge_data = generate_secure_random(32)?;
+        let challenge_id = Uuid::new_v4();
+        let expires_at = Utc::now() + Duration::minutes(5); // 5 minutes
+        
+        let challenge = Challenge {
+            id: Uuid::new_v4(),
+            challenge_id,
+            challenge_data,
+            user_id,
+            challenge_type,
+            expires_at,
+            used: false,
+            created_at: Utc::now(),
+        };
+        
+        self.challenges.insert(challenge_id, challenge.clone());
+        Ok(challenge)
+    }
+
+    /// Validate challenge
+    pub fn validate_challenge(
+        &mut self,
+        challenge_id: Uuid,
+        challenge_data: &[u8],
+    ) -> Result<Challenge> {
+        let challenge = self.challenges
+            .get(&challenge_id)
+            .ok_or_else(|| AppError::BadRequest("Invalid challenge".to_string()))?
+            .clone();
+            
+        if challenge.used {
+            return Err(AppError::BadRequest("Challenge already used".to_string()));
+        }
+        
+        if challenge.expires_at < Utc::now() {
+            return Err(AppError::BadRequest("Challenge expired".to_string()));
+        }
+        
+        if challenge.challenge_data != challenge_data {
+            return Err(AppError::BadRequest("Invalid challenge data".to_string()));
+        }
+        
+        // Mark as used
+        if let Some(ch) = self.challenges.get_mut(&challenge_id) {
+            ch.used = true;
+        }
+        
+        Ok(challenge)
+    }
+}
+
+/// Generate secure random bytes
+fn generate_secure_random(len: usize) -> Result<Vec<u8>> {
+    use rand::RngCore;
+    let mut bytes = vec![0u8; len];
+    rand::thread_rng().fill_bytes(&mut bytes);
+    Ok(bytes)
 }
