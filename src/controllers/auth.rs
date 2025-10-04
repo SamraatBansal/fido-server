@@ -1,8 +1,7 @@
 //! Authentication controller
 
-use actix_web::{web, HttpResponse, Result};
+use actix_web::{HttpResponse, Result};
 use serde_json::json;
-use crate::error::{AppError, Result as AppResult};
 
 /// Start authentication
 pub async fn start_authentication() -> Result<HttpResponse> {
