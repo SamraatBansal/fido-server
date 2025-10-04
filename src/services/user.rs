@@ -62,7 +62,7 @@ impl UserService {
     }
 
     /// Get user by ID
-    pub fn get_user_by_id(&self, user_id: Uuid) -> Result<Option<User>> {
+    pub fn get_user_by_id(&self, user_id: Uuid) -> crate::error::Result<Option<User>> {
         Ok(self.users.get(&user_id).cloned())
     }
 }
