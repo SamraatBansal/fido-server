@@ -69,7 +69,7 @@ async fn test_registration_start_with_service() {
     let req = test::TestRequest::post()
         .uri("/api/v1/register/start")
         .set_json(&serde_json::json!({
-            "username": "test@example.com",
+            "username": "testuser",
             "display_name": "Test User",
             "user_verification": "preferred",
             "attestation": "direct"
@@ -77,12 +77,12 @@ async fn test_registration_start_with_service() {
         .to_request();
 
     let resp = test::call_service(&app, req).await;
-    println!("Response status: {}", resp.status());
-    let body = test::read_body(resp).await;
-    println!("Response body: {}", String::from_utf8_lossy(&body));
+    assert!(resp.status().is_success());
     
-    // For now, just check that we get a response (even if it's an error)
-    // The service might not be properly initialized in the test context
+    let body = test::read_body(resp).await;
+    let response_text = String::from_utf8_lossy(&body);
+    assert!(response_text.contains("challenge_id"));
+    assert!(response_text.contains("publicKey"));
 }
 
 #[actix_web::test]
@@ -111,18 +111,18 @@ async fn test_authentication_start_with_service() {
     let req = test::TestRequest::post()
         .uri("/api/v1/auth/start")
         .set_json(&serde_json::json!({
-            "username": "test@example.com",
+            "username": "testuser",
             "user_verification": "preferred"
         }))
         .to_request();
 
     let resp = test::call_service(&app, req).await;
-    println!("Response status: {}", resp.status());
-    let body = test::read_body(resp).await;
-    println!("Response body: {}", String::from_utf8_lossy(&body));
+    assert!(resp.status().is_success());
     
-    // For now, just check that we get a response (even if it's an error)
-    // The service might not be properly initialized in the test context
+    let body = test::read_body(resp).await;
+    let response_text = String::from_utf8_lossy(&body);
+    assert!(response_text.contains("challenge_id"));
+    assert!(response_text.contains("publicKey"));
 }
 
 #[actix_web::test]
