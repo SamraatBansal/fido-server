@@ -13,8 +13,8 @@ use crate::error::{AppError, Result as AppResult};
 /// Start registration endpoint
 pub async fn start_registration(
     web::Json(request): web::Json<RegistrationStartRequest>,
-    web::Data(webauthn_service): web::Data<WebAuthnService>,
-    web::Data(db_manager): web::Data<DbManager>,
+    webauthn_service: web::Data<WebAuthnService>,
+    db_manager: web::Data<DbManager>,
     req: actix_web::HttpRequest,
 ) -> Result<HttpResponse> {
     // Validate request
@@ -56,8 +56,8 @@ pub async fn start_registration(
 /// Finish registration endpoint
 pub async fn finish_registration(
     web::Json(request): web::Json<RegistrationFinishRequest>,
-    web::Data(webauthn_service): web::Data<WebAuthnService>,
-    web::Data(db_manager): web::Data<DbManager>,
+    webauthn_service: web::Data<WebAuthnService>,
+    db_manager: web::Data<DbManager>,
     req: actix_web::HttpRequest,
 ) -> Result<HttpResponse> {
     // Validate request
