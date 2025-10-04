@@ -1,6 +1,6 @@
 //! Integration tests for the FIDO server
 
-use actix_web::{test, App, http};
+use actix_web::{test, App};
 use fido_server::controllers::health_check;
 use fido_server::routes::{configure_api_routes, configure_health_routes};
 use fido_server::middleware::{configure_cors, security_headers};
