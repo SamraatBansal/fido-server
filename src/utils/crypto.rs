@@ -10,7 +10,7 @@ pub fn generate_secure_random(len: usize) -> crate::error::Result<Vec<u8>> {
 }
 
 /// Generate secure random string
-pub fn generate_secure_random_string(len: usize) -> Result<String> {
+pub fn generate_secure_random_string(len: usize) -> crate::error::Result<String> {
     use base64::{Engine as _, engine::general_purpose};
     let bytes = generate_secure_random(len)?;
     Ok(general_purpose::URL_SAFE_NO_PAD.encode(&bytes[..len]))
