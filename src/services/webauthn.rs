@@ -401,14 +401,14 @@ impl WebAuthnService {
     }
 
     /// Clean up expired states
-    pub fn cleanup_expired_states(&mut self) {
+    pub fn cleanup_expired_states(&self) {
         // In a production implementation, you would check timestamps
         // For now, just clear the maps periodically
-        if self.registration_states.len() > 1000 {
-            self.registration_states.clear();
+        if self.registration_states.lock().unwrap().len() > 1000 {
+            self.registration_states.lock().unwrap().clear();
         }
-        if self.authentication_states.len() > 1000 {
-            self.authentication_states.clear();
+        if self.authentication_states.lock().unwrap().len() > 1000 {
+            self.authentication_states.lock().unwrap().clear();
         }
     }
 }
