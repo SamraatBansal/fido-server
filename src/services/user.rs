@@ -52,7 +52,7 @@ impl UserService {
     }
 
     /// Get user by username
-    pub fn get_user_by_username(&self, username: &str) -> Result<Option<User>> {
+    pub fn get_user_by_username(&self, username: &str) -> crate::error::Result<Option<User>> {
         if let Some(user_id) = self.username_index.get(username) {
             if let Some(user) = self.users.get(user_id) {
                 return Ok(Some(user.clone()));
