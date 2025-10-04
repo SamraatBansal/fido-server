@@ -1,7 +1,11 @@
-//! Middleware module//! Middleware module
+//! Custom middleware
 
-pub mod security;
+pub mod auth;
+pub mod cors;
 pub mod logging;
+pub mod security;
 
-pub use security::{security_headers, cors_config, request_id};
-pub use logging::{request_logger, DetailedLogger, AuditLogger};
+pub use auth::*;
+pub use cors::*;
+pub use logging::*;
+pub use security::*;
