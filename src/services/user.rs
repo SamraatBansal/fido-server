@@ -25,7 +25,7 @@ impl UserService {
         &mut self,
         username: &str,
         display_name: &str,
-    ) -> Result<User> {
+    ) -> crate::error::Result<User> {
         // Check if user exists
         if let Some(user_id) = self.username_index.get(username) {
             if let Some(user) = self.users.get(user_id) {
