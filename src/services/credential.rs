@@ -87,7 +87,7 @@ impl CredentialService {
         &mut self,
         credential_id: &[u8],
         new_sign_count: i32,
-    ) -> Result<()> {
+    ) -> crate::error::Result<()> {
         if let Some(cred_uuid) = self.credential_id_index.get(credential_id) {
             if let Some(credential) = self.credentials.get_mut(cred_uuid) {
                 credential.sign_count = new_sign_count;
