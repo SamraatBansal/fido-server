@@ -48,8 +48,8 @@ diesel::table! {
         challenge_type -> Varchar,
         expires_at -> Timestamptz,
         used -> Bool,
-        created_at -> Timestamptz,
         metadata -> Nullable<Jsonb>,
+        created_at -> Timestamptz,
     }
 }
 
@@ -98,18 +98,3 @@ diesel::allow_tables_to_appear_in_same_query!(
     sessions,
     audit_logs,
 );
-
-// Custom SQL types for Diesel
-pub mod sql_types {
-    #[derive(diesel::sql_types::SqlType)]
-    #[diesel(postgres_type(name = "uuid"))]
-    pub struct Uuid;
-
-    #[derive(diesel::sql_types::SqlType)]
-    #[diesel(postgres_type(name = "timestamptz"))]
-    pub struct Timestamptz;
-
-    #[derive(diesel::sql_types::SqlType)]
-    #[diesel(postgres_type(name = "jsonb"))]
-    pub struct Jsonb;
-}
