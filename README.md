@@ -105,3 +105,5 @@ fido-server/
 ## License
 
 MIT
+
+<!-- Test comment added by FIDO workflow on 2025-10-04T14:06:36.319Z -->
