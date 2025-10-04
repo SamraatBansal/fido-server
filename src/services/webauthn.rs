@@ -28,7 +28,7 @@ impl WebAuthnService {
     }
 
     /// Validate origin
-    pub fn validate_origin(&self, origin: &str) -> Result<()> {
+    pub fn validate_origin(&self, origin: &str) -> crate::error::Result<()> {
         self.config.validate_origin(origin)
     }
 
