@@ -10,7 +10,7 @@ use fido_server::{
     controllers::health,
     db::{create_pool, run_migrations},
     error::handle_404,
-    middleware::{cors::default_cors, security::SecurityHeadersMiddleware},
+    middleware::{cors::default_cors, security::SecurityHeadersMiddleware, ClientIpMiddleware},
     routes::{api, health as health_routes},
     services::{
         CredentialService, FidoService, UserService, 
