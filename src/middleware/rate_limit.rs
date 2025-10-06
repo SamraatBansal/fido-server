@@ -1,6 +1,6 @@
 //! Rate limiting middleware
 
-use actix_web::{dev::ServiceRequest, dev::ServiceResponse, Error};
+use actix_web::{dev::ServiceRequest, dev::ServiceResponse, Error, HttpResponse};
 use actix_web::dev::{forward_ready, Transform};
 use futures::future::{ready, LocalBoxFuture};
 use std::collections::HashMap;
@@ -108,12 +108,14 @@ where
 
         if !self.state.check_rate_limit(&ip) {
             let (req, payload) = req.into_parts();
-            let response = actix_web::HttpResponse::TooManyRequests().json(serde_json::json!({
+            let response = HttpResponse::TooManyRequests().json(serde_json::json!({
                 "error": "rate_limit_exceeded",
                 "message": "Rate limit exceeded. Please try again later."
             }));
             let response = ServiceResponse::new(req, response);
-            return Box::pin(async move { Ok(response.map_into_left_body()) });
+            return Box::pin(async move { 
+                Ok(response.map_into_left_body()) 
+            });
         }
 
         let fut = self.service.call(req);
