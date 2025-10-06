@@ -24,7 +24,7 @@ pub async fn list_credentials(
                         .into_iter()
                         .map(|cred| json!({
                             "id": cred.id,
-                            "credential_id": base64::encode(&cred.credential_id),
+                            "credential_id": base64::engine::general_purpose::STANDARD.encode(&cred.credential_id),
                             "created_at": cred.created_at,
                             "last_used_at": cred.last_used_at,
                             "backup_eligible": cred.backup_eligible,
