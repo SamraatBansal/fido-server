@@ -49,9 +49,9 @@ pub enum UserVerificationType {
     Discouraged,
 }
 
-impl From<String> for AttestationType {
-    fn from(s: String) -> Self {
-        match s.as_str() {
+impl From<&str> for AttestationType {
+    fn from(s: &str) -> Self {
+        match s {
             "none" => AttestationType::None,
             "basic" => AttestationType::Basic,
             "self" => AttestationType::SelfAttestation,
@@ -63,22 +63,22 @@ impl From<String> for AttestationType {
     }
 }
 
-impl From<AttestationType> for String {
+impl From<AttestationType> for &'static str {
     fn from(attestation_type: AttestationType) -> Self {
         match attestation_type {
-            AttestationType::None => "none".to_string(),
-            AttestationType::Basic => "basic".to_string(),
-            AttestationType::SelfAttestation => "self".to_string(),
-            AttestationType::AttCa => "attca".to_string(),
-            AttestationType::Anonymous => "anonymous".to_string(),
-            AttestationType::Uncertain => "uncertain".to_string(),
+            AttestationType::None => "none",
+            AttestationType::Basic => "basic",
+            AttestationType::SelfAttestation => "self",
+            AttestationType::AttCa => "attca",
+            AttestationType::Anonymous => "anonymous",
+            AttestationType::Uncertain => "uncertain",
         }
     }
 }
 
-impl From<String> for UserVerificationType {
-    fn from(s: String) -> Self {
-        match s.as_str() {
+impl From<&str> for UserVerificationType {
+    fn from(s: &str) -> Self {
+        match s {
             "none" => UserVerificationType::None,
             "presence" => UserVerificationType::Presence,
             "required" => UserVerificationType::Required,
@@ -89,14 +89,14 @@ impl From<String> for UserVerificationType {
     }
 }
 
-impl From<UserVerificationType> for String {
+impl From<UserVerificationType> for &'static str {
     fn from(uv_type: UserVerificationType) -> Self {
         match uv_type {
-            UserVerificationType::None => "none".to_string(),
-            UserVerificationType::Presence => "presence".to_string(),
-            UserVerificationType::Required => "required".to_string(),
-            UserVerificationType::Preferred => "preferred".to_string(),
-            UserVerificationType::Discouraged => "discouraged".to_string(),
+            UserVerificationType::None => "none",
+            UserVerificationType::Presence => "presence",
+            UserVerificationType::Required => "required",
+            UserVerificationType::Preferred => "preferred",
+            UserVerificationType::Discouraged => "discouraged",
         }
     }
 }
