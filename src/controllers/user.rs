@@ -6,7 +6,7 @@ use uuid::Uuid;
 use crate::db::DbPool;
 use crate::error::{AppError, Result};
 use crate::schema::*;
-use crate::services::UserService;
+use crate::services::user::UserService;
 
 /// User controller state
 pub struct UserController {
