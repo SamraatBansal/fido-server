@@ -1,7 +1,6 @@
 //! Error handlers
 
 use actix_web::{dev::ServiceResponse, error::Error, Result};
-use actix_web_lab::middleware::CatchAllErrorHandler;
 
 /// Global error handler for the application
 pub async fn handle_error(
