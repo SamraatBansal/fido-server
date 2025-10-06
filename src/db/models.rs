@@ -1,6 +1,7 @@
 //! Database models for FIDO Server
 
 use diesel::prelude::*;
+use diesel::{SqlType, AsExpression, FromSqlRow};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use chrono::{DateTime, Utc};
