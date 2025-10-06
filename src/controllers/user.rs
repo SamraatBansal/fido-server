@@ -38,8 +38,7 @@ impl UserController {
             .and_then(|v| v.as_str())
             .unwrap_or(username);
 
-        let user = self.user_service
-            .create_user(&mut conn, username, display_name)?;
+        let user = UserService::create_user(&mut conn, username, display_name)?;
 
         Ok(HttpResponse::Created().json(SuccessResponse::new(user)))
     }
