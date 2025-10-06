@@ -213,33 +213,34 @@ mod tests {
         // Security requirement: Error messages should not leak sensitive information
         let mut service = FidoService::new();
         
-        // Test various error conditions
-        let test_cases = vec![
-            (RegistrationRequest {
-                username: "".to_string(),
-                display_name: "Test".to_string(),
-            }, "Empty username"),
-            (RegistrationRequest {
-                username: "test@example.com".to_string(),
-                display_name: "".to_string(),
-            }, "Empty display name"),
-            (AuthenticationRequest {
-                username: "".to_string(),
-            }, "Empty auth username"),
-            (AuthenticationRequest {
-                username: "nonexistent@example.com".to_string(),
-            }, "Non-existent user"),
+        // Test registration errors
+        let empty_username_result = service.start_registration(RegistrationRequest {
+            username: "".to_string(),
+            display_name: "Test".to_string(),
+        }).await;
+        
+        let empty_display_result = service.start_registration(RegistrationRequest {
+            username: "test@example.com".to_string(),
+            display_name: "".to_string(),
+        }).await;
+
+        // Test authentication errors
+        let empty_auth_result = service.start_authentication(AuthenticationRequest {
+            username: "".to_string(),
+        }).await;
+        
+        let nonexistent_user_result = service.start_authentication(AuthenticationRequest {
+            username: "nonexistent@example.com".to_string(),
+        }).await;
+
+        let results = vec![
+            (empty_username_result, "Empty username"),
+            (empty_display_result, "Empty display name"),
+            (empty_auth_result, "Empty auth username"),
+            (nonexistent_user_result, "Non-existent user"),
         ];
 
-        for (request, description) in test_cases {
-            let result = if let Some(reg_req) = request.downcast_ref::<RegistrationRequest>() {
-                service.start_registration(reg_req.clone()).await
-            } else if let Some(auth_req) = request.downcast_ref::<AuthenticationRequest>() {
-                service.start_authentication(auth_req.clone()).await
-            } else {
-                continue;
-            };
-
+        for (result, description) in results {
             if let Err(error) = result {
                 let error_msg = format!("{:?}", error);
                 
