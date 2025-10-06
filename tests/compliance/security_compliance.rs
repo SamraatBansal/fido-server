@@ -312,22 +312,3 @@ mod tests {
     }
 }
 
-// Helper trait for downcasting in the error test
-trait Downcast {
-    fn downcast_ref<T: 'static>(&self) -> Option<&T>;
-}
-
-impl Downcast for fido_server::RegistrationRequest {
-    fn downcast_ref<T: 'static>(&self) -> Option<&T> {
-        // This is a simplified implementation
-        // In a real scenario, you'd use proper type checking
-        None
-    }
-}
-
-impl Downcast for fido_server::AuthenticationRequest {
-    fn downcast_ref<T: 'static>(&self) -> Option<&T> {
-        // This is a simplified implementation
-        None
-    }
-}
