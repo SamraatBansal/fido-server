@@ -70,12 +70,12 @@ where
                 "1; mode=block".parse().unwrap(),
             );
             res.headers_mut().insert(
-                HeaderName::from_static("referrer-policy"),
-                HeaderValue::from_static("strict-origin-when-cross-origin"),
+                header::REFERRER_POLICY,
+                "strict-origin-when-cross-origin".parse().unwrap(),
             );
             res.headers_mut().insert(
-                HeaderName::from_static("content-security-policy"),
-                HeaderValue::from_static("default-src 'self'"),
+                header::CONTENT_SECURITY_POLICY,
+                "default-src 'self'".parse().unwrap(),
             );
 
             Ok(res)
