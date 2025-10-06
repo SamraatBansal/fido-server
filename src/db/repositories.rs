@@ -27,6 +27,7 @@ pub trait CredentialRepository: Send + Sync {
     async fn find_by_user_id(&self, user_id: &Uuid) -> Result<Vec<Credential>>;
     async fn update_sign_count(&self, id: &Uuid, count: i64) -> Result<()>;
     async fn update_last_used(&self, id: &Uuid) -> Result<()>;
+    async fn update_credential(&self, credential: &Credential) -> Result<()>;
     async fn delete_credential(&self, id: &Uuid, user_id: &Uuid) -> Result<()>;
 }
 
