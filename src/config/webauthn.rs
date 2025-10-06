@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use url::Url;
 use webauthn_rs::prelude::*;
+use webauthn_rs_proto::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WebAuthnConfig {
