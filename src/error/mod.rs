@@ -2,7 +2,7 @@
 
 use actix_web::{error::ResponseError, HttpResponse};
 use thiserror::Error;
-use webauthn_rs::error::WebauthnError;
+use webauthn_rs::WebauthnError;
 
 /// Application error type
 #[derive(Error, Debug)]
