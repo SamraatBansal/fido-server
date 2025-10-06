@@ -34,6 +34,7 @@ pub fn get_database_url() -> String {
 /// Run database migrations
 pub fn run_migrations(pool: &DbPool) -> Result<(), crate::error::AppError> {
     let mut conn = pool.get()?;
+    diesel_migrations::embed_migrations!("migrations");
     diesel_migrations::run_pending_migrations(&mut conn)?;
     Ok(())
 }
