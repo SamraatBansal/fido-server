@@ -29,12 +29,14 @@ table! {
 
 table! {
     sessions (id) {
-        id -> Uuid,
-        user_id -> Nullable<Uuid>,
+        id -> Text,
+        user_id -> Uuid,
         challenge -> Varchar,
-        session_type -> Varchar,
-        expires_at -> Timestamp,
+        operation_type -> Varchar,
+        user_verification -> Varchar,
+        client_data -> Nullable<Text>,
         created_at -> Timestamp,
+        expires_at -> Timestamp,
     }
 }
 
