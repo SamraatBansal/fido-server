@@ -1,15 +1,9 @@
 //! FIDO/WebAuthn HTTP controllers
 
 use actix_web::{web, HttpResponse, Result as ActixResult};
-use webauthn_rs::prelude::*;
-use webauthn_rs_proto::{
-    UserVerificationPolicy, AttestationConveyancePreference, 
-    ResidentKeyRequirement, AuthenticatorAttachment
-};
 use uuid::Uuid;
 
 use crate::db::DbPool;
-use crate::error::{AppError, Result};
 use crate::schema::*;
 use crate::services::fido::FidoService;
 
