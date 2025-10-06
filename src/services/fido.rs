@@ -409,31 +409,10 @@ impl FidoService {
             &challenge_data.client_data.as_ref().ok_or(AppError::InvalidSessionState)?
         ).map_err(AppError::Serialization)?;
 
-        // Create credential data for verification
-        let credential_data = webauthn_rs::prelude::CredentialData {
-            cred_id: stored_credential.credential_id.clone(),
-            public_key: stored_credential.public_key.clone(),
-            sign_count: stored_credential.sign_count as u32,
-            reg: webauthn_rs::prelude::Registration {
-                credential: webauthn_rs::prelude::Credential {
-                    id: stored_credential.credential_id.clone(),
-                    public_key: stored_credential.public_key.clone(),
-                    type_: webauthn_rs::prelude::PublicKeyCredentialType::PublicKey,
-                    transports: stored_credential.transports.clone(),
-                },
-                user: Some(webauthn_rs::prelude::UserEntity {
-                    id: user.id.to_string(),
-                    name: user.username.clone(),
-                    display_name: user.display_name.clone(),
-                    credentials: vec![],
-                }),
-            },
-        };
-
         // Verify assertion
         let webauthn = self.config.build_webauthn()?;
         let auth_result = webauthn
-            .finish_authentication(&request.credential, &authentication_state, &credential_data)
+            .finish_authentication(&request.credential, &authentication_state)
             .map_err(AppError::WebAuthn)?;
 
         // Check for replay attack (sign count validation)
