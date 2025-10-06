@@ -2,53 +2,98 @@
 
 use actix_web::{web, HttpResponse, Result};
 use serde_json::json;
+use std::net::IpAddr;
 use webauthn_rs::prelude::*;
 
-use crate::{
-    error::AppError,
-    schema::requests::{AuthenticationFinishRequest, AuthenticationStartRequest},
-    schema::responses::{AuthenticationStartResponse, AuthenticationFinishResponse},
-    services::{FidoService, UserService},
-};
+use crate::services::fido::{FidoService, AuthenticationStartRequest, AuthenticationFinishRequest};
+use crate::config::WebAuthnConfig;
+use crate::schema::responses::SuccessResponse;
 
-/// Start authentication process
+/// Start authentication endpoint
 pub async fn start_authentication(
-    req: web::Json<AuthenticationStartRequest>,
-    fido_service: web::Data<FidoService>,
-    user_service: web::Data<UserService>,
+    fido_service: web::Data<Arc<FidoService>>,
+    webauthn_config: web::Data<Arc<WebAuthnConfig>>,
+    req: web::Json<serde_json::Value>,
+    client_ip: web::ReqData<IpAddr>,
 ) -> Result<HttpResponse> {
-    let user = user_service
-        .get_user_by_username(&req.username)
-        .await?
-        .ok_or(AppError::AuthenticationFailed("User not found".to_string()))?;
+    // Parse request
+    let username = req.get("username")
+        .and_then(|v| v.as_str())
+        .ok_or_else(|| actix_web::error::ErrorBadRequest("Missing username"))?
+        .to_string();
 
-    let response = fido_service
-        .start_authentication(&user, req.user_verification)
-        .await?;
+    let user_verification = req.get("user_verification")
+        .and_then(|v| v.as_str())
+        .and_then(|s| match s {
+            "required" => Some(UserVerificationPolicy::Required),
+            "preferred" => Some(UserVerificationPolicy::Preferred),
+            "discouraged" => Some(UserVerificationPolicy::Discouraged),
+            _ => None,
+        })
+        .unwrap_or(webauthn_config.user_verification);
 
-    let start_response = AuthenticationStartResponse {
-        challenge: response.challenge.as_str().to_string(),
-        allow_credentials: response.allow_credentials,
-        user_verification: response.user_verification,
-        timeout: response.timeout,
+    let client_ip = client_ip.as_ref()
+        .copied()
+        .unwrap_or_else(|| "127.0.0.1".parse().unwrap());
+
+    let request = AuthenticationStartRequest {
+        username,
+        user_verification,
+        client_ip,
     };
 
-    Ok(HttpResponse::Ok().json(start_response))
+    match fido_service.start_authentication(request).await {
+        Ok(challenge) => {
+            let response = SuccessResponse::new(challenge);
+            Ok(HttpResponse::Ok().json(response))
+        }
+        Err(e) => {
+            log::error!("Authentication start failed: {:?}", e);
+            Err(actix_web::error::ErrorInternalServerError(e.to_string()))
+        }
+    }
 }
 
-/// Finish authentication process
+/// Finish authentication endpoint
 pub async fn finish_authentication(
-    req: web::Json<AuthenticationFinishRequest>,
-    fido_service: web::Data<FidoService>,
+    fido_service: web::Data<Arc<FidoService>>,
+    req: web::Json<serde_json::Value>,
+    client_ip: web::ReqData<IpAddr>,
 ) -> Result<HttpResponse> {
-    let result = fido_service
-        .finish_authentication(&req.credential, &req.session_id)
-        .await?;
+    // Parse credential from request
+    let credential_data = req.get("credential")
+        .ok_or_else(|| actix_web::error::ErrorBadRequest("Missing credential"))?;
 
-    let response = AuthenticationFinishResponse {
-        user_id: result.user_id.to_string(),
-        session_token: result.session_token,
+    let credential: PublicKeyCredential = serde_json::from_value(credential_data.clone())
+        .map_err(|e| actix_web::error::ErrorBadRequest(format!("Invalid credential format: {}", e)))?;
+
+    let session_id = req.get("session_id")
+        .and_then(|v| v.as_str())
+        .ok_or_else(|| actix_web::error::ErrorBadRequest("Missing session_id"))?
+        .to_string();
+
+    let client_ip = client_ip.as_ref()
+        .copied()
+        .unwrap_or_else(|| "127.0.0.1".parse().unwrap());
+
+    let request = AuthenticationFinishRequest {
+        credential,
+        session_id,
+        client_ip,
     };
 
-    Ok(HttpResponse::Ok().json(response))
+    match fido_service.finish_authentication(request).await {
+        Ok(result) => {
+            let response = SuccessResponse::new(json!({
+                "session_token": result.session_token,
+                "user_id": result.user_id,
+                "credential_id": result.credential_id
+            }));
+            Ok(HttpResponse::Ok().json(response))
+        }
+        Err(e) => {
+            log::error!("Authentication finish failed: {:?}", e);
+            Err(actix_web::error::ErrorInternalServerError(e.to_string()))
+        }
+    }
 }
