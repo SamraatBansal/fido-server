@@ -62,6 +62,9 @@ pub enum AppError {
     #[error("Invalid session: {0}")]
     InvalidSession(String),
 
+    #[error("Invalid session state")]
+    InvalidSessionState,
+
     #[error("Too many sessions")]
     TooManySessions(String),
 
