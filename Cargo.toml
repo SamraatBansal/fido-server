@@ -47,6 +47,8 @@ sha2 = "0.10"
 # Configuration
 config = "0.14"
 dotenv = "0.15"
+toml = "0.8"
+url = "2.5"
 
 # Logging
 log = "0.4"
