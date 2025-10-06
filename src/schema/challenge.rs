@@ -117,7 +117,7 @@ mod tests {
         let user_id = Uuid::new_v4();
         
         // Create a challenge that expires immediately
-        let mut challenge = Challenge::new(
+        let challenge = Challenge::new(
             challenge_data,
             ChallengeType::Registration,
             Some(user_id),
