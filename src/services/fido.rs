@@ -7,6 +7,10 @@ use sha2::{Digest, Sha256};
 use uuid::Uuid;
 use webauthn_rs::prelude::*;
 use webauthn_rs::WebauthnBuilder;
+use webauthn_rs_proto::{
+    UserVerificationPolicy, AttestationConveyancePreference, 
+    ResidentKeyRequirement, AuthenticatorAttachment
+};
 
 use crate::config::WebAuthnConfig;
 use crate::db::{DbConnection, models::*};
