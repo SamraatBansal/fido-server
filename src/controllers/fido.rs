@@ -33,33 +33,10 @@ impl FidoController {
     ) -> ActixResult<HttpResponse> {
         let mut conn = pool.get().map_err(|e| AppError::DatabaseConnection(e.to_string()))?;
 
-        let user_verification = match req.user_verification.as_deref() {
-            Some("required") => Some(UserVerificationPolicy::Required),
-            Some("preferred") => Some(UserVerificationPolicy::Preferred),
-            Some("discouraged") => Some(UserVerificationPolicy::Preferred), // Fallback to preferred
-            _ => Some(UserVerificationPolicy::Preferred),
-        };
-
-        let attestation = match req.attestation.as_deref() {
-            Some("none") => Some(AttestationConveyancePreference::None),
-            Some("indirect") => Some(AttestationConveyancePreference::Indirect),
-            Some("direct") => Some(AttestationConveyancePreference::Direct),
-            Some("enterprise") => Some(AttestationConveyancePreference::Direct), // Fallback to direct
-            _ => Some(AttestationConveyancePreference::Direct),
-        };
-
-        let resident_key = match req.resident_key.as_deref() {
-            Some("discouraged") => Some(ResidentKeyRequirement::Discouraged),
-            Some("preferred") => Some(ResidentKeyRequirement::Preferred),
-            Some("required") => Some(ResidentKeyRequirement::Required),
-            _ => Some(ResidentKeyRequirement::Preferred),
-        };
-
-        let authenticator_attachment = match req.authenticator_attachment.as_deref() {
-            Some("platform") => Some(AuthenticatorAttachment::Platform),
-            Some("cross-platform") => Some(AuthenticatorAttachment::CrossPlatform),
-            _ => None,
-        };
+        let user_verification = req.user_verification.clone();
+        let attestation = req.attestation.clone();
+        let resident_key = req.resident_key.clone();
+        let authenticator_attachment = req.authenticator_attachment.clone();
 
         let response = self.fido_service
             .start_registration(
