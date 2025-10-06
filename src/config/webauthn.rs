@@ -45,7 +45,7 @@ impl Default for WebAuthnConfig {
 }
 
 impl WebAuthnConfig {
-    pub fn build_webauthn(&self) -> Result<WebAuthn<WebauthnC>> {
+    pub fn build_webauthn(&self) -> Result<WebAuthn> {
         let rp_id = RpId::from_str(&self.rp_id)
             .map_err(|e| crate::error::AppError::InvalidRequest(format!("Invalid RP ID: {}", e)))?;
         
@@ -56,7 +56,6 @@ impl WebAuthnConfig {
             rp_id,
             self.rp_name.clone(),
             rp_origin,
-            WebauthnC::new_attestation(),
         );
 
         Ok(webauthn)
