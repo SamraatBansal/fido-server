@@ -1,6 +1,8 @@
 //! Diesel schema definitions
 
-#[allow(missing_docs)]
+#![allow(missing_docs)]
+#![allow(unused_attributes)]
+
 diesel::table! {
     users (id) {
         id -> Uuid,
