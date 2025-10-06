@@ -32,11 +32,11 @@ pub trait CredentialRepository: Send + Sync {
 
 #[async_trait]
 pub trait SessionRepository: Send + Sync {
-    async fn create_session(&self, session: &NewSession) -> Result<Session>;
-    async fn find_by_id(&self, id: &Uuid) -> Result<Option<Session>>;
-    async fn find_by_challenge(&self, challenge: &str) -> Result<Option<Session>>;
-    async fn delete_session(&self, id: &Uuid) -> Result<()>;
-    async fn cleanup_expired_sessions(&self) -> Result<()>;
+    async fn create_session(&self, session_id: &str, data: &ChallengeData) -> Result<()>;
+    async fn find_by_id(&self, id: &str) -> Result<Option<ChallengeData>>;
+    async fn delete_session(&self, id: &str) -> Result<()>;
+    async fn count_active_sessions(&self, user_id: &Uuid, now: DateTime<Utc>) -> Result<i64>;
+    async fn delete_expired_sessions(&self, now: DateTime<Utc>) -> Result<usize>;
 }
 
 pub struct DieselUserRepository {
