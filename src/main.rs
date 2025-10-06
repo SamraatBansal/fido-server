@@ -93,6 +93,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(Logger::default())
             .wrap(cors)
             .wrap(SecurityHeadersMiddleware)
+            .wrap(ClientIpMiddleware)
             // Configure routes
             .configure(health_routes::configure)
             .configure(api::configure)
