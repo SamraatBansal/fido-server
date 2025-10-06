@@ -2,7 +2,6 @@
 
 use actix_web::{web, HttpResponse, Result};
 use serde_json::json;
-use std::net::IpAddr;
 use std::sync::Arc;
 use webauthn_rs::prelude::*;
 
