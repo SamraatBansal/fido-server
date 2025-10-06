@@ -4,7 +4,7 @@ use actix_web::web;
 use crate::config::Config;
 use crate::controllers::fido::FidoController;
 use crate::controllers::user::UserController;
-use crate::middleware::{cors, rate_limit, security};
+use crate::middleware::cors;
 use crate::services::fido::FidoService;
 
 /// Configure API routes
