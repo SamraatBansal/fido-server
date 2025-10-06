@@ -11,7 +11,7 @@ use uuid::Uuid;
 use crate::db::DbPool;
 use crate::error::{AppError, Result};
 use crate::schema::*;
-use crate::services::FidoService;
+use crate::services::fido::FidoService;
 
 /// FIDO controller state
 pub struct FidoController {
