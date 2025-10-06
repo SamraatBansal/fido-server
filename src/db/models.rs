@@ -180,7 +180,7 @@ pub struct Credential {
     /// Signature counter
     pub sign_count: i64,
     /// Attestation type
-    pub attestation_type: AttestationType,
+    pub attestation_type: String,
     /// Transports
     pub transports: Vec<String>,
     /// Created at
@@ -192,7 +192,7 @@ pub struct Credential {
     /// Backup state
     pub backup_state: bool,
     /// User verification type
-    pub user_verification_type: UserVerificationType,
+    pub user_verification_type: String,
     /// AAGUID
     pub aaguid: Option<Vec<u8>>,
 }
@@ -210,7 +210,7 @@ pub struct NewCredential {
     /// Signature counter
     pub sign_count: i64,
     /// Attestation type
-    pub attestation_type: AttestationType,
+    pub attestation_type: String,
     /// Transports
     pub transports: Vec<String>,
     /// Backup eligible
@@ -218,7 +218,7 @@ pub struct NewCredential {
     /// Backup state
     pub backup_state: bool,
     /// User verification type
-    pub user_verification_type: UserVerificationType,
+    pub user_verification_type: String,
     /// AAGUID
     pub aaguid: Option<Vec<u8>>,
 }
