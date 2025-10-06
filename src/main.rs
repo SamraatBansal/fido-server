@@ -1,8 +1,8 @@
 //! FIDO Server Main Entry Point
 
-use actix_cors::Cors;
-use actix_web::{middleware::Logger, App, HttpServer};
+use actix_web::{middleware::Logger, App, HttpServer, web};
 use std::io;
+use fido_server::{config::load_config, db::init_pool, error::AppError};
 
 #[actix_web::main]
 async fn main() -> io::Result<()> {
@@ -11,25 +11,53 @@ async fn main() -> io::Result<()> {
 
     log::info!("Starting FIDO Server...");
 
-    // TODO: Load configuration from config file
-    let host = "127.0.0.1";
-    let port = 8080;
+    // Load configuration
+    let config = load_config().map_err(|e| {
+        log::error!("Failed to load configuration: {}", e);
+        io::Error::new(io::ErrorKind::Other, "Configuration error")
+    })?;
 
-    // TODO: Initialize database connection pool
+    // Initialize database connection pool
+    let pool = init_pool(&config.database.url, config.database.max_connections)
+        .map_err(|e| {
+            log::error!("Failed to initialize database pool: {}", e);
+            io::Error::new(io::ErrorKind::Other, "Database connection error")
+        })?;
+
+    // Run database migrations
+    if let Err(e) = fido_server::db::run_migrations(&pool) {
+        log::error!("Failed to run database migrations: {}", e);
+        return Err(io::Error::new(io::ErrorKind::Other, "Migration error"));
+    }
+
+    log::info!("Database initialized successfully");
+
+    let host = config.server.host.clone();
+    let port = config.server.port;
 
     log::info!("Server running at http://{}:{}", host, port);
 
-    HttpServer::new(move || {
-        // Configure CORS
-        let cors = Cors::default()
-            .allow_any_origin()
-            .allow_any_method()
-            .allow_any_header()
-            .max_age(3600);
+    // Start background task to clean up expired challenges
+    let cleanup_pool = pool.clone();
+    tokio::spawn(async move {
+        let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(300)); // Every 5 minutes
+        loop {
+            interval.tick().await;
+            if let Ok(mut conn) = cleanup_pool.get() {
+                if let Err(e) = fido_server::services::FidoService::new(config.webauthn.clone())
+                    .unwrap()
+                    .cleanup_expired_challenges(&mut conn).await
+                {
+                    log::warn!("Failed to cleanup expired challenges: {}", e);
+                }
+            }
+        }
+    });
 
+    HttpServer::new(move || {
         App::new()
+            .app_data(web::Data::new(pool.clone()))
             .wrap(Logger::default())
-            .wrap(cors)
             .configure(fido_server::routes::api::configure)
     })
     .bind((host, port))?
