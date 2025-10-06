@@ -1,5 +1,6 @@
-//! Rate limiting middleware - simplified version
+//! Rate limiting middleware - temporarily disabled due to type issues
 
+/*
 use actix_web::{dev::ServiceRequest, dev::ServiceResponse, Error, HttpResponse, Result};
 use actix_web::dev::{forward_ready, Transform};
 use futures::future::{ready, LocalBoxFuture};
@@ -122,3 +123,4 @@ where
         })
     }
 }
+*/
