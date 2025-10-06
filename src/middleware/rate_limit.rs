@@ -103,7 +103,7 @@ where
         let ip = req
             .connection_info()
             .peer_addr()
-            .map(|addr| addr.ip().to_string())
+            .map(|addr| addr.to_string())
             .unwrap_or_else(|| "unknown".to_string());
 
         if !self.state.check_rate_limit(&ip) {
