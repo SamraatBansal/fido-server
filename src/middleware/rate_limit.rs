@@ -67,26 +67,25 @@ pub async fn rate_limit_middleware(
 }
 
 /// Rate limiting middleware with custom configuration
-pub fn create_rate_limit_middleware(max_requests: u32, window_secs: u64) -> Arc<dyn Fn(ServiceRequest, Next<impl actix_web::MessageBody>) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<actix_web::HttpResponse, Error>>>> + Send + Sync> {
-    let rate_limiter = Arc::new(RateLimiter::new(max_requests, window_secs));
+pub async fn rate_limit_with_config(
+    req: ServiceRequest,
+    next: Next<impl actix_web::MessageBody>,
+    max_requests: u32,
+    window_secs: u64,
+) -> Result<actix_web::HttpResponse, Error> {
+    let rate_limiter = RateLimiter::new(max_requests, window_secs);
     
-    Arc::new(move |req: ServiceRequest, next: Next<impl actix_web::MessageBody>| {
-        let rate_limiter = rate_limiter.clone();
-        
-        Box::pin(async move {
-            // Get client IP
-            let client_ip = req
-                .connection_info()
-                .peer_addr()
-                .map(|addr| addr.ip().to_string())
-                .unwrap_or_else(|| "unknown".to_string());
+    // Get client IP
+    let client_ip = req
+        .connection_info()
+        .peer_addr()
+        .map(|addr| addr.ip().to_string())
+        .unwrap_or_else(|| "unknown".to_string());
 
-            if !rate_limiter.is_allowed(&client_ip) {
-                return Err(actix_web::error::ErrorTooManyRequests("Rate limit exceeded"));
-            }
+    if !rate_limiter.is_allowed(&client_ip) {
+        return Err(actix_web::error::ErrorTooManyRequests("Rate limit exceeded"));
+    }
 
-            let res = next.call(req).await?;
-            Ok(res)
-        })
-    })
+    let res = next.call(req).await?;
+    Ok(res)
 }
