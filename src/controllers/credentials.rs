@@ -2,6 +2,7 @@
 
 use actix_web::{web, HttpResponse, Result};
 use serde_json::json;
+use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::services::{CredentialService, UserService};
