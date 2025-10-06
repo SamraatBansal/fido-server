@@ -13,7 +13,7 @@ use webauthn_rs_proto::{
 };
 
 use crate::config::WebAuthnConfig;
-use crate::db::{DbConnection, models::*};
+use crate::db::{DbConnection, models::User, models::Credential, models::Challenge, models::NewCredential, models::NewChallenge};
 use crate::db::schema::{users, credentials, challenges};
 use crate::error::{AppError, Result};
 use crate::schema::*;
