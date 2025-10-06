@@ -174,11 +174,11 @@ impl FidoService {
             credential_id: credential_id_bytes,
             public_key: vec![], // Would be extracted from attestation object
             sign_count: 0,
-            attestation_type: AttestationType::None, // Simplified
+            attestation_type: "none".to_string(), // Simplified
             transports: transports.unwrap_or_default(),
             backup_eligible: false,
             backup_state: false,
-            user_verification_type: UserVerificationType::Preferred,
+            user_verification_type: "preferred".to_string(),
             aaguid: None,
         };
 
