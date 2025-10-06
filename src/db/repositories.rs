@@ -150,6 +150,17 @@ impl CredentialRepository for DieselCredentialRepository {
         Ok(())
     }
 
+    async fn update_credential(&self, credential: &Credential) -> Result<()> {
+        let mut conn = self.pool.get()?;
+        diesel::update(credentials::table.filter(credentials::id.eq(&credential.id)))
+            .set((
+                credentials::sign_count.eq(credential.sign_count),
+                credentials::last_used_at.eq(credential.last_used_at),
+            ))
+            .execute(&mut conn)?;
+        Ok(())
+    }
+
     async fn delete_credential(&self, id: &Uuid, user_id: &Uuid) -> Result<()> {
         let mut conn = self.pool.get()?;
         diesel::delete(
