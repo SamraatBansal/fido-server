@@ -1,6 +1,6 @@
 //! API route configuration
 
-use actix_web::web;
+
 use crate::config::Config;
 use crate::controllers::fido::FidoController;
 use crate::controllers::user::UserController;
