@@ -19,18 +19,10 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
 
     // Configure CORS
     let cors = cors::configure_cors(&config.server);
-    
-    // Configure rate limiting
-    let rate_limit = rate_limit::RateLimitMiddleware::new(config.security.rate_limit_per_minute);
-    
-    // Configure security headers
-    let security_headers = security::SecurityHeadersMiddleware::new();
 
     cfg.service(
         web::scope("")
             .wrap(cors)
-            .wrap(rate_limit)
-            .wrap(security_headers)
             .app_data(web::Data::new(fido_controller))
             .app_data(web::Data::new(user_controller))
             .configure(configure_fido_routes)
