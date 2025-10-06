@@ -3,7 +3,6 @@
 use actix_web::{dev::ServiceRequest, dev::ServiceResponse, Error};
 use actix_web::dev::{forward_ready, Transform};
 use futures::future::{ready, LocalBoxFuture};
-use std::future::Ready;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
@@ -73,7 +72,7 @@ where
     type Error = Error;
     type Transform = RateLimitMiddlewareService<S>;
     type InitError = ();
-    type Future = Ready<Result<Self::Transform, Self::InitError>>;
+    type Future = futures::future::Ready<Result<Self::Transform, Self::InitError>>;
 
     fn new_transform(&self, service: S) -> Self::Future {
         ready(Ok(RateLimitMiddlewareService {
@@ -114,7 +113,7 @@ where
                 "message": "Rate limit exceeded. Please try again later."
             }));
             let response = ServiceResponse::new(req, response);
-            return Box::pin(async { Ok(response) });
+            return Box::pin(async move { Ok(response.map_into_left_body()) });
         }
 
         let fut = self.service.call(req);
