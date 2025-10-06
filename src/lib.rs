@@ -13,3 +13,11 @@ pub mod services;
 pub mod utils;
 
 pub use error::{AppError, Result};
+
+// Re-export common types for convenience
+pub use crate::config::{AppConfig, DatabaseConfig, WebAuthnConfig};
+pub use crate::services::{
+    FidoService, UserService, CredentialService, 
+    SecureSessionManager, AttestationVerifier, JwtManager, AuditLogger
+};
+pub use crate::db::repositories::{UserRepository, CredentialRepository, SessionRepository};
