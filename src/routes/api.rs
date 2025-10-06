@@ -2,9 +2,10 @@
 
 use actix_web::{web, Scope};
 use crate::config::Config;
-use crate::controllers::{FidoController, UserController};
+use crate::controllers::fido::FidoController;
+use crate::controllers::user::UserController;
 use crate::middleware::{cors, rate_limit, security};
-use crate::services::FidoService;
+use crate::services::fido::FidoService;
 
 /// Configure API routes
 pub fn configure(cfg: &mut web::ServiceConfig) {
