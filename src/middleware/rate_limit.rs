@@ -67,7 +67,7 @@ pub async fn rate_limit_middleware(
 }
 
 /// Rate limiting middleware with custom configuration
-pub fn create_rate_limit_middleware(max_requests: u32, window_secs: u64) -> impl Fn(ServiceRequest, Next<impl actix_web::MessageBody>) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<actix_web::HttpResponse, Error>>>> {
+pub fn create_rate_limit_middleware(max_requests: u32, window_secs: u64) -> impl Fn(ServiceRequest, Next<impl actix_web::MessageBody>) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<actix_web::HttpResponse, Error>>>> + Send + Sync {
     let rate_limiter = Arc::new(RateLimiter::new(max_requests, window_secs));
     
     move |req: ServiceRequest, next: Next<impl actix_web::MessageBody>| {
