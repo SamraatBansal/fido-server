@@ -4,6 +4,7 @@ use actix_web::{dev::ServiceRequest, dev::ServiceResponse, Error};
 use actix_web::dev::{forward_ready, Transform};
 use actix_web::http::header;
 use futures::future::{ready, LocalBoxFuture};
+use std::future::Ready;
 
 /// Security headers middleware
 pub struct SecurityHeadersMiddleware;
@@ -24,7 +25,7 @@ where
     type Error = Error;
     type Transform = SecurityHeadersMiddlewareService<S>;
     type InitError = ();
-    type Future = std::future::Ready<Result<Self::Transform, Self::InitError>>;
+    type Future = Ready<Result<Self::Transform, Self::InitError>>;
 
     fn new_transform(&self, service: S) -> Self::Future {
         ready(Ok(SecurityHeadersMiddlewareService { service }))
