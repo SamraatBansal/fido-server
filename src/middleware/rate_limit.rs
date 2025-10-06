@@ -2,7 +2,7 @@
 
 use actix_web::{dev::ServiceRequest, dev::ServiceResponse, Error};
 use actix_web::dev::{forward_ready, Transform};
-use futures::future::{ready, LocalBoxFuture};
+use futures::future::LocalBoxFuture;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
