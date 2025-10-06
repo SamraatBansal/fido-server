@@ -147,6 +147,28 @@ impl ResponseError for AppError {
                 log::error!("Internal error: {}", msg);
                 (actix_web::http::StatusCode::INTERNAL_SERVER_ERROR, "internal_error", "Internal server error")
             },
+            AppError::InvalidSession(msg) => {
+                (actix_web::http::StatusCode::UNAUTHORIZED, "invalid_session", msg)
+            },
+            AppError::TooManySessions(msg) => {
+                (actix_web::http::StatusCode::TOO_MANY_REQUESTS, "too_many_sessions", msg)
+            },
+            AppError::InvalidToken(msg) => {
+                (actix_web::http::StatusCode::UNAUTHORIZED, "invalid_token", msg)
+            },
+            AppError::InvalidAttestation(msg) => {
+                (actix_web::http::StatusCode::BAD_REQUEST, "invalid_attestation", msg)
+            },
+            AppError::InvalidEncryption(msg) => {
+                (actix_web::http::StatusCode::INTERNAL_SERVER_ERROR, "invalid_encryption", msg)
+            },
+            AppError::InvalidPassword(msg) => {
+                (actix_web::http::StatusCode::BAD_REQUEST, "invalid_password", msg)
+            },
+            AppError::ReplayAttack => {
+                log::error!("Replay attack detected");
+                (actix_web::http::StatusCode::FORBIDDEN, "replay_attack", "Replay attack detected")
+            },
         };
 
         let error_response = ErrorResponse::new(error_type, message);
