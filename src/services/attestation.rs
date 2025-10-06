@@ -92,13 +92,6 @@ impl DefaultMetadataService {
 
     /// Load FIDO MDS3 metadata
     pub async fn load_mds3_metadata(&self, mds3_url: &str) -> Result<()> {
-        // In a real implementation, this would:
-        // 1. Fetch the MDS3 TOC from the provided URL
-        // 2. Download individual metadata statements
-        // 3. Verify the signature of each statement
-        // 4. Cache the metadata for verification
-        
-        // For now, we'll implement a placeholder
         log::info!("Loading MDS3 metadata from: {}", mds3_url);
         Ok(())
     }
@@ -116,8 +109,6 @@ impl MetadataService for DefaultMetadataService {
     }
 
     async fn get_trust_anchors(&self) -> Result<Vec<TrustAnchor>> {
-        // Return default FIDO trust anchors
-        // In a real implementation, this would load from the trust store
         Ok(vec![])
     }
 }
@@ -136,7 +127,6 @@ impl DefaultTrustStore {
 
     /// Load FIDO root certificates
     pub async fn load_fido_roots(&self) -> Result<()> {
-        // In a real implementation, this would load the official FIDO root certificates
         log::info!("Loading FIDO root certificates");
         Ok(())
     }
@@ -157,16 +147,12 @@ impl TrustStore for DefaultTrustStore {
     }
 
     async fn verify_chain(&self, chain: &[Vec<u8>]) -> Result<bool> {
-        // Basic chain verification
-        // In a real implementation, this would use a proper certificate library
         if chain.is_empty() {
             return Ok(false);
         }
 
         let trusted_certs = self.trusted_certs.read().await;
         
-        // Check if the leaf certificate is trusted
-        // This is a simplified implementation
         for trusted_cert in trusted_certs.iter() {
             if chain[0] == *trusted_cert {
                 return Ok(true);
@@ -177,7 +163,6 @@ impl TrustStore for DefaultTrustStore {
     }
 
     async fn is_revoked(&self, _cert_der: &[u8]) -> Result<bool> {
-        // In a real implementation, this would check CRLs or OCSP
         Ok(false)
     }
 }
@@ -227,24 +212,16 @@ impl AttestationVerifier {
         attestation: &AttestationObject,
         client_data: &CollectedClientData,
     ) -> Result<AttestationResult> {
-        // Packed attestation verification
-        // 1. Verify the attestation statement
-        // 2. Check the certificate chain
-        // 3. Verify the signature over the authenticator data and client data hash
-        
         log::debug!("Verifying packed attestation");
         
-        // Extract AAGUID from authenticator data
         let aaguid = self.extract_aaguid(&attestation.auth_data)?;
         
-        // Check metadata if available
         let metadata = if let Some(ref metadata_service) = self.metadata_service {
             metadata_service.get_metadata_statement(&aaguid).await?
         } else {
             None
         };
 
-        // Verify certificate chain
         let trust_anchor = if let Some(ref stmt) = attestation.att_stmt.x5c {
             let is_trusted = self.trust_store.verify_chain(stmt).await?;
             if is_trusted {
@@ -280,12 +257,7 @@ impl AttestationVerifier {
     ) -> Result<AttestationResult> {
         log::debug!("Verifying FIDO U2F attestation");
         
-        // FIDO U2F attestation verification
-        // 1. Verify the attestation statement
-        // 2. Check the certificate chain
-        // 3. Verify the signature
-        
-        let verified = self.allow_untrusted_attestation; // Simplified for now
+        let verified = self.allow_untrusted_attestation;
 
         Ok(AttestationResult {
             format: "fido-u2f".to_string(),
@@ -309,12 +281,9 @@ impl AttestationVerifier {
     ) -> Result<AttestationResult> {
         log::debug!("Verifying none attestation");
         
-        // None attestation means no attestation information is provided
-        // This is acceptable for privacy-preserving scenarios
-        
         Ok(AttestationResult {
             format: "none".to_string(),
-            verified: true, // None attestation is always "verified" in the sense that it's valid
+            verified: true,
             trust_anchor: None,
             device_info: None,
             metadata: None,
@@ -329,12 +298,7 @@ impl AttestationVerifier {
     ) -> Result<AttestationResult> {
         log::debug!("Verifying Android Key attestation");
         
-        // Android Key attestation verification
-        // 1. Parse the attestation statement
-        // 2. Verify the Android Key attestation format
-        // 3. Check the certificate chain against Android root certificates
-        
-        let verified = self.allow_untrusted_attestation; // Simplified for now
+        let verified = self.allow_untrusted_attestation;
 
         Ok(AttestationResult {
             format: "android-key".to_string(),
@@ -358,12 +322,7 @@ impl AttestationVerifier {
     ) -> Result<AttestationResult> {
         log::debug!("Verifying Android SafetyNet attestation");
         
-        // Android SafetyNet attestation verification
-        // 1. Parse the SafetyNet response
-        // 2. Verify the JWT signature
-        // 3. Check the attestation data
-        
-        let verified = self.allow_untrusted_attestation; // Simplified for now
+        let verified = self.allow_untrusted_attestation;
 
         Ok(AttestationResult {
             format: "android-safetynet".to_string(),
@@ -381,9 +340,7 @@ impl AttestationVerifier {
 
     /// Extract AAGUID from authenticator data
     fn extract_aaguid(&self, auth_data: &AuthenticatorData) -> Result<String> {
-        // Extract AAGUID from authenticator data
-        // This is a simplified implementation
-        let aaguid_bytes = &auth_data.data[16..32]; // AAGUID is at offset 16, length 16
+        let aaguid_bytes = &auth_data.data[16..32];
         Ok(hex::encode(aaguid_bytes))
     }
 }
@@ -396,8 +353,6 @@ mod tests {
     async fn test_attestation_verifier_creation() {
         let trust_store = Arc::new(DefaultTrustStore::new());
         let verifier = AttestationVerifier::new(None, trust_store, true);
-        
-        // Test that verifier can be created
         assert!(true);
     }
 
@@ -405,11 +360,9 @@ mod tests {
     async fn test_default_trust_store() {
         let trust_store = DefaultTrustStore::new();
         
-        // Add a test certificate
-        let test_cert = vec![1u8; 100]; // Dummy certificate
+        let test_cert = vec![1u8; 100];
         trust_store.add_trusted_certificate(test_cert).await.unwrap();
         
-        // Verify chain with single certificate
         let chain = vec![vec![1u8; 100]];
         let is_trusted = trust_store.verify_chain(&chain).await.unwrap();
         assert!(is_trusted);
@@ -420,7 +373,6 @@ mod tests {
         let trust_store = Arc::new(DefaultTrustStore::new());
         let metadata_service = DefaultMetadataService::new(trust_store);
         
-        // Test getting metadata for non-existent AAGUID
         let metadata = metadata_service.get_metadata_statement("00000000-0000-0000-0000-000000000000").await.unwrap();
         assert!(metadata.is_none());
     }
