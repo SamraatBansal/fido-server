@@ -1,12 +1,11 @@
 //! Rate limiting middleware
 
-use actix_web::{dev::ServiceRequest, dev::ServiceResponse, Error, HttpMessage};
+use actix_web::{dev::ServiceRequest, dev::ServiceResponse, Error};
 use actix_web::dev::{forward_ready, Transform};
 use futures::future::{ready, LocalBoxFuture};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
-use std::task::{Context, Poll};
 
 /// Rate limiter state
 #[derive(Debug, Clone)]
