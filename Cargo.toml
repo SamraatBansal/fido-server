@@ -73,8 +73,29 @@ url = "2.5"
 regex = "1.10"
 
 [dev-dependencies]
+# Testing framework
 actix-test = "0.1"
 mockall = "0.13"
+tokio-test = "0.4"
+serial_test = "3.0"
+proptest = "1.4"
+criterion = "0.5"
+
+# Test utilities
+tempfile = "3.8"
+fake = { version = "2.9", features = ["derive", "chrono", "uuid"] }
+testcontainers = "0.15"
+testcontainers-modules = { version = "0.9", features = ["postgres"] }
+
+# HTTP testing
+reqwest = { version = "0.12", features = ["json"] }
+
+# Validation
+validator = { version = "0.18", features = ["derive"] }
+
+# Additional crypto for testing
+p256 = "0.13"
+rand = "0.8"
 
 [profile.dev]
 opt-level = 0
