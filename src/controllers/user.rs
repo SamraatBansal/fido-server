@@ -100,8 +100,7 @@ impl UserController {
         let mut conn = pool.get().map_err(|e| AppError::DatabaseConnection(e.to_string()))?;
         let user_id = path.into_inner();
 
-        self.user_service
-            .delete_user(&mut conn, user_id)?;
+        UserService::delete_user(&mut conn, user_id)?;
 
         Ok(HttpResponse::Ok().json(SuccessResponse::new(serde_json::json!({
             "message": "User deleted successfully"
