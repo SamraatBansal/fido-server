@@ -411,8 +411,18 @@ impl FidoService {
 
         // Verify assertion
         let webauthn = self.config.build_webauthn()?;
+        
+        // Create authenticator data for verification
+        let authenticator_data = webauthn_rs::prelude::AuthenticatorData {
+            credential_data: Some(webauthn_rs::prelude::CredentialData {
+                cred_id: stored_credential.credential_id.clone(),
+                public_key: stored_credential.public_key.clone(),
+                sign_count: stored_credential.sign_count as u32,
+            }),
+        };
+        
         let auth_result = webauthn
-            .finish_authentication(&request.credential, &authentication_state)
+            .finish_authentication(&request.credential, &authentication_state, &authenticator_data)
             .map_err(AppError::WebAuthn)?;
 
         // Check for replay attack (sign count validation)
