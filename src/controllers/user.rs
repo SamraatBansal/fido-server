@@ -86,8 +86,7 @@ impl UserController {
         let display_name = req.get("display_name")
             .and_then(|v| v.as_str());
 
-        let user = self.user_service
-            .update_user(&mut conn, user_id, display_name)?;
+        let user = UserService::update_user(&mut conn, user_id, display_name)?;
 
         Ok(HttpResponse::Ok().json(SuccessResponse::new(user)))
     }
