@@ -9,6 +9,7 @@ use webauthn_rs::prelude::*;
 use crate::services::fido::{FidoService, RegistrationStartRequest, RegistrationFinishRequest};
 use crate::config::WebAuthnConfig;
 use crate::schema::responses::SuccessResponse;
+use crate::middleware::ClientIp;
 
 /// Start registration endpoint
 pub async fn start_registration(
