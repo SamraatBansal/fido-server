@@ -19,3 +19,4 @@ pub fn establish_connection(database_url: &str) -> Result<DbPool, r2d2::PoolErro
     let manager = ConnectionManager::<PgConnection>::new(database_url);
     r2d2::Pool::builder().build(manager)
 }
+//test
