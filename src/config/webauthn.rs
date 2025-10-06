@@ -16,7 +16,7 @@ pub struct WebAuthnConfig {
     pub user_verification: UserVerificationPolicy,
     pub authenticator_attachment: Option<AuthenticatorAttachment>,
     pub resident_key: ResidentKeyRequirement,
-    pub pub_key_cred_params: Vec<PublicKeyCredentialParameters>,
+    pub pub_key_cred_params: Vec<webauthn_rs_proto::PublicKeyCredentialParameters>,
 }
 
 impl Default for WebAuthnConfig {
