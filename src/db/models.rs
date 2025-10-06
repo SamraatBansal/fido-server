@@ -7,18 +7,8 @@ use uuid::Uuid;
 use chrono::{DateTime, Utc};
 use crate::db::schema::*;
 
-/// Custom types for enums
-#[derive(SqlType, Debug)]
-#[postgres(type_name = "attestation_type")]
-pub struct AttestationTypeMapping;
-
-#[derive(SqlType, Debug)]
-#[postgres(type_name = "user_verification_type")]
-pub struct UserVerificationTypeMapping;
-
 /// Attestation type enum
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, AsExpression, FromSqlRow)]
-#[diesel(sql_type = AttestationTypeMapping)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum AttestationType {
     /// No attestation
     None,
@@ -35,8 +25,7 @@ pub enum AttestationType {
 }
 
 /// User verification type enum
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, AsExpression, FromSqlRow)]
-#[diesel(sql_type = UserVerificationTypeMapping)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum UserVerificationType {
     /// No user verification
     None,
