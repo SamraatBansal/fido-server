@@ -62,7 +62,7 @@ impl WebAuthnConfig {
         Ok(webauthn)
     }
 
-    pub fn build_registration_options(&self, user: User) -> Result<CreationChallengeResponse> {
+    pub fn build_registration_options(&self, user: webauthn_rs_proto::User) -> Result<CreationChallengeResponse> {
         let webauthn = self.build_webauthn()?;
         
         let (ccr, reg_state) = webauthn
