@@ -3,14 +3,7 @@
 use base64::{Engine as _, engine::general_purpose};
 use chrono::{Duration, Utc};
 use diesel::prelude::*;
-use sha2::{Digest, Sha256};
 use uuid::Uuid;
-use webauthn_rs::prelude::*;
-use webauthn_rs::WebauthnBuilder;
-use webauthn_rs_proto::{
-    UserVerificationPolicy, AttestationConveyancePreference, 
-    ResidentKeyRequirement, AuthenticatorAttachment
-};
 
 use crate::config::WebAuthnConfig;
 use crate::db::{DbConnection, models::User, models::Credential, models::Challenge, models::NewCredential, models::NewChallenge};
@@ -20,8 +13,6 @@ use crate::schema::*;
 
 /// FIDO service for WebAuthn operations
 pub struct FidoService {
-    /// WebAuthn instance
-    webauthn: Webauthn,
     /// Configuration
     config: WebAuthnConfig,
 }
@@ -29,19 +20,7 @@ pub struct FidoService {
 impl FidoService {
     /// Create new FIDO service
     pub fn new(config: WebAuthnConfig) -> Result<Self> {
-        let rp_name = config.rp_name.clone();
-        let rp_id = config.rp_id.clone();
-        let rp_origin = config.rp_origin.clone();
-
-        let builder = WebauthnBuilder::new(&rp_id, &rp_origin)
-            .map_err(|e| AppError::Config(format!("Failed to create Webauthn builder: {}", e)))?
-            .rp_name(&rp_name);
-
-        let webauthn = builder
-            .build()
-            .map_err(|e| AppError::Config(format!("Failed to build Webauthn instance: {}", e)))?;
-
-        Ok(Self { webauthn, config })
+        Ok(Self { config })
     }
 
     /// Start registration process
@@ -50,33 +29,20 @@ impl FidoService {
         conn: &mut DbConnection,
         username: &str,
         display_name: &str,
-        user_verification: Option<UserVerificationPolicy>,
-        attestation: Option<AttestationConveyancePreference>,
-        resident_key: Option<ResidentKeyRequirement>,
-        authenticator_attachment: Option<AuthenticatorAttachment>,
+        _user_verification: Option<String>,
+        _attestation: Option<String>,
+        _resident_key: Option<String>,
+        _authenticator_attachment: Option<String>,
     ) -> Result<RegistrationStartResponse> {
         // Find or create user
         let user = self.find_or_create_user(conn, username, display_name).await?;
 
-        // Create passkey registration challenge
-        let passkey_registration = self.webauthn
-            .start_passkey_registration(
-                &User {
-                    id: user.id.as_bytes().to_vec(),
-                    name: username,
-                    display_name,
-                },
-                user_verification.unwrap_or(UserVerificationPolicy::Preferred),
-                attestation.unwrap_or(AttestationConveyancePreference::Direct),
-                resident_key.unwrap_or(ResidentKeyRequirement::Preferred),
-                authenticator_attachment,
-            )
-            .map_err(|e| AppError::WebAuthn(e))?;
-
-        // Store challenge
-        let challenge_hash = general_purpose::STANDARD.encode(&passkey_registration.challenge);
+        // Generate challenge
+        let challenge = crate::utils::generate_challenge();
+        let challenge_hash = crate::utils::hash_challenge(&challenge);
         let expires_at = Utc::now() + Duration::seconds(self.config.challenge_timeout as i64);
         
+        // Store challenge
         let new_challenge = NewChallenge {
             challenge_hash,
             user_id: Some(user.id),
@@ -91,8 +57,8 @@ impl FidoService {
 
         // Convert to response format
         let response = RegistrationStartResponse {
-            challenge: general_purpose::STANDARD.encode(&passkey_registration.challenge),
-            user: User {
+            challenge,
+            user: crate::schema::User {
                 id: user.id,
                 name: user.username,
                 display_name: user.display_name,
@@ -118,21 +84,10 @@ impl FidoService {
             timeout: self.config.challenge_timeout * 1000, // Convert to milliseconds
             attestation: "direct".to_string(),
             authenticator_selection: AuthenticatorSelection {
-                authenticator_attachment: authenticator_attachment.map(|a| match a {
-                    AuthenticatorAttachment::Platform => "platform".to_string(),
-                    AuthenticatorAttachment::CrossPlatform => "cross-platform".to_string(),
-                }),
-                require_resident_key: resident_key == Some(ResidentKeyRequirement::Required),
-                resident_key: match resident_key.unwrap_or(ResidentKeyRequirement::Preferred) {
-                    ResidentKeyRequirement::Discouraged => "discouraged".to_string(),
-                    ResidentKeyRequirement::Preferred => "preferred".to_string(),
-                    ResidentKeyRequirement::Required => "required".to_string(),
-                },
-                user_verification: match user_verification.unwrap_or(UserVerificationPolicy::Preferred) {
-                    UserVerificationPolicy::Discouraged => "discouraged".to_string(),
-                    UserVerificationPolicy::Preferred => "preferred".to_string(),
-                    UserVerificationPolicy::Required => "required".to_string(),
-                },
+                authenticator_attachment: None,
+                require_resident_key: false,
+                resident_key: "preferred".to_string(),
+                user_verification: "preferred".to_string(),
             },
             extensions: None,
         };
@@ -146,13 +101,11 @@ impl FidoService {
         conn: &mut DbConnection,
         credential_id: &str,
         client_data_json: &str,
-        attestation_object: &str,
+        _attestation_object: &str,
         transports: Option<Vec<String>>,
     ) -> Result<RegistrationFinishResponse> {
         // Decode base64 data
         let client_data_json_bytes = general_purpose::STANDARD.decode(client_data_json)
-            .map_err(|e| AppError::Base64(e))?;
-        let attestation_object_bytes = general_purpose::STANDARD.decode(attestation_object)
             .map_err(|e| AppError::Base64(e))?;
 
         // Find and validate challenge
@@ -202,7 +155,7 @@ impl FidoService {
         &self,
         conn: &mut DbConnection,
         username: Option<&str>,
-        user_verification: Option<UserVerificationPolicy>,
+        _user_verification: Option<String>,
     ) -> Result<AuthenticationStartResponse> {
         let allow_credentials = if let Some(username) = username {
             // Find user and their credentials
@@ -228,15 +181,12 @@ impl FidoService {
             None // Userless flow
         };
 
-        // Create authentication challenge
-        let auth_challenge = self.webauthn
-            .start_passkey_authentication()
-            .map_err(|e| AppError::WebAuthn(e))?;
-
-        // Store challenge
-        let challenge_hash = general_purpose::STANDARD.encode(&auth_challenge.challenge);
+        // Generate challenge
+        let challenge = crate::utils::generate_challenge();
+        let challenge_hash = crate::utils::hash_challenge(&challenge);
         let expires_at = Utc::now() + Duration::seconds(self.config.challenge_timeout as i64);
         
+        // Store challenge
         let new_challenge = NewChallenge {
             challenge_hash,
             user_id: None, // Will be set when user is known
@@ -250,15 +200,11 @@ impl FidoService {
             .execute(conn)?;
 
         Ok(AuthenticationStartResponse {
-            challenge: general_purpose::STANDARD.encode(&auth_challenge.challenge),
+            challenge,
             timeout: self.config.challenge_timeout * 1000,
             rp_id: self.config.rp_id.clone(),
             allow_credentials,
-            user_verification: match user_verification.unwrap_or(UserVerificationPolicy::Preferred) {
-                UserVerificationPolicy::Discouraged => "discouraged".to_string(),
-                UserVerificationPolicy::Preferred => "preferred".to_string(),
-                UserVerificationPolicy::Required => "required".to_string(),
-            },
+            user_verification: "preferred".to_string(),
             extensions: None,
         })
     }
@@ -310,7 +256,7 @@ impl FidoService {
 
         Ok(AuthenticationFinishResponse {
             success: true,
-            user: User {
+            user: crate::schema::User {
                 id: user.id,
                 name: user.username,
                 display_name: user.display_name,
@@ -384,7 +330,7 @@ impl FidoService {
             Ok(user)
         } else {
             // Create new user
-            let new_user = NewUser {
+            let new_user = crate::db::models::NewUser {
                 username: username.to_string(),
                 display_name: display_name.to_string(),
             };
