@@ -196,7 +196,7 @@ impl FidoService {
             Some(&request.client_ip.to_string()),
             Some(serde_json::json!({
                 "session_id": request.session_id,
-                "credential_id": base64::encode(&request.credential.raw_id)
+                "credential_id": base64::engine::general_purpose::STANDARD.encode(&request.credential.raw_id)
             })),
         ).await?;
 
@@ -259,7 +259,7 @@ impl FidoService {
             &user.username,
             Some(&request.client_ip.to_string()),
             Some(serde_json::json!({
-                "credential_id": base64::encode(&credential_id),
+                "credential_id": base64::engine::general_purpose::STANDARD.encode(&credential_id),
                 "attestation_format": attestation_result.format,
                 "attestation_verified": attestation_result.verified
             })),
@@ -373,7 +373,7 @@ impl FidoService {
             Some(&request.client_ip.to_string()),
             Some(serde_json::json!({
                 "session_id": request.session_id,
-                "credential_id": base64::encode(&request.credential.raw_id)
+                "credential_id": base64::engine::general_purpose::STANDARD.encode(&request.credential.raw_id)
             })),
         ).await?;
 
@@ -395,7 +395,7 @@ impl FidoService {
                 &user.username,
                 Some(&request.client_ip.to_string()),
                 Some(serde_json::json!({
-                    "credential_id": base64::encode(cred_id),
+                    "credential_id": base64::engine::general_purpose::STANDARD.encode(cred_id),
                     "expected_user_id": user.id,
                     "actual_user_id": stored_credential.user_id
                 })),
@@ -423,7 +423,7 @@ impl FidoService {
                 &user.username,
                 Some(&request.client_ip.to_string()),
                 Some(serde_json::json!({
-                    "credential_id": base64::encode(cred_id),
+                    "credential_id": base64::engine::general_purpose::STANDARD.encode(cred_id),
                     "stored_sign_count": stored_credential.sign_count,
                     "received_sign_count": new_sign_count
                 })),
@@ -453,7 +453,7 @@ impl FidoService {
             &user.username,
             Some(&request.client_ip.to_string()),
             Some(serde_json::json!({
-                "credential_id": base64::encode(cred_id),
+                "credential_id": base64::engine::general_purpose::STANDARD.encode(cred_id),
                 "sign_count": new_sign_count
             })),
         ).await?;
@@ -461,7 +461,7 @@ impl FidoService {
         Ok(AuthenticationResult {
             user_id: stored_credential.user_id,
             session_token,
-            credential_id: base64::encode(stored_credential.credential_id),
+            credential_id: base64::engine::general_purpose::STANDARD.encode(stored_credential.credential_id),
         })
     }
 
