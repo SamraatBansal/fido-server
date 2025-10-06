@@ -1,9 +1,6 @@
 //! Diesel schema definitions
 
 diesel::table! {
-    use diesel::sql_types::*;
-    use crate::db::models::UserVerificationTypeMapping;
-
     users (id) {
         id -> Uuid,
         username -> Varchar,
@@ -14,29 +11,24 @@ diesel::table! {
 }
 
 diesel::table! {
-    use diesel::sql_types::*;
-    use crate::db::models::AttestationTypeMapping;
-
     credentials (id) {
         id -> Uuid,
         user_id -> Uuid,
         credential_id -> Bytea,
         public_key -> Bytea,
         sign_count -> Int8,
-        attestation_type -> AttestationTypeMapping,
+        attestation_type -> Text,
         transports -> Array<Text>,
         created_at -> Timestamptz,
         last_used_at -> Nullable<Timestamptz>,
         backup_eligible -> Bool,
         backup_state -> Bool,
-        user_verification_type -> UserVerificationTypeMapping,
+        user_verification_type -> Text,
         aaguid -> Nullable<Bytea>,
     }
 }
 
 diesel::table! {
-    use diesel::sql_types::*;
-
     challenges (id) {
         id -> Uuid,
         challenge_hash -> Varchar,
