@@ -4,6 +4,7 @@ use actix_web::{web, HttpResponse, Result as ActixResult};
 use uuid::Uuid;
 
 use crate::db::DbPool;
+use crate::error::AppError;
 use crate::schema::*;
 use crate::services::fido::FidoService;
 
