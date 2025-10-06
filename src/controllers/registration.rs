@@ -16,7 +16,7 @@ pub async fn start_registration(
     fido_service: web::Data<Arc<FidoService>>,
     webauthn_config: web::Data<Arc<WebAuthnConfig>>,
     req: web::Json<serde_json::Value>,
-    client_ip: web::ReqData<IpAddr>,
+    client_ip: ClientIp,
 ) -> Result<HttpResponse> {
     // Parse request
     let username = req.get("username")
@@ -78,7 +78,7 @@ pub async fn start_registration(
 pub async fn finish_registration(
     fido_service: web::Data<Arc<FidoService>>,
     req: web::Json<serde_json::Value>,
-    client_ip: web::ReqData<IpAddr>,
+    client_ip: ClientIp,
 ) -> Result<HttpResponse> {
     // Parse credential from request
     let credential_data = req.get("credential")
