@@ -50,9 +50,7 @@ pub async fn start_registration(
         })
         .unwrap_or(webauthn_config.attestation_preference);
 
-    let client_ip = client_ip.as_ref()
-        .copied()
-        .unwrap_or_else(|| "127.0.0.1".parse().unwrap());
+    let client_ip = client_ip.0;
 
     let request = RegistrationStartRequest {
         username,
@@ -92,9 +90,7 @@ pub async fn finish_registration(
         .ok_or_else(|| actix_web::error::ErrorBadRequest("Missing session_id"))?
         .to_string();
 
-    let client_ip = client_ip.as_ref()
-        .copied()
-        .unwrap_or_else(|| "127.0.0.1".parse().unwrap());
+    let client_ip = client_ip.0;
 
     let request = RegistrationFinishRequest {
         credential,
