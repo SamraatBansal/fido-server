@@ -2,10 +2,7 @@
 
 use diesel::pg::PgConnection;
 use diesel::r2d2::{ConnectionManager, Pool, PooledConnection};
-use diesel::result::Error as DieselError;
 use std::env;
-use uuid::Uuid;
-use chrono::{DateTime, Utc};
 
 pub mod models;
 pub mod schema;
