@@ -53,7 +53,7 @@ impl WebAuthnConfig {
         let rp_origin = Url::parse(&self.rp_origin)
             .map_err(|e| crate::error::AppError::InvalidRequest(format!("Invalid origin: {}", e)))?;
 
-        let webauthn = WebAuthn::new(
+        let webauthn = Webauthn::new(
             rp_id,
             self.rp_name.clone(),
             rp_origin,
