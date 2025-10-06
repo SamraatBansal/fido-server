@@ -49,6 +49,7 @@ sha2 = "0.10"
 ring = "0.17"
 jsonwebtoken = "9.3"
 argon2 = "0.5"
+serde_cbor = "0.11"
 
 # Configuration
 config = "0.14"
