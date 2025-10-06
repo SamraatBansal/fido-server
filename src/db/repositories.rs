@@ -7,7 +7,7 @@ use uuid::Uuid;
 
 use crate::db::models::*;
 use crate::error::{AppError, Result};
-use crate::schema::{credentials, sessions, users};
+use crate::schema::generated::{credentials, sessions, users};
 use crate::services::session::ChallengeData;
 use crate::DbPool;
 use chrono::{DateTime, Utc};
