@@ -137,8 +137,7 @@ impl UserController {
         let mut conn = pool.get().map_err(|e| AppError::DatabaseConnection(e.to_string()))?;
         let user_id = path.into_inner();
 
-        let user_with_creds = self.user_service
-            .get_user_with_credentials(&mut conn, user_id)?
+        let user_with_creds = UserService::get_user_with_credentials(&mut conn, user_id)?
             .ok_or_else(|| AppError::NotFound("User not found".to_string()))?;
 
         Ok(HttpResponse::Ok().json(SuccessResponse::new(user_with_creds)))
