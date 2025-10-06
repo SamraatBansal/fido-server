@@ -28,7 +28,7 @@ impl UserController {
         pool: web::Data<DbPool>,
         req: web::Json<serde_json::Value>,
     ) -> ActixResult<HttpResponse> {
-        let mut conn = pool.get().map_err(|e| AppError::DatabaseConnection(e))?;
+        let mut conn = pool.get().map_err(|e| AppError::DatabaseConnection(e.to_string()))?;
 
         let username = req.get("username")
             .and_then(|v| v.as_str())
@@ -50,7 +50,7 @@ impl UserController {
         pool: web::Data<DbPool>,
         path: web::Path<Uuid>,
     ) -> ActixResult<HttpResponse> {
-        let mut conn = pool.get().map_err(|e| AppError::DatabaseConnection(e))?;
+        let mut conn = pool.get().map_err(|e| AppError::DatabaseConnection(e.to_string()))?;
         let user_id = path.into_inner();
 
         let user = self.user_service
@@ -66,7 +66,7 @@ impl UserController {
         pool: web::Data<DbPool>,
         path: web::Path<String>,
     ) -> ActixResult<HttpResponse> {
-        let mut conn = pool.get().map_err(|e| AppError::DatabaseConnection(e))?;
+        let mut conn = pool.get().map_err(|e| AppError::DatabaseConnection(e.to_string()))?;
         let username = path.into_inner();
 
         let user = self.user_service
@@ -83,7 +83,7 @@ impl UserController {
         path: web::Path<Uuid>,
         req: web::Json<serde_json::Value>,
     ) -> ActixResult<HttpResponse> {
-        let mut conn = pool.get().map_err(|e| AppError::DatabaseConnection(e))?;
+        let mut conn = pool.get().map_err(|e| AppError::DatabaseConnection(e.to_string()))?;
         let user_id = path.into_inner();
 
         let display_name = req.get("display_name")
@@ -101,7 +101,7 @@ impl UserController {
         pool: web::Data<DbPool>,
         path: web::Path<Uuid>,
     ) -> ActixResult<HttpResponse> {
-        let mut conn = pool.get().map_err(|e| AppError::DatabaseConnection(e))?;
+        let mut conn = pool.get().map_err(|e| AppError::DatabaseConnection(e.to_string()))?;
         let user_id = path.into_inner();
 
         self.user_service
@@ -118,7 +118,7 @@ impl UserController {
         pool: web::Data<DbPool>,
         query: web::Query<serde_json::Value>,
     ) -> ActixResult<HttpResponse> {
-        let mut conn = pool.get().map_err(|e| AppError::DatabaseConnection(e))?;
+        let mut conn = pool.get().map_err(|e| AppError::DatabaseConnection(e.to_string()))?;
 
         let limit = query.get("limit")
             .and_then(|v| v.as_i64())
@@ -140,7 +140,7 @@ impl UserController {
         pool: web::Data<DbPool>,
         path: web::Path<Uuid>,
     ) -> ActixResult<HttpResponse> {
-        let mut conn = pool.get().map_err(|e| AppError::DatabaseConnection(e))?;
+        let mut conn = pool.get().map_err(|e| AppError::DatabaseConnection(e.to_string()))?;
         let user_id = path.into_inner();
 
         let user_with_creds = self.user_service
