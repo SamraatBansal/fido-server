@@ -46,7 +46,7 @@ impl RateLimiter {
 /// Rate limiting middleware
 pub async fn rate_limit_middleware(
     req: ServiceRequest,
-    next: Next<impl actix_web::MessageBody>,
+    next: Next<impl MessageBody>,
 ) -> Result<actix_web::HttpResponse, Error> {
     // Get client IP
     let client_ip = req
@@ -69,7 +69,7 @@ pub async fn rate_limit_middleware(
 /// Rate limiting middleware with custom configuration
 pub async fn rate_limit_with_config(
     req: ServiceRequest,
-    next: Next<impl actix_web::MessageBody>,
+    next: Next<impl MessageBody>,
     max_requests: u32,
     window_secs: u64,
 ) -> Result<actix_web::HttpResponse, Error> {
