@@ -1,6 +1,12 @@
-//! Common test utilities and setup
+//! Common test utilities, fixtures, and helpers
 
-pub mod test_setup;
+pub mod fixtures;
+pub mod helpers;
+pub mod mocks;
+pub mod test_data;
 
-// Re-export for convenience
-pub use test_setup::*;
+// Re-export commonly used items
+pub use fixtures::*;
+pub use helpers::*;
+pub use mocks::*;
+pub use test_data::*;
