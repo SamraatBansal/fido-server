@@ -5,7 +5,7 @@ use actix_web::{
     http::header,
     Error, HttpResponse,
 };
-use futures_util::future::LocalBoxFuture;
+use futures::future::LocalBoxFuture;
 use std::future::ready;
 
 /// Security headers middleware
