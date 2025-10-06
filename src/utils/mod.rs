@@ -1,9 +1,7 @@
-//! Utility functions
+//! Utility modules for the FIDO server
 
+pub mod audit;
 pub mod crypto;
-pub mod time;
-pub mod validation;
 
+pub use audit::*;
 pub use crypto::*;
-pub use time::*;
-pub use validation::*;
