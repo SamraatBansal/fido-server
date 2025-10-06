@@ -4,6 +4,7 @@ use actix_web::{web, HttpResponse, Result};
 use serde_json::json;
 use std::sync::Arc;
 use webauthn_rs::prelude::*;
+use webauthn_rs_proto::*;
 
 use crate::services::fido::{FidoService, RegistrationStartRequest, RegistrationFinishRequest};
 use crate::config::WebAuthnConfig;
