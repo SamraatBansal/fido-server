@@ -111,8 +111,7 @@ where
                 "error": "rate_limit_exceeded",
                 "message": "Rate limit exceeded. Please try again later."
             }));
-            let (req, _) = req.into_parts();
-            let response = req.into_response(response);
+            let response = response.into_response();
             return Box::pin(async { Ok(response) });
         }
 
