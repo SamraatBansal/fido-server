@@ -72,7 +72,7 @@ where
     type Error = Error;
     type Transform = RateLimitMiddlewareService<S>;
     type InitError = ();
-    type Future = ready::Ready<Result<Self::Transform, Self::InitError>>;
+    type Future = std::future::Ready<Result<Self::Transform, Self::InitError>>;
 
     fn new_transform(&self, service: S) -> Self::Future {
         ready(Ok(RateLimitMiddlewareService {
