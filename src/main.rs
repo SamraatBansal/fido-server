@@ -2,7 +2,7 @@
 
 use actix_web::{middleware::Logger, App, HttpServer, web};
 use std::io;
-use fido_server::{config::load_config, db::init_pool, error::AppError};
+use fido_server::{config::load_config, db::init_pool, services::fido::FidoService};
 
 #[actix_web::main]
 async fn main() -> io::Result<()> {
@@ -44,7 +44,7 @@ async fn main() -> io::Result<()> {
         loop {
             interval.tick().await;
             if let Ok(mut conn) = cleanup_pool.get() {
-                if let Err(e) = fido_server::services::FidoService::new(config.webauthn.clone())
+                if let Err(e) = FidoService::new(config.webauthn.clone())
                     .unwrap()
                     .cleanup_expired_challenges(&mut conn).await
                 {
