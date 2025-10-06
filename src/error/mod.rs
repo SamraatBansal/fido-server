@@ -145,7 +145,7 @@ impl ResponseError for AppError {
                     "message": format!("Configuration error: {}", msg)
                 }))
             }
-            AppError::Internal(msg) => {
+            AppError::Internal(_msg) => {
                 HttpResponse::InternalServerError().json(serde_json::json!({
                     "error": "internal_error",
                     "message": "An internal server error occurred"
