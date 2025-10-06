@@ -1,8 +1,6 @@
 //! CORS middleware configuration
 
 use actix_cors::Cors;
-use actix_web::dev::ServiceRequest;
-use actix_web::Error;
 use crate::config::ServerConfig;
 
 /// Configure CORS middleware
