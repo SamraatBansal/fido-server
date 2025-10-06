@@ -123,8 +123,7 @@ impl UserController {
             .and_then(|v| v.as_i64())
             .map(|v| v as i64);
 
-        let users = self.user_service
-            .list_users(&mut conn, limit, offset)?;
+        let users = UserService::list_users(&mut conn, limit, offset)?;
 
         Ok(HttpResponse::Ok().json(SuccessResponse::new(users)))
     }
