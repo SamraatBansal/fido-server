@@ -1,5 +1,7 @@
 //! Diesel schema file
 
+pub mod responses;
+
 table! {
     users (id) {
         id -> Uuid,
