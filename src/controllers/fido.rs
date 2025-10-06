@@ -156,33 +156,3 @@ impl FidoController {
     }
 }
 
-/// Configure FIDO routes
-pub fn configure(cfg: &mut web::ServiceConfig, controller: web::Data<FidoController>) {
-    cfg.service(
-        web::scope("/api/v1")
-            .route("/register/start", web::post().to({
-                let controller = controller.clone();
-                move |pool, req| controller.start_registration(pool, req)
-            }))
-            .route("/register/finish", web::post().to({
-                let controller = controller.clone();
-                move |pool, req| controller.finish_registration(pool, req)
-            }))
-            .route("/authenticate/start", web::post().to({
-                let controller = controller.clone();
-                move |pool, req| controller.start_authentication(pool, req)
-            }))
-            .route("/authenticate/finish", web::post().to({
-                let controller = controller.clone();
-                move |pool, req| controller.finish_authentication(pool, req)
-            }))
-            .route("/credentials/{user_id}", web::get().to({
-                let controller = controller.clone();
-                move |pool, path| controller.list_credentials(pool, path)
-            }))
-            .route("/credentials/{user_id}/{credential_id}", web::delete().to({
-                let controller = controller.clone();
-                move |pool, path| controller.delete_credential(pool, path)
-            })),
-    );
-}
