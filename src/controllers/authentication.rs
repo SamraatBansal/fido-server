@@ -9,6 +9,7 @@ use webauthn_rs::prelude::*;
 use crate::services::fido::{FidoService, AuthenticationStartRequest, AuthenticationFinishRequest};
 use crate::config::WebAuthnConfig;
 use crate::schema::responses::SuccessResponse;
+use crate::middleware::ClientIp;
 
 /// Start authentication endpoint
 pub async fn start_authentication(
