@@ -266,7 +266,7 @@ impl FidoService {
         ).await?;
 
         Ok(RegistrationResult {
-            credential_id: base64::encode(stored_credential.credential_id),
+            credential_id: base64::engine::general_purpose::STANDARD.encode(stored_credential.credential_id),
             user_id: stored_credential.user_id,
             attestation_result,
         })
