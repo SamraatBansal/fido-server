@@ -30,15 +30,15 @@ impl Default for WebAuthnConfig {
             authenticator_attachment: None,
             resident_key: ResidentKeyRequirement::Discouraged,
             pub_key_cred_params: vec![
-                PublicKeyCredentialParameters::Ec2 {
-                    curve: Ec2Curve::ES256,
+                webauthn_rs_proto::PublicKeyCredentialParameters::Ec2 {
+                    curve: webauthn_rs_proto::Ec2Curve::ES256,
                 },
-                PublicKeyCredentialParameters::Rsa {
+                webauthn_rs_proto::PublicKeyCredentialParameters::Rsa {
                     modulus_length: 2048,
-                    padding: RsaSignaturePadding::Pkcs1v15Sha256,
+                    padding: webauthn_rs_proto::RsaSignaturePadding::Pkcs1v15Sha256,
                 },
-                PublicKeyCredentialParameters::EdDSA {
-                    curve: EdDSACurve::Ed25519,
+                webauthn_rs_proto::PublicKeyCredentialParameters::EdDSA {
+                    curve: webauthn_rs_proto::EdDSACurve::Ed25519,
                 },
             ],
         }
