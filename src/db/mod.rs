@@ -30,8 +30,7 @@ pub fn get_database_url() -> String {
 }
 
 /// Run database migrations
-pub fn run_migrations(pool: &DbPool) -> Result<(), crate::error::AppError> {
-    let mut conn = pool.get().map_err(|e| crate::error::AppError::DatabaseConnection(e.to_string()))?;
+pub fn run_migrations(_pool: &DbPool) -> Result<(), crate::error::AppError> {
     // For now, skip migrations until we fix the diesel_migrations issue
     // diesel_migrations::embed_migrations!("migrations");
     // diesel_migrations::run_pending_migrations(&mut conn)?;
