@@ -144,37 +144,3 @@ impl UserController {
     }
 }
 
-/// Configure user routes
-pub fn configure(cfg: &mut web::ServiceConfig, controller: web::Data<UserController>) {
-    cfg.service(
-        web::scope("/api/v1/users")
-            .route("", web::post().to({
-                let controller = controller.clone();
-                move |pool, req| controller.create_user(pool, req)
-            }))
-            .route("/{user_id}", web::get().to({
-                let controller = controller.clone();
-                move |pool, path| controller.get_user(pool, path)
-            }))
-            .route("/username/{username}", web::get().to({
-                let controller = controller.clone();
-                move |pool, path| controller.get_user_by_username(pool, path)
-            }))
-            .route("/{user_id}", web::put().to({
-                let controller = controller.clone();
-                move |pool, path, req| controller.update_user(pool, path, req)
-            }))
-            .route("/{user_id}", web::delete().to({
-                let controller = controller.clone();
-                move |pool, path| controller.delete_user(pool, path)
-            }))
-            .route("", web::get().to({
-                let controller = controller.clone();
-                move |pool, query| controller.list_users(pool, query)
-            }))
-            .route("/{user_id}/credentials", web::get().to({
-                let controller = controller.clone();
-                move |pool, path| controller.get_user_with_credentials(pool, path)
-            })),
-    );
-}
