@@ -61,19 +61,25 @@ pub struct NewCredential {
 #[diesel(table_name = sessions)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Session {
-    pub id: Uuid,
-    pub user_id: Option<Uuid>,
+    pub id: String,
+    pub user_id: Uuid,
     pub challenge: String,
-    pub session_type: String,
-    pub expires_at: DateTime<Utc>,
+    pub operation_type: String,
+    pub user_verification: String,
+    pub client_data: Option<String>,
     pub created_at: DateTime<Utc>,
+    pub expires_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Insertable, Serialize, Deserialize)]
 #[diesel(table_name = sessions)]
 pub struct NewSession {
-    pub user_id: Option<Uuid>,
+    pub id: String,
+    pub user_id: Uuid,
     pub challenge: String,
-    pub session_type: String,
+    pub operation_type: String,
+    pub user_verification: String,
+    pub client_data: Option<String>,
+    pub created_at: DateTime<Utc>,
     pub expires_at: DateTime<Utc>,
 }
