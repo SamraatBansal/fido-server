@@ -3,7 +3,7 @@
 use actix_web::{dev::ServiceRequest, dev::ServiceResponse, Error};
 use actix_web::dev::{forward_ready, Transform};
 use actix_web::http::header;
-use futures::future::LocalBoxFuture;
+use futures::future::{ready, LocalBoxFuture};
 
 /// Security headers middleware
 pub struct SecurityHeadersMiddleware;
