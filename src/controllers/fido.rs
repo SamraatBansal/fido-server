@@ -36,7 +36,7 @@ impl FidoController {
         let user_verification = match req.user_verification.as_deref() {
             Some("required") => Some(UserVerificationPolicy::Required),
             Some("preferred") => Some(UserVerificationPolicy::Preferred),
-            Some("discouraged") => Some(UserVerificationPolicy::Discouraged),
+            Some("discouraged") => Some(UserVerificationPolicy::Preferred), // Fallback to preferred
             _ => Some(UserVerificationPolicy::Preferred),
         };
 
@@ -108,7 +108,7 @@ impl FidoController {
         let user_verification = match req.user_verification.as_deref() {
             Some("required") => Some(UserVerificationPolicy::Required),
             Some("preferred") => Some(UserVerificationPolicy::Preferred),
-            Some("discouraged") => Some(UserVerificationPolicy::Discouraged),
+            Some("discouraged") => Some(UserVerificationPolicy::Preferred), // Fallback to preferred
             _ => Some(UserVerificationPolicy::Preferred),
         };
 
