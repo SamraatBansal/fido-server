@@ -11,6 +11,7 @@ use crate::services::user::UserService;
 /// User controller state
 pub struct UserController {
     /// User service
+    #[allow(dead_code)]
     user_service: UserService,
 }
 
