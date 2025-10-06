@@ -1,463 +1,296 @@
-//! Test fixtures for FIDO2/WebAuthn API testing
+//! Test fixtures and mock data for FIDO2/WebAuthn testing
 
-use crate::common::{TestContext, TestResult, constants::*};
-use serde::{Deserialize, Serialize};
-use base64::{Engine as _, engine::general_purpose};
-use uuid::Uuid;
+use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
 use chrono::{DateTime, Utc};
+use serde_json::json;
+use std::collections::HashMap;
+use uuid::Uuid;
 
-/// Registration start request fixture
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct RegistrationStartRequestFixture {
+/// Test user fixture
+#[derive(Debug, Clone)]
+pub struct TestUser {
+    pub id: Uuid,
     pub username: String,
     pub display_name: String,
-    pub attestation: String,
-    pub authenticator_selection: AuthenticatorSelectionFixture,
+    pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct AuthenticatorSelectionFixture {
-    pub authenticator_attachment: Option<String>,
-    pub require_resident_key: bool,
-    pub user_verification: String,
-}
-
-impl RegistrationStartRequestFixture {
-    pub fn valid() -> Self {
+impl TestUser {
+    pub fn new(username: &str, display_name: &str) -> Self {
         Self {
-            username: TEST_USERNAME.to_string(),
-            display_name: TEST_DISPLAY_NAME.to_string(),
-            attestation: "direct".to_string(),
-            authenticator_selection: AuthenticatorSelectionFixture {
-                authenticator_attachment: Some("platform".to_string()),
-                require_resident_key: false,
-                user_verification: "preferred".to_string(),
-            },
+            id: Uuid::new_v4(),
+            username: username.to_string(),
+            display_name: display_name.to_string(),
+            created_at: Utc::now(),
         }
     }
 
-    pub fn with_username(username: &str) -> Self {
-        let mut fixture = Self::valid();
-        fixture.username = username.to_string();
-        fixture
+    pub fn alice() -> Self {
+        Self::new("alice@example.com", "Alice Smith")
     }
 
-    pub fn with_attestation(attestation: &str) -> Self {
-        let mut fixture = Self::valid();
-        fixture.attestation = attestation.to_string();
-        fixture
-    }
-
-    pub fn invalid_missing_username() -> Self {
-        let mut fixture = Self::valid();
-        fixture.username = "".to_string();
-        fixture
-    }
-
-    pub fn invalid_missing_display_name() -> Self {
-        let mut fixture = Self::valid();
-        fixture.display_name = "".to_string();
-        fixture
-    }
-
-    pub fn invalid_attestation_format() -> Self {
-        let mut fixture = Self::valid();
-        fixture.attestation = "invalid_format".to_string();
-        fixture
-    }
-
-    pub fn oversized_username() -> Self {
-        let mut fixture = Self::valid();
-        fixture.username = "a".repeat(300); // Exceed typical limits
-        fixture
+    pub fn bob() -> Self {
+        Self::new("bob@example.com", "Bob Johnson")
     }
 }
 
-/// Registration start response fixture
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct RegistrationStartResponseFixture {
-    pub challenge: String,
-    pub rp: RpEntityFixture,
-    pub user: UserEntityFixture,
-    pub pub_key_cred_params: Vec<PubKeyCredParamFixture>,
-    pub timeout: u32,
-    pub attestation: String,
-    pub authenticator_selection: AuthenticatorSelectionFixture,
+/// Test credential fixture
+#[derive(Debug, Clone)]
+pub struct TestCredential {
+    pub id: Vec<u8>,
+    pub user_id: Uuid,
+    pub public_key: Vec<u8>,
+    pub sign_count: u64,
+    pub aaguid: Option<Vec<u8>>,
+    pub attestation_type: String,
+    pub transports: Vec<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct RpEntityFixture {
-    pub name: String,
-    pub id: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct UserEntityFixture {
-    pub id: String,
-    pub name: String,
-    pub display_name: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct PubKeyCredParamFixture {
-    #[serde(rename = "type")]
-    pub cred_type: String,
-    pub alg: i32,
-}
-
-impl RegistrationStartResponseFixture {
-    pub fn from_context(context: &TestContext) -> Self {
+impl TestCredential {
+    pub fn new(user_id: Uuid) -> Self {
         Self {
-            challenge: context.challenge.clone(),
-            rp: RpEntityFixture {
-                name: TEST_RP_NAME.to_string(),
-                id: TEST_RP_ID.to_string(),
-            },
-            user: UserEntityFixture {
-                id: general_purpose::URL_SAFE.encode(context.user_id.as_bytes()),
-                name: context.username.clone(),
-                display_name: context.display_name.clone(),
-            },
-            pub_key_cred_params: vec![
-                PubKeyCredParamFixture {
-                    cred_type: "public-key".to_string(),
-                    alg: -7, // ES256
-                },
-                PubKeyCredParamFixture {
-                    cred_type: "public-key".to_string(),
-                    alg: -257, // RS256
-                },
-            ],
-            timeout: 60000,
-            attestation: "direct".to_string(),
-            authenticator_selection: AuthenticatorSelectionFixture {
-                authenticator_attachment: Some("platform".to_string()),
-                require_resident_key: false,
-                user_verification: "preferred".to_string(),
-            },
-        }
-    }
-
-    pub fn invalid_missing_challenge() -> Self {
-        let mut fixture = Self::from_context(&TestContext::default());
-        fixture.challenge = "".to_string();
-        fixture
-    }
-
-    pub fn invalid_missing_rp() -> Self {
-        let mut fixture = Self::from_context(&TestContext::default());
-        fixture.rp.id = "".to_string();
-        fixture
-    }
-
-    pub fn invalid_timeout() -> Self {
-        let mut fixture = Self::from_context(&TestContext::default());
-        fixture.timeout = 0;
-        fixture
-    }
-}
-
-/// Registration finish request fixture
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct RegistrationFinishRequestFixture {
-    pub id: String,
-    pub raw_id: String,
-    pub response: AttestationResponseFixture,
-    #[serde(rename = "type")]
-    pub cred_type: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct AttestationResponseFixture {
-    pub attestation_object: String,
-    pub client_data_json: String,
-}
-
-impl RegistrationFinishRequestFixture {
-    pub fn valid(context: &TestContext) -> Self {
-        Self {
-            id: context.credential_id.clone(),
-            raw_id: context.credential_id.clone(),
-            response: AttestationResponseFixture {
-                attestation_object: create_mock_attestation_object(),
-                client_data_json: create_mock_client_data_json(&context.challenge, "webauthn.create"),
-            },
-            cred_type: "public-key".to_string(),
-        }
-    }
-
-    pub fn with_credential_id(credential_id: &str) -> Self {
-        let mut fixture = Self::valid(&TestContext::default());
-        fixture.id = credential_id.to_string();
-        fixture.raw_id = credential_id.to_string();
-        fixture
-    }
-
-    pub fn invalid_missing_id() -> Self {
-        let mut fixture = Self::valid(&TestContext::default());
-        fixture.id = "".to_string();
-        fixture
-    }
-
-    pub fn invalid_missing_attestation() -> Self {
-        let mut fixture = Self::valid(&TestContext::default());
-        fixture.response.attestation_object = "".to_string();
-        fixture
-    }
-
-    pub fn invalid_missing_client_data() -> Self {
-        let mut fixture = Self::valid(&TestContext::default());
-        fixture.response.client_data_json = "".to_string();
-        fixture
-    }
-
-    pub fn invalid_base64_attestation() -> Self {
-        let mut fixture = Self::valid(&TestContext::default());
-        fixture.response.attestation_object = "invalid_base64!".to_string();
-        fixture
-    }
-
-    pub fn invalid_base64_client_data() -> Self {
-        let mut fixture = Self::valid(&TestContext::default());
-        fixture.response.client_data_json = "invalid_base64!".to_string();
-        fixture
-    }
-
-    pub fn malformed_client_data_json() -> Self {
-        let mut fixture = Self::valid(&TestContext::default());
-        fixture.response.client_data_json = general_purpose::URL_SAFE.encode(b"invalid json");
-        fixture
-    }
-}
-
-/// Registration finish response fixture
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct RegistrationFinishResponseFixture {
-    pub status: String,
-    pub error_message: String,
-}
-
-impl RegistrationFinishResponseFixture {
-    pub fn success() -> Self {
-        Self {
-            status: "ok".to_string(),
-            error_message: "".to_string(),
-        }
-    }
-
-    pub fn error(message: &str) -> Self {
-        Self {
-            status: "error".to_string(),
-            error_message: message.to_string(),
+            id: Uuid::new_v4().as_bytes().to_vec(),
+            user_id,
+            public_key: vec![0x04, 0x01, 0x02, 0x03], // Mock public key
+            sign_count: 0,
+            aaguid: Some(vec![0x00; 16]),
+            attestation_type: "packed".to_string(),
+            transports: vec!["internal".to_string()],
         }
     }
 }
 
-/// Authentication start request fixture
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct AuthenticationStartRequestFixture {
-    pub username: String,
-    pub user_verification: String,
+/// Test challenge fixture
+#[derive(Debug, Clone)]
+pub struct TestChallenge {
+    pub id: Uuid,
+    pub challenge_hash: Vec<u8>,
+    pub user_id: Option<Uuid>,
+    pub challenge_type: String,
+    pub expires_at: DateTime<Utc>,
+    pub created_at: DateTime<Utc>,
 }
 
-impl AuthenticationStartRequestFixture {
-    pub fn valid() -> Self {
+impl TestChallenge {
+    pub fn new_registration(user_id: Uuid) -> Self {
+        let now = Utc::now();
         Self {
-            username: TEST_USERNAME.to_string(),
-            user_verification: "preferred".to_string(),
+            id: Uuid::new_v4(),
+            challenge_hash: Uuid::new_v4().as_bytes().to_vec(),
+            user_id: Some(user_id),
+            challenge_type: "registration".to_string(),
+            expires_at: now + chrono::Duration::minutes(5),
+            created_at: now,
         }
     }
 
-    pub fn with_username(username: &str) -> Self {
-        let mut fixture = Self::valid();
-        fixture.username = username.to_string();
-        fixture
-    }
-
-    pub fn invalid_missing_username() -> Self {
-        let mut fixture = Self::valid();
-        fixture.username = "".to_string();
-        fixture
-    }
-
-    pub fn invalid_user_verification() -> Self {
-        let mut fixture = Self::valid();
-        fixture.user_verification = "invalid".to_string();
-        fixture
-    }
-}
-
-/// Authentication start response fixture
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct AuthenticationStartResponseFixture {
-    pub challenge: String,
-    pub rp_id: String,
-    pub allow_credentials: Vec<AllowCredentialFixture>,
-    pub timeout: u32,
-    pub user_verification: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct AllowCredentialFixture {
-    #[serde(rename = "type")]
-    pub cred_type: String,
-    pub id: String,
-}
-
-impl AuthenticationStartResponseFixture {
-    pub fn from_context(context: &TestContext) -> Self {
+    pub fn new_authentication(user_id: Uuid) -> Self {
+        let now = Utc::now();
         Self {
-            challenge: context.challenge.clone(),
-            rp_id: TEST_RP_ID.to_string(),
-            allow_credentials: vec![AllowCredentialFixture {
-                cred_type: "public-key".to_string(),
-                id: context.credential_id.clone(),
-            }],
-            timeout: 60000,
-            user_verification: "preferred".to_string(),
+            id: Uuid::new_v4(),
+            challenge_hash: Uuid::new_v4().as_bytes().to_vec(),
+            user_id: Some(user_id),
+            challenge_type: "authentication".to_string(),
+            expires_at: now + chrono::Duration::minutes(5),
+            created_at: now,
         }
     }
 
-    pub fn invalid_missing_challenge() -> Self {
-        let mut fixture = Self::from_context(&TestContext::default());
-        fixture.challenge = "".to_string();
-        fixture
-    }
-
-    pub fn invalid_missing_rp_id() -> Self {
-        let mut fixture = Self::from_context(&TestContext::default());
-        fixture.rp_id = "".to_string();
-        fixture
-    }
-
-    pub fn invalid_empty_credentials() -> Self {
-        let mut fixture = Self::from_context(&TestContext::default());
-        fixture.allow_credentials = vec![];
-        fixture
-    }
-}
-
-/// Authentication finish request fixture
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct AuthenticationFinishRequestFixture {
-    pub id: String,
-    pub raw_id: String,
-    pub response: AssertionResponseFixture,
-    #[serde(rename = "type")]
-    pub cred_type: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct AssertionResponseFixture {
-    pub authenticator_data: String,
-    pub client_data_json: String,
-    pub signature: String,
-    pub user_handle: String,
-}
-
-impl AuthenticationFinishRequestFixture {
-    pub fn valid(context: &TestContext) -> Self {
+    pub fn expired() -> Self {
+        let now = Utc::now();
         Self {
-            id: context.credential_id.clone(),
-            raw_id: context.credential_id.clone(),
-            response: AssertionResponseFixture {
-                authenticator_data: create_mock_authenticator_data(),
-                client_data_json: create_mock_client_data_json(&context.challenge, "webauthn.get"),
-                signature: create_mock_signature(),
-                user_handle: general_purpose::URL_SAFE.encode(context.user_id.as_bytes()),
-            },
-            cred_type: "public-key".to_string(),
-        }
-    }
-
-    pub fn with_credential_id(credential_id: &str) -> Self {
-        let mut fixture = Self::valid(&TestContext::default());
-        fixture.id = credential_id.to_string();
-        fixture.raw_id = credential_id.to_string();
-        fixture
-    }
-
-    pub fn invalid_missing_id() -> Self {
-        let mut fixture = Self::valid(&TestContext::default());
-        fixture.id = "".to_string();
-        fixture
-    }
-
-    pub fn invalid_missing_signature() -> Self {
-        let mut fixture = Self::valid(&TestContext::default());
-        fixture.response.signature = "".to_string();
-        fixture
-    }
-
-    pub fn invalid_missing_authenticator_data() -> Self {
-        let mut fixture = Self::valid(&TestContext::default());
-        fixture.response.authenticator_data = "".to_string();
-        fixture
-    }
-
-    pub fn invalid_base64_signature() -> Self {
-        let mut fixture = Self::valid(&TestContext::default());
-        fixture.response.signature = "invalid_base64!".to_string();
-        fixture
-    }
-}
-
-/// Authentication finish response fixture
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct AuthenticationFinishResponseFixture {
-    pub status: String,
-    pub error_message: String,
-}
-
-impl AuthenticationFinishResponseFixture {
-    pub fn success() -> Self {
-        Self {
-            status: "ok".to_string(),
-            error_message: "".to_string(),
-        }
-    }
-
-    pub fn error(message: &str) -> Self {
-        Self {
-            status: "error".to_string(),
-            error_message: message.to_string(),
+            id: Uuid::new_v4(),
+            challenge_hash: Uuid::new_v4().as_bytes().to_vec(),
+            user_id: None,
+            challenge_type: "registration".to_string(),
+            expires_at: now - chrono::Duration::minutes(1),
+            created_at: now - chrono::Duration::minutes(6),
         }
     }
 }
 
-// Helper functions to create mock data
-fn create_mock_attestation_object() -> String {
-    // Mock CBOR-encoded attestation object (simplified for testing)
-    let mock_data = vec![
-        0xa3, // Map with 3 items
-        0x01, 0x26, // fmt: "packed"
-        0x02, 0x58, 0x40, // attStmt: bytes(64)
-    ];
-    general_purpose::URL_SAFE.encode(&mock_data)
+/// Valid attestation options response fixture
+pub fn valid_attestation_options_response() -> serde_json::Value {
+    json!({
+        "challenge": URL_SAFE_NO_PAD.encode("valid_challenge_12345"),
+        "rp": {
+            "name": "Test RP",
+            "id": "localhost"
+        },
+        "user": {
+            "id": URL_SAFE_NO_PAD.encode("user_id_123"),
+            "name": "alice@example.com",
+            "displayName": "Alice Smith"
+        },
+        "pubKeyCredParams": [
+            {"type": "public-key", "alg": -7},
+            {"type": "public-key", "alg": -257}
+        ],
+        "timeout": 60000,
+        "attestation": "direct",
+        "authenticatorSelection": {
+            "authenticatorAttachment": "platform",
+            "requireResidentKey": false,
+            "userVerification": "preferred"
+        }
+    })
 }
 
-fn create_mock_client_data_json(challenge: &str, ceremony_type: &str) -> String {
-    let client_data = serde_json::json!({
-        "type": ceremony_type,
-        "challenge": challenge,
-        "origin": "http://localhost:8080",
-        "crossOrigin": false
-    });
-    general_purpose::URL_SAFE.encode(client_data.to_string().as_bytes())
+/// Valid assertion options response fixture
+pub fn valid_assertion_options_response() -> serde_json::Value {
+    json!({
+        "challenge": URL_SAFE_NO_PAD.encode("valid_challenge_67890"),
+        "rpId": "localhost",
+        "allowCredentials": [
+            {
+                "type": "public-key",
+                "id": URL_SAFE_NO_PAD.encode("credential_id_123"),
+                "transports": ["internal", "usb"]
+            }
+        ],
+        "timeout": 60000,
+        "userVerification": "preferred"
+    })
 }
 
-fn create_mock_authenticator_data() -> String {
-    // Mock authenticator data (37 bytes minimum)
-    let mock_data = vec![
-        0x49960de5880e8c687434170f6476605b, // RP ID hash (mock)
-        0x01, // Flags (user present)
-        0x00, 0x00, 0x00, 0x01, // Sign count
-    ];
-    general_purpose::URL_SAFE.encode(&mock_data)
+/// Valid attestation result request fixture
+pub fn valid_attestation_result_request() -> serde_json::Value {
+    json!({
+        "id": URL_SAFE_NO_PAD.encode("credential_id_123"),
+        "rawId": URL_SAFE_NO_PAD.encode("credential_id_123"),
+        "response": {
+            "attestationObject": URL_SAFE_NO_PAD.encode("mock_attestation_object"),
+            "clientDataJSON": URL_SAFE_NO_PAD.encode("{\"type\":\"webauthn.create\",\"challenge\":\"valid_challenge_12345\",\"origin\":\"http://localhost:8080\"}")
+        },
+        "type": "public-key"
+    })
 }
 
-fn create_mock_signature() -> String {
-    // Mock ECDSA signature
-    let mock_sig = vec![0u8; 64]; // 64 bytes for ECDSA signature
-    general_purpose::URL_SAFE.encode(&mock_sig)
+/// Valid assertion result request fixture
+pub fn valid_assertion_result_request() -> serde_json::Value {
+    json!({
+        "id": URL_SAFE_NO_PAD.encode("credential_id_123"),
+        "rawId": URL_SAFE_NO_PAD.encode("credential_id_123"),
+        "response": {
+            "authenticatorData": URL_SAFE_NO_PAD.encode("mock_authenticator_data"),
+            "clientDataJSON": URL_SAFE_NO_PAD.encode("{\"type\":\"webauthn.get\",\"challenge\":\"valid_challenge_67890\",\"origin\":\"http://localhost:8080\"}"),
+            "signature": URL_SAFE_NO_PAD.encode("mock_signature"),
+            "userHandle": URL_SAFE_NO_PAD.encode("user_id_123")
+        },
+        "type": "public-key"
+    })
+}
+
+/// Invalid attestation result request with malformed base64
+pub fn invalid_attestation_result_malformed_base64() -> serde_json::Value {
+    json!({
+        "id": "invalid_base64!",
+        "rawId": URL_SAFE_NO_PAD.encode("credential_id_123"),
+        "response": {
+            "attestationObject": "invalid_base64!",
+            "clientDataJSON": URL_SAFE_NO_PAD.encode("{\"type\":\"webauthn.create\"}")
+        },
+        "type": "public-key"
+    })
+}
+
+/// Invalid assertion result request with missing fields
+pub fn invalid_assertion_result_missing_fields() -> serde_json::Value {
+    json!({
+        "id": URL_SAFE_NO_PAD.encode("credential_id_123"),
+        "rawId": URL_SAFE_NO_PAD.encode("credential_id_123"),
+        "response": {
+            "authenticatorData": URL_SAFE_NO_PAD.encode("mock_authenticator_data"),
+            "clientDataJSON": URL_SAFE_NO_PAD.encode("{\"type\":\"webauthn.get\"}")
+            // Missing signature and userHandle
+        },
+        "type": "public-key"
+    })
+}
+
+/// Oversized payload fixture for testing size limits
+pub fn oversized_payload() -> serde_json::Value {
+    let large_string = "x".repeat(2_000_000); // 2MB string
+    json!({
+        "id": URL_SAFE_NO_PAD.encode("credential_id_123"),
+        "rawId": URL_SAFE_NO_PAD.encode("credential_id_123"),
+        "response": {
+            "attestationObject": URL_SAFE_NO_PAD.encode(&large_string),
+            "clientDataJSON": URL_SAFE_NO_PAD.encode(&format!("{{\"type\":\"webauthn.create\",\"data\":\"{}\"}}", large_string))
+        },
+        "type": "public-key"
+    })
+}
+
+/// Empty values fixture for testing validation
+pub fn empty_values_payload() -> serde_json::Value {
+    json!({
+        "id": "",
+        "rawId": "",
+        "response": {
+            "attestationObject": "",
+            "clientDataJSON": ""
+        },
+        "type": ""
+    })
+}
+
+/// Tampered client data fixture for security testing
+pub fn tampered_client_data() -> serde_json::Value {
+    json!({
+        "id": URL_SAFE_NO_PAD.encode("credential_id_123"),
+        "rawId": URL_SAFE_NO_PAD.encode("credential_id_123"),
+        "response": {
+            "attestationObject": URL_SAFE_NO_PAD.encode("mock_attestation_object"),
+            "clientDataJSON": URL_SAFE_NO_PAD.encode("{\"type\":\"webauthn.create\",\"challenge\":\"different_challenge\",\"origin\":\"http://malicious.com\"}")
+        },
+        "type": "public-key"
+    })
+}
+
+/// Replay attack fixture with old challenge
+pub fn replay_attack_payload() -> serde_json::Value {
+    json!({
+        "id": URL_SAFE_NO_PAD.encode("credential_id_123"),
+        "rawId": URL_SAFE_NO_PAD.encode("credential_id_123"),
+        "response": {
+            "authenticatorData": URL_SAFE_NO_PAD.encode("mock_authenticator_data"),
+            "clientDataJSON": URL_SAFE_NO_PAD.encode("{\"type\":\"webauthn.get\",\"challenge\":\"old_used_challenge\",\"origin\":\"http://localhost:8080\"}"),
+            "signature": URL_SAFE_NO_PAD.encode("mock_signature"),
+            "userHandle": URL_SAFE_NO_PAD.encode("user_id_123")
+        },
+        "type": "public-key"
+    })
+}
+
+/// Invalid RP ID fixture for testing origin validation
+pub fn invalid_rp_id_payload() -> serde_json::Value {
+    json!({
+        "id": URL_SAFE_NO_PAD.encode("credential_id_123"),
+        "rawId": URL_SAFE_NO_PAD.encode("credential_id_123"),
+        "response": {
+            "attestationObject": URL_SAFE_NO_PAD.encode("mock_attestation_object"),
+            "clientDataJSON": URL_SAFE_NO_PAD.encode("{\"type\":\"webauthn.create\",\"challenge\":\"valid_challenge_12345\",\"origin\":\"http://evil.com\"}")
+        },
+        "type": "public-key"
+    })
+}
+
+/// Test database configuration
+pub fn test_database_config() -> HashMap<String, String> {
+    let mut config = HashMap::new();
+    config.insert("database_url".to_string(), "postgresql://test:test@localhost:5432/fido_test".to_string());
+    config.insert("max_connections".to_string(), "5".to_string());
+    config.insert("min_connections".to_string(), "1".to_string());
+    config
+}
+
+/// Test WebAuthn configuration
+pub fn test_webauthn_config() -> HashMap<String, String> {
+    let mut config = HashMap::new();
+    config.insert("rp_name".to_string(), "Test RP".to_string());
+    config.insert("rp_id".to_string(), "localhost".to_string());
+    config.insert("rp_origin".to_string(), "http://localhost:8080".to_string());
+    config.insert("challenge_timeout_seconds".to_string(), "300".to_string());
+    config
 }
