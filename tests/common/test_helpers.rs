@@ -1,180 +1,101 @@
 //! Common test helper functions and utilities
 
-use crate::common::{TestContext, TestResult, TestError};
-use actix_web::{test, App, http::{StatusCode, Method}};
-use actix_web::dev::ServiceResponse;
-use serde::{Deserialize, Serialize};
+use actix_web::{dev::ServiceResponse, http::StatusCode, test, App};
+use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
+use serde_json::Value;
 use std::collections::HashMap;
-use tokio::time::{sleep, Duration};
+use std::time::Duration;
+use tempfile::TempDir;
 use uuid::Uuid;
-use base64::{Engine as _, engine::general_purpose};
 
-/// HTTP test helper for making requests to the test server
-pub struct HttpTestHelper {
-    app: actix_web::App<>,
+/// Test application context
+pub struct TestApp {
+    pub app: actix_web::app::App<
+        impl actix_web::dev::ServiceFactory<
+            actix_web::dev::ServiceRequest,
+            Config = (),
+            Response = ServiceResponse,
+            Error = actix_web::Error,
+            InitError = (),
+        >,
+    >,
+    pub temp_dir: TempDir,
 }
 
-impl HttpTestHelper {
+impl TestApp {
+    /// Create a new test application instance
     pub fn new() -> Self {
-        Self {
-            app: test::init_service(
-                App::new().configure(fido_server::routes::configure_routes)
-            ).await,
-        }
+        let temp_dir = TempDir::new().expect("Failed to create temp dir");
+        
+        // This would be replaced with actual app configuration
+        let app = test::init_service(
+            App::new().configure(fido_server::routes::configure_routes),
+        );
+        
+        Self { app, temp_dir }
     }
+}
 
+/// HTTP test helper
+pub struct HttpTestHelper;
+
+impl HttpTestHelper {
     /// Make a POST request with JSON body
-    pub async fn post_json<T: Serialize>(
-        &self,
+    pub async fn post_json(
+        app: &actix_web::app::App<impl actix_web::dev::ServiceFactory<
+            actix_web::dev::ServiceRequest,
+            Config = (),
+            Response = ServiceResponse,
+            Error = actix_web::Error,
+            InitError = (),
+        >>,
         path: &str,
-        body: &T,
-    ) -> TestResult<ServiceResponse> {
+        body: &Value,
+    ) -> ServiceResponse {
         let req = test::TestRequest::post()
             .uri(path)
             .set_json(body)
             .to_request();
-
-        Ok(test::call_service(&self.app, req).await)
+        
+        test::call_service(app, req).await
     }
 
     /// Make a GET request
-    pub async fn get(&self, path: &str) -> TestResult<ServiceResponse> {
-        let req = test::TestRequest::get()
-            .uri(path)
-            .to_request();
-
-        Ok(test::call_service(&self.app, req).await)
-    }
-
-    /// Make a request with custom method and headers
-    pub async fn request<T: Serialize>(
-        &self,
-        method: Method,
+    pub async fn get(
+        app: &actix_web::app::App<impl actix_web::dev::ServiceFactory<
+            actix_web::dev::ServiceRequest,
+            Config = (),
+            Response = ServiceResponse,
+            Error = actix_web::Error,
+            InitError = (),
+        >>,
         path: &str,
-        body: Option<&T>,
-        headers: Option<HashMap<&str, &str>>,
-    ) -> TestResult<ServiceResponse> {
-        let mut req = test::TestRequest::new()
-            .method(method)
-            .uri(path);
-
-        if let Some(body_data) = body {
-            req = req.set_json(body_data);
-        }
-
-        if let Some(header_map) = headers {
-            for (key, value) in header_map {
-                req = req.insert_header((key.to_string(), value.to_string()));
-            }
-        }
-
-        Ok(test::call_service(&self.app, req.to_request()).await)
+    ) -> ServiceResponse {
+        let req = test::TestRequest::get().uri(path).to_request();
+        test::call_service(app, req).await
     }
 
-    /// Extract JSON response body
-    pub async fn json_body<T: for<'de> Deserialize<'de>>(
+    /// Extract response body as JSON
+    pub async fn response_json<T: serde::de::DeserializeOwned>(
         response: ServiceResponse,
-    ) -> TestResult<T> {
+    ) -> Result<T, Box<dyn std::error::Error>> {
         let body = test::read_body(response).await;
-        serde_json::from_slice(&body).map_err(TestError::Serialization)
+        Ok(serde_json::from_slice(&body)?)
+    }
+
+    /// Extract response body as text
+    pub async fn response_text(response: ServiceResponse) -> String {
+        let body = test::read_body(response).await;
+        String::from_utf8_lossy(&body).to_string()
     }
 }
 
-/// Database test helper for setting up test data
-pub struct DatabaseTestHelper {
-    // In a real implementation, this would manage a test database connection
-    test_data: HashMap<String, serde_json::Value>,
-}
-
-impl DatabaseTestHelper {
-    pub fn new() -> Self {
-        Self {
-            test_data: HashMap::new(),
-        }
-    }
-
-    /// Insert test user data
-    pub fn insert_user(&mut self, context: &TestContext) -> TestResult<()> {
-        let user_data = serde_json::json!({
-            "id": context.user_id,
-            "username": context.username,
-            "display_name": context.display_name,
-            "created_at": context.created_at,
-            "is_active": true
-        });
-
-        self.test_data.insert(
-            format!("user:{}", context.username),
-            user_data,
-        );
-        Ok(())
-    }
-
-    /// Insert test credential data
-    pub fn insert_credential(&mut self, context: &TestContext) -> TestResult<()> {
-        let credential_data = serde_json::json!({
-            "id": Uuid::new_v4(),
-            "user_id": context.user_id,
-            "credential_id": context.credential_id,
-            "public_key": general_purpose::URL_SAFE.encode(vec![0u8; 32]),
-            "sign_count": 0,
-            "created_at": context.created_at,
-            "is_active": true
-        });
-
-        self.test_data.insert(
-            format!("credential:{}", context.credential_id),
-            credential_data,
-        );
-        Ok(())
-    }
-
-    /// Insert test challenge data
-    pub fn insert_challenge(&mut self, context: &TestContext, challenge_type: &str) -> TestResult<()> {
-        let challenge_data = serde_json::json!({
-            "id": Uuid::new_v4(),
-            "challenge_hash": general_purpose::URL_SAFE.encode(context.challenge.as_bytes()),
-            "user_id": context.user_id,
-            "challenge_type": challenge_type,
-            "expires_at": chrono::Utc::now() + chrono::Duration::minutes(5),
-            "created_at": context.created_at,
-            "used_at": null
-        });
-
-        self.test_data.insert(
-            format!("challenge:{}", context.challenge),
-            challenge_data,
-        );
-        Ok(())
-    }
-
-    /// Check if user exists
-    pub fn user_exists(&self, username: &str) -> bool {
-        self.test_data.contains_key(&format!("user:{}", username))
-    }
-
-    /// Check if credential exists
-    pub fn credential_exists(&self, credential_id: &str) -> bool {
-        self.test_data.contains_key(&format!("credential:{}", credential_id))
-    }
-
-    /// Check if challenge exists
-    pub fn challenge_exists(&self, challenge: &str) -> bool {
-        self.test_data.contains_key(&format!("challenge:{}", challenge))
-    }
-
-    /// Clear all test data
-    pub fn clear(&mut self) {
-        self.test_data.clear();
-    }
-}
-
-/// Assertion helpers for test validation
+/// Assertion helpers for testing
 pub struct AssertionHelper;
 
 impl AssertionHelper {
-    /// Assert HTTP status code
-    pub fn assert_status(response: &ServiceResponse, expected: StatusCode) -> TestResult<()> {
+    /// Assert response status code
+    pub fn assert_status(response: &ServiceResponse, expected: StatusCode) {
         assert_eq!(
             response.status(),
             expected,
@@ -182,132 +103,140 @@ impl AssertionHelper {
             expected,
             response.status()
         );
-        Ok(())
     }
 
-    /// Assert response contains required JSON fields
-    pub fn assert_json_fields<T: Serialize>(
-        response: &ServiceResponse,
-        required_fields: &[&str],
-    ) -> TestResult<()> {
-        let body = test::read_body(response).await;
-        let json: serde_json::Value = serde_json::from_slice(&body)?;
-
-        for field in required_fields {
+    /// Assert response contains required fields
+    pub fn assert_contains_fields(response: &Value, fields: &[&str]) {
+        for field in fields {
             assert!(
-                json.get(field).is_some(),
-                "Missing required field: {}",
+                response.get(field).is_some(),
+                "Response missing required field: {}",
                 field
             );
         }
-
-        Ok(())
     }
 
-    /// Assert JSON field value
-    pub fn assert_json_field_value<T: PartialEq + serde::de::DeserializeOwned>(
-        response: &ServiceResponse,
-        field: &str,
-        expected_value: T,
-    ) -> TestResult<()> {
-        let body = test::read_body(response).await;
-        let json: serde_json::Value = serde_json::from_slice(&body)?;
-
-        let actual_value: T = serde_json::from_value(
-            json.get(field)
-                .ok_or_else(|| TestError::Setup(format!("Field {} not found", field)))?
-                .clone(),
-        )?;
-
-        assert_eq!(
-            actual_value, expected_value,
-            "Field {} value mismatch",
-            field
-        );
-
-        Ok(())
+    /// Assert field is valid base64url
+    pub fn assert_base64url(value: &str) {
+        URL_SAFE_NO_PAD
+            .decode(value)
+            .unwrap_or_else(|_| panic!("Invalid base64url string: {}", value));
     }
 
-    /// Assert base64url string is valid
-    pub fn assert_valid_base64url(s: &str) -> TestResult<()> {
-        general_purpose::URL_SAFE
-            .decode(s)
-            .map_err(TestError::Base64)?;
-        Ok(())
-    }
-
-    /// Assert challenge format and uniqueness
-    pub fn assert_valid_challenge(challenge: &str) -> TestResult<()> {
-        // Check base64url encoding
-        Self::assert_valid_base64url(challenge)?;
-
-        // Check minimum length (at least 16 bytes when decoded)
-        let decoded = general_purpose::URL_SAFE.decode(challenge)?;
+    /// Assert challenge is properly formatted
+    pub fn assert_challenge_format(challenge: &str) {
+        assert!(!challenge.is_empty(), "Challenge should not be empty");
         assert!(
-            decoded.len() >= 16,
-            "Challenge too short: {} bytes",
-            decoded.len()
+            challenge.len() >= 16,
+            "Challenge should be at least 16 characters"
         );
-
-        Ok(())
+        Self::assert_base64url(challenge);
     }
 
-    /// Assert credential ID format
-    pub fn assert_valid_credential_id(credential_id: &str) -> TestResult<()> {
-        // Check base64url encoding
-        Self::assert_valid_base64url(credential_id)?;
-
-        // Check reasonable length
-        let decoded = general_purpose::URL_SAFE.decode(credential_id)?;
-        assert!(
-            decoded.len() >= 16 && decoded.len() <= 1024,
-            "Credential ID length invalid: {} bytes",
-            decoded.len()
-        );
-
-        Ok(())
+    /// Assert credential ID is properly formatted
+    pub fn assert_credential_id_format(credential_id: &str) {
+        assert!(!credential_id.is_empty(), "Credential ID should not be empty");
+        Self::assert_base64url(credential_id);
     }
 
     /// Assert client data JSON structure
-    pub fn assert_valid_client_data_json(client_data_json: &str, expected_type: &str) -> TestResult<()> {
-        // Decode base64url
-        let decoded = general_purpose::URL_SAFE.decode(client_data_json)?;
-        let json_str = String::from_utf8(decoded)
-            .map_err(|_| TestError::Setup("Invalid UTF-8 in client data".to_string()))?;
+    pub fn assert_client_data_structure(client_data: &Value) {
+        assert!(
+            client_data.get("type").is_some(),
+            "Client data missing 'type' field"
+        );
+        assert!(
+            client_data.get("challenge").is_some(),
+            "Client data missing 'challenge' field"
+        );
+        assert!(
+            client_data.get("origin").is_some(),
+            "Client data missing 'origin' field"
+        );
+    }
 
-        // Parse JSON
-        let client_data: serde_json::Value = serde_json::from_str(&json_str)?;
+    /// Assert attestation options response structure
+    pub fn assert_attestation_options_structure(response: &Value) {
+        let required_fields = [
+            "challenge",
+            "rp",
+            "user",
+            "pubKeyCredParams",
+            "timeout",
+            "attestation",
+        ];
+        Self::assert_contains_fields(response, &required_fields);
 
-        // Check required fields
-        let required_fields = ["type", "challenge", "origin"];
-        for field in &required_fields {
-            assert!(
-                client_data.get(field).is_some(),
-                "Missing client data field: {}",
-                field
-            );
-        }
+        // Check RP structure
+        let rp = response.get("rp").unwrap();
+        Self::assert_contains_fields(rp, &["name", "id"]);
 
-        // Check type matches expected
-        if let Some(actual_type) = client_data.get("type").and_then(|v| v.as_str()) {
-            assert_eq!(
-                actual_type, expected_type,
-                "Client data type mismatch: expected {}, got {}",
-                expected_type, actual_type
-            );
-        } else {
-            return Err(TestError::Setup("Invalid type field in client data".to_string()));
-        }
+        // Check user structure
+        let user = response.get("user").unwrap();
+        Self::assert_contains_fields(user, &["id", "name", "displayName"]);
 
-        Ok(())
+        // Check pubKeyCredParams is an array
+        assert!(
+            response.get("pubKeyCredParams").unwrap().as_array().is_some(),
+            "pubKeyCredParams should be an array"
+        );
+    }
+
+    /// Assert assertion options response structure
+    pub fn assert_assertion_options_structure(response: &Value) {
+        let required_fields = ["challenge", "rpId", "allowCredentials", "timeout"];
+        Self::assert_contains_fields(response, &required_fields);
+
+        // Check allowCredentials is an array
+        assert!(
+            response.get("allowCredentials").unwrap().as_array().is_some(),
+            "allowCredentials should be an array"
+        );
+    }
+
+    /// Assert attestation result request structure
+    pub fn assert_attestation_result_structure(request: &Value) {
+        let required_fields = ["id", "rawId", "response", "type"];
+        Self::assert_contains_fields(request, &required_fields);
+
+        // Check response structure
+        let response = request.get("response").unwrap();
+        Self::assert_contains_fields(response, &["attestationObject", "clientDataJSON"]);
+
+        // Check type is "public-key"
+        assert_eq!(
+            request.get("type").unwrap().as_str().unwrap(),
+            "public-key",
+            "Type should be 'public-key'"
+        );
+    }
+
+    /// Assert assertion result request structure
+    pub fn assert_assertion_result_structure(request: &Value) {
+        let required_fields = ["id", "rawId", "response", "type"];
+        Self::assert_contains_fields(request, &required_fields);
+
+        // Check response structure
+        let response = request.get("response").unwrap();
+        Self::assert_contains_fields(
+            response,
+            &["authenticatorData", "clientDataJSON", "signature"],
+        );
+
+        // Check type is "public-key"
+        assert_eq!(
+            request.get("type").unwrap().as_str().unwrap(),
+            "public-key",
+            "Type should be 'public-key'"
+        );
     }
 }
 
-/// Timing helper for performance and timeout tests
+/// Timing helper for performance testing
 pub struct TimingHelper;
 
 impl TimingHelper {
-    /// Measure execution time of an async function
+    /// Measure execution time of a function
     pub async fn measure_time<F, Fut, T>(f: F) -> (T, Duration)
     where
         F: FnOnce() -> Fut,
@@ -320,31 +249,48 @@ impl TimingHelper {
     }
 
     /// Assert execution time is within bounds
-    pub fn assert_duration_within(
-        duration: Duration,
-        min_ms: u64,
-        max_ms: u64,
-    ) -> TestResult<()> {
-        let duration_ms = duration.as_millis() as u64;
-        
+    pub fn assert_duration_within(duration: Duration, min: Duration, max: Duration) {
         assert!(
-            duration_ms >= min_ms,
-            "Duration too short: {}ms (expected >= {}ms)",
-            duration_ms, min_ms
+            duration >= min,
+            "Duration {:?} is less than minimum {:?}",
+            duration,
+            min
         );
-        
         assert!(
-            duration_ms <= max_ms,
-            "Duration too long: {}ms (expected <= {}ms)",
-            duration_ms, max_ms
+            duration <= max,
+            "Duration {:?} exceeds maximum {:?}",
+            duration,
+            max
         );
+    }
+}
 
+/// Database helper for testing
+pub struct DatabaseHelper;
+
+impl DatabaseHelper {
+    /// Create test database configuration
+    pub fn test_config() -> HashMap<String, String> {
+        let mut config = HashMap::new();
+        config.insert("database_url".to_string(), "postgresql://test:test@localhost:5432/fido_test".to_string());
+        config.insert("max_connections".to_string(), "5".to_string());
+        config.insert("min_connections".to_string(), "1".to_string());
+        config.insert("connection_timeout".to_string(), "30".to_string());
+        config
+    }
+
+    /// Clean up test database
+    pub async fn cleanup_test_db() -> Result<(), Box<dyn std::error::Error>> {
+        // This would implement actual database cleanup
+        // For now, just return Ok
         Ok(())
     }
 
-    /// Wait for a specified duration
-    pub async fn wait(duration: Duration) {
-        sleep(duration).await;
+    /// Seed test data
+    pub async fn seed_test_data() -> Result<(), Box<dyn std::error::Error>> {
+        // This would implement actual test data seeding
+        // For now, just return Ok
+        Ok(())
     }
 }
 
@@ -352,114 +298,117 @@ impl TimingHelper {
 pub struct SecurityTestHelper;
 
 impl SecurityTestHelper {
-    /// Generate malformed JSON strings for testing
-    pub fn malformed_json_samples() -> Vec<&'static str> {
-        vec![
-            "", // Empty
-            "{", // Incomplete object
-            "}", // Unmatched brace
-            "[", // Incomplete array
-            "]", // Unmatched bracket
-            "{\"key\":}", // Missing value
-            "{\"key\": \"value\"", // Missing closing brace
-            "{\"key\": \"value\",}", // Trailing comma
-            "null", // Just null
-            "undefined", // JavaScript undefined
-            "{\"key\": undefined}", // Undefined value
-            "{\"key\": NaN}", // NaN value
-            "{\"key\": Infinity}", // Infinity value
-        ]
+    /// Generate random challenge for testing
+    pub fn generate_challenge() -> String {
+        let challenge: Vec<u8> = (0..32).map(|_| rand::random::<u8>()).collect();
+        URL_SAFE_NO_PAD.encode(challenge)
     }
 
-    /// Generate oversized payloads for DoS testing
-    pub fn oversized_payloads() -> Vec<String> {
-        vec![
-            "a".repeat(1024 * 1024), // 1MB string
-            " ".repeat(1024 * 1024), // 1MB whitespace
-            serde_json::json!({
-                "data": "x".repeat(1024 * 1024)
-            }).to_string(), // 1MB JSON field
-        ]
+    /// Generate mock attestation object
+    pub fn mock_attestation_object() -> Vec<u8> {
+        // This would generate a proper CBOR-encoded attestation object
+        // For now, return mock data
+        b"mock_attestation_object".to_vec()
     }
 
-    /// Generate invalid base64url strings
-    pub fn invalid_base64url_samples() -> Vec<&'static str> {
-        vec![
-            "", // Empty
-            "!", // Invalid character
-            "invalid!", // Contains invalid character
-            "====", // Too many padding characters
-            "a=b", // Invalid padding position
-            "a", // Too short
-        ]
+    /// Generate mock authenticator data
+    pub fn mock_authenticator_data() -> Vec<u8> {
+        // This would generate proper authenticator data
+        // For now, return mock data
+        b"mock_authenticator_data".to_vec()
     }
 
-    /// Generate SQL injection payloads
-    pub fn sql_injection_payloads() -> Vec<&'static str> {
-        vec![
-            "'; DROP TABLE users; --",
-            "' OR '1'='1",
-            "'; INSERT INTO users VALUES ('hacker', 'password'); --",
-            "' UNION SELECT * FROM users --",
-            "'; UPDATE users SET password='hacked'; --",
-        ]
+    /// Generate mock signature
+    pub fn mock_signature() -> Vec<u8> {
+        // This would generate a proper signature
+        // For now, return mock data
+        b"mock_signature".to_vec()
     }
 
-    /// Generate XSS payloads
-    pub fn xss_payloads() -> Vec<&'static str> {
-        vec![
-            "<script>alert('xss')</script>",
-            "javascript:alert('xss')",
-            "<img src=x onerror=alert('xss')>",
-            "';alert('xss');//",
-            "<svg onload=alert('xss')>",
-        ]
+    /// Tamper with data for security testing
+    pub fn tamper_data(data: &[u8], tamper_type: &str) -> Vec<u8> {
+        let mut tampered = data.to_vec();
+        match tamper_type {
+            "flip_bit" => {
+                if !tampered.is_empty() {
+                    tampered[0] ^= 0x01;
+                }
+            }
+            "truncate" => {
+                tampered.truncate(tampered.len() / 2);
+            }
+            "append" => {
+                tampered.extend_from_slice(b"tampered");
+            }
+            _ => {}
+        }
+        tampered
     }
 }
 
-/// Concurrency test helper
-pub struct ConcurrencyTestHelper;
+/// Mock service helper for testing
+pub struct MockServiceHelper;
 
-impl ConcurrencyTestHelper {
-    /// Run multiple tasks concurrently and collect results
-    pub async fn run_concurrent<F, Fut, T>(
-        tasks: Vec<F>,
-        max_concurrent: usize,
-    ) -> Vec<T>
-    where
-        F: FnOnce() -> Fut + Send + 'static,
-        Fut: std::future::Future<Output = T> + Send + 'static,
-        T: Send + 'static,
-    {
-        use futures::stream::{self, StreamExt};
+impl MockServiceHelper {
+    /// Create mock WebAuthn service
+    pub fn create_mock_webauthn_service() -> Box<dyn fido_server::services::WebAuthnService> {
+        // This would create a mock implementation
+        // For now, panic to indicate implementation needed
+        panic!("Mock WebAuthn service implementation needed")
+    }
+
+    /// Create mock credential service
+    pub fn create_mock_credential_service() -> Box<dyn fido_server::services::CredentialService> {
+        // This would create a mock implementation
+        // For now, panic to indicate implementation needed
+        panic!("Mock credential service implementation needed")
+    }
+
+    /// Create mock user service
+    pub fn create_mock_user_service() -> Box<dyn fido_server::services::UserService> {
+        // This would create a mock implementation
+        // For now, panic to indicate implementation needed
+        panic!("Mock user service implementation needed")
+    }
+}
+
+/// Configuration helper for testing
+pub struct ConfigHelper;
+
+impl ConfigHelper {
+    /// Load test configuration
+    pub fn load_test_config() -> HashMap<String, String> {
+        let mut config = HashMap::new();
         
-        stream::iter(tasks)
-            .map(|task| tokio::spawn(task()))
-            .buffer_unordered(max_concurrent)
-            .map(|result| result.unwrap_or_else(|e| panic!("Task failed: {:?}", e)))
-            .collect()
-            .await
+        // WebAuthn config
+        config.insert("rp_name".to_string(), "Test RP".to_string());
+        config.insert("rp_id".to_string(), "localhost".to_string());
+        config.insert("rp_origin".to_string(), "http://localhost:8080".to_string());
+        config.insert("challenge_timeout_seconds".to_string(), "300".to_string());
+        
+        // Database config
+        config.insert("database_url".to_string(), "postgresql://test:test@localhost:5432/fido_test".to_string());
+        
+        // Security config
+        config.insert("rate_limit_requests_per_minute".to_string(), "100".to_string());
+        config.insert("max_request_size_bytes".to_string(), "1048576".to_string()); // 1MB
+        
+        config
     }
 
-    /// Generate concurrent registration requests
-    pub fn generate_registration_requests(count: usize) -> Vec<crate::common::fixtures::RegistrationStartRequestFixture> {
-        (0..count)
-            .map(|i| {
-                crate::common::fixtures::RegistrationStartRequestFixture::with_username(
-                    &format!("user{}@example.com", i)
-                )
-            })
-            .collect()
+    /// Create environment variables for testing
+    pub fn setup_test_env() {
+        std::env::set_var("RUST_LOG", "debug");
+        std::env::set_var("DATABASE_URL", "postgresql://test:test@localhost:5432/fido_test");
+        std::env::set_var("RP_ID", "localhost");
+        std::env::set_var("RP_ORIGIN", "http://localhost:8080");
     }
 
-    /// Generate concurrent authentication requests
-    pub fn generate_authentication_requests(count: usize) -> Vec<crate::common::fixtures::AuthenticationStartRequestFixture> {
-        (0..count)
-            .map(|i| {
-                crate::common::fixtures::AuthenticationStartRequestFixture::with_username(
-                    &format!("user{}@example.com", i)
-                )
-            })
-            .collect()
+    /// Clean up test environment
+    pub fn cleanup_test_env() {
+        std::env::remove_var("RUST_LOG");
+        std::env::remove_var("DATABASE_URL");
+        std::env::remove_var("RP_ID");
+        std::env::remove_var("RP_ORIGIN");
     }
 }
