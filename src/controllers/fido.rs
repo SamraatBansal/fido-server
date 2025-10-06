@@ -31,7 +31,7 @@ impl FidoController {
         pool: web::Data<DbPool>,
         req: web::Json<RegistrationStartRequest>,
     ) -> ActixResult<HttpResponse> {
-        let mut conn = pool.get().map_err(|e| AppError::DatabaseConnection(e))?;
+        let mut conn = pool.get().map_err(|e| AppError::DatabaseConnection(e.to_string()))?;
 
         let user_verification = match req.user_verification.as_deref() {
             Some("required") => Some(UserVerificationPolicy::Required),
@@ -82,7 +82,7 @@ impl FidoController {
         pool: web::Data<DbPool>,
         req: web::Json<RegistrationFinishRequest>,
     ) -> ActixResult<HttpResponse> {
-        let mut conn = pool.get().map_err(|e| AppError::DatabaseConnection(e))?;
+        let mut conn = pool.get().map_err(|e| AppError::DatabaseConnection(e.to_string()))?;
 
         let response = self.fido_service
             .finish_registration(
@@ -103,7 +103,7 @@ impl FidoController {
         pool: web::Data<DbPool>,
         req: web::Json<AuthenticationStartRequest>,
     ) -> ActixResult<HttpResponse> {
-        let mut conn = pool.get().map_err(|e| AppError::DatabaseConnection(e))?;
+        let mut conn = pool.get().map_err(|e| AppError::DatabaseConnection(e.to_string()))?;
 
         let user_verification = match req.user_verification.as_deref() {
             Some("required") => Some(UserVerificationPolicy::Required),
@@ -129,7 +129,7 @@ impl FidoController {
         pool: web::Data<DbPool>,
         req: web::Json<AuthenticationFinishRequest>,
     ) -> ActixResult<HttpResponse> {
-        let mut conn = pool.get().map_err(|e| AppError::DatabaseConnection(e))?;
+        let mut conn = pool.get().map_err(|e| AppError::DatabaseConnection(e.to_string()))?;
 
         let response = self.fido_service
             .finish_authentication(
@@ -151,7 +151,7 @@ impl FidoController {
         pool: web::Data<DbPool>,
         path: web::Path<Uuid>,
     ) -> ActixResult<HttpResponse> {
-        let mut conn = pool.get().map_err(|e| AppError::DatabaseConnection(e))?;
+        let mut conn = pool.get().map_err(|e| AppError::DatabaseConnection(e.to_string()))?;
         let user_id = path.into_inner();
 
         let credentials = self.fido_service
@@ -172,7 +172,7 @@ impl FidoController {
         pool: web::Data<DbPool>,
         path: web::Path<(Uuid, String)>,
     ) -> ActixResult<HttpResponse> {
-        let mut conn = pool.get().map_err(|e| AppError::DatabaseConnection(e))?;
+        let mut conn = pool.get().map_err(|e| AppError::DatabaseConnection(e.to_string()))?;
         let (user_id, credential_id) = path.into_inner();
 
         self.fido_service
