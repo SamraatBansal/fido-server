@@ -13,7 +13,7 @@ pub enum AppError {
 
     /// Database connection errors
     #[error("Database connection error: {0}")]
-    DatabaseConnection(#[from] diesel::result::ConnectionError),
+    DatabaseConnection(String),
 
     /// WebAuthn errors
     #[error("WebAuthn error: {0}")]
