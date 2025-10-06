@@ -21,3 +21,4 @@ pub use crate::services::{
     SecureSessionManager, AttestationVerifier, JwtManager, AuditLogger
 };
 pub use crate::db::repositories::{UserRepository, CredentialRepository, SessionRepository};
+pub use crate::db::connection::DbPool;
