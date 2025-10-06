@@ -46,7 +46,7 @@ impl Default for WebAuthnConfig {
 }
 
 impl WebAuthnConfig {
-    pub fn build_webauthn(&self) -> Result<WebAuthn> {
+    pub fn build_webauthn(&self) -> Result<Webauthn> {
         let rp_id = RpId::from_str(&self.rp_id)
             .map_err(|e| crate::error::AppError::InvalidRequest(format!("Invalid RP ID: {}", e)))?;
         
