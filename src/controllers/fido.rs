@@ -44,7 +44,7 @@ impl FidoController {
             Some("none") => Some(AttestationConveyancePreference::None),
             Some("indirect") => Some(AttestationConveyancePreference::Indirect),
             Some("direct") => Some(AttestationConveyancePreference::Direct),
-            Some("enterprise") => Some(AttestationConveyancePreference::Enterprise),
+            Some("enterprise") => Some(AttestationConveyancePreference::Direct), // Fallback to direct
             _ => Some(AttestationConveyancePreference::Direct),
         };
 
