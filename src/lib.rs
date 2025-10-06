@@ -18,7 +18,8 @@ pub use error::{AppError, Result};
 pub use crate::config::{AppConfig, DatabaseConfig, WebAuthnConfig};
 pub use crate::services::{
     FidoService, UserService, CredentialService, 
-    SecureSessionManager, AttestationVerifier, JwtManager, AuditLogger
+    SecureSessionManager, AttestationVerifier
 };
+pub use crate::utils::{JwtManager, AuditLogger};
 pub use crate::db::repositories::{UserRepository, CredentialRepository, SessionRepository};
 pub use crate::db::connection::DbPool;
