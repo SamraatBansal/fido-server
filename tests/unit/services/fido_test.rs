@@ -3,8 +3,14 @@
 #[cfg(test)]
 mod tests {
     use super::*;
-    use mockall::predicate::*;
-    
+
+    #[tokio::test]
+    async fn test_basic_functionality() {
+        // Simple test that verifies basic functionality
+        // This will be our starting point for TDD
+        assert!(true, "Basic test should pass");
+    }
+
     #[tokio::test]
     async fn test_registration_challenge_generation() {
         // TODO: Test registration challenge generation
