@@ -58,6 +58,27 @@ pub enum AppError {
 
     #[error("Internal server error: {0}")]
     Internal(String),
+
+    #[error("Invalid session: {0}")]
+    InvalidSession(String),
+
+    #[error("Too many sessions")]
+    TooManySessions(String),
+
+    #[error("Invalid token: {0}")]
+    InvalidToken(String),
+
+    #[error("Invalid attestation: {0}")]
+    InvalidAttestation(String),
+
+    #[error("Invalid encryption: {0}")]
+    InvalidEncryption(String),
+
+    #[error("Invalid password: {0}")]
+    InvalidPassword(String),
+
+    #[error("Replay attack detected")]
+    ReplayAttack,
 }
 
 impl ResponseError for AppError {
