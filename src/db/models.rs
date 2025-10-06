@@ -101,6 +101,52 @@ impl From<UserVerificationType> for &'static str {
     }
 }
 
+// Implement ToSql and FromSql for AttestationType
+impl<DB> diesel::serialize::ToSql<AttestationTypeMapping, DB> for AttestationType
+where
+    DB: diesel::backend::Backend,
+    str: diesel::serialize::ToSql<diesel::sql_types::Text, DB>,
+{
+    fn to_sql<'b>(&'b self, out: &mut diesel::serialize::Output<'b, '_, DB>) -> diesel::serialize::Result {
+        let str_val: &'static str = (*self).into();
+        <str as diesel::serialize::ToSql<diesel::sql_types::Text, DB>>::to_sql(str_val, out)
+    }
+}
+
+impl<DB> diesel::deserialize::FromSql<AttestationTypeMapping, DB> for AttestationType
+where
+    DB: diesel::backend::Backend,
+    String: diesel::deserialize::FromSql<diesel::sql_types::Text, DB>,
+{
+    fn from_sql(bytes: Option<&<DB as diesel::backend::Backend>::RawValue>) -> diesel::deserialize::Result<Self> {
+        let string = <String as diesel::deserialize::FromSql<diesel::sql_types::Text, DB>>::from_sql(bytes)?;
+        Ok(AttestationType::from(string.as_str()))
+    }
+}
+
+// Implement ToSql and FromSql for UserVerificationType
+impl<DB> diesel::serialize::ToSql<UserVerificationTypeMapping, DB> for UserVerificationType
+where
+    DB: diesel::backend::Backend,
+    str: diesel::serialize::ToSql<diesel::sql_types::Text, DB>,
+{
+    fn to_sql<'b>(&'b self, out: &mut diesel::serialize::Output<'b, '_, DB>) -> diesel::serialize::Result {
+        let str_val: &'static str = (*self).into();
+        <str as diesel::serialize::ToSql<diesel::sql_types::Text, DB>>::to_sql(str_val, out)
+    }
+}
+
+impl<DB> diesel::deserialize::FromSql<UserVerificationTypeMapping, DB> for UserVerificationType
+where
+    DB: diesel::backend::Backend,
+    String: diesel::deserialize::FromSql<diesel::sql_types::Text, DB>,
+{
+    fn from_sql(bytes: Option<&<DB as diesel::backend::Backend>::RawValue>) -> diesel::deserialize::Result<Self> {
+        let string = <String as diesel::deserialize::FromSql<diesel::sql_types::Text, DB>>::from_sql(bytes)?;
+        Ok(UserVerificationType::from(string.as_str()))
+    }
+}
+
 /// User model
 #[derive(Debug, Clone, Queryable, Selectable, Serialize, Deserialize)]
 #[diesel(table_name = users)]
