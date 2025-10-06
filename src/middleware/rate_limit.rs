@@ -1,6 +1,6 @@
 //! Rate limiting middleware
 
-use actix_web::{dev::ServiceRequest, Error, HttpMessage};
+use actix_web::{dev::ServiceRequest, Error, body::MessageBody};
 use actix_web_lab::middleware::Next;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
