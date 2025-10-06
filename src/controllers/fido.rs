@@ -130,9 +130,10 @@ impl FidoController {
             .list_credentials(&mut conn, user_id)
             .await?;
 
+        let total = credentials.len();
         let response = ListCredentialsResponse {
             credentials,
-            total: credentials.len(),
+            total,
         };
 
         Ok(HttpResponse::Ok().json(SuccessResponse::new(response)))
