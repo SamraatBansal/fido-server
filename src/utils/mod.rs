@@ -1,4 +1,4 @@
-//! Utility modules for the FIDO server
+//! Utility modules
 
 pub mod audit;
 pub mod crypto;
