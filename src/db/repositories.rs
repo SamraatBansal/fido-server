@@ -3,6 +3,7 @@
 use async_trait::async_trait;
 use diesel::prelude::*;
 use std::sync::Arc;
+use uuid::Uuid;
 
 use crate::db::models::*;
 use crate::error::{AppError, Result};
