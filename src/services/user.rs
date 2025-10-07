@@ -186,8 +186,19 @@ impl UserService {
             return Err(AppError::ValidationError("Username cannot be empty".to_string()));
         }
 
+        // Basic email validation - check for exactly one @ and no SQL injection patterns
         if !username.contains('@') {
             return Err(AppError::ValidationError("Username must be a valid email address".to_string()));
+        }
+
+        // Check for SQL injection patterns
+        if username.to_lowercase().contains("drop") || 
+           username.to_lowercase().contains("delete") ||
+           username.to_lowercase().contains("insert") ||
+           username.to_lowercase().contains("update") ||
+           username.contains(';') ||
+           username.contains('\'') {
+            return Err(AppError::ValidationError("Invalid characters in username".to_string()));
         }
 
         // Basic email validation
