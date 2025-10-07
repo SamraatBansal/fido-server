@@ -92,8 +92,20 @@ mod tests {
 
     #[test]
     fn test_error_response_validation() {
-        let error_response = ErrorResponse {
-            error: fido_server::schema::common::ErrorDetails {
+        let error_response = ErrorResponse::new("Invalid input data".to_string(), 400);
+
+        // Test serialization
+        let serialized = serde_json::to_string(&error_response).unwrap();
+        let deserialized: ErrorResponse = serde_json::from_str(&serialized).unwrap();
+
+        assert_eq!(deserialized.error, error_response.error);
+        assert_eq!(deserialized.status, error_response.status);
+    }
+
+    #[test]
+    fn test_detailed_error_response_validation() {
+        let error_response = DetailedErrorResponse {
+            error: ErrorDetails {
                 code: "VALIDATION_ERROR".to_string(),
                 message: "Invalid input data".to_string(),
                 details: Some(serde_json::json!({"field": "username"})),
@@ -104,7 +116,7 @@ mod tests {
 
         // Test serialization
         let serialized = serde_json::to_string(&error_response).unwrap();
-        let deserialized: ErrorResponse = serde_json::from_str(&serialized).unwrap();
+        let deserialized: DetailedErrorResponse = serde_json::from_str(&serialized).unwrap();
 
         assert_eq!(deserialized.error.code, error_response.error.code);
         assert_eq!(deserialized.error.message, error_response.error.message);
