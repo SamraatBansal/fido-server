@@ -136,12 +136,12 @@ impl CredentialRepository for InMemoryCredentialRepository {
 
 /// Credential service
 pub struct CredentialService {
-    repository: Box<dyn CredentialRepository>,
+    repository: InMemoryCredentialRepository,
 }
 
 impl CredentialService {
     /// Create a new credential service
-    pub fn new(repository: Box<dyn CredentialRepository>) -> Self {
+    pub fn new(repository: InMemoryCredentialRepository) -> Self {
         Self { repository }
     }
 
