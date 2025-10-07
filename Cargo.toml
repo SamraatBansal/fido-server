@@ -101,6 +101,6 @@ codegen-units = 1
 panic = "abort"
 strip = true
 
-# Minimal linting for initial development
+# Disable all linting for initial development
 [lints.rust]
-unused_must_use = "warn"
+[lints.clippy]
