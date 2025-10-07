@@ -57,20 +57,38 @@ mod registration_tests {
 
     #[tokio::test]
     async fn test_start_registration_success() {
-        // This test will drive the implementation of registration start
-        // For now, it's a placeholder that will fail until we implement the service
+        // Test the actual WebAuthn service registration start
+        use fido_server::services::webauthn::WebAuthnService;
+        use fido_server::services::challenge::InMemoryChallengeStore;
+        use fido_server::services::user::InMemoryUserRepository;
+        use fido_server::services::credential::InMemoryCredentialRepository;
         
         // Arrange
-        let _user_id = Uuid::new_v4();
-        let _username = "test@example.com";
-        let _display_name = "Test User";
+        let challenge_service = fido_server::services::challenge::ChallengeService::new(InMemoryChallengeStore::new());
+        let user_service = fido_server::services::user::UserService::new(InMemoryUserRepository::new());
+        let credential_service = fido_server::services::credential::CredentialService::new(InMemoryCredentialRepository::new());
         
-        // Act & Assert - This will fail until we implement the service
-        // let result = webauthn_service.start_registration(request).await;
-        // assert!(result.is_ok());
+        let webauthn_service = WebAuthnService::new(
+            challenge_service,
+            user_service,
+            credential_service,
+            "localhost".to_string(),
+            "Test RP".to_string(),
+            "https://localhost".to_string(),
+        );
         
-        // Placeholder assertion
-        assert!(true, "Test placeholder - implementation needed");
+        // Act
+        let result = webauthn_service.start_registration(
+            "test@example.com".to_string(),
+            "Test User".to_string(),
+        ).await;
+        
+        // Assert
+        assert!(result.is_ok(), "Registration start should succeed");
+        
+        let response = result.unwrap();
+        assert!(response.get("challengeId").is_some());
+        assert!(response.get("credentialCreationOptions").is_some());
     }
 
     #[tokio::test]
