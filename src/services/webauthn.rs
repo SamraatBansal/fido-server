@@ -17,12 +17,12 @@ pub struct WebAuthnService {
     /// Credential management service
     pub credential_service: CredentialService,
     /// Relying Party ID
-    rp_id: String,
+    pub rp_id: String,
     /// Relying Party name
-    rp_name: String,
+    pub rp_name: String,
     /// Origin URL
     #[allow(dead_code)]
-    origin: String,
+    pub origin: String,
 }
 
 impl WebAuthnService {
