@@ -3,6 +3,7 @@ use uuid::Uuid;
 use base64::{Engine as _, engine::general_purpose};
 use chrono::{Duration, Utc};
 use rand::Rng;
+use validator::Validate;
 
 use crate::config::WebAuthnConfig;
 use crate::db::repositories::{UserRepository, CredentialRepository, AuthSessionRepository, AuditLogRepository};
