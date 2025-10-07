@@ -13,8 +13,12 @@ async fn test_challenge_generation() {
     assert_ne!(challenge1, challenge2);
 
     // Challenges should be base64url encoded
-    assert!(base64::engine::general_purpose::URL_SAFE_NO_PAD.decode(&challenge1).is_ok());
-    assert!(base64::engine::general_purpose::URL_SAFE_NO_PAD.decode(&challenge2).is_ok());
+    assert!(base64::engine::general_purpose::URL_SAFE_NO_PAD
+        .decode(&challenge1)
+        .is_ok());
+    assert!(base64::engine::general_purpose::URL_SAFE_NO_PAD
+        .decode(&challenge2)
+        .is_ok());
 }
 
 #[tokio::test]

@@ -8,8 +8,14 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
             .route("/health", web::get().to(ManagementController::health_check))
             .service(
                 web::scope("/users/{user_id}")
-                    .route("/credentials", web::get().to(ManagementController::list_credentials))
-                    .route("/credentials/{credential_id}", web::delete().to(ManagementController::delete_credential))
-            )
+                    .route(
+                        "/credentials",
+                        web::get().to(ManagementController::list_credentials),
+                    )
+                    .route(
+                        "/credentials/{credential_id}",
+                        web::delete().to(ManagementController::delete_credential),
+                    ),
+            ),
     );
 }

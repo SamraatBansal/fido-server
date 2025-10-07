@@ -1,18 +1,15 @@
-use diesel::r2d2::{ConnectionManager, Pool, PooledConnection};
 use diesel::pg::PgConnection;
+use diesel::r2d2::{ConnectionManager, Pool, PooledConnection};
 use std::env;
 
 pub type PgPool = Pool<ConnectionManager<PgConnection>>;
 pub type PgPooledConn = PooledConnection<ConnectionManager<PgConnection>>;
 
 pub fn establish_connection_pool() -> Result<PgPool, r2d2::Error> {
-    let database_url = env::var("DATABASE_URL")
-        .expect("DATABASE_URL must be set");
-    
+    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+
     let manager = ConnectionManager::<PgConnection>::new(database_url);
-    Pool::builder()
-        .max_size(15)
-        .build(manager)
+    Pool::builder().max_size(15).build(manager)
 }
 
 pub fn get_connection(pool: &PgPool) -> Result<PgPooledConn, r2d2::Error> {

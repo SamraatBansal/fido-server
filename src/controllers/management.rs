@@ -1,9 +1,9 @@
 use actix_web::{web, HttpRequest, HttpResponse, Result as ActixResult};
 use uuid::Uuid;
 
-use crate::services::{CredentialService, UserService};
-use crate::schema::{CredentialListResponse, ErrorResponse, HealthResponse};
 use crate::error::{AppError, Result};
+use crate::schema::{CredentialListResponse, ErrorResponse, HealthResponse};
+use crate::services::{CredentialService, UserService};
 
 pub struct ManagementController {
     user_service: web::Data<UserService>,
@@ -23,7 +23,9 @@ impl ManagementController {
 
     fn extract_request_context(req: &HttpRequest) -> (Option<String>, Option<String>) {
         let ip_address = req.connection_info().peer_addr().map(|s| s.to_string());
-        let user_agent = req.headers().get("user-agent")
+        let user_agent = req
+            .headers()
+            .get("user-agent")
             .and_then(|h| h.to_str().ok())
             .map(|s| s.to_string());
         (ip_address, user_agent)
@@ -34,7 +36,7 @@ impl ManagementController {
         credential_service: web::Data<CredentialService>,
     ) -> ActixResult<HttpResponse> {
         let user_id_str = path.into_inner();
-        
+
         let user_id = Uuid::parse_str(&user_id_str)
             .map_err(|_| AppError::InvalidRequest("Invalid user ID".to_string()))?;
 
@@ -60,13 +62,16 @@ impl ManagementController {
         credential_service: web::Data<CredentialService>,
     ) -> ActixResult<HttpResponse> {
         let (user_id_str, credential_id) = path.into_inner();
-        
+
         let user_id = Uuid::parse_str(&user_id_str)
             .map_err(|_| AppError::InvalidRequest("Invalid user ID".to_string()))?;
 
         let (ip_address, user_agent) = Self::extract_request_context(&req);
 
-        match credential_service.delete_credential(&credential_id, &user_id, ip_address, user_agent).await {
+        match credential_service
+            .delete_credential(&credential_id, &user_id, ip_address, user_agent)
+            .await
+        {
             Ok(_) => Ok(HttpResponse::Ok().json(serde_json::json!({
                 "status": "ok",
                 "message": "Credential deleted successfully"
@@ -87,7 +92,7 @@ impl ManagementController {
             timestamp: chrono::Utc::now().to_rfc3339(),
             version: env!("CARGO_PKG_VERSION").to_string(),
         };
-        
+
         Ok(HttpResponse::Ok().json(response))
     }
 }

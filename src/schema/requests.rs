@@ -6,10 +6,10 @@ use validator::Validate;
 pub struct AttestationOptionsRequest {
     #[validate(length(min = 1, max = 255))]
     pub username: String,
-    
+
     #[validate(length(min = 1, max = 255))]
     pub display_name: String,
-    
+
     pub authenticator_selection: Option<AuthenticatorSelectionCriteria>,
     pub attestation: Option<AttestationConveyancePreference>,
     pub extensions: Option<RegistrationExtensionInputs>,
@@ -138,13 +138,13 @@ pub struct LargeBlobExtensionOutput {
 pub struct AttestationResultRequest {
     #[validate(length(min = 1))]
     pub session_id: String,
-    
+
     #[validate(length(min = 1))]
     pub credential_id: String,
-    
+
     #[validate(length(min = 1))]
     pub raw_id: String,
-    
+
     pub response: AuthenticatorAttestationResponse,
     pub client_extension_results: Option<RegistrationExtensionOutputs>,
     pub authenticator_attachment: Option<AuthenticatorAttachment>,
@@ -214,13 +214,13 @@ pub struct LargeBlobAuthenticationOutput {
 pub struct AssertionResultRequest {
     #[validate(length(min = 1))]
     pub session_id: String,
-    
+
     #[validate(length(min = 1))]
     pub credential_id: String,
-    
+
     #[validate(length(min = 1))]
     pub raw_id: String,
-    
+
     pub response: AuthenticatorAssertionResponse,
     pub client_extension_results: Option<AuthenticationExtensionOutputs>,
     pub authenticator_attachment: Option<AuthenticatorAttachment>,

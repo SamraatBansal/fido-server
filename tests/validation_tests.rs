@@ -1,7 +1,9 @@
 #[cfg(test)]
 mod tests {
     use super::*;
-    use fido_server::utils::{validate_username, validate_display_name, validate_session_id, validate_credential_id};
+    use fido_server::utils::{
+        validate_credential_id, validate_display_name, validate_session_id, validate_username,
+    };
 
     #[test]
     fn test_validate_username() {

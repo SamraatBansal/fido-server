@@ -1,28 +1,31 @@
-use std::sync::Arc;
-use uuid::Uuid;
-use base64::{Engine as _, engine::general_purpose};
+use base64::{engine::general_purpose, Engine as _};
 use chrono::{Duration, Utc};
 use rand::Rng;
+use std::sync::Arc;
+use uuid::Uuid;
 use validator::Validate;
 use webauthn_rs::prelude::*;
 use webauthn_rs::WebAuthnBuilder;
 use webauthn_rs_proto::*;
 
 use crate::config::WebAuthnConfig;
-use crate::db::repositories::{UserRepository, CredentialRepository, AuthSessionRepository, AuditLogRepository};
-use crate::db::models::{NewUser, NewCredential, NewAuthSession, NewAuditLog};
-use crate::schema::{
-    AttestationOptionsRequest, AttestationOptionsResponse, AttestationResultRequest, AttestationResultResponse,
-    AssertionOptionsRequest, AssertionOptionsResponse, AssertionResultRequest, AssertionResultResponse,
-    RequestContext, SessionData, SessionType, AuthResult, CredentialCreationData, AuditEventData,
-    PublicKeyCredentialRpEntity, PublicKeyCredentialUserEntity, PublicKeyCredentialParameters,
-    AuthenticatorSelectionCriteria, AttestationConveyancePreference, RegistrationExtensionInputs,
-    RegistrationExtensionOutputs, AuthenticationExtensionInputs, AuthenticationExtensionOutputs,
-    PublicKeyCredentialDescriptor, AuthenticatorTransport, AuthenticatorAttachment,
-    UserVerificationPolicy, ResidentKeyRequirement, CredentialPropertiesOutput,
-    LargeBlobExtensionInput, LargeBlobExtensionOutput, LargeBlobAuthenticationInput, LargeBlobAuthenticationOutput
+use crate::db::models::{NewAuditLog, NewAuthSession, NewCredential, NewUser};
+use crate::db::repositories::{
+    AuditLogRepository, AuthSessionRepository, CredentialRepository, UserRepository,
 };
 use crate::error::{AppError, Result};
+use crate::schema::{
+    AssertionOptionsRequest, AssertionOptionsResponse, AssertionResultRequest,
+    AssertionResultResponse, AttestationConveyancePreference, AttestationOptionsRequest,
+    AttestationOptionsResponse, AttestationResultRequest, AttestationResultResponse,
+    AuditEventData, AuthResult, AuthenticationExtensionInputs, AuthenticationExtensionOutputs,
+    AuthenticatorAttachment, AuthenticatorSelectionCriteria, AuthenticatorTransport,
+    CredentialCreationData, CredentialPropertiesOutput, LargeBlobAuthenticationInput,
+    LargeBlobAuthenticationOutput, LargeBlobExtensionInput, LargeBlobExtensionOutput,
+    PublicKeyCredentialDescriptor, PublicKeyCredentialParameters, PublicKeyCredentialRpEntity,
+    PublicKeyCredentialUserEntity, RegistrationExtensionInputs, RegistrationExtensionOutputs,
+    RequestContext, ResidentKeyRequirement, SessionData, SessionType, UserVerificationPolicy,
+};
 
 pub struct WebAuthnService {
     user_repo: Arc<dyn UserRepository>,
@@ -44,21 +47,23 @@ impl WebAuthnService {
         let rp_id = config.rp_id.clone();
         let rp_name = config.rp_name.clone();
         let rp_origin = config.rp_origin.clone();
-        
+
         let webauthn_config = WebauthnConfig {
             rp: RelyingParty {
                 id: rp_id,
                 name: rp_name,
-                origin: rp_origin.parse().map_err(|_| AppError::InvalidRequest("Invalid origin".to_string()))?,
+                origin: rp_origin
+                    .parse()
+                    .map_err(|_| AppError::InvalidRequest("Invalid origin".to_string()))?,
             },
             timeout: Some(config.timeout),
             ..Default::default()
         };
-        
+
         let webauthn = WebAuthnBuilder::new(webauthn_config)
             .build()
             .map_err(|e| AppError::InvalidRequest(format!("WebAuthn config error: {:?}", e)))?;
-            
+
         Ok(Self {
             user_repo,
             credential_repo,
@@ -75,7 +80,8 @@ impl WebAuthnService {
         context: &RequestContext,
     ) -> Result<AttestationOptionsResponse> {
         // Validate request
-        request.validate()
+        request
+            .validate()
             .map_err(|e| AppError::InvalidRequest(format!("Validation error: {}", e)))?;
 
         // Find or create user
@@ -93,21 +99,24 @@ impl WebAuthnService {
 
         // Get existing credentials for exclusion
         let existing_credentials = self.credential_repo.find_by_user_id(&user.id).await?;
-        let exclude_credentials: Vec<_> = existing_credentials.iter().map(|cred| {
-            PublicKeyCredentialDescriptor {
+        let exclude_credentials: Vec<_> = existing_credentials
+            .iter()
+            .map(|cred| PublicKeyCredentialDescriptor {
                 type_: "public-key".to_string(),
                 id: general_purpose::URL_SAFE_NO_PAD.encode(&cred.credential_id),
                 transports: cred.transports.as_ref().map(|t| {
-                    t.iter().filter_map(|s| match s.as_str() {
-                        "usb" => Some(AuthenticatorTransport::Usb),
-                        "nfc" => Some(AuthenticatorTransport::Nfc),
-                        "ble" => Some(AuthenticatorTransport::Ble),
-                        "internal" => Some(AuthenticatorTransport::Internal),
-                        _ => None,
-                    }).collect()
+                    t.iter()
+                        .filter_map(|s| match s.as_str() {
+                            "usb" => Some(AuthenticatorTransport::Usb),
+                            "nfc" => Some(AuthenticatorTransport::Nfc),
+                            "ble" => Some(AuthenticatorTransport::Ble),
+                            "internal" => Some(AuthenticatorTransport::Internal),
+                            _ => None,
+                        })
+                        .collect()
                 }),
-            }
-        }).collect();
+            })
+            .collect();
 
         // Generate challenge
         let challenge = self.generate_challenge();
@@ -172,9 +181,18 @@ impl WebAuthnService {
             },
             challenge,
             pub_key_cred_params: vec![
-                PublicKeyCredentialParameters { type_: "public-key".to_string(), alg: -7 },  // ES256
-                PublicKeyCredentialParameters { type_: "public-key".to_string(), alg: -257 }, // RS256
-                PublicKeyCredentialParameters { type_: "public-key".to_string(), alg: -8 },   // EdDSA
+                PublicKeyCredentialParameters {
+                    type_: "public-key".to_string(),
+                    alg: -7,
+                }, // ES256
+                PublicKeyCredentialParameters {
+                    type_: "public-key".to_string(),
+                    alg: -257,
+                }, // RS256
+                PublicKeyCredentialParameters {
+                    type_: "public-key".to_string(),
+                    alg: -8,
+                }, // EdDSA
             ],
             timeout: self.config.timeout,
             exclude_credentials: Some(exclude_credentials),
@@ -192,16 +210,22 @@ impl WebAuthnService {
         context: &RequestContext,
     ) -> Result<AttestationResultResponse> {
         // Validate request
-        request.validate()
+        request
+            .validate()
             .map_err(|e| AppError::InvalidRequest(format!("Validation error: {}", e)))?;
 
         // Find session
-        let session = self.session_repo.find_by_session_id(&request.session_id).await?
+        let session = self
+            .session_repo
+            .find_by_session_id(&request.session_id)
+            .await?
             .ok_or(AppError::SessionNotFound)?;
 
         // Check session expiration
         if session.expires_at < Utc::now() {
-            self.session_repo.delete_session(&request.session_id).await?;
+            self.session_repo
+                .delete_session(&request.session_id)
+                .await?;
             return Err(AppError::SessionExpired);
         }
 
@@ -211,16 +235,19 @@ impl WebAuthnService {
         }
 
         // Parse session data
-        let session_data: SessionData = serde_json::from_value(session.data.ok_or_else(|| {
-            AppError::InvalidRequest("Session data missing".to_string())
-        })?)?;
+        let session_data: SessionData = serde_json::from_value(
+            session
+                .data
+                .ok_or_else(|| AppError::InvalidRequest("Session data missing".to_string()))?,
+        )?;
 
-        let user_id = session_data.user_id.ok_or_else(|| {
-            AppError::InvalidRequest("User ID missing from session".to_string())
-        })?;
+        let user_id = session_data
+            .user_id
+            .ok_or_else(|| AppError::InvalidRequest("User ID missing from session".to_string()))?;
 
         // Parse credential response
-        let credential_id = general_purpose::URL_SAFE_NO_PAD.decode(&request.credential_id)
+        let credential_id = general_purpose::URL_SAFE_NO_PAD
+            .decode(&request.credential_id)
             .map_err(|_| AppError::InvalidRequest("Invalid credential ID".to_string()))?;
 
         // Verify attestation using webauthn-rs
@@ -236,20 +263,22 @@ impl WebAuthnService {
             client_extension_results: request.client_extension_results.clone(),
             type_: "public-key".to_string(),
         };
-        
+
         let challenge = String::from_utf8(session_data.challenge)
             .map_err(|_| AppError::InvalidRequest("Invalid challenge encoding".to_string()))?;
-            
-        let attestation_result = self.webauthn.register_credential(
-            &attestation_response,
-            &challenge,
-        ).map_err(|e| AppError::AttestationVerificationFailed(format!("{:?}", e)))?;
-        
+
+        let attestation_result = self
+            .webauthn
+            .register_credential(&attestation_response, &challenge)
+            .map_err(|e| AppError::AttestationVerificationFailed(format!("{:?}", e)))?;
+
         // Extract credential data from verification result
         let credential_data = attestation_result.credential_data;
-        let public_key_bytes = credential_data.public_key.to_der()
+        let public_key_bytes = credential_data
+            .public_key
+            .to_der()
             .map_err(|_| AppError::InvalidRequest("Failed to serialize public key".to_string()))?;
-            
+
         // Store credential
         let new_credential = NewCredential {
             user_id,
@@ -261,15 +290,22 @@ impl WebAuthnService {
             backup_eligible: credential_data.backup_eligible,
             backup_state: credential_data.backup_state,
             attestation_format: Some(attestation_result.fmt.to_string()),
-            attestation_statement: Some(serde_json::to_value(attestation_result.attestation_statement)?),
+            attestation_statement: Some(serde_json::to_value(
+                attestation_result.attestation_statement,
+            )?),
             transports: request.response.transports.clone(),
             is_resident: credential_data.resident_key,
         };
 
-        let _stored_credential = self.credential_repo.create_credential(&new_credential).await?;
+        let _stored_credential = self
+            .credential_repo
+            .create_credential(&new_credential)
+            .await?;
 
         // Clean up session
-        self.session_repo.delete_session(&request.session_id).await?;
+        self.session_repo
+            .delete_session(&request.session_id)
+            .await?;
 
         // Log audit event
         let audit_log = NewAuditLog {
@@ -290,7 +326,10 @@ impl WebAuthnService {
         self.audit_repo.create_log(&audit_log).await?;
 
         // Get user for response
-        let user = self.user_repo.find_by_id(&user_id).await?
+        let user = self
+            .user_repo
+            .find_by_id(&user_id)
+            .await?
             .ok_or(AppError::UserNotFound)?;
 
         let response = AttestationResultResponse {
@@ -316,7 +355,8 @@ impl WebAuthnService {
         context: &RequestContext,
     ) -> Result<AssertionOptionsResponse> {
         // Validate request
-        request.validate()
+        request
+            .validate()
             .map_err(|e| AppError::InvalidRequest(format!("Validation error: {}", e)))?;
 
         // Find user if username provided
@@ -329,21 +369,26 @@ impl WebAuthnService {
         // Get user credentials
         let allow_credentials = if let Some(user) = &user {
             let credentials = self.credential_repo.find_by_user_id(&user.id).await?;
-            Some(credentials.iter().map(|cred| {
-                PublicKeyCredentialDescriptor {
-                    type_: "public-key".to_string(),
-                    id: general_purpose::URL_SAFE_NO_PAD.encode(&cred.credential_id),
-                    transports: cred.transports.as_ref().map(|t| {
-                        t.iter().filter_map(|s| match s.as_str() {
-                            "usb" => Some(AuthenticatorTransport::Usb),
-                            "nfc" => Some(AuthenticatorTransport::Nfc),
-                            "ble" => Some(AuthenticatorTransport::Ble),
-                            "internal" => Some(AuthenticatorTransport::Internal),
-                            _ => None,
-                        }).collect()
-                    }),
-                }
-            }).collect())
+            Some(
+                credentials
+                    .iter()
+                    .map(|cred| PublicKeyCredentialDescriptor {
+                        type_: "public-key".to_string(),
+                        id: general_purpose::URL_SAFE_NO_PAD.encode(&cred.credential_id),
+                        transports: cred.transports.as_ref().map(|t| {
+                            t.iter()
+                                .filter_map(|s| match s.as_str() {
+                                    "usb" => Some(AuthenticatorTransport::Usb),
+                                    "nfc" => Some(AuthenticatorTransport::Nfc),
+                                    "ble" => Some(AuthenticatorTransport::Ble),
+                                    "internal" => Some(AuthenticatorTransport::Internal),
+                                    _ => None,
+                                })
+                                .collect()
+                        }),
+                    })
+                    .collect(),
+            )
         } else {
             None // Username-less authentication
         };
@@ -416,16 +461,22 @@ impl WebAuthnService {
         context: &RequestContext,
     ) -> Result<AssertionResultResponse> {
         // Validate request
-        request.validate()
+        request
+            .validate()
             .map_err(|e| AppError::InvalidRequest(format!("Validation error: {}", e)))?;
 
         // Find session
-        let session = self.session_repo.find_by_session_id(&request.session_id).await?
+        let session = self
+            .session_repo
+            .find_by_session_id(&request.session_id)
+            .await?
             .ok_or(AppError::SessionNotFound)?;
 
         // Check session expiration
         if session.expires_at < Utc::now() {
-            self.session_repo.delete_session(&request.session_id).await?;
+            self.session_repo
+                .delete_session(&request.session_id)
+                .await?;
             return Err(AppError::SessionExpired);
         }
 
@@ -435,20 +486,29 @@ impl WebAuthnService {
         }
 
         // Parse session data
-        let session_data: SessionData = serde_json::from_value(session.data.ok_or_else(|| {
-            AppError::InvalidRequest("Session data missing".to_string())
-        })?)?;
+        let session_data: SessionData = serde_json::from_value(
+            session
+                .data
+                .ok_or_else(|| AppError::InvalidRequest("Session data missing".to_string()))?,
+        )?;
 
         // Parse credential response
-        let credential_id = general_purpose::URL_SAFE_NO_PAD.decode(&request.credential_id)
+        let credential_id = general_purpose::URL_SAFE_NO_PAD
+            .decode(&request.credential_id)
             .map_err(|_| AppError::InvalidRequest("Invalid credential ID".to_string()))?;
 
         // Find credential
-        let credential = self.credential_repo.find_by_credential_id(&credential_id).await?
+        let credential = self
+            .credential_repo
+            .find_by_credential_id(&credential_id)
+            .await?
             .ok_or(AppError::CredentialNotFound)?;
 
         // Get user
-        let user = self.user_repo.find_by_id(&credential.user_id).await?
+        let user = self
+            .user_repo
+            .find_by_id(&credential.user_id)
+            .await?
             .ok_or(AppError::UserNotFound)?;
 
         // Verify assertion using webauthn-rs
@@ -465,35 +525,42 @@ impl WebAuthnService {
             client_extension_results: request.client_extension_results.clone(),
             type_: "public-key".to_string(),
         };
-        
+
         let challenge = String::from_utf8(session_data.challenge)
             .map_err(|_| AppError::InvalidRequest("Invalid challenge encoding".to_string()))?;
-            
+
         // Create credential data for verification
         let credential_data = Credential {
             credential_id: credential_id.clone(),
-            public_key: webauthn_rs::prelude::PublicKey::from_der(&credential.credential_public_key)
-                .map_err(|_| AppError::InvalidRequest("Invalid stored public key".to_string()))?,
+            public_key: webauthn_rs::prelude::PublicKey::from_der(
+                &credential.credential_public_key,
+            )
+            .map_err(|_| AppError::InvalidRequest("Invalid stored public key".to_string()))?,
             sign_count: credential.sign_count as u32,
             user_verified: credential.user_verified,
             registration_policy: UserVerificationPolicy::Preferred,
         };
-        
-        let auth_result = self.webauthn.authenticate_credential(
-            &assertion_response,
-            &credential_data,
-            &challenge,
-        ).map_err(|e| AppError::InvalidSignature(format!("{:?}", e)))?;
-        
+
+        let auth_result = self
+            .webauthn
+            .authenticate_credential(&assertion_response, &credential_data, &challenge)
+            .map_err(|e| AppError::InvalidSignature(format!("{:?}", e)))?;
+
         // Update credential sign count and last used
-        self.credential_repo.update_sign_count(&credential_id, auth_result.new_sign_count as i64).await?;
-        self.credential_repo.update_last_used(&credential_id).await?;
+        self.credential_repo
+            .update_sign_count(&credential_id, auth_result.new_sign_count as i64)
+            .await?;
+        self.credential_repo
+            .update_last_used(&credential_id)
+            .await?;
 
         // Update user last login
         self.user_repo.update_last_login(&user.id).await?;
 
         // Clean up session
-        self.session_repo.delete_session(&request.session_id).await?;
+        self.session_repo
+            .delete_session(&request.session_id)
+            .await?;
 
         // Log audit event
         let audit_log = NewAuditLog {
@@ -514,7 +581,10 @@ impl WebAuthnService {
 
         self.audit_repo.create_log(&audit_log).await?;
 
-        let user_handle = request.response.user_handle.as_ref()
+        let user_handle = request
+            .response
+            .user_handle
+            .as_ref()
             .and_then(|uh| general_purpose::URL_SAFE_NO_PAD.decode(uh).ok());
 
         let response = AssertionResultResponse {

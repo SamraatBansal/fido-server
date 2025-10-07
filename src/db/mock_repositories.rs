@@ -1,9 +1,11 @@
-use mockall::mock;
-use uuid::Uuid;
-use chrono::{DateTime, Utc};
-use crate::db::models::{User, Credential, AuthSession, AuditLog, NewUser, NewCredential, NewAuthSession, NewAuditLog};
+use crate::db::models::{
+    AuditLog, AuthSession, Credential, NewAuditLog, NewAuthSession, NewCredential, NewUser, User,
+};
 use crate::error::{AppError, Result};
 use async_trait::async_trait;
+use chrono::{DateTime, Utc};
+use mockall::mock;
+use uuid::Uuid;
 
 mock! {
     pub UserRepository {}

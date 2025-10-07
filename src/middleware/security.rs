@@ -36,16 +36,17 @@ where
 {
     type Response = ServiceResponse<B>;
     type Error = Error;
-    type Future = std::pin::Pin<Box<dyn std::future::Future<Output = Result<Self::Response, Self::Error>>>>;
+    type Future =
+        std::pin::Pin<Box<dyn std::future::Future<Output = Result<Self::Response, Self::Error>>>>;
 
     forward_ready!(service);
 
     fn call(&self, req: ServiceRequest) -> Self::Future {
         let fut = self.service.call(req);
-        
+
         Box::pin(async move {
             let mut res = fut.await?;
-            
+
             // Add security headers
             res.headers_mut().insert(
                 HeaderName::from_static("x-content-type-options"),
@@ -75,7 +76,7 @@ where
                 HeaderName::from_static("permissions-policy"),
                 HeaderValue::from_static("geolocation=(), microphone=(), camera=()"),
             );
-            
+
             Ok(res)
         })
     }

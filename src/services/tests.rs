@@ -1,10 +1,13 @@
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::services::WebAuthnService;
-    use crate::config::{WebAuthnConfig, AppConfig};
-    use crate::db::mock_repositories::{MockUserRepository, MockCredentialRepository, MockAuthSessionRepository, MockAuditLogRepository};
+    use crate::config::{AppConfig, WebAuthnConfig};
+    use crate::db::mock_repositories::{
+        MockAuditLogRepository, MockAuthSessionRepository, MockCredentialRepository,
+        MockUserRepository,
+    };
     use crate::schema::{AttestationOptionsRequest, RequestContext};
+    use crate::services::WebAuthnService;
     use std::sync::Arc;
     use uuid::Uuid;
 
@@ -24,13 +27,8 @@ mod tests {
         let session_repo = Arc::new(MockAuthSessionRepository::new());
         let audit_repo = Arc::new(MockAuditLogRepository::new());
 
-        let service = WebAuthnService::new(
-            config,
-            user_repo,
-            credential_repo,
-            session_repo,
-            audit_repo,
-        );
+        let service =
+            WebAuthnService::new(config, user_repo, credential_repo, session_repo, audit_repo);
 
         assert!(service.is_ok());
     }
@@ -80,7 +78,7 @@ mod tests {
     async fn test_uuid_handling() {
         let user_id = Uuid::new_v4();
         let user_id_str = user_id.to_string();
-        
+
         // Test UUID parsing
         let parsed = Uuid::parse_str(&user_id_str);
         assert!(parsed.is_ok());

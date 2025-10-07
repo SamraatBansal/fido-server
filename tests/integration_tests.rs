@@ -2,12 +2,12 @@
 mod tests {
     use super::*;
     use actix_web::{test, web, App};
-    use uuid::Uuid;
     use std::sync::Arc;
+    use uuid::Uuid;
 
-    use fido_server::services::WebAuthnService;
     use fido_server::config::WebAuthnConfig;
     use fido_server::schema::{AttestationOptionsRequest, RequestContext};
+    use fido_server::services::WebAuthnService;
 
     #[tokio::test]
     async fn test_attestation_start_endpoint() {
@@ -23,7 +23,7 @@ mod tests {
 
         // This test would require mocking the repositories
         // For now, we'll test the endpoint structure
-        
+
         let request = AttestationOptionsRequest {
             username: "testuser".to_string(),
             display_name: "Test User".to_string(),

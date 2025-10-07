@@ -95,7 +95,7 @@ impl AppConfig {
 
     pub fn load() -> Self {
         dotenv::dotenv().ok();
-        
+
         match Self::from_env() {
             Ok(config) => config,
             Err(e) => {

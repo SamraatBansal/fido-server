@@ -1,6 +1,6 @@
-use rand::{RngCore, rngs::OsRng};
-use sha2::{Sha256, Digest};
-use base64::{Engine as _, engine::general_purpose};
+use base64::{engine::general_purpose, Engine as _};
+use rand::{rngs::OsRng, RngCore};
+use sha2::{Digest, Sha256};
 
 pub fn generate_challenge() -> String {
     let mut rng = OsRng;

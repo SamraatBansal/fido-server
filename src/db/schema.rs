@@ -68,9 +68,4 @@ diesel::joinable!(auth_sessions -> users (user_id));
 diesel::joinable!(audit_logs -> users (user_id));
 diesel::joinable!(credentials -> users (user_id));
 
-diesel::allow_tables_to_appear_in_same_query!(
-    audit_logs,
-    auth_sessions,
-    credentials,
-    users,
-);
+diesel::allow_tables_to_appear_in_same_query!(audit_logs, auth_sessions, credentials, users,);

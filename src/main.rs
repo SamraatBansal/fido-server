@@ -5,7 +5,7 @@ use std::io;
 
 use fido_server::{
     config::AppConfig,
-    middleware::{SecurityHeaders, cors_config},
+    middleware::{cors_config, SecurityHeaders},
     routes::{api, webauthn},
     utils::AppState,
 };
@@ -22,16 +22,18 @@ async fn main() -> io::Result<()> {
     log::info!("Configuration loaded: {:?}", config.server);
 
     // Initialize application state
-    let app_state = AppState::new(config.clone())
-        .await
-        .map_err(|e| {
-            log::error!("Failed to initialize application state: {}", e);
-            std::io::Error::new(std::io::ErrorKind::Other, format!("{}", e))
-        })?;
+    let app_state = AppState::new(config.clone()).await.map_err(|e| {
+        log::error!("Failed to initialize application state: {}", e);
+        std::io::Error::new(std::io::ErrorKind::Other, format!("{}", e))
+    })?;
 
     // Rate limiter disabled for now
 
-    log::info!("Server running at http://{}:{}", config.server.host, config.server.port);
+    log::info!(
+        "Server running at http://{}:{}",
+        config.server.host,
+        config.server.port
+    );
 
     HttpServer::new(move || {
         App::new()

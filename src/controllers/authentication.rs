@@ -1,12 +1,12 @@
 use actix_web::{web, HttpRequest, HttpResponse, Result as ActixResult};
 use validator::Validate;
 
-use crate::services::WebAuthnService;
-use crate::schema::{
-    AssertionOptionsRequest, AssertionOptionsResponse, AssertionResultRequest, AssertionResultResponse,
-    RequestContext, ErrorResponse
-};
 use crate::error::{AppError, Result};
+use crate::schema::{
+    AssertionOptionsRequest, AssertionOptionsResponse, AssertionResultRequest,
+    AssertionResultResponse, ErrorResponse, RequestContext,
+};
+use crate::services::WebAuthnService;
 
 pub struct AuthenticationController {
     webauthn_service: web::Data<WebAuthnService>,
@@ -20,7 +20,9 @@ impl AuthenticationController {
     fn extract_request_context(req: &HttpRequest) -> RequestContext {
         RequestContext {
             ip_address: req.connection_info().peer_addr().map(|s| s.to_string()),
-            user_agent: req.headers().get("user-agent")
+            user_agent: req
+                .headers()
+                .get("user-agent")
                 .and_then(|h| h.to_str().ok())
                 .map(|s| s.to_string()),
             session_id: None,
@@ -33,8 +35,11 @@ impl AuthenticationController {
         request: web::Json<AssertionOptionsRequest>,
     ) -> ActixResult<HttpResponse> {
         let context = Self::extract_request_context(&req);
-        
-        match webauthn_service.start_assertion(request.into_inner(), &context).await {
+
+        match webauthn_service
+            .start_assertion(request.into_inner(), &context)
+            .await
+        {
             Ok(response) => Ok(HttpResponse::Ok().json(response)),
             Err(e) => {
                 log::error!("Assertion start error: {}", e);
@@ -52,8 +57,11 @@ impl AuthenticationController {
         request: web::Json<AssertionResultRequest>,
     ) -> ActixResult<HttpResponse> {
         let context = Self::extract_request_context(&req);
-        
-        match webauthn_service.finish_assertion(request.into_inner(), &context).await {
+
+        match webauthn_service
+            .finish_assertion(request.into_inner(), &context)
+            .await
+        {
             Ok(response) => Ok(HttpResponse::Ok().json(response)),
             Err(e) => {
                 log::error!("Assertion finish error: {}", e);

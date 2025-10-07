@@ -1,8 +1,8 @@
-pub mod webauthn;
 pub mod user;
+pub mod webauthn;
 
 #[cfg(test)]
 pub mod tests;
 
-pub use webauthn::*;
 pub use user::*;
+pub use webauthn::*;
