@@ -1,3 +1,4 @@
+use base64::Engine;
 use fido_server::{
     config::AppConfig,
     utils::{generate_challenge, hash_data, verify_hash},

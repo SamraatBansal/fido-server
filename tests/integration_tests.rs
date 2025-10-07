@@ -5,9 +5,9 @@ mod tests {
     use uuid::Uuid;
     use std::sync::Arc;
 
-    use crate::services::WebAuthnService;
-    use crate::config::WebAuthnConfig;
-    use crate::schema::{AttestationOptionsRequest, RequestContext};
+    use fido_server::services::WebAuthnService;
+    use fido_server::config::WebAuthnConfig;
+    use fido_server::schema::{AttestationOptionsRequest, RequestContext};
 
     #[tokio::test]
     async fn test_attestation_start_endpoint() {
