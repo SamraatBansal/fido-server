@@ -1,301 +1,320 @@
-//! Common test utilities and fixtures for FIDO2/WebAuthn testing
+//! Common test utilities and factories for FIDO2/WebAuthn testing
 
-use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
-use chrono::{DateTime, Utc};
 use serde_json::{json, Value};
-use std::collections::HashMap;
+use base64::{Engine as _, engine::general_purpose};
 use uuid::Uuid;
+use chrono::{DateTime, Utc};
+use std::collections::HashMap;
 
-/// Common test utilities and fixtures
-pub mod fixtures;
-pub mod mocks;
-pub mod testcontainers;
-pub mod webauthn_fixtures;
+/// Test data factory for WebAuthn API requests
+pub struct WebAuthnTestDataFactory;
 
-/// Re-export common test utilities
-pub use fixtures::*;
-pub use mocks::*;
-pub use webauthn_fixtures::*;
-
-/// Test configuration constants
-pub const TEST_RP_ID: &str = "localhost";
-pub const TEST_RP_ORIGIN: &str = "https://localhost:8443";
-pub const TEST_RP_NAME: &str = "FIDO2 Test Server";
-pub const TEST_TIMEOUT: u64 = 60000;
-
-/// Default test user
-pub fn default_test_user() -> TestUser {
-    TestUser {
-        id: BASE64.encode(Uuid::new_v4().as_bytes()),
-        name: "testuser@example.com".to_string(),
-        display_name: "Test User".to_string(),
-    }
-}
-
-/// Test user struct for generating test data
-#[derive(Debug, Clone)]
-pub struct TestUser {
-    pub id: String,
-    pub name: String,
-    pub display_name: String,
-}
-
-impl TestUser {
-    pub fn new(name: &str, display_name: &str) -> Self {
-        Self {
-            id: BASE64.encode(Uuid::new_v4().as_bytes()),
-            name: name.to_string(),
-            display_name: display_name.to_string(),
-        }
+impl WebAuthnTestDataFactory {
+    /// Create a valid attestation options request
+    pub fn valid_attestation_options_request() -> Value {
+        json!({
+            "username": "alice@example.com",
+            "displayName": "Alice Smith",
+            "attestation": "direct",
+            "authenticatorSelection": {
+                "authenticatorAttachment": "platform",
+                "requireResidentKey": false,
+                "userVerification": "preferred"
+            }
+        })
     }
 
-    pub fn with_id(id: &str, name: &str, display_name: &str) -> Self {
-        Self {
-            id: id.to_string(),
-            name: name.to_string(),
-            display_name: display_name.to_string(),
-        }
-    }
-}
+    /// Create a valid attestation result request
+    pub fn valid_attestation_result_request() -> Value {
+        let credential_id = general_purpose::URL_SAFE_NO_PAD.encode(b"test-credential-id");
+        let attestation_object = general_purpose::URL_SAFE_NO_PAD.encode(b"mock-attestation-object");
+        let client_data_json = general_purpose::URL_SAFE_NO_PAD.encode(
+            r#"{"type":"webauthn.create","challenge":"test-challenge","origin":"https://example.com"}"#
+        );
 
-/// Test credential struct
-#[derive(Debug, Clone)]
-pub struct TestCredential {
-    pub id: String,
-    pub raw_id: String,
-    pub r#type: String,
-    pub response: CredentialResponse,
-}
-
-#[derive(Debug, Clone)]
-pub struct CredentialResponse {
-    pub attestation_object: Option<String>,
-    pub client_data_json: String,
-    pub authenticator_data: Option<String>,
-    pub signature: Option<String>,
-    pub user_handle: Option<String>,
-}
-
-impl TestCredential {
-    pub fn new_registration(
-        id: &str,
-        attestation_object: &str,
-        client_data_json: &str,
-    ) -> Self {
-        Self {
-            id: id.to_string(),
-            raw_id: id.to_string(),
-            r#type: "public-key".to_string(),
-            response: CredentialResponse {
-                attestation_object: Some(attestation_object.to_string()),
-                client_data_json: client_data_json.to_string(),
-                authenticator_data: None,
-                signature: None,
-                user_handle: None,
+        json!({
+            "id": credential_id,
+            "rawId": credential_id,
+            "response": {
+                "attestationObject": attestation_object,
+                "clientDataJSON": client_data_json
             },
-        }
+            "type": "public-key"
+        })
     }
 
-    pub fn new_authentication(
-        id: &str,
-        authenticator_data: &str,
-        client_data_json: &str,
-        signature: &str,
-        user_handle: Option<&str>,
-    ) -> Self {
-        Self {
-            id: id.to_string(),
-            raw_id: id.to_string(),
-            r#type: "public-key".to_string(),
-            response: CredentialResponse {
-                attestation_object: None,
-                client_data_json: client_data_json.to_string(),
-                authenticator_data: Some(authenticator_data.to_string()),
-                signature: Some(signature.to_string()),
-                user_handle: user_handle.map(|uh| uh.to_string()),
+    /// Create a valid assertion options request
+    pub fn valid_assertion_options_request() -> Value {
+        json!({
+            "username": "alice@example.com",
+            "userVerification": "preferred"
+        })
+    }
+
+    /// Create a valid assertion result request
+    pub fn valid_assertion_result_request() -> Value {
+        let credential_id = general_purpose::URL_SAFE_NO_PAD.encode(b"test-credential-id");
+        let authenticator_data = general_purpose::URL_SAFE_NO_PAD.encode(b"mock-authenticator-data");
+        let client_data_json = general_purpose::URL_SAFE_NO_PAD.encode(
+            r#"{"type":"webauthn.get","challenge":"test-challenge","origin":"https://example.com"}"#
+        );
+        let signature = general_purpose::URL_SAFE_NO_PAD.encode(b"mock-signature");
+        let user_handle = general_purpose::URL_SAFE_NO_PAD.encode(b"test-user-handle");
+
+        json!({
+            "id": credential_id,
+            "rawId": credential_id,
+            "response": {
+                "authenticatorData": authenticator_data,
+                "clientDataJSON": client_data_json,
+                "signature": signature,
+                "userHandle": user_handle
             },
-        }
+            "type": "public-key"
+        })
+    }
+
+    /// Create invalid attestation options request (missing username)
+    pub fn invalid_attestation_options_missing_username() -> Value {
+        json!({
+            "displayName": "Alice Smith",
+            "attestation": "direct",
+            "authenticatorSelection": {
+                "authenticatorAttachment": "platform",
+                "requireResidentKey": false,
+                "userVerification": "preferred"
+            }
+        })
+    }
+
+    /// Create invalid attestation options request (invalid email)
+    pub fn invalid_attestation_options_invalid_email() -> Value {
+        json!({
+            "username": "invalid-email",
+            "displayName": "Alice Smith",
+            "attestation": "direct",
+            "authenticatorSelection": {
+                "authenticatorAttachment": "platform",
+                "requireResidentKey": false,
+                "userVerification": "preferred"
+            }
+        })
+    }
+
+    /// Create malformed JSON request
+    pub fn malformed_json_request() -> String {
+        "{ invalid json }".to_string()
+    }
+
+    /// Create request with oversized payload
+    pub fn oversized_payload_request() -> Value {
+        let large_string = "x".repeat(10_000_000); // 10MB string
+        json!({
+            "username": "alice@example.com",
+            "displayName": large_string,
+            "attestation": "direct",
+            "authenticatorSelection": {
+                "authenticatorAttachment": "platform",
+                "requireResidentKey": false,
+                "userVerification": "preferred"
+            }
+        })
+    }
+
+    /// Create request with invalid base64url
+    pub fn invalid_base64url_request() -> Value {
+        json!({
+            "id": "invalid-base64!@#",
+            "rawId": "invalid-base64!@#",
+            "response": {
+                "attestationObject": "invalid-base64!@#",
+                "clientDataJSON": "invalid-base64!@#"
+            },
+            "type": "public-key"
+        })
+    }
+
+    /// Create replay attack request (old challenge)
+    pub fn replay_attack_request() -> Value {
+        let credential_id = general_purpose::URL_SAFE_NO_PAD.encode(b"test-credential-id");
+        let attestation_object = general_purpose::URL_SAFE_NO_PAD.encode(b"mock-attestation-object");
+        let client_data_json = general_purpose::URL_SAFE_NO_PAD.encode(
+            r#"{"type":"webauthn.create","challenge":"old-expired-challenge","origin":"https://example.com"}"#
+        );
+
+        json!({
+            "id": credential_id,
+            "rawId": credential_id,
+            "response": {
+                "attestationObject": attestation_object,
+                "clientDataJSON": client_data_json
+            },
+            "type": "public-key"
+        })
+    }
+
+    /// Create request with tampered clientDataJSON
+    pub fn tampered_client_data_request() -> Value {
+        let credential_id = general_purpose::URL_SAFE_NO_PAD.encode(b"test-credential-id");
+        let attestation_object = general_purpose::URL_SAFE_NO_PAD.encode(b"mock-attestation-object");
+        let client_data_json = general_purpose::URL_SAFE_NO_PAD.encode(
+            r#"{"type":"webauthn.create","challenge":"different-challenge","origin":"https://malicious.com"}"#
+        );
+
+        json!({
+            "id": credential_id,
+            "rawId": credential_id,
+            "response": {
+                "attestationObject": attestation_object,
+                "clientDataJSON": client_data_json
+            },
+            "type": "public-key"
+        })
+    }
+
+    /// Create request with invalid RP ID
+    pub fn invalid_rp_id_request() -> Value {
+        let credential_id = general_purpose::URL_SAFE_NO_PAD.encode(b"test-credential-id");
+        let authenticator_data = general_purpose::URL_SAFE_NO_PAD.encode(b"mock-authenticator-data");
+        let client_data_json = general_purpose::URL_SAFE_NO_PAD.encode(
+            r#"{"type":"webauthn.get","challenge":"test-challenge","origin":"https://malicious.com"}"#
+        );
+        let signature = general_purpose::URL_SAFE_NO_PAD.encode(b"mock-signature");
+        let user_handle = general_purpose::URL_SAFE_NO_PAD.encode(b"test-user-handle");
+
+        json!({
+            "id": credential_id,
+            "rawId": credential_id,
+            "response": {
+                "authenticatorData": authenticator_data,
+                "clientDataJSON": client_data_json,
+                "signature": signature,
+                "userHandle": user_handle
+            },
+            "type": "public-key"
+        })
     }
 }
 
-/// Test challenge generator
-pub fn generate_test_challenge() -> String {
-    BASE64.encode(rand::random::<[u8; 32]>())
-}
+/// Test helper utilities
+pub struct TestHelpers;
 
-/// Test timestamp generator
-pub fn test_timestamp() -> DateTime<Utc> {
-    Utc::now()
-}
-
-/// Helper to create JSON values for testing
-pub fn json_value<T: serde::Serialize>(value: T) -> Value {
-    serde_json::to_value(value).expect("Failed to serialize test value")
-}
-
-/// Helper to create base64url encoded test data
-pub fn base64url_encode(data: &[u8]) -> String {
-    base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(data)
-}
-
-/// Helper to decode base64url test data
-pub fn base64url_decode(data: &str) -> Result<Vec<u8>, base64::DecodeError> {
-    base64::engine::general_purpose::URL_SAFE_NO_PAD.decode(data)
-}
-
-/// Test error helper
-#[derive(Debug, thiserror::Error)]
-pub enum TestError {
-    #[error("Serialization error: {0}")]
-    Serialization(#[from] serde_json::Error),
-    
-    #[error("Base64 error: {0}")]
-    Base64(#[from] base64::DecodeError),
-    
-    #[error("Invalid test data: {0}")]
-    InvalidData(String),
-}
-
-/// Result type for test operations
-pub type TestResult<T> = Result<T, TestError>;
-
-/// Test assertion helpers
-pub mod assertions {
-    use super::*;
-    
-    /// Assert that a JSON response contains required fields
-    pub fn assert_has_fields(response: &Value, fields: &[&str]) {
-        for field in fields {
-            assert!(
-                response.get(field).is_some(),
-                "Missing required field: {}",
-                field
-            );
-        }
+impl TestHelpers {
+    /// Generate a random challenge for testing
+    pub fn generate_test_challenge() -> String {
+        Uuid::new_v4().to_string()
     }
-    
-    /// Assert that a base64 string is valid
-    pub fn assert_valid_base64(s: &str) {
-        BASE64.decode(s).expect("Invalid base64 string");
+
+    /// Generate a timestamp for testing
+    pub fn generate_test_timestamp() -> DateTime<Utc> {
+        Utc::now()
     }
-    
-    /// Assert that a base64url string is valid
-    pub fn assert_valid_base64url(s: &str) {
-        base64url_decode(s).expect("Invalid base64url string");
+
+    /// Create a mock user ID
+    pub fn create_mock_user_id() -> String {
+        Uuid::new_v4().to_string()
     }
-    
-    /// Assert that a challenge is properly formatted
-    pub fn assert_valid_challenge(challenge: &str) {
-        assert!(!challenge.is_empty(), "Challenge cannot be empty");
-        assert_valid_base64url(challenge);
-        assert!(challenge.len() >= 16, "Challenge too short");
+
+    /// Create a mock credential ID
+    pub fn create_mock_credential_id() -> Vec<u8> {
+        Uuid::new_v4().as_bytes().to_vec()
+    }
+
+    /// Validate base64url string
+    pub fn is_valid_base64url(input: &str) -> bool {
+        general_purpose::URL_SAFE_NO_PAD.decode(input).is_ok()
+    }
+
+    /// Create test headers
+    pub fn create_test_headers() -> HashMap<String, String> {
+        let mut headers = HashMap::new();
+        headers.insert("Content-Type".to_string(), "application/json".to_string());
+        headers.insert("User-Agent".to_string(), "FIDO2-Test-Client/1.0".to_string());
+        headers
     }
 }
 
-/// Test data generators for property-based testing
-pub mod generators {
-    use proptest::prelude::*;
-    
-    /// Generate valid email addresses
-    pub fn arb_email() -> impl Strategy<Value = String> {
-        prop::string::string_regex(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}")
-            .unwrap()
-            .prop_filter("Valid email", |s| s.len() <= 255)
+/// Security test vectors
+pub struct SecurityTestVectors;
+
+impl SecurityTestVectors {
+    /// Malformed CBOR data
+    pub fn malformed_cbor() -> Vec<u8> {
+        vec![0x99, 0x99, 0x99, 0x99] // Invalid CBOR
     }
-    
-    /// Generate valid display names
-    pub fn arb_display_name() -> impl Strategy<Value = String> {
-        prop::string::string_regex(r"[a-zA-Z0-9 ]{1,100}")
-            .unwrap()
+
+    /// Truncated clientDataJSON
+    pub fn truncated_client_data_json() -> String {
+        r#"{"type":"webauthn.create","challenge":"test-challenge","origin":"https://example.com""#.to_string()
     }
-    
-    /// Generate valid base64url strings
-    pub fn arb_base64url() -> impl Strategy<Value = String> {
-        prop::collection::vec(any::<u8>(), 16..64)
-            .prop_map(|bytes| base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(bytes))
+
+    /// Buffer overflow attempt
+    pub fn buffer_overflow_attempt() -> Vec<u8> {
+        vec![0; 1_000_000] // 1MB of zeros
     }
-    
-    /// Generate valid challenges
-    pub fn arb_challenge() -> impl Strategy<Value = String> {
-        arb_base64url().prop_filter("Valid challenge", |s| s.len() >= 16)
+
+    /// SQL injection attempt
+    pub fn sql_injection_attempt() -> String {
+        "'; DROP TABLE users; --".to_string()
+    }
+
+    /// XSS attempt
+    pub fn xss_attempt() -> String {
+        "<script>alert('xss')</script>".to_string()
     }
 }
 
-/// Test environment configuration
-#[derive(Debug, Clone)]
-pub struct TestConfig {
-    pub rp_id: String,
-    pub rp_origin: String,
-    pub rp_name: String,
-    pub timeout: u64,
+/// Performance test configurations
+pub struct PerformanceTestConfig;
+
+impl PerformanceTestConfig {
+    /// Number of concurrent requests for load testing
+    pub const CONCURRENT_REQUESTS: usize = 100;
+    
+    /// Duration for stress testing (seconds)
+    pub const STRESS_TEST_DURATION: u64 = 60;
+    
+    /// Payload size for performance testing (bytes)
+    pub const PERFORMANCE_PAYLOAD_SIZE: usize = 1024;
 }
 
-impl Default for TestConfig {
-    fn default() -> Self {
-        Self {
-            rp_id: TEST_RP_ID.to_string(),
-            rp_origin: TEST_RP_ORIGIN.to_string(),
-            rp_name: TEST_RP_NAME.to_string(),
-            timeout: TEST_TIMEOUT,
-        }
-    }
-}
+/// Compliance test data
+pub struct ComplianceTestData;
 
-/// Test context for managing test state
-#[derive(Debug)]
-pub struct TestContext {
-    pub config: TestConfig,
-    pub users: HashMap<String, TestUser>,
-    pub credentials: HashMap<String, TestCredential>,
-    pub challenges: HashMap<String, DateTime<Utc>>,
-}
+impl ComplianceTestData {
+    /// FIDO2 compliant attestation options response
+    pub fn fido2_compliant_attestation_response() -> Value {
+        json!({
+            "challenge": "BASE64URLSTRING",
+            "rp": { 
+                "name": "Example RP", 
+                "id": "example.com" 
+            },
+            "user": { 
+                "id": "BASE64URL", 
+                "name": "alice", 
+                "displayName": "Alice Smith" 
+            },
+            "pubKeyCredParams": [{ 
+                "type": "public-key", 
+                "alg": -7 
+            }],
+            "timeout": 60000,
+            "attestation": "direct"
+        })
+    }
 
-impl TestContext {
-    pub fn new() -> Self {
-        Self {
-            config: TestConfig::default(),
-            users: HashMap::new(),
-            credentials: HashMap::new(),
-            challenges: HashMap::new(),
-        }
-    }
-    
-    pub fn with_config(config: TestConfig) -> Self {
-        Self {
-            config,
-            users: HashMap::new(),
-            credentials: HashMap::new(),
-            challenges: HashMap::new(),
-        }
-    }
-    
-    pub fn add_user(&mut self, user: TestUser) {
-        self.users.insert(user.name.clone(), user);
-    }
-    
-    pub fn add_credential(&mut self, id: String, credential: TestCredential) {
-        self.credentials.insert(id, credential);
-    }
-    
-    pub fn add_challenge(&mut self, challenge: String) {
-        self.challenges.insert(challenge, Utc::now());
-    }
-    
-    pub fn get_user(&self, username: &str) -> Option<&TestUser> {
-        self.users.get(username)
-    }
-    
-    pub fn get_credential(&self, id: &str) -> Option<&TestCredential> {
-        self.credentials.get(id)
-    }
-    
-    pub fn challenge_exists(&self, challenge: &str) -> bool {
-        self.challenges.contains_key(challenge)
-    }
-}
-
-impl Default for TestContext {
-    fn default() -> Self {
-        Self::new()
+    /// FIDO2 compliant assertion options response
+    pub fn fido2_compliant_assertion_response() -> Value {
+        json!({
+            "challenge": "BASE64URLSTRING",
+            "rpId": "example.com",
+            "allowCredentials": [{ 
+                "type": "public-key", 
+                "id": "BASE64URL" 
+            }],
+            "timeout": 60000,
+            "userVerification": "preferred"
+        })
     }
 }
