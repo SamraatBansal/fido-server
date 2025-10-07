@@ -110,8 +110,8 @@ mod tests {
             .set_json(&serde_json::json!({
                 "challenge_id": auth_challenge_id,
                 "credential": {
-                    "id": "YXV0aC10ZXN0LWNyZWRlbnRpYWwtaWQ=",
-                    "raw_id": "YXV0aC10ZXN0LWNyZWRlbnRpYWwtaWQ=",
+                    "id": "YXV0aC10ZXN0LWNyZWRlbnRpYWwtaWQ",
+                    "raw_id": "YXV0aC10ZXN0LWNyZWRlbnRpYWwtaWQ",
                     "type": "public-key",
                     "response": {
                         "authenticator_data": "SZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2MBAAAAAQ==",
