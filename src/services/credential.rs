@@ -44,6 +44,7 @@ impl InMemoryCredentialRepository {
 
     /// Helper function to convert credential ID to string key
     fn credential_id_to_key(id: &[u8]) -> String {
+        use base64::Engine;
         base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(id)
     }
 }
