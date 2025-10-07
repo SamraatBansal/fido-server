@@ -4,6 +4,9 @@ use base64::{Engine as _, engine::general_purpose};
 use chrono::{Duration, Utc};
 use rand::Rng;
 use validator::Validate;
+use webauthn_rs::prelude::*;
+use webauthn_rs::WebAuthnBuilder;
+use webauthn_rs_proto::*;
 
 use crate::config::WebAuthnConfig;
 use crate::db::repositories::{UserRepository, CredentialRepository, AuthSessionRepository, AuditLogRepository};
@@ -27,6 +30,7 @@ pub struct WebAuthnService {
     session_repo: Arc<dyn AuthSessionRepository>,
     audit_repo: Arc<dyn AuditLogRepository>,
     config: WebAuthnConfig,
+    webauthn: WebAuthn<WebauthnConfig>,
 }
 
 impl WebAuthnService {
@@ -37,12 +41,31 @@ impl WebAuthnService {
         session_repo: Arc<dyn AuthSessionRepository>,
         audit_repo: Arc<dyn AuditLogRepository>,
     ) -> Result<Self> {
+        let rp_id = config.rp_id.clone();
+        let rp_name = config.rp_name.clone();
+        let rp_origin = config.rp_origin.clone();
+        
+        let webauthn_config = WebauthnConfig {
+            rp: RelyingParty {
+                id: rp_id,
+                name: rp_name,
+                origin: rp_origin.parse().map_err(|_| AppError::InvalidRequest("Invalid origin".to_string()))?,
+            },
+            timeout: Some(config.timeout),
+            ..Default::default()
+        };
+        
+        let webauthn = WebAuthnBuilder::new(webauthn_config)
+            .build()
+            .map_err(|e| AppError::InvalidRequest(format!("WebAuthn config error: {:?}", e)))?;
+            
         Ok(Self {
             user_repo,
             credential_repo,
             session_repo,
             audit_repo,
             config,
+            webauthn,
         })
     }
 
@@ -200,25 +223,47 @@ impl WebAuthnService {
         let credential_id = general_purpose::URL_SAFE_NO_PAD.decode(&request.credential_id)
             .map_err(|_| AppError::InvalidRequest("Invalid credential ID".to_string()))?;
 
-        // For now, we'll store the credential without full WebAuthn verification
-        // In a real implementation, you would verify the attestation here
+        // Verify attestation using webauthn-rs
+        let attestation_response = AttestationResponse {
+            id: request.credential_id.clone(),
+            raw_id: credential_id.clone(),
+            response: AuthenticatorAttestationResponse {
+                client_data_json: request.response.client_data_json.clone(),
+                attestation_object: request.response.attestation_object.clone(),
+                transports: request.response.transports.clone(),
+            },
+            authenticator_attachment: request.authenticator_attachment.clone(),
+            client_extension_results: request.client_extension_results.clone(),
+            type_: "public-key".to_string(),
+        };
         
+        let challenge = String::from_utf8(session_data.challenge)
+            .map_err(|_| AppError::InvalidRequest("Invalid challenge encoding".to_string()))?;
+            
+        let attestation_result = self.webauthn.register_credential(
+            &attestation_response,
+            &challenge,
+        ).map_err(|e| AppError::AttestationVerificationFailed(format!("{:?}", e)))?;
+        
+        // Extract credential data from verification result
+        let credential_data = attestation_result.credential_data;
+        let public_key_bytes = credential_data.public_key.to_der()
+            .map_err(|_| AppError::InvalidRequest("Failed to serialize public key".to_string()))?;
+            
         // Store credential
         let new_credential = NewCredential {
             user_id,
             credential_id: credential_id.clone(),
-            credential_public_key: vec![], // Would be extracted from attestation
-            aaguid: None,
-            sign_count: 0,
-            user_verified: true,
-            backup_eligible: false,
-            backup_state: false,
-            attestation_format: Some("none".to_string()),
-            attestation_statement: None,
-            transports: request.authenticator_attachment.as_ref().map(|_| {
-                vec!["internal".to_string()] // Default to internal for platform authenticators
-            }),
-            is_resident: false,
+            credential_public_key: public_key_bytes,
+            aaguid: Some(credential_data.aaguid.to_vec()),
+            sign_count: credential_data.sign_count as i64,
+            user_verified: credential_data.user_verified,
+            backup_eligible: credential_data.backup_eligible,
+            backup_state: credential_data.backup_state,
+            attestation_format: Some(attestation_result.fmt.to_string()),
+            attestation_statement: Some(serde_json::to_value(attestation_result.attestation_statement)?),
+            transports: request.response.transports.clone(),
+            is_resident: credential_data.resident_key,
         };
 
         let _stored_credential = self.credential_repo.create_credential(&new_credential).await?;
@@ -406,11 +451,42 @@ impl WebAuthnService {
         let user = self.user_repo.find_by_id(&credential.user_id).await?
             .ok_or(AppError::UserNotFound)?;
 
-        // For now, we'll simulate successful authentication
-        // In a real implementation, you would verify the assertion signature here
+        // Verify assertion using webauthn-rs
+        let assertion_response = AssertionResponse {
+            id: request.credential_id.clone(),
+            raw_id: credential_id.clone(),
+            response: AuthenticatorAssertionResponse {
+                client_data_json: request.response.client_data_json.clone(),
+                authenticator_data: request.response.authenticator_data.clone(),
+                signature: request.response.signature.clone(),
+                user_handle: request.response.user_handle.clone(),
+            },
+            authenticator_attachment: request.authenticator_attachment.clone(),
+            client_extension_results: request.client_extension_results.clone(),
+            type_: "public-key".to_string(),
+        };
+        
+        let challenge = String::from_utf8(session_data.challenge)
+            .map_err(|_| AppError::InvalidRequest("Invalid challenge encoding".to_string()))?;
+            
+        // Create credential data for verification
+        let credential_data = Credential {
+            credential_id: credential_id.clone(),
+            public_key: webauthn_rs::prelude::PublicKey::from_der(&credential.credential_public_key)
+                .map_err(|_| AppError::InvalidRequest("Invalid stored public key".to_string()))?,
+            sign_count: credential.sign_count as u32,
+            user_verified: credential.user_verified,
+            registration_policy: UserVerificationPolicy::Preferred,
+        };
+        
+        let auth_result = self.webauthn.authenticate_credential(
+            &assertion_response,
+            &credential_data,
+            &challenge,
+        ).map_err(|e| AppError::InvalidSignature(format!("{:?}", e)))?;
         
         // Update credential sign count and last used
-        self.credential_repo.update_sign_count(&credential_id, credential.sign_count + 1).await?;
+        self.credential_repo.update_sign_count(&credential_id, auth_result.new_sign_count as i64).await?;
         self.credential_repo.update_last_used(&credential_id).await?;
 
         // Update user last login
