@@ -67,7 +67,7 @@ validator = { version = "0.18", features = ["derive"] }
 regex = "1.10"
 
 # Session Management & Caching
-redis = { version = "0.24", features = ["tokio-comp", "connection-manager"] }
+redis = { version = "0.25", features = ["tokio-comp", "connection-manager"] }
 
 # Monitoring & Metrics
 prometheus = "0.13"
