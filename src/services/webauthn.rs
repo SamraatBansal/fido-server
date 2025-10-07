@@ -1,6 +1,7 @@
 use std::sync::Arc;
 use uuid::Uuid;
 use webauthn_rs::prelude::*;
+use webauthn_rs_proto::*;
 use base64::{Engine as _, engine::general_purpose};
 use chrono::{Duration, Utc};
 use rand::Rng;
