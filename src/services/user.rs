@@ -94,7 +94,7 @@ impl CredentialService {
                 name: None, // Could be stored as a separate field
                 last_used_at: cred.last_used_at.map(|dt| dt.to_rfc3339()),
                 created_at: cred.created_at.to_rfc3339(),
-                transports: cred.transfers.as_ref().map(|t| {
+                transports: cred.transports.as_ref().map(|t| {
                     t.iter().filter_map(|s| match s.as_str() {
                         "usb" => Some(AuthenticatorTransport::Usb),
                         "nfc" => Some(AuthenticatorTransport::Nfc),
