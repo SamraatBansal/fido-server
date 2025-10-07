@@ -60,8 +60,31 @@ anyhow = "1.0"
 chrono = { version = "0.4", features = ["serde"] }
 
 [dev-dependencies]
+# Testing Framework
 actix-test = "0.1"
 mockall = "0.13"
+tokio-test = "0.4"
+
+# Test Utilities
+proptest = "1.5"  # Property-based testing
+quickcheck = "1.0"
+fake = { version = "2.9", features = ["derive", "chrono", "uuid"] }
+
+# Test Database
+testcontainers = "0.16"
+testcontainers-modules = { version = "0.4", features = ["postgres"] }
+
+# Security Testing
+criterion = "0.5"  # Performance testing
+iai = "0.1"        # Benchmarking
+
+# Coverage
+tarpaulin = "0.27"
+
+# Additional testing dependencies
+hex = "0.4"
+serde_cbor = "0.11"
+ring = "0.17"  # For cryptographic testing
 
 [profile.dev]
 opt-level = 0
