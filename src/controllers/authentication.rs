@@ -1,13 +1,13 @@
 //! Authentication controller
 
 use actix_web::{web, HttpResponse, Result};
-use crate::error::{AppError, Result as AppResult};
+use crate::error::AppError;
 use crate::services::{WebAuthnService, ChallengeService, UserService, CredentialService};
 use crate::services::challenge::InMemoryChallengeStore;
 use crate::services::user::InMemoryUserRepository;
 use crate::services::credential::InMemoryCredentialRepository;
 use crate::schema::authentication::{AuthenticationStartRequest, AuthenticationFinishRequest};
-use serde_json::Value;
+use base64::Engine;
 
 /// Authentication controller
 pub struct AuthenticationController {
