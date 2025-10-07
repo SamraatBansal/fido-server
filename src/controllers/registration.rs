@@ -68,21 +68,18 @@ impl RegistrationController {
         match result {
             Ok(response) => Ok(HttpResponse::Created().json(response)),
             Err(AppError::NotFound(msg)) => {
-                println!("DEBUG: Registration NotFound: {}", msg);
                 Ok(HttpResponse::NotFound().json(serde_json::json!({
                     "error": msg,
                     "status": 404
                 })))
             }
             Err(AppError::BadRequest(msg)) => {
-                println!("DEBUG: Registration BadRequest: {}", msg);
                 Ok(HttpResponse::BadRequest().json(serde_json::json!({
                     "error": msg,
                     "status": 400
                 })))
             }
-            Err(err) => {
-                println!("DEBUG: Registration Internal Error: {:?}", err);
+            Err(_) => {
                 Ok(HttpResponse::InternalServerError().json(serde_json::json!({
                     "error": "Internal server error",
                     "status": 500
