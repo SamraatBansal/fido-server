@@ -1,151 +1,153 @@
 //! Authentication request/response schemas
 
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use super::{UserVerificationPolicy, AuthenticatorAttachment};
+use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 
-/// Public key credential descriptor
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct PublicKeyCredentialDescriptor {
-    /// Credential type
+/// Request to start authentication
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AuthenticationStartRequest {
+    /// Username (email address)
+    pub username: String,
+    /// User verification preference
+    #[serde(default = "default_user_verification")]
+    pub user_verification: String,
+}
+
+fn default_user_verification() -> String {
+    "preferred".to_string()
+}
+
+/// Response for authentication start
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AuthenticationStartResponse {
+    /// Challenge ID for tracking
+    pub challenge_id: String,
+    /// Credential request options
+    pub credential_request_options: CredentialRequestOptions,
+}
+
+/// Credential request options
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CredentialRequestOptions {
+    /// Challenge (base64url encoded)
+    pub challenge: String,
+    /// Allowed credentials
+    pub allow_credentials: Vec<AllowCredentials>,
+    /// User verification requirement
+    pub user_verification: String,
+    /// Timeout in milliseconds
+    pub timeout: u32,
+}
+
+/// Allow credentials structure
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AllowCredentials {
+    /// Type (always "public-key")
     #[serde(rename = "type")]
     pub cred_type: String,
     /// Credential ID (base64url encoded)
     pub id: String,
-    /// Transports
+    /// Supported transports
     pub transports: Option<Vec<String>>,
 }
 
-impl PublicKeyCredentialDescriptor {
-    /// Create a new descriptor
-    pub fn new(id: String, transports: Option<Vec<String>>) -> Self {
-        Self {
-            cred_type: "public-key".to_string(),
-            id,
-            transports,
-        }
-    }
-}
-
-/// Authentication extensions
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct AuthenticationExtensions {
-    /// Credential properties extension
-    #[serde(rename = "credProps")]
-    pub cred_props: Option<bool>,
-    /// Large blob extension
-    #[serde(rename = "largeBlob")]
-    pub large_blob: Option<AuthenticationExtensionsLargeBlob>,
-    /// User verification method extension
-    #[serde(rename = "uvm")]
-    pub uvm: Option<bool>,
-}
-
-/// Large blob authentication extension
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[serde(rename_all = "camelCase")]
-pub struct AuthenticationExtensionsLargeBlob {
-    /// Support for large blob
-    pub support: Option<String>,
-    /// Read operation
-    pub read: Option<bool>,
-    /// Write operation
-    pub write: Option<bool>,
-}
-
-/// Public key credential request options
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct PublicKeyCredentialRequestOptions {
-    /// Challenge (base64url encoded)
-    pub challenge: String,
-    /// Allow credentials
-    #[serde(rename = "allowCredentials")]
-    pub allow_credentials: Option<Vec<PublicKeyCredentialDescriptor>>,
-    /// User verification requirement
-    #[serde(rename = "userVerification")]
-    pub user_verification: UserVerificationPolicy,
-    /// Timeout in milliseconds
-    pub timeout: u32,
-    /// Extensions
-    pub extensions: Option<AuthenticationExtensions>,
-    /// Relying party ID
-    #[serde(rename = "rpId")]
-    pub rp_id: String,
-}
-
-/// Authentication start request
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct AuthenticationStartRequest {
-    /// Username
-    pub username: String,
-    /// User verification policy
-    #[serde(default = "UserVerificationPolicy::default")]
-    #[serde(rename = "userVerification")]
-    pub user_verification: UserVerificationPolicy,
-    /// Authenticator attachment
-    #[serde(rename = "authenticatorAttachment")]
-    pub authenticator_attachment: Option<AuthenticatorAttachment>,
-}
-
-/// Authentication start response
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct AuthenticationStartResponse {
-    /// Public key credential request options
-    #[serde(rename = "publicKey")]
-    pub public_key: PublicKeyCredentialRequestOptions,
-}
-
-/// Authentication finish response data
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct AuthenticationFinishResponseData {
-    /// Client data JSON
-    #[serde(rename = "clientDataJSON")]
+/// Request to finish authentication
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AuthenticationFinishRequest {
+    /// Challenge ID
+    pub challenge_id: String,
+    /// Credential ID
+    pub credential_id: String,
+    /// Client data JSON (base64url encoded)
     pub client_data_json: String,
-    /// Authenticator data
-    #[serde(rename = "authenticatorData")]
+    /// Authenticator data (base64url encoded)
     pub authenticator_data: String,
-    /// Signature
+    /// Signature (base64url encoded)
     pub signature: String,
-    /// User handle
-    #[serde(rename = "userHandle")]
+    /// User handle (base64url encoded, optional)
     pub user_handle: Option<String>,
 }
 
-/// Authentication finish request
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct AuthenticationFinishRequest {
-    /// Credential ID
-    pub id: String,
-    /// Raw ID
-    #[serde(rename = "rawId")]
-    pub raw_id: String,
-    /// Response data
-    pub response: AuthenticationFinishResponseData,
-    /// Authenticator attachment
-    #[serde(rename = "authenticatorAttachment")]
-    pub authenticator_attachment: Option<String>,
-    /// Client extension results
-    #[serde(rename = "clientExtensionResults")]
-    pub client_extension_results: Option<HashMap<String, serde_json::Value>>,
-    /// Type
-    #[serde(rename = "type")]
-    pub cred_type: String,
-}
-
-/// Authentication finish response
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+/// Response for authentication finish
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AuthenticationFinishResponse {
-    /// Status
+    /// Status of the operation
     pub status: String,
     /// User ID
-    #[serde(rename = "userId")]
     pub user_id: String,
-    /// New signature counter
-    #[serde(rename = "newSignCount")]
-    pub new_sign_count: u64,
-    /// Credential ID
-    #[serde(rename = "credentialId")]
-    pub credential_id: String,
+}
+
+impl AuthenticationStartRequest {
+    /// Validate the request
+    pub fn validate(&self) -> Result<(), String> {
+        if self.username.is_empty() {
+            return Err("Username cannot be empty".to_string());
+        }
+
+        if !self.username.contains('@') {
+            return Err("Username must be a valid email address".to_string());
+        }
+
+        let valid_user_verification = ["required", "preferred", "discouraged"];
+        if !valid_user_verification.contains(&self.user_verification.as_str()) {
+            return Err("Invalid user verification preference".to_string());
+        }
+
+        Ok(())
+    }
+}
+
+impl AuthenticationFinishRequest {
+    /// Validate the request
+    pub fn validate(&self) -> Result<(), String> {
+        if self.challenge_id.is_empty() {
+            return Err("Challenge ID cannot be empty".to_string());
+        }
+
+        if self.credential_id.is_empty() {
+            return Err("Credential ID cannot be empty".to_string());
+        }
+
+        if self.client_data_json.is_empty() {
+            return Err("Client data JSON cannot be empty".to_string());
+        }
+
+        if self.authenticator_data.is_empty() {
+            return Err("Authenticator data cannot be empty".to_string());
+        }
+
+        if self.signature.is_empty() {
+            return Err("Signature cannot be empty".to_string());
+        }
+
+        // Validate base64url encoding
+        if let Err(_) = URL_SAFE_NO_PAD.decode(&self.credential_id) {
+            return Err("Invalid credential ID encoding".to_string());
+        }
+
+        if let Err(_) = URL_SAFE_NO_PAD.decode(&self.client_data_json) {
+            return Err("Invalid client data JSON encoding".to_string());
+        }
+
+        if let Err(_) = URL_SAFE_NO_PAD.decode(&self.authenticator_data) {
+            return Err("Invalid authenticator data encoding".to_string());
+        }
+
+        if let Err(_) = URL_SAFE_NO_PAD.decode(&self.signature) {
+            return Err("Invalid signature encoding".to_string());
+        }
+
+        // Validate user handle if present
+        if let Some(ref user_handle) = self.user_handle {
+            if !user_handle.is_empty() {
+                if let Err(_) = URL_SAFE_NO_PAD.decode(user_handle) {
+                    return Err("Invalid user handle encoding".to_string());
+                }
+            }
+        }
+
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -153,101 +155,66 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_authentication_start_request_serialization() {
+    fn test_authentication_start_request_validation_success() {
         let request = AuthenticationStartRequest {
             username: "test@example.com".to_string(),
-            user_verification: UserVerificationPolicy::Required,
-            authenticator_attachment: Some(AuthenticatorAttachment::Platform),
+            user_verification: "preferred".to_string(),
         };
 
-        let serialized = serde_json::to_string(&request).unwrap();
-        let deserialized: AuthenticationStartRequest = serde_json::from_str(&serialized).unwrap();
-
-        assert_eq!(request, deserialized);
+        assert!(request.validate().is_ok());
     }
 
     #[test]
-    fn test_public_key_credential_descriptor() {
-        let descriptor = PublicKeyCredentialDescriptor::new(
-            "credential-id".to_string(),
-            Some(vec!["usb".to_string(), "nfc".to_string()]),
-        );
-
-        assert_eq!(descriptor.id, "credential-id");
-        assert_eq!(descriptor.cred_type, "public-key");
-        assert_eq!(descriptor.transports, Some(vec!["usb".to_string(), "nfc".to_string()]));
-    }
-
-    #[test]
-    fn test_public_key_credential_request_options() {
-        let options = PublicKeyCredentialRequestOptions {
-            challenge: "challenge".to_string(),
-            allow_credentials: Some(vec![PublicKeyCredentialDescriptor::new(
-                "cred-id".to_string(),
-                None,
-            )]),
-            user_verification: UserVerificationPolicy::Preferred,
-            timeout: 60000,
-            extensions: None,
-            rp_id: "example.com".to_string(),
+    fn test_authentication_start_request_invalid_username() {
+        let request = AuthenticationStartRequest {
+            username: "invalid-email".to_string(),
+            user_verification: "preferred".to_string(),
         };
 
-        assert_eq!(options.challenge, "challenge");
-        assert_eq!(options.user_verification, UserVerificationPolicy::Preferred);
-        assert_eq!(options.rp_id, "example.com");
+        assert!(request.validate().is_err());
     }
 
     #[test]
-    fn test_authentication_finish_request() {
+    fn test_authentication_finish_request_validation_success() {
         let request = AuthenticationFinishRequest {
-            id: "credential-id".to_string(),
-            raw_id: "raw-id".to_string(),
-            response: AuthenticationFinishResponseData {
-                client_data_json: "client-data".to_string(),
-                authenticator_data: "authenticator-data".to_string(),
-                signature: "signature".to_string(),
-                user_handle: Some("user-handle".to_string()),
-            },
-            authenticator_attachment: Some("platform".to_string()),
-            client_extension_results: None,
+            challenge_id: "challenge-123".to_string(),
+            credential_id: URL_SAFE_NO_PAD.encode(&[1, 2, 3, 4]),
+            client_data_json: URL_SAFE_NO_PAD.encode(b"{}"),
+            authenticator_data: URL_SAFE_NO_PAD.encode(&[5, 6, 7, 8]),
+            signature: URL_SAFE_NO_PAD.encode(&[9, 10, 11, 12]),
+            user_handle: Some(URL_SAFE_NO_PAD.encode(&[13, 14, 15, 16])),
+        };
+
+        assert!(request.validate().is_ok());
+    }
+
+    #[test]
+    fn test_authentication_finish_request_invalid_encoding() {
+        let request = AuthenticationFinishRequest {
+            challenge_id: "challenge-123".to_string(),
+            credential_id: "invalid-base64!".to_string(),
+            client_data_json: URL_SAFE_NO_PAD.encode(b"{}"),
+            authenticator_data: URL_SAFE_NO_PAD.encode(&[5, 6, 7, 8]),
+            signature: URL_SAFE_NO_PAD.encode(&[9, 10, 11, 12]),
+            user_handle: None,
+        };
+
+        assert!(request.validate().is_err());
+    }
+
+    #[test]
+    fn test_allow_credentials_serialization() {
+        let allow_creds = AllowCredentials {
             cred_type: "public-key".to_string(),
+            id: URL_SAFE_NO_PAD.encode(&[1, 2, 3, 4]),
+            transports: Some(vec!["usb".to_string(), "nfc".to_string()]),
         };
 
-        assert_eq!(request.id, "credential-id");
-        assert_eq!(request.response.client_data_json, "client-data");
-        assert_eq!(request.response.signature, "signature");
-        assert_eq!(request.cred_type, "public-key");
-    }
+        let serialized = serde_json::to_string(&allow_creds).unwrap();
+        let deserialized: AllowCredentials = serde_json::from_str(&serialized).unwrap();
 
-    #[test]
-    fn test_authentication_extensions() {
-        let extensions = AuthenticationExtensions {
-            cred_props: Some(true),
-            large_blob: Some(AuthenticationExtensionsLargeBlob {
-                support: Some("required".to_string()),
-                read: Some(true),
-                write: Some(false),
-            }),
-            uvm: Some(true),
-        };
-
-        assert_eq!(extensions.cred_props, Some(true));
-        assert_eq!(extensions.uvm, Some(true));
-        assert!(extensions.large_blob.is_some());
-    }
-
-    #[test]
-    fn test_authentication_finish_response() {
-        let response = AuthenticationFinishResponse {
-            status: "success".to_string(),
-            user_id: "user-123".to_string(),
-            new_sign_count: 42,
-            credential_id: "credential-id".to_string(),
-        };
-
-        assert_eq!(response.status, "success");
-        assert_eq!(response.user_id, "user-123");
-        assert_eq!(response.new_sign_count, 42);
-        assert_eq!(response.credential_id, "credential-id");
+        assert_eq!(allow_creds.cred_type, deserialized.cred_type);
+        assert_eq!(allow_creds.id, deserialized.id);
+        assert_eq!(allow_creds.transports, deserialized.transports);
     }
 }
