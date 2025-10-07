@@ -23,7 +23,7 @@ use crate::schema::{
 use crate::error::{AppError, Result};
 
 pub struct WebAuthnService {
-    webauthn: WebAuthn<WebauthnConfig>,
+    webauthn: Webauthn<WebauthnConfig>,
     user_repo: Arc<dyn UserRepository>,
     credential_repo: Arc<dyn CredentialRepository>,
     session_repo: Arc<dyn AuthSessionRepository>,
