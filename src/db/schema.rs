@@ -12,7 +12,7 @@ diesel::table! {
         success -> Bool,
         error_message -> Nullable<Text>,
         metadata -> Nullable<Jsonb>,
-        created_at -> Timestamp,
+        created_at -> Timestamptz,
     }
 }
 
