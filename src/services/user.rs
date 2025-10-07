@@ -1,7 +1,8 @@
 use std::sync::Arc;
 use uuid::Uuid;
 use crate::db::repositories::{UserRepository, CredentialRepository, AuthSessionRepository, AuditLogRepository};
-use crate::db::models::{User, Credential, CredentialInfo};
+use crate::db::models::{User, Credential};
+use crate::schema::CredentialInfo;
 use crate::error::{AppError, Result};
 
 pub struct UserService {
