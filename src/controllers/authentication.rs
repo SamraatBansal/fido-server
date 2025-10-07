@@ -2,34 +2,19 @@
 
 use actix_web::{web, HttpResponse, Result};
 use crate::error::AppError;
-use crate::services::{WebAuthnService, ChallengeService, UserService, CredentialService};
-use crate::services::challenge::InMemoryChallengeStore;
-use crate::services::user::InMemoryUserRepository;
-use crate::services::credential::InMemoryCredentialRepository;
+use crate::services::WebAuthnService;
 use crate::schema::authentication::{AuthenticationStartRequest, AuthenticationFinishRequest};
 use base64::Engine;
+use std::sync::Arc;
 
 /// Authentication controller
 pub struct AuthenticationController {
-    webauthn_service: WebAuthnService,
+    webauthn_service: Arc<WebAuthnService>,
 }
 
 impl AuthenticationController {
     /// Create a new authentication controller
-    pub fn new() -> Self {
-        let challenge_service = ChallengeService::new(InMemoryChallengeStore::new());
-        let user_service = UserService::new(InMemoryUserRepository::new());
-        let credential_service = CredentialService::new(InMemoryCredentialRepository::new());
-        
-        let webauthn_service = WebAuthnService::new(
-            challenge_service,
-            user_service,
-            credential_service,
-            "localhost".to_string(),
-            "Test RP".to_string(),
-            "https://localhost".to_string(),
-        );
-        
+    pub fn new(webauthn_service: Arc<WebAuthnService>) -> Self {
         Self { webauthn_service }
     }
 
