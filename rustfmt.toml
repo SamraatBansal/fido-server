@@ -14,3 +14,5 @@ wrap_comments = true
 comment_width = 80
 imports_granularity = "Crate"
 group_imports = "StdExternalCrate"
+use_field_init_shorthand = true
+use_try_shorthand = true
