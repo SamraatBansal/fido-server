@@ -1,7 +1,7 @@
 use actix_web::{
     dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform},
     error::Error,
-    HttpMessage,
+    http::header::{HeaderName, HeaderValue},
 };
 use std::future::{ready, Ready};
 
