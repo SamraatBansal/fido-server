@@ -48,7 +48,8 @@ impl WebAuthnService {
         let rp_name = config.rp_name.clone();
         let rp_origin = config.rp_origin.clone();
 
-        let webauthn_config = WebauthnConfig {
+        let rp_origin = config.rp_origin.parse()
+            .map_err(|_| AppError::InvalidRequest("Invalid origin".to_string()))?;
             rp: RelyingParty {
                 id: rp_id,
                 name: rp_name,
