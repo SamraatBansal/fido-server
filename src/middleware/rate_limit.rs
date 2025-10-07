@@ -1,10 +1,9 @@
-use actix_web::{dev::ServiceRequest, error, Error, HttpMessage};
+use actix_web::{dev::ServiceRequest, error, Error};
 use actix_web::dev::{forward_ready, Service, ServiceResponse, Transform};
-use governor::{clock::DefaultClock, middleware::NoOpMiddleware, state::InMemoryState, Jitter, Quota, RateLimiter};
+use governor::{clock::DefaultClock, state::keyed::HashMapKeyedStateStore, Quota, RateLimiter};
 use std::future::{ready, Ready};
 use std::num::NonZeroU32;
 use std::sync::Arc;
-use std::time::Duration;
 
 pub struct RateLimitMiddleware {
     limiter: Arc<RateLimiter<String, InMemoryState, DefaultClock, NoOpMiddleware>>,
