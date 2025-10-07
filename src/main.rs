@@ -29,8 +29,7 @@ async fn main() -> io::Result<()> {
             std::io::Error::new(std::io::ErrorKind::Other, e)
         })?;
 
-    // Create rate limiter
-    let rate_limiter = RateLimitMiddleware::new(config.security.rate_limit_requests_per_minute);
+    // Rate limiter disabled for now
 
     log::info!("Server running at http://{}:{}", config.server.host, config.server.port);
 
