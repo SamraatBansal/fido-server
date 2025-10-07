@@ -3,7 +3,7 @@ mod tests {
     use super::*;
     use crate::services::WebAuthnService;
     use crate::config::{WebAuthnConfig, AppConfig};
-    use crate::db::repositories::{MockUserRepository, MockCredentialRepository, MockAuthSessionRepository, MockAuditLogRepository};
+    use crate::db::mock_repositories::{MockUserRepository, MockCredentialRepository, MockAuthSessionRepository, MockAuditLogRepository};
     use crate::schema::{AttestationOptionsRequest, RequestContext};
     use std::sync::Arc;
     use uuid::Uuid;
