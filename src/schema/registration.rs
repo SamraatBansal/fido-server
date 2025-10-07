@@ -1,134 +1,63 @@
 //! Registration request/response schemas
 
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use uuid::Uuid;
+use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 
-/// User verification policy
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[serde(rename_all = "kebab-case")]
-pub enum UserVerificationPolicy {
-    /// User verification is discouraged
-    Discouraged,
-    /// User verification is preferred
-    Preferred,
-    /// User verification is required
-    Required,
+/// Request to start registration
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RegistrationStartRequest {
+    /// Username (email address)
+    pub username: String,
+    /// Display name for the user
+    pub display_name: String,
+    /// User verification preference
+    #[serde(default = "default_user_verification")]
+    pub user_verification: String,
+    /// Resident key preference
+    #[serde(default = "default_resident_key")]
+    pub resident_key: String,
 }
 
-impl Default for UserVerificationPolicy {
-    fn default() -> Self {
-        Self::Preferred
-    }
+fn default_user_verification() -> String {
+    "preferred".to_string()
 }
 
-/// Attestation conveyance preference
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[serde(rename_all = "kebab-case")]
-pub enum AttestationConveyancePreference {
-    /// No attestation
-    None,
-    /// Indirect attestation
-    Indirect,
-    /// Direct attestation
-    Direct,
-    /// Enterprise attestation
-    Enterprise,
+fn default_resident_key() -> String {
+    "discouraged".to_string()
 }
 
-impl Default for AttestationConveyancePreference {
-    fn default() -> Self {
-        Self::None
-    }
+/// Response for registration start
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RegistrationStartResponse {
+    /// Challenge ID for tracking
+    pub challenge_id: String,
+    /// Credential creation options
+    pub credential_creation_options: CredentialCreationOptions,
 }
 
-/// Authenticator attachment
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[serde(rename_all = "kebab-case")]
-pub enum AuthenticatorAttachment {
-    /// Cross-platform authenticator
-    CrossPlatform,
-    /// Platform authenticator
-    Platform,
-}
-
-/// Resident key requirement
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[serde(rename_all = "kebab-case")]
-pub enum ResidentKeyRequirement {
-    /// Resident key discouraged
-    Discouraged,
-    /// Resident key preferred
-    Preferred,
-    /// Resident key required
-    Required,
-}
-
-impl Default for ResidentKeyRequirement {
-    fn default() -> Self {
-        Self::Discouraged
-    }
-}
-
-/// Authenticator selection criteria
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct AuthenticatorSelection {
-    /// Authenticator attachment
-    pub authenticator_attachment: Option<AuthenticatorAttachment>,
-    /// Resident key requirement
-    pub resident_key: ResidentKeyRequirement,
-    /// User verification requirement
-    pub user_verification: UserVerificationPolicy,
-}
-
-impl Default for AuthenticatorSelection {
-    fn default() -> Self {
-        Self {
-            authenticator_attachment: None,
-            resident_key: ResidentKeyRequirement::default(),
-            user_verification: UserVerificationPolicy::default(),
-        }
-    }
-}
-
-/// Public key credential parameters
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct PublicKeyCredentialParameters {
-    /// Credential type
-    #[serde(rename = "type")]
-    pub cred_type: String,
-    /// Algorithm identifier
-    pub alg: i32,
-}
-
-impl PublicKeyCredentialParameters {
-    /// Create ES256 parameters
-    pub fn es256() -> Self {
-        Self {
-            cred_type: "public-key".to_string(),
-            alg: -7, // ES256
-        }
-    }
-
-    /// Create Ed25519 parameters
-    pub fn ed25519() -> Self {
-        Self {
-            cred_type: "public-key".to_string(),
-            alg: -8, // Ed25519
-        }
-    }
-
-    /// Create RS256 parameters
-    pub fn rs256() -> Self {
-        Self {
-            cred_type: "public-key".to_string(),
-            alg: -257, // RS256
-        }
-    }
+/// Credential creation options
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CredentialCreationOptions {
+    /// Challenge (base64url encoded)
+    pub challenge: String,
+    /// Relying party information
+    pub rp: PublicKeyCredentialRpEntity,
+    /// User information
+    pub user: PublicKeyCredentialUserEntity,
+    /// Public key credential parameters
+    pub pub_key_cred_params: Vec<PublicKeyCredentialParameters>,
+    /// Timeout in milliseconds
+    pub timeout: u32,
+    /// Attestation conveyance preference
+    pub attestation: String,
+    /// Authenticator selection criteria
+    pub authenticator_selection: AuthenticatorSelectionCriteria,
 }
 
 /// Relying party entity
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct RelyingParty {
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PublicKeyCredentialRpEntity {
     /// RP name
     pub name: String,
     /// RP ID
@@ -136,8 +65,8 @@ pub struct RelyingParty {
 }
 
 /// User entity
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct User {
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PublicKeyCredentialUserEntity {
     /// User ID (base64url encoded)
     pub id: String,
     /// Username
@@ -146,97 +75,114 @@ pub struct User {
     pub display_name: String,
 }
 
-/// Public key credential creation options
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct PublicKeyCredentialCreationOptions {
-    /// Challenge (base64url encoded)
-    pub challenge: String,
-    /// Relying party
-    pub rp: RelyingParty,
-    /// User
-    pub user: User,
-    /// Public key credential parameters
-    pub pub_key_cred_params: Vec<PublicKeyCredentialParameters>,
-    /// Timeout in milliseconds
-    pub timeout: u32,
-    /// Attestation conveyance preference
-    pub attestation: AttestationConveyancePreference,
-    /// Authenticator selection criteria
-    pub authenticator_selection: AuthenticatorSelection,
-    /// Extensions
-    pub extensions: Option<HashMap<String, serde_json::Value>>,
-}
-
-/// Registration start request
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct RegistrationStartRequest {
-    /// Username (email address)
-    pub username: String,
-    /// Display name
-    pub display_name: String,
-    /// User verification policy
-    #[serde(default = "UserVerificationPolicy::default")]
-    pub user_verification: UserVerificationPolicy,
-    /// Attestation conveyance preference
-    #[serde(default = "AttestationConveyancePreference::default")]
-    pub attestation: AttestationConveyancePreference,
-    /// Authenticator attachment
-    pub authenticator_attachment: Option<AuthenticatorAttachment>,
-    /// Resident key requirement
-    #[serde(default = "ResidentKeyRequirement::default")]
-    pub resident_key: ResidentKeyRequirement,
-}
-
-/// Registration start response
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct RegistrationStartResponse {
-    /// Public key credential creation options
-    #[serde(rename = "publicKey")]
-    pub public_key: PublicKeyCredentialCreationOptions,
-}
-
-/// Registration finish request
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct RegistrationFinishRequest {
-    /// Credential ID
-    pub id: String,
-    /// Raw ID
-    #[serde(rename = "rawId")]
-    pub raw_id: String,
-    /// Response data
-    pub response: RegistrationFinishResponseData,
-    /// Authenticator attachment
-    #[serde(rename = "authenticatorAttachment")]
-    pub authenticator_attachment: Option<String>,
-    /// Client extension results
-    #[serde(rename = "clientExtensionResults")]
-    pub client_extension_results: Option<HashMap<String, serde_json::Value>>,
-    /// Type
+/// Public key credential parameters
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PublicKeyCredentialParameters {
+    /// Type (always "public-key")
     #[serde(rename = "type")]
     pub cred_type: String,
+    /// Algorithm identifier (COSE algorithm)
+    pub alg: i32,
 }
 
-/// Registration finish response data
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct RegistrationFinishResponseData {
-    /// Client data JSON
-    #[serde(rename = "clientDataJSON")]
-    pub client_data_json: String,
-    /// Attestation object
-    #[serde(rename = "attestationObject")]
-    pub attestation_object: String,
-    /// Transports
-    pub transports: Option<Vec<String>>,
+/// Authenticator selection criteria
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AuthenticatorSelectionCriteria {
+    /// User verification requirement
+    pub user_verification: String,
+    /// Resident key requirement
+    pub resident_key: String,
 }
 
-/// Registration finish response
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct RegistrationFinishResponse {
-    /// Status
-    pub status: String,
+/// Request to finish registration
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RegistrationFinishRequest {
+    /// Challenge ID
+    pub challenge_id: String,
     /// Credential ID
-    #[serde(rename = "credentialId")]
     pub credential_id: String,
+    /// Client data JSON (base64url encoded)
+    pub client_data_json: String,
+    /// Attestation object (base64url encoded)
+    pub attestation_object: String,
+}
+
+/// Response for registration finish
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RegistrationFinishResponse {
+    /// Status of the operation
+    pub status: String,
+    /// Credential ID (base64url encoded)
+    pub credential_id: String,
+}
+
+impl RegistrationStartRequest {
+    /// Validate the request
+    pub fn validate(&self) -> Result<(), String> {
+        if self.username.is_empty() {
+            return Err("Username cannot be empty".to_string());
+        }
+
+        if !self.username.contains('@') {
+            return Err("Username must be a valid email address".to_string());
+        }
+
+        if self.display_name.is_empty() {
+            return Err("Display name cannot be empty".to_string());
+        }
+
+        if self.display_name.len() > 255 {
+            return Err("Display name too long (max 255 characters)".to_string());
+        }
+
+        let valid_user_verification = ["required", "preferred", "discouraged"];
+        if !valid_user_verification.contains(&self.user_verification.as_str()) {
+            return Err("Invalid user verification preference".to_string());
+        }
+
+        let valid_resident_key = ["required", "preferred", "discouraged"];
+        if !valid_resident_key.contains(&self.resident_key.as_str()) {
+            return Err("Invalid resident key preference".to_string());
+        }
+
+        Ok(())
+    }
+}
+
+impl RegistrationFinishRequest {
+    /// Validate the request
+    pub fn validate(&self) -> Result<(), String> {
+        if self.challenge_id.is_empty() {
+            return Err("Challenge ID cannot be empty".to_string());
+        }
+
+        if self.credential_id.is_empty() {
+            return Err("Credential ID cannot be empty".to_string());
+        }
+
+        if self.client_data_json.is_empty() {
+            return Err("Client data JSON cannot be empty".to_string());
+        }
+
+        if self.attestation_object.is_empty() {
+            return Err("Attestation object cannot be empty".to_string());
+        }
+
+        // Validate base64url encoding
+        if let Err(_) = URL_SAFE_NO_PAD.decode(&self.credential_id) {
+            return Err("Invalid credential ID encoding".to_string());
+        }
+
+        if let Err(_) = URL_SAFE_NO_PAD.decode(&self.client_data_json) {
+            return Err("Invalid client data JSON encoding".to_string());
+        }
+
+        if let Err(_) = URL_SAFE_NO_PAD.decode(&self.attestation_object) {
+            return Err("Invalid attestation object encoding".to_string());
+        }
+
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -244,72 +190,62 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_registration_start_request_serialization() {
+    fn test_registration_start_request_validation_success() {
         let request = RegistrationStartRequest {
             username: "test@example.com".to_string(),
             display_name: "Test User".to_string(),
-            user_verification: UserVerificationPolicy::Preferred,
-            attestation: AttestationConveyancePreference::Direct,
-            authenticator_attachment: Some(AuthenticatorAttachment::CrossPlatform),
-            resident_key: ResidentKeyRequirement::Preferred,
+            user_verification: "preferred".to_string(),
+            resident_key: "discouraged".to_string(),
         };
 
-        let serialized = serde_json::to_string(&request).unwrap();
-        let deserialized: RegistrationStartRequest = serde_json::from_str(&serialized).unwrap();
-
-        assert_eq!(request, deserialized);
+        assert!(request.validate().is_ok());
     }
 
     #[test]
-    fn test_public_key_credential_parameters() {
-        let es256 = PublicKeyCredentialParameters::es256();
-        assert_eq!(es256.alg, -7);
-        assert_eq!(es256.cred_type, "public-key");
+    fn test_registration_start_request_invalid_username() {
+        let request = RegistrationStartRequest {
+            username: "invalid-email".to_string(),
+            display_name: "Test User".to_string(),
+            user_verification: "preferred".to_string(),
+            resident_key: "discouraged".to_string(),
+        };
 
-        let ed25519 = PublicKeyCredentialParameters::ed25519();
-        assert_eq!(ed25519.alg, -8);
-
-        let rs256 = PublicKeyCredentialParameters::rs256();
-        assert_eq!(rs256.alg, -257);
+        assert!(request.validate().is_err());
     }
 
     #[test]
-    fn test_authenticator_selection_default() {
-        let selection = AuthenticatorSelection::default();
-        assert_eq!(selection.resident_key, ResidentKeyRequirement::Discouraged);
-        assert_eq!(selection.user_verification, UserVerificationPolicy::Preferred);
-        assert!(selection.authenticator_attachment.is_none());
+    fn test_registration_start_request_empty_display_name() {
+        let request = RegistrationStartRequest {
+            username: "test@example.com".to_string(),
+            display_name: "".to_string(),
+            user_verification: "preferred".to_string(),
+            resident_key: "discouraged".to_string(),
+        };
+
+        assert!(request.validate().is_err());
     }
 
     #[test]
-    fn test_user_verification_policy_default() {
-        let policy = UserVerificationPolicy::default();
-        assert_eq!(policy, UserVerificationPolicy::Preferred);
-    }
-
-    #[test]
-    fn test_attestation_conveyance_preference_default() {
-        let preference = AttestationConveyancePreference::default();
-        assert_eq!(preference, AttestationConveyancePreference::None);
-    }
-
-    #[test]
-    fn test_registration_finish_request() {
+    fn test_registration_finish_request_validation_success() {
         let request = RegistrationFinishRequest {
-            id: "credential-id".to_string(),
-            raw_id: "raw-id".to_string(),
-            response: RegistrationFinishResponseData {
-                client_data_json: "client-data".to_string(),
-                attestation_object: "attestation-object".to_string(),
-                transports: Some(vec!["usb".to_string(), "nfc".to_string()]),
-            },
-            authenticator_attachment: Some("cross-platform".to_string()),
-            client_extension_results: None,
-            cred_type: "public-key".to_string(),
+            challenge_id: "challenge-123".to_string(),
+            credential_id: URL_SAFE_NO_PAD.encode(&[1, 2, 3, 4]),
+            client_data_json: URL_SAFE_NO_PAD.encode(b"{}"),
+            attestation_object: URL_SAFE_NO_PAD.encode(&[5, 6, 7, 8]),
         };
 
-        assert_eq!(request.id, "credential-id");
-        assert_eq!(request.response.client_data_json, "client-data");
-        assert_eq!(request.cred_type, "public-key");
+        assert!(request.validate().is_ok());
+    }
+
+    #[test]
+    fn test_registration_finish_request_invalid_encoding() {
+        let request = RegistrationFinishRequest {
+            challenge_id: "challenge-123".to_string(),
+            credential_id: "invalid-base64!".to_string(),
+            client_data_json: URL_SAFE_NO_PAD.encode(b"{}"),
+            attestation_object: URL_SAFE_NO_PAD.encode(&[5, 6, 7, 8]),
+        };
+
+        assert!(request.validate().is_err());
     }
 }
