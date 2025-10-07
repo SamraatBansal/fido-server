@@ -1,9 +1,9 @@
 //! WebAuthn Integration Tests
 
 use fido_server::services::webauthn::WebAuthnService;
-use fido_server::services::challenge::InMemoryChallengeStore;
-use fido_server::services::user::InMemoryUserRepository;
-use fido_server::services::credential::InMemoryCredentialRepository;
+use fido_server::services::challenge::{ChallengeService, InMemoryChallengeStore};
+use fido_server::services::user::{UserService, InMemoryUserRepository};
+use fido_server::services::credential::{CredentialService, InMemoryCredentialRepository};
 use fido_server::schema::credential::Credential;
 
 #[tokio::test]
