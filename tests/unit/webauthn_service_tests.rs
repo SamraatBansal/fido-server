@@ -4,16 +4,20 @@ use uuid::Uuid;
 use serde_json::json;
 use mockall::predicate::*;
 use mockall::mock;
+use fido_server::services::challenge::Challenge;
+use fido_server::services::credential::Credential;
+use fido_server::services::user::User;
+use fido_server::error::Result;
 
 // Mock dependencies
 mock! {
     ChallengeStore {}
 
     #[async_trait::async_trait]
-    impl crate::services::challenge::ChallengeStore for ChallengeStore {
-        async fn store_challenge(&self, challenge: crate::services::challenge::Challenge) -> crate::error::Result<()>;
-        async fn validate_and_consume(&self, challenge_id: &str, response: &str) -> crate::error::Result<bool>;
-        async fn cleanup_expired(&self) -> crate::error::Result<()>;
+    impl fido_server::services::challenge::ChallengeStore for ChallengeStore {
+        async fn store_challenge(&self, challenge: &Challenge) -> Result<()>;
+        async fn validate_and_consume(&self, challenge_id: &str, response: &str) -> Result<bool>;
+        async fn cleanup_expired(&self) -> Result<()>;
     }
 }
 
@@ -21,12 +25,12 @@ mock! {
     CredentialRepository {}
 
     #[async_trait::async_trait]
-    impl crate::services::credential::CredentialRepository for CredentialRepository {
-        async fn create(&self, credential: &crate::services::credential::Credential) -> crate::error::Result<()>;
-        async fn find_by_id(&self, id: &[u8]) -> crate::error::Result<Option<crate::services::credential::Credential>>;
-        async fn find_by_user_id(&self, user_id: &Uuid) -> crate::error::Result<Vec<crate::services::credential::Credential>>;
-        async fn update_sign_count(&self, id: &[u8], count: u64) -> crate::error::Result<()>;
-        async fn delete(&self, id: &[u8]) -> crate::error::Result<()>;
+    impl fido_server::services::credential::CredentialRepository for CredentialRepository {
+        async fn create(&self, credential: &Credential) -> Result<()>;
+        async fn find_by_id(&self, id: &[u8]) -> Result<Option<Credential>>;
+        async fn find_by_user_id(&self, user_id: &Uuid) -> Result<Vec<Credential>>;
+        async fn update_sign_count(&self, id: &[u8], count: u64) -> Result<()>;
+        async fn delete(&self, id: &[u8]) -> Result<()>;
     }
 }
 
@@ -34,12 +38,12 @@ mock! {
     UserRepository {}
 
     #[async_trait::async_trait]
-    impl crate::services::user::UserRepository for UserRepository {
-        async fn create(&self, user: &crate::services::user::User) -> crate::error::Result<()>;
-        async fn find_by_id(&self, id: &Uuid) -> crate::error::Result<Option<crate::services::user::User>>;
-        async fn find_by_username(&self, username: &str) -> crate::error::Result<Option<crate::services::user::User>>;
-        async fn update(&self, user: &crate::services::user::User) -> crate::error::Result<()>;
-        async fn delete(&self, id: &Uuid) -> crate::error::Result<()>;
+    impl fido_server::services::user::UserRepository for UserRepository {
+        async fn create(&self, user: &User) -> Result<()>;
+        async fn find_by_id(&self, id: &Uuid) -> Result<Option<User>>;
+        async fn find_by_username(&self, username: &str) -> Result<Option<User>>;
+        async fn update(&self, user: &User) -> Result<()>;
+        async fn delete(&self, id: &Uuid) -> Result<()>;
     }
 }
 
