@@ -95,7 +95,7 @@ impl WebAuthnService {
 
         let session_data = SessionData {
             user_id: Some(user.id),
-            username: Some(user.username),
+            username: Some(user.username.clone()),
             challenge: challenge.as_bytes().to_vec(),
             session_type: SessionType::Registration,
             expires_at,
