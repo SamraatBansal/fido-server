@@ -53,10 +53,7 @@ impl RegistrationController {
         // For now, we'll implement a basic version that validates the challenge
         let credential_id = base64::engine::general_purpose::URL_SAFE_NO_PAD
             .decode(&req.credential.id)
-            .unwrap_or_else(|e| {
-                println!("DEBUG: Failed to decode credential ID '{}': {:?}", req.credential.id, e);
-                vec![]
-            });
+            .unwrap_or_default();
             
         let result = self
             .webauthn_service
