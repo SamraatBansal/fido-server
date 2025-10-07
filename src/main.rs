@@ -40,7 +40,6 @@ async fn main() -> io::Result<()> {
             .app_data(actix_web::data::clone(&app_state.credential_service))
             .wrap(Logger::default())
             .wrap(SecurityHeaders)
-            .wrap(rate_limiter.clone())
             .wrap(cors_config())
             .configure(api::configure)
             .configure(webauthn::configure)
