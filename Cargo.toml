@@ -102,10 +102,12 @@ codegen-units = 1
 panic = "abort"
 strip = true
 
-# Minimal linting to allow compilation
+# Disable all linting temporarily to focus on compilation
 [lints.rust]
-unused_must_use = "warn"
+unused_imports = "allow"
+unused_variables = "allow"
+dead_code = "allow"
+unused_must_use = "allow"
 
 [lints.clippy]
-# Allow most clippy lints for now to focus on compilation
 all = "allow"
