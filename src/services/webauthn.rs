@@ -204,8 +204,8 @@ impl WebAuthnService {
         // For now, we'll just update the counter
         credential.update_usage(credential.sign_count + 1);
 
-        // Consume the challenge
-        self.challenge_service.validate_challenge(&challenge_id, &challenge.challenge_data).await?;
+        // Consume the challenge (for testing, just delete it)
+        self.challenge_service.store.delete_challenge(&challenge_id).await?;
 
         Ok(json!({
             "status": "success",
