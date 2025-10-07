@@ -15,6 +15,14 @@ path = "src/lib.rs"
 name = "fido-server"
 path = "src/main.rs"
 
+[[test]]
+name = "unit"
+path = "tests/unit/mod.rs"
+
+[[test]]
+name = "integration"
+path = "tests/integration/mod.rs"
+
 [dependencies]
 # Web Framework
 actix-web = "4.9"
