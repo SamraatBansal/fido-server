@@ -215,9 +215,9 @@ mod tests {
     use crate::services::credential::InMemoryCredentialRepository;
 
     fn create_test_service() -> WebAuthnService {
-        let challenge_service = ChallengeService::new(Box::new(InMemoryChallengeStore::new()));
-        let user_service = UserService::new(Box::new(InMemoryUserRepository::new()));
-        let credential_service = CredentialService::new(Box::new(InMemoryCredentialRepository::new()));
+        let challenge_service = ChallengeService::new(InMemoryChallengeStore::new());
+        let user_service = UserService::new(InMemoryUserRepository::new());
+        let credential_service = CredentialService::new(InMemoryCredentialRepository::new());
 
         WebAuthnService::new(
             challenge_service,
