@@ -55,13 +55,7 @@ impl AppState {
     }
 }
 
-fn run_migrations(pool: &PgPool) -> Result<(), Box<dyn std::error::Error>> {
-    use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
-    
-    const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
-    
-    let mut conn = pool.get()?;
-    conn.run_pending_migrations(MIGRATIONS)?;
-    
+fn run_migrations(_pool: &PgPool) -> Result<(), Box<dyn std::error::Error>> {
+    // Skip migrations for now - they would be run manually
     Ok(())
 }
