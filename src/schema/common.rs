@@ -1,215 +1,131 @@
 //! Common schema definitions
 
 use serde::{Deserialize, Serialize};
-use chrono::{DateTime, Utc};
 
-/// Common API response structure
+/// API error response
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ApiResponse<T> {
-    /// Whether the request was successful
-    pub success: bool,
-    /// Response data (if successful)
-    pub data: Option<T>,
-    /// Error message (if unsuccessful)
-    pub error: Option<String>,
-    /// Timestamp of the response
-    pub timestamp: DateTime<Utc>,
-}
-
-impl<T> ApiResponse<T> {
-    /// Create a successful response
-    pub fn success(data: T) -> Self {
-        Self {
-            success: true,
-            data: Some(data),
-            error: None,
-            timestamp: Utc::now(),
-        }
-    }
-
-    /// Create an error response
-    pub fn error(error: String) -> Self {
-        Self {
-            success: false,
-            data: None,
-            error: Some(error),
-            timestamp: Utc::now(),
-        }
-    }
+pub struct ErrorResponse {
+    pub error: String,
+    pub status: u16,
+    pub timestamp: Option<String>,
+    pub request_id: Option<String>,
 }
 
 /// Health check response
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HealthResponse {
-    /// Service status
     pub status: String,
-    /// Service version
+    pub timestamp: String,
     pub version: String,
-    /// Current timestamp
-    pub timestamp: DateTime<Utc>,
-    /// Optional service details
-    pub details: Option<ServiceDetails>,
 }
 
-/// Service details for health check
+/// API success response
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ServiceDetails {
-    /// Database connection status
-    pub database: String,
-    /// Cache connection status (if applicable)
-    pub cache: Option<String>,
-    /// Uptime in seconds
-    pub uptime_seconds: u64,
-}
-
-/// Error response structure
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ErrorResponse {
-    /// Error code
-    pub code: String,
-    /// Error message
-    pub message: String,
-    /// Additional details (optional)
-    pub details: Option<serde_json::Value>,
-    /// Timestamp
-    pub timestamp: DateTime<Utc>,
-}
-
-impl ErrorResponse {
-    /// Create a new error response
-    pub fn new(code: String, message: String) -> Self {
-        Self {
-            code,
-            message,
-            details: None,
-            timestamp: Utc::now(),
-        }
-    }
-
-    /// Create an error response with details
-    pub fn with_details(code: String, message: String, details: serde_json::Value) -> Self {
-        Self {
-            code,
-            message,
-            details: Some(details),
-            timestamp: Utc::now(),
-        }
-    }
+pub struct SuccessResponse {
+    pub status: String,
+    pub message: Option<String>,
 }
 
 /// Validation error details
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ValidationError {
-    /// Field that failed validation
     pub field: String,
-    /// Validation error message
     pub message: String,
-    /// Invalid value (optional)
-    pub value: Option<serde_json::Value>,
 }
 
-impl ValidationError {
-    /// Create a new validation error
-    pub fn new(field: String, message: String) -> Self {
-        Self {
-            field,
-            message,
-            value: None,
-        }
-    }
-
-    /// Create a validation error with value
-    pub fn with_value(field: String, message: String, value: serde_json::Value) -> Self {
-        Self {
-            field,
-            message,
-            value: Some(value),
-        }
-    }
-}
-
-/// Pagination parameters
+/// Detailed error response
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct PaginationParams {
-    /// Page number (1-based)
-    #[serde(default = "default_page")]
-    pub page: u32,
-    /// Items per page
-    #[serde(default = "default_page_size")]
-    pub page_size: u32,
+pub struct DetailedErrorResponse {
+    pub error: ErrorDetails,
+    pub timestamp: String,
+    pub request_id: String,
 }
 
-fn default_page() -> u32 {
-    1
-}
-
-fn default_page_size() -> u32 {
-    20
-}
-
-/// Paginated response
+/// Error details
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct PaginatedResponse<T> {
-    /// Items in the current page
-    pub items: Vec<T>,
-    /// Current page number
-    pub page: u32,
-    /// Items per page
-    pub page_size: u32,
-    /// Total number of items
-    pub total: u64,
-    /// Total number of pages
-    pub total_pages: u32,
-    /// Whether there's a next page
-    pub has_next: bool,
-    /// Whether there's a previous page
-    pub has_previous: bool,
+pub struct ErrorDetails {
+    pub code: String,
+    pub message: String,
+    pub details: Option<serde_json::Value>,
 }
 
-impl<T> PaginatedResponse<T> {
-    /// Create a new paginated response
-    pub fn new(
-        items: Vec<T>,
-        page: u32,
-        page_size: u32,
-        total: u64,
-    ) -> Self {
-        let total_pages = ((total as f64) / (page_size as f64)).ceil() as u32;
-        let total_pages = if total_pages == 0 { 1 } else { total_pages };
-
+impl ErrorResponse {
+    /// Create a new error response
+    pub fn new(error: String, status: u16) -> Self {
         Self {
-            items,
-            page,
-            page_size,
-            total,
-            total_pages,
-            has_next: page < total_pages,
-            has_previous: page > 1,
+            error,
+            status,
+            timestamp: Some(chrono::Utc::now().to_rfc3339()),
+            request_id: Some(uuid::Uuid::new_v4().to_string()),
+        }
+    }
+
+    /// Create a bad request error
+    pub fn bad_request(message: &str) -> Self {
+        Self::new(message.to_string(), 400)
+    }
+
+    /// Create a not found error
+    pub fn not_found(message: &str) -> Self {
+        Self::new(message.to_string(), 404)
+    }
+
+    /// Create an internal server error
+    pub fn internal_error(message: &str) -> Self {
+        Self::new(message.to_string(), 500)
+    }
+}
+
+impl HealthResponse {
+    /// Create a new health response
+    pub fn new(version: String) -> Self {
+        Self {
+            status: "healthy".to_string(),
+            timestamp: chrono::Utc::now().to_rfc3339(),
+            version,
+        }
+    }
+
+    /// Create an unhealthy response
+    pub fn unhealthy(version: String) -> Self {
+        Self {
+            status: "unhealthy".to_string(),
+            timestamp: chrono::Utc::now().to_rfc3339(),
+            version,
         }
     }
 }
 
-impl PaginationParams {
-    /// Validate pagination parameters
-    pub fn validate(&self) -> Result<(), String> {
-        if self.page == 0 {
-            return Err("Page number must be greater than 0".to_string());
+impl SuccessResponse {
+    /// Create a new success response
+    pub fn new() -> Self {
+        Self {
+            status: "success".to_string(),
+            message: None,
         }
-
-        if self.page_size == 0 {
-            return Err("Page size must be greater than 0".to_string());
-        }
-
-        if self.page_size > 1000 {
-            return Err("Page size cannot exceed 1000".to_string());
-        }
-
-        Ok(())
     }
 
-    /// Calculate offset for database queries
-    pub fn offset(&self) -> u32 {
-        (self.page - 1) * self.page_size
+    /// Create a success response with a message
+    pub fn with_message(message: &str) -> Self {
+        Self {
+            status: "success".to_string(),
+            message: Some(message.to_string()),
+        }
+    }
+}
+
+impl DetailedErrorResponse {
+    /// Create a new detailed error response
+    pub fn new(code: String, message: String, details: Option<serde_json::Value>) -> Self {
+        Self {
+            error: ErrorDetails {
+                code,
+                message,
+                details,
+            },
+            timestamp: chrono::Utc::now().to_rfc3339(),
+            request_id: uuid::Uuid::new_v4().to_string(),
+        }
     }
 }
 
@@ -218,103 +134,54 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_api_response_success() {
-        let response = ApiResponse::success("test data");
-        assert!(response.success);
-        assert_eq!(response.data, Some("test data"));
-        assert!(response.error.is_none());
+    fn test_error_response_creation() {
+        let error = ErrorResponse::bad_request("Invalid input");
+        assert_eq!(error.status, 400);
+        assert_eq!(error.error, "Invalid input");
+        assert!(error.timestamp.is_some());
+        assert!(error.request_id.is_some());
     }
 
     #[test]
-    fn test_api_response_error() {
-        let response = ApiResponse::<String>::error("test error".to_string());
-        assert!(!response.success);
-        assert!(response.data.is_none());
-        assert_eq!(response.error, Some("test error".to_string()));
-    }
-
-    #[test]
-    fn test_error_response() {
-        let error = ErrorResponse::new(
-            "VALIDATION_ERROR".to_string(),
-            "Invalid input".to_string(),
-        );
-        assert_eq!(error.code, "VALIDATION_ERROR");
-        assert_eq!(error.message, "Invalid input");
-        assert!(error.details.is_none());
-    }
-
-    #[test]
-    fn test_validation_error() {
-        let error = ValidationError::new(
-            "username".to_string(),
-            "Username is required".to_string(),
-        );
-        assert_eq!(error.field, "username");
-        assert_eq!(error.message, "Username is required");
-        assert!(error.value.is_none());
-    }
-
-    #[test]
-    fn test_pagination_params_validation() {
-        let valid_params = PaginationParams {
-            page: 1,
-            page_size: 20,
-        };
-        assert!(valid_params.validate().is_ok());
-
-        let invalid_page = PaginationParams {
-            page: 0,
-            page_size: 20,
-        };
-        assert!(invalid_page.validate().is_err());
-
-        let invalid_page_size = PaginationParams {
-            page: 1,
-            page_size: 0,
-        };
-        assert!(invalid_page_size.validate().is_err());
-
-        let too_large_page_size = PaginationParams {
-            page: 1,
-            page_size: 1001,
-        };
-        assert!(too_large_page_size.validate().is_err());
-    }
-
-    #[test]
-    fn test_pagination_offset() {
-        let params = PaginationParams {
-            page: 3,
-            page_size: 10,
-        };
-        assert_eq!(params.offset(), 20);
-    }
-
-    #[test]
-    fn test_paginated_response() {
-        let items = vec!["item1", "item2", "item3"];
-        let response = PaginatedResponse::new(items.clone(), 1, 10, 25);
-
-        assert_eq!(response.items, items);
-        assert_eq!(response.page, 1);
-        assert_eq!(response.page_size, 10);
-        assert_eq!(response.total, 25);
-        assert_eq!(response.total_pages, 3);
-        assert!(response.has_next);
-        assert!(!response.has_previous);
-    }
-
-    #[test]
-    fn test_health_response() {
-        let health = HealthResponse {
-            status: "healthy".to_string(),
-            version: "1.0.0".to_string(),
-            timestamp: Utc::now(),
-            details: None,
-        };
+    fn test_health_response_creation() {
+        let health = HealthResponse::new("1.0.0".to_string());
         assert_eq!(health.status, "healthy");
         assert_eq!(health.version, "1.0.0");
-        assert!(health.details.is_none());
+        assert!(health.timestamp.len() > 0);
+    }
+
+    #[test]
+    fn test_success_response_creation() {
+        let success = SuccessResponse::with_message("Operation completed");
+        assert_eq!(success.status, "success");
+        assert_eq!(success.message, Some("Operation completed".to_string()));
+    }
+
+    #[test]
+    fn test_detailed_error_response_creation() {
+        let details = serde_json::json!({
+            "field": "username",
+            "reason": "Invalid email format"
+        });
+
+        let error = DetailedErrorResponse::new(
+            "VALIDATION_ERROR".to_string(),
+            "Validation failed".to_string(),
+            Some(details),
+        );
+
+        assert_eq!(error.error.code, "VALIDATION_ERROR");
+        assert_eq!(error.error.message, "Validation failed");
+        assert!(error.error.details.is_some());
+    }
+
+    #[test]
+    fn test_error_response_serialization() {
+        let error = ErrorResponse::not_found("User not found");
+        let serialized = serde_json::to_string(&error).unwrap();
+        let deserialized: ErrorResponse = serde_json::from_str(&serialized).unwrap();
+
+        assert_eq!(deserialized.status, 404);
+        assert_eq!(deserialized.error, "User not found");
     }
 }
