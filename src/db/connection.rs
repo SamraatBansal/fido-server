@@ -5,7 +5,7 @@ use std::env;
 pub type PgPool = Pool<ConnectionManager<PgConnection>>;
 pub type PgPooledConn = PooledConnection<ConnectionManager<PgConnection>>;
 
-pub fn establish_connection_pool() -> Result<PgPool, diesel::result::ConnectionError> {
+pub fn establish_connection_pool() -> Result<PgPool, r2d2::Error> {
     let database_url = env::var("DATABASE_URL")
         .expect("DATABASE_URL must be set");
     
