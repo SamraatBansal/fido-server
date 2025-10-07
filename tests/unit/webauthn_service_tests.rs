@@ -5,8 +5,7 @@ use fido_server::services::challenge::{ChallengeService, InMemoryChallengeStore}
 use fido_server::services::user::{UserService, InMemoryUserRepository};
 use fido_server::services::credential::{CredentialService, InMemoryCredentialRepository};
 use fido_server::schema::credential::Credential;
-use fido_server::error::{AppError, Result};
-use serde_json::json;
+use fido_server::error::AppError;
 
 #[cfg(test)]
 mod tests {
