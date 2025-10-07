@@ -5,7 +5,7 @@ use std::sync::Arc;
 use uuid::Uuid;
 use validator::Validate;
 use webauthn_rs::prelude::*;
-use webauthn_rs::WebAuthnBuilder;
+use webauthn_rs::WebauthnBuilder;
 use webauthn_rs_proto::*;
 
 use crate::config::WebAuthnConfig;
