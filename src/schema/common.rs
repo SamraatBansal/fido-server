@@ -1,17 +1,78 @@
 //! Common schema definitions
 
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use chrono::{DateTime, Utc};
 
-/// API error response
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+/// Common API response structure
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ApiResponse<T> {
+    /// Whether the request was successful
+    pub success: bool,
+    /// Response data (if successful)
+    pub data: Option<T>,
+    /// Error message (if unsuccessful)
+    pub error: Option<String>,
+    /// Timestamp of the response
+    pub timestamp: DateTime<Utc>,
+}
+
+impl<T> ApiResponse<T> {
+    /// Create a successful response
+    pub fn success(data: T) -> Self {
+        Self {
+            success: true,
+            data: Some(data),
+            error: None,
+            timestamp: Utc::now(),
+        }
+    }
+
+    /// Create an error response
+    pub fn error(error: String) -> Self {
+        Self {
+            success: false,
+            data: None,
+            error: Some(error),
+            timestamp: Utc::now(),
+        }
+    }
+}
+
+/// Health check response
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HealthResponse {
+    /// Service status
+    pub status: String,
+    /// Service version
+    pub version: String,
+    /// Current timestamp
+    pub timestamp: DateTime<Utc>,
+    /// Optional service details
+    pub details: Option<ServiceDetails>,
+}
+
+/// Service details for health check
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ServiceDetails {
+    /// Database connection status
+    pub database: String,
+    /// Cache connection status (if applicable)
+    pub cache: Option<String>,
+    /// Uptime in seconds
+    pub uptime_seconds: u64,
+}
+
+/// Error response structure
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ErrorResponse {
     /// Error code
     pub code: String,
     /// Error message
     pub message: String,
-    /// Additional error details
-    pub details: Option<HashMap<String, serde_json::Value>>,
+    /// Additional details (optional)
+    pub details: Option<serde_json::Value>,
+    /// Timestamp
+    pub timestamp: DateTime<Utc>,
 }
 
 impl ErrorResponse {
@@ -21,147 +82,135 @@ impl ErrorResponse {
             code,
             message,
             details: None,
+            timestamp: Utc::now(),
         }
     }
 
-    /// Create a new error response with details
-    pub fn with_details(
-        code: String,
-        message: String,
-        details: HashMap<String, serde_json::Value>,
-    ) -> Self {
+    /// Create an error response with details
+    pub fn with_details(code: String, message: String, details: serde_json::Value) -> Self {
         Self {
             code,
             message,
             details: Some(details),
+            timestamp: Utc::now(),
         }
     }
 }
 
-/// Success response
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct SuccessResponse {
-    /// Status
-    pub status: String,
-    /// Optional data
-    pub data: Option<serde_json::Value>,
+/// Validation error details
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ValidationError {
+    /// Field that failed validation
+    pub field: String,
+    /// Validation error message
+    pub message: String,
+    /// Invalid value (optional)
+    pub value: Option<serde_json::Value>,
 }
 
-impl SuccessResponse {
-    /// Create a new success response
-    pub fn new() -> Self {
+impl ValidationError {
+    /// Create a new validation error
+    pub fn new(field: String, message: String) -> Self {
         Self {
-            status: "success".to_string(),
-            data: None,
+            field,
+            message,
+            value: None,
         }
     }
 
-    /// Create a success response with data
-    pub fn with_data(data: serde_json::Value) -> Self {
+    /// Create a validation error with value
+    pub fn with_value(field: String, message: String, value: serde_json::Value) -> Self {
         Self {
-            status: "success".to_string(),
-            data: Some(data),
+            field,
+            message,
+            value: Some(value),
         }
     }
 }
 
-/// Health check response
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct HealthResponse {
-    /// Service status
-    pub status: String,
-    /// Service version
-    pub version: String,
-    /// Timestamp
-    pub timestamp: String,
-    /// Database status
-    pub database: String,
-    /// Additional checks
-    pub checks: Option<HashMap<String, String>>,
+/// Pagination parameters
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PaginationParams {
+    /// Page number (1-based)
+    #[serde(default = "default_page")]
+    pub page: u32,
+    /// Items per page
+    #[serde(default = "default_page_size")]
+    pub page_size: u32,
 }
 
-impl HealthResponse {
-    /// Create a new health response
-    pub fn new(version: String, database_status: String) -> Self {
+fn default_page() -> u32 {
+    1
+}
+
+fn default_page_size() -> u32 {
+    20
+}
+
+/// Paginated response
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PaginatedResponse<T> {
+    /// Items in the current page
+    pub items: Vec<T>,
+    /// Current page number
+    pub page: u32,
+    /// Items per page
+    pub page_size: u32,
+    /// Total number of items
+    pub total: u64,
+    /// Total number of pages
+    pub total_pages: u32,
+    /// Whether there's a next page
+    pub has_next: bool,
+    /// Whether there's a previous page
+    pub has_previous: bool,
+}
+
+impl<T> PaginatedResponse<T> {
+    /// Create a new paginated response
+    pub fn new(
+        items: Vec<T>,
+        page: u32,
+        page_size: u32,
+        total: u64,
+    ) -> Self {
+        let total_pages = ((total as f64) / (page_size as f64)).ceil() as u32;
+        let total_pages = if total_pages == 0 { 1 } else { total_pages };
+
         Self {
-            status: "healthy".to_string(),
-            version,
-            timestamp: chrono::Utc::now().to_rfc3339(),
-            database: database_status,
-            checks: None,
+            items,
+            page,
+            page_size,
+            total,
+            total_pages,
+            has_next: page < total_pages,
+            has_previous: page > 1,
         }
     }
+}
 
-    /// Add a health check
-    pub fn with_check(mut self, name: String, status: String) -> Self {
-        if self.checks.is_none() {
-            self.checks = Some(HashMap::new());
+impl PaginationParams {
+    /// Validate pagination parameters
+    pub fn validate(&self) -> Result<(), String> {
+        if self.page == 0 {
+            return Err("Page number must be greater than 0".to_string());
         }
-        self.checks.as_mut().unwrap().insert(name, status);
-        self
+
+        if self.page_size == 0 {
+            return Err("Page size must be greater than 0".to_string());
+        }
+
+        if self.page_size > 1000 {
+            return Err("Page size cannot exceed 1000".to_string());
+        }
+
+        Ok(())
     }
-}
 
-/// Common error codes
-pub mod error_codes {
-    /// Invalid attestation
-    pub const INVALID_ATTESTATION: &str = "INVALID_ATTESTATION";
-    /// Invalid assertion
-    pub const INVALID_ASSERTION: &str = "INVALID_ASSERTION";
-    /// Invalid challenge
-    pub const INVALID_CHALLENGE: &str = "INVALID_CHALLENGE";
-    /// Expired challenge
-    pub const EXPIRED_CHALLENGE: &str = "EXPIRED_CHALLENGE";
-    /// User not found
-    pub const USER_NOT_FOUND: &str = "USER_NOT_FOUND";
-    /// Credential not found
-    pub const CREDENTIAL_NOT_FOUND: &str = "CREDENTIAL_NOT_FOUND";
-    /// Duplicate credential
-    pub const DUPLICATE_CREDENTIAL: &str = "DUPLICATE_CREDENTIAL";
-    /// Validation error
-    pub const VALIDATION_ERROR: &str = "VALIDATION_ERROR";
-    /// Internal server error
-    pub const INTERNAL_ERROR: &str = "INTERNAL_ERROR";
-    /// Database error
-    pub const DATABASE_ERROR: &str = "DATABASE_ERROR";
-    /// Rate limit exceeded
-    pub const RATE_LIMIT_EXCEEDED: &str = "RATE_LIMIT_EXCEEDED";
-    /// Invalid origin
-    pub const INVALID_ORIGIN: &str = "INVALID_ORIGIN";
-    /// Invalid RP ID
-    pub const INVALID_RP_ID: &str = "INVALID_RP_ID";
-    /// Counter regression
-    pub const COUNTER_REGRESSION: &str = "COUNTER_REGRESSION";
-}
-
-/// Transport types
-pub mod transports {
-    /// USB transport
-    pub const USB: &str = "usb";
-    /// NFC transport
-    pub const NFC: &str = "nfc";
-    /// Bluetooth transport
-    pub const BLE: &str = "ble";
-    /// Internal transport
-    pub const INTERNAL: &str = "internal";
-    /// Hybrid transport
-    pub const HYBRID: &str = "hybrid";
-}
-
-/// Attestation formats
-pub mod attestation_formats {
-    /// Packed attestation format
-    pub const PACKED: &str = "packed";
-    /// FIDO U2F attestation format
-    pub const FIDO_U2F: &str = "fido-u2f";
-    /// None attestation format
-    pub const NONE: &str = "none";
-    /// TPM attestation format
-    pub const TPM: &str = "tpm";
-    /// Android Key attestation format
-    pub const ANDROID_KEY: &str = "android-key";
-    /// Android SafetyNet attestation format
-    pub const ANDROID_SAFETYNET: &str = "android-safetynet";
+    /// Calculate offset for database queries
+    pub fn offset(&self) -> u32 {
+        (self.page - 1) * self.page_size
+    }
 }
 
 #[cfg(test)]
@@ -169,87 +218,103 @@ mod tests {
     use super::*;
 
     #[test]
+    fn test_api_response_success() {
+        let response = ApiResponse::success("test data");
+        assert!(response.success);
+        assert_eq!(response.data, Some("test data"));
+        assert!(response.error.is_none());
+    }
+
+    #[test]
+    fn test_api_response_error() {
+        let response = ApiResponse::<String>::error("test error".to_string());
+        assert!(!response.success);
+        assert!(response.data.is_none());
+        assert_eq!(response.error, Some("test error".to_string()));
+    }
+
+    #[test]
     fn test_error_response() {
         let error = ErrorResponse::new(
-            "TEST_ERROR".to_string(),
-            "Test error message".to_string(),
+            "VALIDATION_ERROR".to_string(),
+            "Invalid input".to_string(),
         );
-
-        assert_eq!(error.code, "TEST_ERROR");
-        assert_eq!(error.message, "Test error message");
+        assert_eq!(error.code, "VALIDATION_ERROR");
+        assert_eq!(error.message, "Invalid input");
         assert!(error.details.is_none());
     }
 
     #[test]
-    fn test_error_response_with_details() {
-        let mut details = HashMap::new();
-        details.insert("field".to_string(), serde_json::Value::String("value".to_string()));
-
-        let error = ErrorResponse::with_details(
-            "TEST_ERROR".to_string(),
-            "Test error message".to_string(),
-            details.clone(),
+    fn test_validation_error() {
+        let error = ValidationError::new(
+            "username".to_string(),
+            "Username is required".to_string(),
         );
-
-        assert_eq!(error.code, "TEST_ERROR");
-        assert_eq!(error.message, "Test error message");
-        assert_eq!(error.details, Some(details));
+        assert_eq!(error.field, "username");
+        assert_eq!(error.message, "Username is required");
+        assert!(error.value.is_none());
     }
 
     #[test]
-    fn test_success_response() {
-        let response = SuccessResponse::new();
-        assert_eq!(response.status, "success");
-        assert!(response.data.is_none());
+    fn test_pagination_params_validation() {
+        let valid_params = PaginationParams {
+            page: 1,
+            page_size: 20,
+        };
+        assert!(valid_params.validate().is_ok());
+
+        let invalid_page = PaginationParams {
+            page: 0,
+            page_size: 20,
+        };
+        assert!(invalid_page.validate().is_err());
+
+        let invalid_page_size = PaginationParams {
+            page: 1,
+            page_size: 0,
+        };
+        assert!(invalid_page_size.validate().is_err());
+
+        let too_large_page_size = PaginationParams {
+            page: 1,
+            page_size: 1001,
+        };
+        assert!(too_large_page_size.validate().is_err());
     }
 
     #[test]
-    fn test_success_response_with_data() {
-        let data = serde_json::json!({"key": "value"});
-        let response = SuccessResponse::with_data(data.clone());
-        assert_eq!(response.status, "success");
-        assert_eq!(response.data, Some(data));
+    fn test_pagination_offset() {
+        let params = PaginationParams {
+            page: 3,
+            page_size: 10,
+        };
+        assert_eq!(params.offset(), 20);
+    }
+
+    #[test]
+    fn test_paginated_response() {
+        let items = vec!["item1", "item2", "item3"];
+        let response = PaginatedResponse::new(items.clone(), 1, 10, 25);
+
+        assert_eq!(response.items, items);
+        assert_eq!(response.page, 1);
+        assert_eq!(response.page_size, 10);
+        assert_eq!(response.total, 25);
+        assert_eq!(response.total_pages, 3);
+        assert!(response.has_next);
+        assert!(!response.has_previous);
     }
 
     #[test]
     fn test_health_response() {
-        let health = HealthResponse::new("1.0.0".to_string(), "connected".to_string());
+        let health = HealthResponse {
+            status: "healthy".to_string(),
+            version: "1.0.0".to_string(),
+            timestamp: Utc::now(),
+            details: None,
+        };
         assert_eq!(health.status, "healthy");
         assert_eq!(health.version, "1.0.0");
-        assert_eq!(health.database, "connected");
-        assert!(health.checks.is_none());
-    }
-
-    #[test]
-    fn test_health_response_with_checks() {
-        let health = HealthResponse::new("1.0.0".to_string(), "connected".to_string())
-            .with_check("cache".to_string(), "ok".to_string())
-            .with_check("external_api".to_string(), "ok".to_string());
-
-        assert_eq!(health.status, "healthy");
-        assert!(health.checks.is_some());
-        let checks = health.checks.unwrap();
-        assert_eq!(checks.get("cache"), Some(&"ok".to_string()));
-        assert_eq!(checks.get("external_api"), Some(&"ok".to_string()));
-    }
-
-    #[test]
-    fn test_error_response_serialization() {
-        let error = ErrorResponse::new(
-            "INVALID_ATTESTATION".to_string(),
-            "The attestation signature could not be verified".to_string(),
-        );
-
-        let serialized = serde_json::to_string(&error).unwrap();
-        let deserialized: ErrorResponse = serde_json::from_str(&serialized).unwrap();
-
-        assert_eq!(error, deserialized);
-    }
-
-    #[test]
-    fn test_constants() {
-        assert_eq!(error_codes::INVALID_ATTESTATION, "INVALID_ATTESTATION");
-        assert_eq!(transports::USB, "usb");
-        assert_eq!(attestation_formats::PACKED, "packed");
+        assert!(health.details.is_none());
     }
 }
