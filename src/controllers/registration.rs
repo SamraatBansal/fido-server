@@ -1,13 +1,13 @@
 //! Registration controller
 
 use actix_web::{web, HttpResponse, Result};
-use crate::error::{AppError, Result as AppResult};
+use crate::error::AppError;
 use crate::services::{WebAuthnService, ChallengeService, UserService, CredentialService};
 use crate::services::challenge::InMemoryChallengeStore;
 use crate::services::user::InMemoryUserRepository;
 use crate::services::credential::InMemoryCredentialRepository;
 use crate::schema::registration::{RegistrationStartRequest, RegistrationFinishRequest};
-use serde_json::Value;
+use base64::Engine;
 
 /// Registration controller
 pub struct RegistrationController {
