@@ -198,8 +198,33 @@ mod authentication_tests {
 
     #[tokio::test]
     async fn test_start_authentication_user_not_found() {
-        // Test case: Non-existent user should return error
-        assert!(true, "Test placeholder - implementation needed");
+        // Test the actual WebAuthn service with non-existent user
+        use fido_server::services::webauthn::WebAuthnService;
+        use fido_server::services::challenge::InMemoryChallengeStore;
+        use fido_server::services::user::InMemoryUserRepository;
+        use fido_server::services::credential::InMemoryCredentialRepository;
+        
+        // Arrange
+        let challenge_service = fido_server::services::challenge::ChallengeService::new(InMemoryChallengeStore::new());
+        let user_service = fido_server::services::user::UserService::new(InMemoryUserRepository::new());
+        let credential_service = fido_server::services::credential::CredentialService::new(InMemoryCredentialRepository::new());
+        
+        let webauthn_service = WebAuthnService::new(
+            challenge_service,
+            user_service,
+            credential_service,
+            "localhost".to_string(),
+            "Test RP".to_string(),
+            "https://localhost".to_string(),
+        );
+        
+        // Act
+        let result = webauthn_service.start_authentication(
+            "nonexistent@example.com".to_string(),
+        ).await;
+        
+        // Assert
+        assert!(result.is_err(), "Authentication start should fail for non-existent user");
     }
 
     #[tokio::test]
