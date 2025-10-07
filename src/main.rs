@@ -1,8 +1,14 @@
 //! FIDO Server Main Entry Point
 
-use actix_cors::Cors;
 use actix_web::{middleware::Logger, App, HttpServer};
 use std::io;
+
+use fido_server::{
+    config::AppConfig,
+    middleware::{RateLimitMiddleware, SecurityHeaders, cors_config},
+    routes::{api, webauthn},
+    utils::AppState,
+};
 
 #[actix_web::main]
 async fn main() -> io::Result<()> {
@@ -11,28 +17,37 @@ async fn main() -> io::Result<()> {
 
     log::info!("Starting FIDO Server...");
 
-    // TODO: Load configuration from config file
-    let host = "127.0.0.1";
-    let port = 8080;
+    // Load configuration
+    let config = AppConfig::load();
+    log::info!("Configuration loaded: {:?}", config.server);
 
-    // TODO: Initialize database connection pool
+    // Initialize application state
+    let app_state = AppState::new(config.clone())
+        .await
+        .map_err(|e| {
+            log::error!("Failed to initialize application state: {}", e);
+            std::io::Error::new(std::io::ErrorKind::Other, e)
+        })?;
 
-    log::info!("Server running at http://{}:{}", host, port);
+    // Create rate limiter
+    let rate_limiter = RateLimitMiddleware::new(config.security.rate_limit_requests_per_minute);
+
+    log::info!("Server running at http://{}:{}", config.server.host, config.server.port);
 
     HttpServer::new(move || {
-        // Configure CORS
-        let cors = Cors::default()
-            .allow_any_origin()
-            .allow_any_method()
-            .allow_any_header()
-            .max_age(3600);
-
         App::new()
+            .app_data(actix_web::data::clone(&app_state.webauthn_service))
+            .app_data(actix_web::data::clone(&app_state.user_service))
+            .app_data(actix_web::data::clone(&app_state.credential_service))
             .wrap(Logger::default())
-            .wrap(cors)
-            .configure(fido_server::routes::api::configure)
+            .wrap(SecurityHeaders)
+            .wrap(rate_limiter.clone())
+            .wrap(cors_config())
+            .configure(api::configure)
+            .configure(webauthn::configure)
     })
-    .bind((host, port))?
+    .bind((config.server.host, config.server.port))?
+    .workers(config.server.workers.unwrap_or_else(num_cpus::get))
     .run()
     .await
 }
