@@ -14,7 +14,7 @@ impl RateLimitMiddleware {
         let quota = Quota::per_minute(NonZeroU32::new(requests_per_minute).unwrap())
             .allow_burst(NonZeroU32::new(requests_per_minute * 2).unwrap());
         
-        let limiter = Arc::new(RateLimiter::direct(quota));
+        let limiter = Arc::new(RateLimiter::keyed(quota));
         
         Self { limiter }
     }
