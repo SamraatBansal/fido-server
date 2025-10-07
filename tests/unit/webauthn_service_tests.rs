@@ -171,7 +171,7 @@ mod tests {
             .await.unwrap();
         challenge.expires_at = chrono::Utc::now() - chrono::Duration::minutes(1);
         
-        // Manually store the expired challenge
+        // Create expired challenge directly through the store
         service.challenge_service.store.store_challenge(&challenge).await.unwrap();
 
         let result = service.finish_registration(
