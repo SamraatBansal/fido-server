@@ -1,6 +1,6 @@
 use actix_web::{dev::ServiceRequest, error, Error};
 use actix_web::dev::{forward_ready, Service, ServiceResponse, Transform};
-use governor::{clock::DefaultClock, state::keyed::HashMapKeyedStateStore, Quota, RateLimiter};
+use governor::{clock::DefaultClock, state::direct::NotKeyed, Quota, RateLimiter};
 use std::future::{ready, Ready};
 use std::num::NonZeroU32;
 use std::sync::Arc;
