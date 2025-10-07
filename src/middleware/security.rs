@@ -48,32 +48,32 @@ where
             
             // Add security headers
             res.headers_mut().insert(
-                "X-Content-Type-Options",
-                "nosniff".parse().unwrap(),
+                HeaderName::from_static("x-content-type-options"),
+                HeaderValue::from_static("nosniff"),
             );
             res.headers_mut().insert(
-                "X-Frame-Options",
-                "DENY".parse().unwrap(),
+                HeaderName::from_static("x-frame-options"),
+                HeaderValue::from_static("DENY"),
             );
             res.headers_mut().insert(
-                "X-XSS-Protection",
-                "1; mode=block".parse().unwrap(),
+                HeaderName::from_static("x-xss-protection"),
+                HeaderValue::from_static("1; mode=block"),
             );
             res.headers_mut().insert(
-                "Strict-Transport-Security",
-                "max-age=31536000; includeSubDomains".parse().unwrap(),
+                HeaderName::from_static("strict-transport-security"),
+                HeaderValue::from_static("max-age=31536000; includeSubDomains"),
             );
             res.headers_mut().insert(
-                "Content-Security-Policy",
-                "default-src 'self'".parse().unwrap(),
+                HeaderName::from_static("content-security-policy"),
+                HeaderValue::from_static("default-src 'self'"),
             );
             res.headers_mut().insert(
-                "Referrer-Policy",
-                "strict-origin-when-cross-origin".parse().unwrap(),
+                HeaderName::from_static("referrer-policy"),
+                HeaderValue::from_static("strict-origin-when-cross-origin"),
             );
             res.headers_mut().insert(
-                "Permissions-Policy",
-                "geolocation=(), microphone=(), camera=()".parse().unwrap(),
+                HeaderName::from_static("permissions-policy"),
+                HeaderValue::from_static("geolocation=(), microphone=(), camera=()"),
             );
             
             Ok(res)
