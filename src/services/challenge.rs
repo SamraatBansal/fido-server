@@ -2,7 +2,7 @@
 
 use async_trait::async_trait;
 use crate::error::{AppError, Result};
-use crate::schema::challenge::{Challenge, ChallengeType};
+use crate::schema::challenge::Challenge;
 use uuid::Uuid;
 
 /// Challenge store trait for dependency injection
