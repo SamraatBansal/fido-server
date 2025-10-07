@@ -188,7 +188,7 @@ impl WebAuthnService {
         }
 
         // Parse session data
-        let _session_data: SessionData = serde_json::from_value(session.data.ok_or_else(|| {
+        let session_data: SessionData = serde_json::from_value(session.data.ok_or_else(|| {
             AppError::InvalidRequest("Session data missing".to_string())
         })?)?;
 
@@ -390,7 +390,7 @@ impl WebAuthnService {
         }
 
         // Parse session data
-        let _session_data: SessionData = serde_json::from_value(session.data.ok_or_else(|| {
+        let session_data: SessionData = serde_json::from_value(session.data.ok_or_else(|| {
             AppError::InvalidRequest("Session data missing".to_string())
         })?)?;
 
