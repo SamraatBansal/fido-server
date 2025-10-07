@@ -1,6 +1,6 @@
-use chrono::{DateTime, Utc};
 use regex::Regex;
-use validator::{ValidationError, ValidationErrors};
+use validator::ValidationError;
+use base64::Engine as _;
 
 pub fn validate_username(username: &str) -> Result<(), ValidationError> {
     let re = Regex::new(r"^[a-zA-Z0-9_-]{3,50}$").unwrap();
