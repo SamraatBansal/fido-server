@@ -82,7 +82,6 @@ impl ChallengeStore for InMemoryChallengeStore {
 }
 
 /// Challenge service
-#[derive(Debug)]
 pub struct ChallengeService {
     store: Box<dyn ChallengeStore>,
 }
