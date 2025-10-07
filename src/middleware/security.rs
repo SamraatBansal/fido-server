@@ -3,7 +3,6 @@ use actix_web::{
     error::Error,
     HttpMessage,
 };
-use futures_util::future::LocalBoxFuture;
 use std::future::{ready, Ready};
 
 pub struct SecurityHeaders;
