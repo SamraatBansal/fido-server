@@ -137,7 +137,7 @@ impl CredentialRepository for InMemoryCredentialRepository {
 
 /// Credential service
 pub struct CredentialService {
-    repository: InMemoryCredentialRepository,
+    pub repository: InMemoryCredentialRepository,
 }
 
 impl CredentialService {
