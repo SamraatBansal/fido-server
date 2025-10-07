@@ -309,7 +309,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_credential_service_register() {
-        let repo = Box::new(InMemoryCredentialRepository::new());
+        let repo = InMemoryCredentialRepository::new();
         let service = CredentialService::new(repo);
         let user_id = Uuid::new_v4();
         let credential = Credential::new(
@@ -331,7 +331,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_credential_service_authenticate() {
-        let repo = Box::new(InMemoryCredentialRepository::new());
+        let repo = InMemoryCredentialRepository::new();
         let service = CredentialService::new(repo);
         let user_id = Uuid::new_v4();
         let credential = Credential::new(
@@ -353,7 +353,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_credential_service_authenticate_regression() {
-        let repo = Box::new(InMemoryCredentialRepository::new());
+        let repo = InMemoryCredentialRepository::new();
         let service = CredentialService::new(repo);
         let user_id = Uuid::new_v4();
         let credential = Credential::new(
@@ -378,7 +378,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_credential_service_delete_user_credentials() {
-        let repo = Box::new(InMemoryCredentialRepository::new());
+        let repo = InMemoryCredentialRepository::new();
         let service = CredentialService::new(repo);
         let user_id = Uuid::new_v4();
 
