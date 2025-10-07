@@ -118,9 +118,7 @@ missing_errors_doc = "allow"
 opt-level = 1
 debug = true
 
-[[bench]]
-name = "webauthn_benchmarks"
-harness = false
+
 
 [[test]]
 name = "webauthn_integration"
