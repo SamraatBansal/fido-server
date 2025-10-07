@@ -20,9 +20,10 @@ mod crypto_tests {
     #[test]
     fn test_base64url_encoding() {
         // Test case: Base64URL encoding should work correctly
+        use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
         let data = b"hello world";
-        let encoded = base64::encode_config(data, base64::URL_SAFE_NO_PAD);
-        let decoded = base64::decode_config(encoded, base64::URL_SAFE_NO_PAD).unwrap();
+        let encoded = URL_SAFE_NO_PAD.encode(data);
+        let decoded = URL_SAFE_NO_PAD.decode(encoded).unwrap();
         
         assert_eq!(data, decoded.as_slice());
     }
