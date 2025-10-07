@@ -196,33 +196,33 @@ mod tests {
 
     #[tokio::test]
     async fn test_challenge_service_registration() {
-        let store = Box::new(InMemoryChallengeStore::new());
+        let store = InMemoryChallengeStore::new();
         let service = ChallengeService::new(store);
         let user_id = Uuid::new_v4();
 
         let challenge = service.create_registration_challenge(user_id).await.unwrap();
         
         assert_eq!(challenge.user_id, Some(user_id));
-        assert!(matches!(challenge.challenge_type, ChallengeType::Registration));
+        assert!(matches!(challenge.challenge_type, crate::schema::challenge::ChallengeType::Registration));
         assert!(!challenge.is_expired());
     }
 
     #[tokio::test]
     async fn test_challenge_service_authentication() {
-        let store = Box::new(InMemoryChallengeStore::new());
+        let store = InMemoryChallengeStore::new();
         let service = ChallengeService::new(store);
         let user_id = Uuid::new_v4();
 
         let challenge = service.create_authentication_challenge(user_id).await.unwrap();
         
         assert_eq!(challenge.user_id, Some(user_id));
-        assert!(matches!(challenge.challenge_type, ChallengeType::Authentication));
+        assert!(matches!(challenge.challenge_type, crate::schema::challenge::ChallengeType::Authentication));
         assert!(!challenge.is_expired());
     }
 
     #[tokio::test]
     async fn test_challenge_service_validate_success() {
-        let store = Box::new(InMemoryChallengeStore::new());
+        let store = InMemoryChallengeStore::new();
         let service = ChallengeService::new(store);
         let user_id = Uuid::new_v4();
 
@@ -235,7 +235,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_challenge_service_validate_invalid() {
-        let store = Box::new(InMemoryChallengeStore::new());
+        let store = InMemoryChallengeStore::new();
         let service = ChallengeService::new(store);
         let user_id = Uuid::new_v4();
 
@@ -249,13 +249,13 @@ mod tests {
 
     #[tokio::test]
     async fn test_cleanup_expired_challenges() {
-        let store = Box::new(InMemoryChallengeStore::new());
+        let store = InMemoryChallengeStore::new();
         let service = ChallengeService::new(store);
         let user_id = Uuid::new_v4();
 
         // Create a challenge that expires immediately
         let challenge_data = vec![1, 2, 3, 4];
-        let mut expired_challenge = Challenge::registration(challenge_data, user_id);
+        let mut expired_challenge = crate::schema::challenge::Challenge::registration(challenge_data, user_id);
         expired_challenge.expires_at = chrono::Utc::now() - chrono::Duration::minutes(1);
 
         // Store both challenges
