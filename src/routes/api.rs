@@ -3,11 +3,31 @@
 use actix_web::web;
 use crate::controllers::{register_start, register_finish, authenticate_start, authenticate_finish};
 use crate::controllers::health::HealthController;
+use crate::services::{WebAuthnService, ChallengeService, UserService, CredentialService};
+use crate::services::challenge::InMemoryChallengeStore;
+use crate::services::user::InMemoryUserRepository;
+use crate::services::credential::InMemoryCredentialRepository;
+use std::sync::Arc;
 
 /// Configure all API routes
 pub fn configure(cfg: &mut web::ServiceConfig) {
+    // Create shared services
+    let challenge_service = ChallengeService::new(InMemoryChallengeStore::new());
+    let user_service = UserService::new(InMemoryUserRepository::new());
+    let credential_service = CredentialService::new(InMemoryCredentialRepository::new());
+    
+    let webauthn_service = Arc::new(WebAuthnService::new(
+        challenge_service,
+        user_service,
+        credential_service,
+        "localhost".to_string(),
+        "Test RP".to_string(),
+        "https://localhost".to_string(),
+    ));
+
     cfg.service(
         web::scope("/api/v1")
+            .app_data(web::Data::new(webauthn_service.clone()))
             .route("/register/start", web::post().to(register_start))
             .route("/register/start", web::get().to(method_not_allowed))
             .route("/register/start", web::put().to(method_not_allowed))
