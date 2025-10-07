@@ -1,6 +1,7 @@
 use crate::db::models::{
     AuditLog, AuthSession, Credential, NewAuditLog, NewAuthSession, NewCredential, NewUser, User,
 };
+use crate::db::repositories::{UserRepository, CredentialRepository, AuthSessionRepository, AuditLogRepository};
 use crate::error::{AppError, Result};
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
