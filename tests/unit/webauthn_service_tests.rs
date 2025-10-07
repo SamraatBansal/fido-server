@@ -93,8 +93,34 @@ mod registration_tests {
 
     #[tokio::test]
     async fn test_start_registration_invalid_user() {
-        // Test case: Invalid user data should return error
-        assert!(true, "Test placeholder - implementation needed");
+        // Test the actual WebAuthn service with invalid user data
+        use fido_server::services::webauthn::WebAuthnService;
+        use fido_server::services::challenge::InMemoryChallengeStore;
+        use fido_server::services::user::InMemoryUserRepository;
+        use fido_server::services::credential::InMemoryCredentialRepository;
+        
+        // Arrange
+        let challenge_service = fido_server::services::challenge::ChallengeService::new(InMemoryChallengeStore::new());
+        let user_service = fido_server::services::user::UserService::new(InMemoryUserRepository::new());
+        let credential_service = fido_server::services::credential::CredentialService::new(InMemoryCredentialRepository::new());
+        
+        let webauthn_service = WebAuthnService::new(
+            challenge_service,
+            user_service,
+            credential_service,
+            "localhost".to_string(),
+            "Test RP".to_string(),
+            "https://localhost".to_string(),
+        );
+        
+        // Act
+        let result = webauthn_service.start_registration(
+            "invalid-email".to_string(),  // Invalid email
+            "Test User".to_string(),
+        ).await;
+        
+        // Assert
+        assert!(result.is_err(), "Registration start should fail with invalid email");
     }
 
     #[tokio::test]
