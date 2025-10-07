@@ -83,12 +83,12 @@ impl ChallengeStore for InMemoryChallengeStore {
 
 /// Challenge service
 pub struct ChallengeService {
-    store: Box<dyn ChallengeStore>,
+    store: InMemoryChallengeStore,
 }
 
 impl ChallengeService {
     /// Create a new challenge service
-    pub fn new(store: Box<dyn ChallengeStore>) -> Self {
+    pub fn new(store: InMemoryChallengeStore) -> Self {
         Self { store }
     }
 
