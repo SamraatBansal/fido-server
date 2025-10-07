@@ -57,9 +57,9 @@ diesel::table! {
         username -> Varchar,
         display_name -> Varchar,
         email -> Nullable<Varchar>,
-        created_at -> Timestamp,
-        updated_at -> Timestamp,
-        last_login_at -> Nullable<Timestamp>,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
+        last_login_at -> Nullable<Timestamptz>,
         is_active -> Bool,
     }
 }
