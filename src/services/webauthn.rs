@@ -1,14 +1,12 @@
 //! WebAuthn service implementation
 
 use crate::error::{AppError, Result};
-use crate::schema::user::User;
 use crate::schema::credential::Credential;
 use crate::services::challenge::ChallengeService;
 use crate::services::user::UserService;
 use crate::services::credential::CredentialService;
-use uuid::Uuid;
 use serde_json::{json, Value};
-use base64::engine::general_purpose::URL_SAFE_NO_PAD;
+use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
 
 /// WebAuthn service for handling registration and authentication flows
 pub struct WebAuthnService {
