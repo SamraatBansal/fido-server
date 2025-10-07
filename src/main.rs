@@ -26,7 +26,7 @@ async fn main() -> io::Result<()> {
         .await
         .map_err(|e| {
             log::error!("Failed to initialize application state: {}", e);
-            std::io::Error::new(std::io::ErrorKind::Other, e)
+            std::io::Error::new(std::io::ErrorKind::Other, format!("{}", e))
         })?;
 
     // Rate limiter disabled for now
