@@ -1,21 +1,20 @@
-//! Database connection management
+use diesel::r2d2::{ConnectionManager, Pool, PooledConnection};
+use diesel::pg::PgConnection;
+use std::env;
 
-use diesel::r2d2::{self, ConnectionManager};
-use diesel::PgConnection;
+pub type PgPool = Pool<ConnectionManager<PgConnection>>;
+pub type PgPooledConn = PooledConnection<ConnectionManager<PgConnection>>;
 
-/// Type alias for database connection pool
-pub type DbPool = r2d2::Pool<ConnectionManager<PgConnection>>;
-
-/// Establish database connection pool
-///
-/// # Arguments
-///
-/// * `database_url` - PostgreSQL database URL
-///
-/// # Errors
-///
-/// Returns an error if the connection pool cannot be established
-pub fn establish_connection(database_url: &str) -> Result<DbPool, r2d2::PoolError> {
+pub fn establish_connection_pool() -> Result<PgPool, diesel::result::ConnectionError> {
+    let database_url = env::var("DATABASE_URL")
+        .expect("DATABASE_URL must be set");
+    
     let manager = ConnectionManager::<PgConnection>::new(database_url);
-    r2d2::Pool::builder().build(manager)
+    Pool::builder()
+        .max_size(15)
+        .build(manager)
+}
+
+pub fn get_connection(pool: &PgPool) -> Result<PgPooledConn, diesel::r2d2::Error> {
+    pool.get()
 }
