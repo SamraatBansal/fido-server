@@ -126,12 +126,12 @@ impl UserRepository for InMemoryUserRepository {
 
 /// User service
 pub struct UserService {
-    repository: Box<dyn UserRepository>,
+    repository: InMemoryUserRepository,
 }
 
 impl UserService {
     /// Create a new user service
-    pub fn new(repository: Box<dyn UserRepository>) -> Self {
+    pub fn new(repository: InMemoryUserRepository) -> Self {
         Self { repository }
     }
 
