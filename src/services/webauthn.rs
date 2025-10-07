@@ -15,6 +15,7 @@ pub struct WebAuthnService {
     credential_service: CredentialService,
     rp_id: String,
     rp_name: String,
+    #[allow(dead_code)]
     origin: String,
 }
 
