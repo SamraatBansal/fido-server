@@ -10,11 +10,17 @@ use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
 
 /// WebAuthn service for handling registration and authentication flows
 pub struct WebAuthnService {
+    /// Challenge management service
     pub challenge_service: ChallengeService,
+    /// User management service
     pub user_service: UserService,
+    /// Credential management service
     pub credential_service: CredentialService,
+    /// Relying Party ID
     rp_id: String,
+    /// Relying Party name
     rp_name: String,
+    /// Origin URL
     #[allow(dead_code)]
     origin: String,
 }
