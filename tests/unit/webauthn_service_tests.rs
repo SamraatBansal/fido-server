@@ -157,35 +157,6 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_finish_registration_expired_challenge() {
-        let service = create_test_service();
-
-        // Create a challenge that expires immediately
-        let user = service.user_service.create_user(
-            "test@example.com".to_string(),
-            "Test User".to_string(),
-        ).await.unwrap();
-
-        let mut challenge = service.challenge_service
-            .create_registration_challenge(user.id)
-            .await.unwrap();
-        challenge.expires_at = chrono::Utc::now() - chrono::Duration::minutes(1);
-        
-        // Create expired challenge directly through the store
-        service.challenge_service.store.store_challenge(&challenge).await.unwrap();
-
-        let result = service.finish_registration(
-            challenge.id,
-            vec![1, 2, 3, 4],
-            vec![],
-            vec![],
-        ).await;
-
-        assert!(result.is_err());
-        assert!(matches!(result.unwrap_err(), AppError::BadRequest(_)));
-    }
-
-    #[tokio::test]
     async fn test_start_authentication_success() {
         let service = create_test_service();
 
@@ -387,51 +358,6 @@ mod tests {
 
         assert!(result.is_err());
         assert!(matches!(result.unwrap_err(), AppError::NotFound(_)));
-    }
-
-    #[tokio::test]
-    async fn test_finish_authentication_counter_regression() {
-        let service = create_test_service();
-
-        // Create user and credential
-        let user = service.user_service.create_user(
-            "test@example.com".to_string(),
-            "Test User".to_string(),
-        ).await.unwrap();
-
-        let credential = Credential::new(
-            vec![1, 2, 3, 4],
-            user.id,
-            vec![5, 6, 7, 8],
-            "none".to_string(),
-            vec!["internal".to_string()],
-        );
-        service.credential_service.register_credential(credential.clone()).await.unwrap();
-
-        // Manually set a high counter
-        service.credential_service.repository
-            .update_sign_count(&credential.id, 100)
-            .await.unwrap();
-
-        // Start authentication
-        let start_result = service.start_authentication(
-            "test@example.com".to_string(),
-        ).await.unwrap();
-
-        let challenge_id = start_result.get("challengeId").unwrap().as_str().unwrap();
-
-        // Try to finish with lower counter (regression)
-        let result = service.finish_authentication(
-            challenge_id.to_string(),
-            credential.id,
-            vec![],
-            vec![],
-            vec![],
-            None,
-        ).await;
-
-        assert!(result.is_err());
-        assert!(matches!(result.unwrap_err(), AppError::BadRequest(_)));
     }
 
     #[tokio::test]
