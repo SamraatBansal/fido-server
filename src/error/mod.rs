@@ -11,6 +11,9 @@ pub enum AppError {
     #[error("WebAuthn error: {0}")]
     WebAuthn(#[from] WebauthnError),
     
+    #[error("Connection pool error: {0}")]
+    ConnectionPool(#[from] r2d2::Error),
+    
     #[error("Invalid challenge: {0}")]
     InvalidChallenge(String),
     
