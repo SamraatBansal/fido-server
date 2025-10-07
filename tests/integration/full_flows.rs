@@ -82,13 +82,7 @@ mod tests {
             .to_request();
         
         let finish_reg_resp = test::call_service(&app, finish_reg_req).await;
-        let status = finish_reg_resp.status();
-        if !status.is_success() {
-            let body = test::read_body(finish_reg_resp).await;
-            println!("Finish registration response status: {}", status);
-            println!("Response body: {}", String::from_utf8_lossy(&body));
-        }
-        assert!(status.is_success());
+        assert!(finish_reg_resp.status().is_success());
         
         // Now test authentication
         let start_auth_req = test::TestRequest::post()
