@@ -5,7 +5,7 @@ use std::io;
 
 use fido_server::{
     config::AppConfig,
-    middleware::{RateLimitMiddleware, SecurityHeaders, cors_config},
+    middleware::{SecurityHeaders, cors_config},
     routes::{api, webauthn},
     utils::AppState,
 };
