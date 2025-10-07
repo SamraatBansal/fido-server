@@ -90,13 +90,19 @@ impl RegistrationController {
 }
 
 /// Default registration start endpoint for actix-web
-pub async fn register_start(req: web::Json<RegistrationStartRequest>) -> Result<HttpResponse> {
-    let controller = RegistrationController::new();
+pub async fn register_start(
+    req: web::Json<RegistrationStartRequest>,
+    webauthn_service: web::Data<Arc<WebAuthnService>>,
+) -> Result<HttpResponse> {
+    let controller = RegistrationController::new(webauthn_service.get_ref().clone());
     controller.start_registration(req).await
 }
 
 /// Default registration finish endpoint for actix-web
-pub async fn register_finish(req: web::Json<RegistrationFinishRequest>) -> Result<HttpResponse> {
-    let controller = RegistrationController::new();
+pub async fn register_finish(
+    req: web::Json<RegistrationFinishRequest>,
+    webauthn_service: web::Data<Arc<WebAuthnService>>,
+) -> Result<HttpResponse> {
+    let controller = RegistrationController::new(webauthn_service.get_ref().clone());
     controller.finish_registration(req).await
 }
