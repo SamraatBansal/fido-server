@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::utils::{validate_username, validate_display_name, validate_session_id, validate_credential_id};
+    use fido_server::utils::{validate_username, validate_display_name, validate_session_id, validate_credential_id};
 
     #[test]
     fn test_validate_username() {
