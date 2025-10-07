@@ -2,7 +2,7 @@
 
 use crate::error::{AppError, Result};
 use crate::schema::credential::Credential;
-use crate::services::challenge::ChallengeService;
+use crate::services::challenge::{ChallengeService, ChallengeStore};
 use crate::services::user::UserService;
 use crate::services::credential::CredentialService;
 use serde_json::{json, Value};
