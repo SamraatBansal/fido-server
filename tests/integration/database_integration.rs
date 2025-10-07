@@ -5,7 +5,7 @@ mod tests {
     use fido_server::services::user::{UserService, InMemoryUserRepository};
     use fido_server::services::credential::{CredentialService, InMemoryCredentialRepository};
     use fido_server::services::challenge::{ChallengeService, InMemoryChallengeStore};
-    use fido_server::schema::user::User;
+    
     use fido_server::schema::credential::Credential;
     use uuid::Uuid;
 
