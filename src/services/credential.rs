@@ -135,7 +135,6 @@ impl CredentialRepository for InMemoryCredentialRepository {
 }
 
 /// Credential service
-#[derive(Debug)]
 pub struct CredentialService {
     repository: Box<dyn CredentialRepository>,
 }
