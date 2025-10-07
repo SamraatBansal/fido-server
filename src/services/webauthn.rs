@@ -10,9 +10,9 @@ use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
 
 /// WebAuthn service for handling registration and authentication flows
 pub struct WebAuthnService {
-    challenge_service: ChallengeService,
-    user_service: UserService,
-    credential_service: CredentialService,
+    pub challenge_service: ChallengeService,
+    pub user_service: UserService,
+    pub credential_service: CredentialService,
     rp_id: String,
     rp_name: String,
     #[allow(dead_code)]
