@@ -50,16 +50,6 @@ impl WebAuthnService {
 
         let rp_origin = config.rp_origin.parse()
             .map_err(|_| AppError::InvalidRequest("Invalid origin".to_string()))?;
-            rp: RelyingParty {
-                id: rp_id,
-                name: rp_name,
-                origin: rp_origin
-                    .parse()
-                    .map_err(|_| AppError::InvalidRequest("Invalid origin".to_string()))?,
-            },
-            timeout: Some(config.timeout),
-            ..Default::default()
-        };
 
         let webauthn = WebauthnBuilder::new(&config.rp_id, &rp_origin)?
             .build()
