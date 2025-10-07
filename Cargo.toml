@@ -77,6 +77,9 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 # Async Traits
 async-trait = "0.1"
 
+# System info
+num_cpus = "1.16"
+
 [dev-dependencies]
 actix-test = "0.1"
 mockall = "0.13"
