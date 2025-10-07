@@ -60,7 +60,7 @@ impl WebAuthnService {
             ..Default::default()
         };
 
-        let webauthn = WebAuthnBuilder::new(webauthn_config)
+        let webauthn = WebauthnBuilder::new(webauthn_config)
             .build()
             .map_err(|e| AppError::InvalidRequest(format!("WebAuthn config error: {:?}", e)))?;
 
