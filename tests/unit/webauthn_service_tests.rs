@@ -61,9 +61,9 @@ mod registration_tests {
         // For now, it's a placeholder that will fail until we implement the service
         
         // Arrange
-        let user_id = Uuid::new_v4();
-        let username = "test@example.com";
-        let display_name = "Test User";
+        let _user_id = Uuid::new_v4();
+        let _username = "test@example.com";
+        let _display_name = "Test User";
         
         // Act & Assert - This will fail until we implement the service
         // let result = webauthn_service.start_registration(request).await;
