@@ -96,13 +96,19 @@ impl AuthenticationController {
 }
 
 /// Default authentication start endpoint for actix-web
-pub async fn authenticate_start(req: web::Json<AuthenticationStartRequest>) -> Result<HttpResponse> {
-    let controller = AuthenticationController::new();
+pub async fn authenticate_start(
+    req: web::Json<AuthenticationStartRequest>,
+    webauthn_service: web::Data<Arc<WebAuthnService>>,
+) -> Result<HttpResponse> {
+    let controller = AuthenticationController::new(webauthn_service.get_ref().clone());
     controller.start_authentication(req).await
 }
 
 /// Default authentication finish endpoint for actix-web
-pub async fn authenticate_finish(req: web::Json<AuthenticationFinishRequest>) -> Result<HttpResponse> {
-    let controller = AuthenticationController::new();
+pub async fn authenticate_finish(
+    req: web::Json<AuthenticationFinishRequest>,
+    webauthn_service: web::Data<Arc<WebAuthnService>>,
+) -> Result<HttpResponse> {
+    let controller = AuthenticationController::new(webauthn_service.get_ref().clone());
     controller.finish_authentication(req).await
 }
