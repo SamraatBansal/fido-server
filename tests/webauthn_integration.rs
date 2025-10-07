@@ -11,9 +11,9 @@ async fn test_start_registration_success() {
     // Test the actual WebAuthn service registration start
     
     // Arrange
-    let challenge_service = fido_server::services::challenge::ChallengeService::new(InMemoryChallengeStore::new());
-    let user_service = fido_server::services::user::UserService::new(InMemoryUserRepository::new());
-    let credential_service = fido_server::services::credential::CredentialService::new(InMemoryCredentialRepository::new());
+    let challenge_service = ChallengeService::new(InMemoryChallengeStore::new());
+    let user_service = UserService::new(InMemoryUserRepository::new());
+    let credential_service = CredentialService::new(InMemoryCredentialRepository::new());
     
     let webauthn_service = WebAuthnService::new(
         challenge_service,
@@ -43,9 +43,9 @@ async fn test_start_registration_invalid_user() {
     // Test the actual WebAuthn service with invalid user data
     
     // Arrange
-    let challenge_service = fido_server::services::challenge::ChallengeService::new(InMemoryChallengeStore::new());
-    let user_service = fido_server::services::user::UserService::new(InMemoryUserRepository::new());
-    let credential_service = fido_server::services::credential::CredentialService::new(InMemoryCredentialRepository::new());
+    let challenge_service = ChallengeService::new(InMemoryChallengeStore::new());
+    let user_service = UserService::new(InMemoryUserRepository::new());
+    let credential_service = CredentialService::new(InMemoryCredentialRepository::new());
     
     let webauthn_service = WebAuthnService::new(
         challenge_service,
@@ -71,9 +71,9 @@ async fn test_start_authentication_success() {
     // Test the actual WebAuthn service authentication start
     
     // Arrange
-    let challenge_service = fido_server::services::challenge::ChallengeService::new(InMemoryChallengeStore::new());
-    let user_service = fido_server::services::user::UserService::new(InMemoryUserRepository::new());
-    let credential_service = fido_server::services::credential::CredentialService::new(InMemoryCredentialRepository::new());
+    let challenge_service = ChallengeService::new(InMemoryChallengeStore::new());
+    let user_service = UserService::new(InMemoryUserRepository::new());
+    let credential_service = CredentialService::new(InMemoryCredentialRepository::new());
     
     let webauthn_service = WebAuthnService::new(
         challenge_service,
@@ -117,9 +117,9 @@ async fn test_start_authentication_user_not_found() {
     // Test the actual WebAuthn service with non-existent user
     
     // Arrange
-    let challenge_service = fido_server::services::challenge::ChallengeService::new(InMemoryChallengeStore::new());
-    let user_service = fido_server::services::user::UserService::new(InMemoryUserRepository::new());
-    let credential_service = fido_server::services::credential::CredentialService::new(InMemoryCredentialRepository::new());
+    let challenge_service = ChallengeService::new(InMemoryChallengeStore::new());
+    let user_service = UserService::new(InMemoryUserRepository::new());
+    let credential_service = CredentialService::new(InMemoryCredentialRepository::new());
     
     let webauthn_service = WebAuthnService::new(
         challenge_service,
