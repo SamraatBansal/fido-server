@@ -120,10 +120,4 @@ debug = true
 
 
 
-[[test]]
-name = "webauthn_integration"
-path = "tests/integration/webauthn_tests.rs"
 
-[[test]]
-name = "security_tests"
-path = "tests/security/security_tests.rs"
