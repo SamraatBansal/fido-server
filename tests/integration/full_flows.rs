@@ -70,8 +70,8 @@ mod tests {
             .set_json(&serde_json::json!({
                 "challenge_id": reg_challenge_id,
                 "credential": {
-                    "id": "YXV0aC10ZXN0LWNyZWRlbnRpYWwtaWQ=",
-                    "raw_id": "YXV0aC10ZXN0LWNyZWRlbnRpYWwtaWQ=",
+                    "id": "YXV0aC10ZXN0LWNyZWRlbnRpYWwtaWQ",
+                    "raw_id": "YXV0aC10ZXN0LWNyZWRlbnRpYWwtaWQ",
                     "type": "public-key",
                     "response": {
                         "attestation_object": "o2NmbXRkbm9uZWdhdHRTdG10oGhhdXRoRGF0YVjESZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2NBAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
