@@ -30,7 +30,7 @@ mod tests {
             .set_json(&serde_json::json!({
                 "challenge_id": challenge_id,
                 "credential": {
-                    "id": "test-credential-id",
+                    "id": "dGVzdC1jcmVkZW50aWFsLWlk",
                     "raw_id": "dGVzdC1jcmVkZW50aWFsLWlk",
                     "type": "public-key",
                     "response": {
