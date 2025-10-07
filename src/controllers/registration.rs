@@ -66,11 +66,15 @@ impl RegistrationController {
         req: web::Json<RegistrationFinishRequest>,
     ) -> Result<HttpResponse> {
         // For now, we'll implement a basic version that validates the challenge
+        let credential_id = base64::engine::general_purpose::URL_SAFE_NO_PAD
+            .decode(&req.credential.id)
+            .unwrap_or_default();
+            
         let result = self
             .webauthn_service
             .finish_registration(
                 req.challenge_id.clone(),
-                req.credential.id.clone(),
+                credential_id,
                 vec![], // client_data_json placeholder
                 vec![], // attestation_object placeholder
             )
