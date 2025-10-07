@@ -59,6 +59,24 @@ anyhow = "1.0"
 # Time
 chrono = { version = "0.4", features = ["serde"] }
 
+# Security & Rate Limiting
+governor = "0.6"
+tower = "0.4"
+tower-http = { version = "0.5", features = ["cors", "trace"] }
+validator = { version = "0.18", features = ["derive"] }
+regex = "1.10"
+
+# Session Management & Caching
+redis = { version = "0.24", features = ["tokio-comp", "connection-manager"] }
+
+# Monitoring & Metrics
+prometheus = "0.13"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Async Traits
+async-trait = "0.1"
+
 [dev-dependencies]
 actix-test = "0.1"
 mockall = "0.13"
