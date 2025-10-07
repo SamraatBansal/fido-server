@@ -125,7 +125,6 @@ impl UserRepository for InMemoryUserRepository {
 }
 
 /// User service
-#[derive(Debug)]
 pub struct UserService {
     repository: Box<dyn UserRepository>,
 }
