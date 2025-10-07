@@ -3,14 +3,14 @@
 #[cfg(test)]
 mod tests {
     use fido_server::schema::registration::{
-        RegistrationStartRequest, RegistrationFinishRequest, PublicKeyCredential,
+        RegistrationStartRequest, PublicKeyCredential,
         AuthenticatorSelection, AuthenticatorAttestationResponse
     };
     use fido_server::schema::authentication::{
-        AuthenticationStartRequest, AuthenticationFinishRequest, PublicKeyCredentialAssertion,
+        AuthenticationStartRequest, PublicKeyCredentialAssertion,
         AuthenticatorAssertionResponse
     };
-    use fido_server::schema::common::{ErrorResponse, HealthResponse};
+    use fido_server::schema::common::{ErrorResponse, HealthResponse, DetailedErrorResponse, ErrorDetails};
 
     #[test]
     fn test_registration_start_request_validation() {
