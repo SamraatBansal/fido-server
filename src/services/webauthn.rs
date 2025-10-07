@@ -33,7 +33,7 @@ pub struct WebAuthnService {
     session_repo: Arc<dyn AuthSessionRepository>,
     audit_repo: Arc<dyn AuditLogRepository>,
     config: WebAuthnConfig,
-    webauthn: Webauthn<WebauthnConfig>,
+    webauthn: Webauthn,
 }
 
 impl WebAuthnService {
