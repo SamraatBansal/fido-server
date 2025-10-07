@@ -79,7 +79,7 @@ criterion = "0.5"  # Performance testing
 iai = "0.1"        # Benchmarking
 
 # Coverage
-tarpaulin = "0.27"
+# tarpaulin = "0.27"  # Commented out for now
 
 # Additional testing dependencies
 hex = "0.4"
