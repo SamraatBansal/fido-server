@@ -36,7 +36,7 @@ where
 {
     type Response = ServiceResponse<B>;
     type Error = Error;
-    type Future = LocalBoxFuture<'static, Result<Self::Response, Self::Error>>;
+    type Future = std::pin::Pin<Box<dyn std::future::Future<Output = Result<Self::Response, Self::Error>>>>;
 
     forward_ready!(service);
 
