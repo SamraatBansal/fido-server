@@ -55,9 +55,6 @@ impl RegistrationController {
             .decode(&req.credential.id)
             .unwrap_or_default();
             
-        println!("DEBUG: Finishing registration with challenge_id: {}", req.challenge_id);
-        println!("DEBUG: Credential ID: {:?}", credential_id);
-            
         let result = self
             .webauthn_service
             .finish_registration(
@@ -69,26 +66,20 @@ impl RegistrationController {
             .await;
 
         match result {
-            Ok(response) => {
-                println!("DEBUG: Registration successful");
-                Ok(HttpResponse::Created().json(response))
-            },
+            Ok(response) => Ok(HttpResponse::Created().json(response)),
             Err(AppError::NotFound(msg)) => {
-                println!("DEBUG: Registration failed - Not found: {}", msg);
                 Ok(HttpResponse::NotFound().json(serde_json::json!({
                     "error": msg,
                     "status": 404
                 })))
             }
             Err(AppError::BadRequest(msg)) => {
-                println!("DEBUG: Registration failed - Bad request: {}", msg);
                 Ok(HttpResponse::BadRequest().json(serde_json::json!({
                     "error": msg,
                     "status": 400
                 })))
             }
-            Err(err) => {
-                println!("DEBUG: Registration failed - Internal error: {:?}", err);
+            Err(_) => {
                 Ok(HttpResponse::InternalServerError().json(serde_json::json!({
                     "error": "Internal server error",
                     "status": 500
