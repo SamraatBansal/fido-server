@@ -66,15 +66,23 @@ impl AuthenticationController {
         req: web::Json<AuthenticationFinishRequest>,
     ) -> Result<HttpResponse> {
         // For now, we'll implement a basic version that validates the challenge
+        let credential_id = base64::engine::general_purpose::URL_SAFE_NO_PAD
+            .decode(&req.credential.id)
+            .unwrap_or_default();
+            
+        let user_handle = req.credential.response.user_handle
+            .as_ref()
+            .and_then(|uh| base64::engine::general_purpose::URL_SAFE_NO_PAD.decode(uh).ok());
+            
         let result = self
             .webauthn_service
             .finish_authentication(
                 req.challenge_id.clone(),
-                req.credential.id.clone(),
+                credential_id,
                 vec![], // client_data_json placeholder
                 vec![], // authenticator_data placeholder
                 vec![], // signature placeholder
-                req.credential.response.user_handle.clone(),
+                user_handle,
             )
             .await;
 
