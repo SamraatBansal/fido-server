@@ -69,6 +69,12 @@ impl ResponseError for AppError {
                     "message": "WebAuthn processing error"
                 }))
             }
+            AppError::ConnectionPool(_) => {
+                HttpResponse::InternalServerError().json(serde_json::json!({
+                    "error": "connection_pool_error",
+                    "message": "Database connection pool error"
+                }))
+            }
             AppError::InvalidChallenge(_) | AppError::InvalidSignature | 
             AppError::UserVerificationFailed | AppError::AttestationVerificationFailed(_) => {
                 HttpResponse::BadRequest().json(serde_json::json!({
