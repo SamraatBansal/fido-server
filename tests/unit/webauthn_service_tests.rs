@@ -1,12 +1,11 @@
 //! WebAuthn Service Unit Tests
 
 use uuid::Uuid;
-use serde_json::json;
 use mockall::predicate::*;
 use mockall::mock;
-use fido_server::services::challenge::Challenge;
-use fido_server::services::credential::Credential;
-use fido_server::services::user::User;
+use fido_server::schema::challenge::Challenge;
+use fido_server::schema::credential::Credential;
+use fido_server::schema::user::User;
 use fido_server::error::Result;
 
 // Mock dependencies
@@ -16,8 +15,10 @@ mock! {
     #[async_trait::async_trait]
     impl fido_server::services::challenge::ChallengeStore for ChallengeStore {
         async fn store_challenge(&self, challenge: &Challenge) -> Result<()>;
-        async fn validate_and_consume(&self, challenge_id: &str, response: &str) -> Result<bool>;
+        async fn validate_and_consume(&self, challenge_id: &str, response: &[u8]) -> Result<bool>;
         async fn cleanup_expired(&self) -> Result<()>;
+        async fn get_challenge(&self, challenge_id: &str) -> Result<Option<Challenge>>;
+        async fn delete_challenge(&self, challenge_id: &str) -> Result<()>;
     }
 }
 
@@ -30,7 +31,9 @@ mock! {
         async fn find_by_id(&self, id: &[u8]) -> Result<Option<Credential>>;
         async fn find_by_user_id(&self, user_id: &Uuid) -> Result<Vec<Credential>>;
         async fn update_sign_count(&self, id: &[u8], count: u64) -> Result<()>;
+        async fn update_usage(&self, id: &[u8], new_sign_count: u64) -> Result<()>;
         async fn delete(&self, id: &[u8]) -> Result<()>;
+        async fn exists_for_user(&self, user_id: &Uuid, credential_id: &[u8]) -> Result<bool>;
     }
 }
 
@@ -44,6 +47,7 @@ mock! {
         async fn find_by_username(&self, username: &str) -> Result<Option<User>>;
         async fn update(&self, user: &User) -> Result<()>;
         async fn delete(&self, id: &Uuid) -> Result<()>;
+        async fn username_exists(&self, username: &str) -> Result<bool>;
     }
 }
 
