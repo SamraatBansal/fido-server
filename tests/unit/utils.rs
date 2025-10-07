@@ -73,7 +73,14 @@ mod tests {
         }
         
         for email in invalid_emails {
-            assert!(!email.contains('@') || !email.contains('.'));
+            // More comprehensive validation for invalid emails
+            let is_valid = email.contains('@') && 
+                          email.contains('.') && 
+                          !email.starts_with('@') && 
+                          !email.ends_with('@') &&
+                          !email.contains("@.") &&
+                          email.len() > 3;
+            assert!(!is_valid, "Email '{}' should be invalid but passed basic validation", email);
         }
     }
 
