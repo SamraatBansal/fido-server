@@ -2,7 +2,7 @@ use std::sync::Arc;
 use uuid::Uuid;
 use crate::db::repositories::{UserRepository, CredentialRepository, AuditLogRepository};
 use crate::db::models::User;
-use crate::schema::CredentialInfo;
+use crate::schema::{CredentialInfo, AuthenticatorTransport};
 use crate::error::{AppError, Result};
 use base64::Engine;
 
