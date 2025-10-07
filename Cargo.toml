@@ -112,3 +112,20 @@ cargo = "warn"
 # Allow some pedantic lints that are too strict
 module_name_repetitions = "allow"
 missing_errors_doc = "allow"
+
+# Testing profiles
+[profile.test]
+opt-level = 1
+debug = true
+
+[[bench]]
+name = "webauthn_benchmarks"
+harness = false
+
+[[test]]
+name = "webauthn_integration"
+path = "tests/integration/webauthn_tests.rs"
+
+[[test]]
+name = "security_tests"
+path = "tests/security/security_tests.rs"
