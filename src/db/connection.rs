@@ -15,6 +15,6 @@ pub fn establish_connection_pool() -> Result<PgPool, r2d2::Error> {
         .build(manager)
 }
 
-pub fn get_connection(pool: &PgPool) -> Result<PgPooledConn, diesel::r2d2::Error> {
+pub fn get_connection(pool: &PgPool) -> Result<PgPooledConn, r2d2::Error> {
     pool.get()
 }
