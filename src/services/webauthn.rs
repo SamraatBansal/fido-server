@@ -167,10 +167,10 @@ impl WebAuthnService {
         &self,
         challenge_id: String,
         credential_id: Vec<u8>,
-        client_data_json: Vec<u8>,
-        authenticator_data: Vec<u8>,
-        signature: Vec<u8>,
-        user_handle: Option<Vec<u8>>,
+        _client_data_json: Vec<u8>,
+        _authenticator_data: Vec<u8>,
+        _signature: Vec<u8>,
+        _user_handle: Option<Vec<u8>>,
     ) -> Result<Value> {
         // For now, we'll implement a minimal version that validates the challenge
         // and updates the credential usage. In a full implementation, we would:
