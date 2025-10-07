@@ -50,7 +50,7 @@ impl WebAuthnService {
             origin: rp_origin,
         };
         
-        let webauthn = WebAuthn::new(webauthn_config);
+        let webauthn = Webauthn::new(webauthn_config);
         
         Ok(Self {
             webauthn,
