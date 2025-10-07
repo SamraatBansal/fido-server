@@ -64,6 +64,7 @@ mod tests {
             "@example.com",
             "test@",
             "test.example.com",
+            "test@.com",
         ];
         
         for email in valid_emails {
