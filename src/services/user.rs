@@ -303,7 +303,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_user_service_create() {
-        let repo = Box::new(InMemoryUserRepository::new());
+        let repo = InMemoryUserRepository::new();
         let service = UserService::new(repo);
 
         let user = service.create_user(
@@ -318,7 +318,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_user_service_get_by_username() {
-        let repo = Box::new(InMemoryUserRepository::new());
+        let repo = InMemoryUserRepository::new();
         let service = UserService::new(repo);
 
         // Create user
@@ -335,7 +335,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_user_service_get_or_create_new() {
-        let repo = Box::new(InMemoryUserRepository::new());
+        let repo = InMemoryUserRepository::new();
         let service = UserService::new(repo);
 
         // Get or create (should create new user)
@@ -349,7 +349,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_user_service_get_or_create_existing() {
-        let repo = Box::new(InMemoryUserRepository::new());
+        let repo = InMemoryUserRepository::new();
         let service = UserService::new(repo);
 
         // Create initial user
@@ -370,7 +370,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_user_service_validation() {
-        let repo = Box::new(InMemoryUserRepository::new());
+        let repo = InMemoryUserRepository::new();
         let service = UserService::new(repo);
 
         // Test valid username
@@ -391,7 +391,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_user_service_update() {
-        let repo = Box::new(InMemoryUserRepository::new());
+        let repo = InMemoryUserRepository::new();
         let service = UserService::new(repo);
 
         // Create user
@@ -409,7 +409,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_user_service_delete() {
-        let repo = Box::new(InMemoryUserRepository::new());
+        let repo = InMemoryUserRepository::new();
         let service = UserService::new(repo);
 
         // Create user
