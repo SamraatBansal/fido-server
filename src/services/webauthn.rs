@@ -221,7 +221,7 @@ impl WebAuthnService {
             is_resident: false,
         };
 
-        let stored_credential = self.credential_repo.create_credential(&new_credential).await?;
+        let _stored_credential = self.credential_repo.create_credential(&new_credential).await?;
 
         // Clean up session
         self.session_repo.delete_session(&request.session_id).await?;
