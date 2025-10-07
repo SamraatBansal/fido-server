@@ -6,7 +6,7 @@ use std::num::NonZeroU32;
 use std::sync::Arc;
 
 pub struct RateLimitMiddleware {
-    limiter: Arc<RateLimiter<String, InMemoryState, DefaultClock, NoOpMiddleware>>,
+    limiter: Arc<RateLimiter<String, HashMapKeyedStateStore<String>, DefaultClock>>,
 }
 
 impl RateLimitMiddleware {
@@ -42,7 +42,7 @@ where
 
 pub struct RateLimitService<S> {
     service: S,
-    limiter: Arc<RateLimiter<String, InMemoryState, DefaultClock, NoOpMiddleware>>,
+    limiter: Arc<RateLimiter<String, HashMapKeyedStateStore<String>, DefaultClock>>,
 }
 
 impl<S, B> Service<ServiceRequest> for RateLimitService<S>
