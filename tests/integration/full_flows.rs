@@ -42,12 +42,13 @@ mod tests {
             .to_request();
         
         let finish_resp = test::call_service(&app, finish_req).await;
-        println!("Finish registration response status: {}", finish_resp.status());
-        if !finish_resp.status().is_success() {
+        let status = finish_resp.status();
+        println!("Finish registration response status: {}", status);
+        if !status.is_success() {
             let body = test::read_body(finish_resp).await;
             println!("Response body: {}", String::from_utf8_lossy(&body));
         }
-        assert!(finish_resp.status().is_success());
+        assert!(status.is_success());
     }
 
     #[tokio::test]
