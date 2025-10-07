@@ -182,7 +182,7 @@ impl WebAuthnService {
         // 6. Update credential usage
 
         // Validate challenge exists and is not expired
-        let challenge = self.challenge_service.store.get_challenge(&challenge_id).await?
+        let challenge = self.challenge_service.get_challenge(&challenge_id).await?
             .ok_or_else(|| AppError::NotFound("Challenge not found".to_string()))?;
 
         if challenge.is_expired() {
