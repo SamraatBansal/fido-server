@@ -98,7 +98,7 @@ impl WebAuthnService {
         // 6. Store the credential
 
         // For this TDD implementation, we'll just validate the challenge exists
-        let challenge = self.challenge_service.store.get_challenge(&challenge_id).await?
+        let challenge = self.challenge_service.get_challenge(&challenge_id).await?
             .ok_or_else(|| AppError::NotFound("Challenge not found".to_string()))?;
 
         // Validate challenge is not expired
