@@ -83,7 +83,7 @@ impl ChallengeStore for InMemoryChallengeStore {
 
 /// Challenge service
 pub struct ChallengeService {
-    store: InMemoryChallengeStore,
+    pub store: InMemoryChallengeStore,
 }
 
 impl ChallengeService {
