@@ -126,6 +126,11 @@ impl ChallengeService {
         self.store.cleanup_expired().await
     }
 
+    /// Get a challenge by ID (for internal use)
+    pub async fn get_challenge(&self, challenge_id: &str) -> Result<Option<Challenge>> {
+        self.store.get_challenge(challenge_id).await
+    }
+
     /// Generate cryptographically secure random bytes
     fn generate_secure_random(&self, length: usize) -> Result<Vec<u8>> {
         use rand::RngCore;
