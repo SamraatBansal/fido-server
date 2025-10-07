@@ -45,8 +45,8 @@ diesel::table! {
         attestation_format -> Nullable<Varchar>,
         attestation_statement -> Nullable<Jsonb>,
         transports -> Nullable<Array<Text>>,
-        created_at -> Timestamp,
-        last_used_at -> Nullable<Timestamp>,
+        created_at -> Timestamptz,
+        last_used_at -> Nullable<Timestamptz>,
         is_resident -> Bool,
     }
 }
