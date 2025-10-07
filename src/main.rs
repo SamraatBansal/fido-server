@@ -35,9 +35,9 @@ async fn main() -> io::Result<()> {
 
     HttpServer::new(move || {
         App::new()
-            .app_data(actix_web::data::clone(&app_state.webauthn_service))
-            .app_data(actix_web::data::clone(&app_state.user_service))
-            .app_data(actix_web::data::clone(&app_state.credential_service))
+            .app_data(app_state.webauthn_service.clone())
+            .app_data(app_state.user_service.clone())
+            .app_data(app_state.credential_service.clone())
             .wrap(Logger::default())
             .wrap(SecurityHeaders)
             .wrap(cors_config())
