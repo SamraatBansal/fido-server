@@ -30,7 +30,7 @@ pub struct Credential {
     pub backup_eligible: bool,
     pub backup_state: bool,
     pub attestation_type: String,
-    pub transports: Vec<String>,
+    pub transports: Vec<diesel::sql_types::Text>,
     pub created_at: chrono::DateTime<chrono::Utc>,
     pub updated_at: chrono::DateTime<chrono::Utc>,
     pub last_used_at: Option<chrono::DateTime<chrono::Utc>>,
@@ -70,7 +70,7 @@ pub struct NewCredential {
     pub backup_eligible: bool,
     pub backup_state: bool,
     pub attestation_type: String,
-    pub transports: Vec<String>,
+    pub transports: Vec<diesel::sql_types::Text>,
 }
 
 /// New challenge for insertion
