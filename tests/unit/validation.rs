@@ -82,6 +82,7 @@ struct AssertionOptionsRequest {
     pub username: String,
 
     #[validate(custom(function = "validate_user_verification"))]
+    #[serde(rename = "userVerification")]
     pub user_verification: Option<String>,
 }
 
