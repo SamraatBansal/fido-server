@@ -48,7 +48,7 @@ impl UserService {
     }
 
     /// Add credential to user
-    pub async fn add_credential(&self, user_id: &str, credential: &Credential) -> Result<()> {
+    pub async fn add_credential(&self, _user_id: &str, _credential: &Credential) -> Result<()> {
         // TODO: Implement actual credential storage
         // For now, just return success
         Ok(())
