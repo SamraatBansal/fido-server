@@ -1,8 +1,9 @@
 //! Unit tests for challenge management
 
 use std::collections::HashMap;
-use std::time::Duration;
-use fido_server::common::{TestHelpers, SecurityTestVectors};
+use std::time::{Duration, SystemTime};
+use uuid::Uuid;
+use fido_server::common::{TestHelpers};
 
 #[tokio::test]
 async fn test_challenge_generation() {
