@@ -73,6 +73,7 @@ impl ResponseError for AppError {
             Self::WebAuthnError(_) => StatusCode::BAD_REQUEST,
             Self::ValidationError(_) | Self::BadRequest(_) => StatusCode::BAD_REQUEST,
             Self::NotFound(_) => StatusCode::NOT_FOUND,
+            Self::Unauthorized(_) => StatusCode::UNAUTHORIZED,
             Self::ChallengeExpired(_) => StatusCode::BAD_REQUEST,
             Self::InvalidChallenge(_) => StatusCode::BAD_REQUEST,
             Self::CredentialAlreadyExists(_) => StatusCode::CONFLICT,
