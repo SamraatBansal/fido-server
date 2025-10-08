@@ -401,11 +401,13 @@ impl PerformanceData {
 }
 
 /// Test configuration builder
+#[allow(missing_docs)]
 pub struct TestConfig {
     config: HashMap<String, String>,
 }
 
 impl TestConfig {
+    #[allow(missing_docs)]
     pub fn new() -> Self {
         let mut config = HashMap::new();
         config.insert("rp_id".to_string(), "example.com".to_string());
