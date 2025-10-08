@@ -28,5 +28,5 @@ pub async fn health_check() -> HttpResponse {
         "service": "fido-server"
     });
 
-    Ok(HttpResponse::Ok().json(response))
+    HttpResponse::Ok().json(response)
 }
