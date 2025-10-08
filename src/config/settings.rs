@@ -12,7 +12,7 @@ pub struct Settings {
     /// WebAuthn configuration
     pub webauthn: WebAuthnSettings,
 }
-
+//
 /// Server settings
 #[derive(Debug, Deserialize, Clone)]
 pub struct ServerSettings {
