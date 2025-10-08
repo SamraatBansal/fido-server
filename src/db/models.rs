@@ -36,9 +36,8 @@ pub struct NewUser {
 }
 
 /// Credential model representing a WebAuthn credential
-#[derive(Debug, Clone, Queryable, Selectable, Serialize, Deserialize)]
+#[derive(Debug, Clone, Queryable, Serialize, Deserialize)]
 #[diesel(table_name = credentials)]
-#[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Credential {
     /// Primary key
     pub id: Uuid,
@@ -49,7 +48,6 @@ pub struct Credential {
     /// Public key (binary)
     pub public_key: Vec<u8>,
     /// Attestation format
-    #[diesel(sql_type = diesel::sql_types::Text)]
     pub attestation_format: Option<String>,
     /// Authenticator AAGUID
     pub aaguid: Option<Uuid>,
