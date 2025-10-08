@@ -8,6 +8,7 @@ use uuid::Uuid;
 use crate::db::{models::*, DbPool};
 use crate::error::{AppError, Result};
 use crate::schema::webauthn::*;
+use crate::schema::*;
 
 /// WebAuthn service handling FIDO2 operations
 pub struct WebAuthnService {
