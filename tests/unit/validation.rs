@@ -24,10 +24,12 @@ struct AttestationOptionsRequest {
 
 /// Test validation for authenticator selection criteria
 #[derive(Debug, Deserialize, Validate)]
+#[allow(dead_code)]
 struct AuthenticatorSelectionCriteria {
     #[validate(custom(function = "validate_authenticator_attachment"))]
     pub authenticator_attachment: Option<String>,
 
+    #[allow(dead_code)]
     pub require_resident_key: Option<bool>,
 
     #[validate(custom(function = "validate_user_verification"))]
