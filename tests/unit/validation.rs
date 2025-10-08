@@ -13,12 +13,14 @@ struct AttestationOptionsRequest {
     pub username: String,
 
     #[validate(length(min = 1, max = 255, message = "Display name must be 1-255 characters"))]
+    #[serde(rename = "displayName")]
     pub display_name: String,
 
     #[validate(custom(function = "validate_attestation"))]
     pub attestation: Option<String>,
 
     #[validate(nested)]
+    #[serde(rename = "authenticatorSelection")]
     pub authenticator_selection: Option<AuthenticatorSelectionCriteria>,
 }
 
