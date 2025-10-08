@@ -2,13 +2,6 @@
 
 use serde::{Deserialize, Serialize};
 use validator::Validate;
-use webauthn_rs::prelude::*;
-use webauthn_rs_proto::{
-    AuthenticatorSelectionCriteria, AttestationConveyancePreference,
-    AuthenticationExtensionsClientInputs, PublicKeyCredentialRpEntity,
-    PublicKeyCredentialParameters, PublicKeyCredentialDescriptor,
-    UserVerificationRequirement, AuthenticatorTransport,
-};
 
 /// Registration options request
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
@@ -17,9 +10,9 @@ pub struct RegistrationOptionsRequest {
     pub username: String,
     #[validate(length(min = 1, max = 255))]
     pub display_name: String,
-    pub authenticator_selection: Option<AuthenticatorSelectionCriteria>,
-    pub attestation: Option<AttestationConveyancePreference>,
-    pub extensions: Option<AuthenticationExtensionsClientInputs>,
+    pub authenticator_selection: Option<serde_json::Value>,
+    pub attestation: Option<String>,
+    pub extensions: Option<serde_json::Value>,
 }
 
 /// Registration options response
@@ -27,15 +20,15 @@ pub struct RegistrationOptionsRequest {
 pub struct RegistrationOptionsResponse {
     pub status: String,
     pub error_message: String,
-    pub rp: PublicKeyCredentialRpEntity,
+    pub rp: serde_json::Value,
     pub user: ServerPublicKeyCredentialUserEntity,
     pub challenge: String,
-    pub pub_key_cred_params: Vec<PublicKeyCredentialParameters>,
+    pub pub_key_cred_params: Vec<serde_json::Value>,
     pub timeout: u64,
-    pub exclude_credentials: Vec<PublicKeyCredentialDescriptor>,
-    pub authenticator_selection: Option<AuthenticatorSelectionCriteria>,
-    pub attestation: Option<AttestationConveyancePreference>,
-    pub extensions: Option<AuthenticationExtensionsClientInputs>,
+    pub exclude_credentials: Vec<serde_json::Value>,
+    pub authenticator_selection: Option<serde_json::Value>,
+    pub attestation: Option<String>,
+    pub extensions: Option<serde_json::Value>,
 }
 
 /// Server public key credential user entity
@@ -51,8 +44,8 @@ pub struct ServerPublicKeyCredentialUserEntity {
 pub struct AuthenticationOptionsRequest {
     #[validate(length(min = 1, max = 255))]
     pub username: String,
-    pub user_verification: Option<UserVerificationRequirement>,
-    pub extensions: Option<AuthenticationExtensionsClientInputs>,
+    pub user_verification: Option<String>,
+    pub extensions: Option<serde_json::Value>,
 }
 
 /// Authentication options response
@@ -64,8 +57,8 @@ pub struct AuthenticationOptionsResponse {
     pub timeout: u64,
     pub rp_id: String,
     pub allow_credentials: Vec<ServerPublicKeyCredentialDescriptor>,
-    pub user_verification: UserVerificationRequirement,
-    pub extensions: Option<AuthenticationExtensionsClientInputs>,
+    pub user_verification: String,
+    pub extensions: Option<serde_json::Value>,
 }
 
 /// Server public key credential descriptor
@@ -74,7 +67,7 @@ pub struct ServerPublicKeyCredentialDescriptor {
     #[serde(rename = "type")]
     pub type_: String,
     pub id: String,
-    pub transports: Vec<AuthenticatorTransport>,
+    pub transports: Vec<String>,
 }
 
 /// Server response
