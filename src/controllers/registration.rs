@@ -147,7 +147,7 @@ pub struct AttestationResultResponse {
 #[post("/api/v1/webauthn/registration/challenge")]
 pub async fn start_attestation(
     request: web::Json<AttestationOptionsRequest>,
-) -> Result<HttpResponse, AppError> {
+) -> HttpResponse {
     // Validate request
     request
         .validate()
