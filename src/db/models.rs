@@ -5,7 +5,7 @@ use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::schema::{challenges, credentials, users};
+use crate::schema::*;
 
 /// User model representing a FIDO2/WebAuthn user
 #[derive(Debug, Clone, Queryable, Selectable, Serialize, Deserialize)]
