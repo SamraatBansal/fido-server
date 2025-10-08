@@ -1,10 +1,11 @@
 //! Authentication controller for WebAuthn assertion
 
 use actix_web::{post, web, HttpResponse, Result};
+use base64::Engine;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 
-use crate::error::{AppError, Result as AppResult};
+use crate::error::AppError;
 
 /// Authentication controller
 pub struct AuthenticationController;
