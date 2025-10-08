@@ -361,7 +361,6 @@ pub struct AssertionResultResponse {
 }
 
 /// Verify assertion result
-#[post("/verify")]
 pub async fn verify_assertion(
     request: web::Json<AssertionResultRequest>,
 ) -> HttpResponse {
