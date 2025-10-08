@@ -1,6 +1,6 @@
 //! Diesel schema for FIDO2/WebAuthn server
 
-table! {
+diesel::table! {
     users (id) {
         id -> Uuid,
         username -> Varchar,
@@ -11,7 +11,7 @@ table! {
     }
 }
 
-table! {
+diesel::table! {
     credentials (id) {
         id -> Uuid,
         user_id -> Uuid,
@@ -29,7 +29,7 @@ table! {
     }
 }
 
-table! {
+diesel::table! {
     challenges (id) {
         id -> Uuid,
         challenge_base64 -> Text,
@@ -41,11 +41,13 @@ table! {
     }
 }
 
-joinable!(credentials -> users (user_id));
-joinable!(challenges -> users (user_id));
+diesel::joinable!(credentials -> users (user_id));
+diesel::joinable!(challenges -> users (user_id));
 
-allow_tables_to_appear_in_same_query!(
+diesel::allow_tables_to_appear_in_same_query!(
     users,
     credentials,
     challenges,
 );
+
+pub mod webauthn;
