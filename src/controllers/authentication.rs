@@ -156,9 +156,12 @@ pub async fn verify_assertion(
     request: web::Json<AssertionResultRequest>,
 ) -> HttpResponse {
     // Validate request
-    request
-        .validate()
-        .map_err(|e| AppError::ValidationError(format!("Invalid request: {}", e)))?;
+    if let Err(e) = request.validate() {
+        return HttpResponse::BadRequest().json(serde_json::json!({
+            "error": format!("Invalid request: {}", e),
+            "status": 400
+        }));
+    }
 
     // TODO: Implement actual WebAuthn assertion verification
     // For now, return a mock response
@@ -174,5 +177,5 @@ pub async fn verify_assertion(
         user_verified: true,
     };
 
-    Ok(HttpResponse::Ok().json(response))
+    HttpResponse::Ok().json(response)
 }
