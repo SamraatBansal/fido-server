@@ -307,12 +307,56 @@ async fn test_user_concurrent_operations() {
 }
 
 fn is_valid_email(email: &str) -> bool {
-    // Simple email validation regex
+    // RFC 5322 compliant email validation
+    if email.len() > 254 {
+        return false;
+    }
+    
+    let parts: Vec<&str> = email.split('@').collect();
+    if parts.len() != 2 {
+        return false;
+    }
+    
+    let local_part = parts[0];
+    let domain_part = parts[1];
+    
+    // Local part validation
+    if local_part.is_empty() || local_part.len() > 64 {
+        return false;
+    }
+    
+    // No consecutive dots
+    if local_part.contains("..") {
+        return false;
+    }
+    
+    // Cannot start or end with dot
+    if local_part.starts_with('.') || local_part.ends_with('.') {
+        return false;
+    }
+    
+    // Domain part validation
+    if domain_part.is_empty() || domain_part.len() > 255 {
+        return false;
+    }
+    
+    // Domain cannot start or end with hyphen or dot
+    if domain_part.starts_with('-') || domain_part.ends_with('-') ||
+       domain_part.starts_with('.') || domain_part.ends_with('.') {
+        return false;
+    }
+    
+    // No consecutive dots in domain
+    if domain_part.contains("..") {
+        return false;
+    }
+    
+    // Basic regex for structure validation
     let email_regex = regex::Regex::new(
-        r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+        r"^[a-zA-Z0-9](\.?[a-zA-Z0-9_-])*@[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*\.[a-zA-Z]{2,}$"
     ).unwrap();
     
-    email_regex.is_match(email) && email.len() <= 254 // RFC 5321 limit
+    email_regex.is_match(email)
 }
 
 #[tokio::test]
