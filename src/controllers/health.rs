@@ -1,6 +1,6 @@
 //! Health check controller
 
-use actix_web::{get, HttpResponse, Result};
+use actix_web::{get, HttpResponse};
 use serde_json::json;
 
 /// Health check controller
