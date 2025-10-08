@@ -259,7 +259,7 @@ async fn test_credential_concurrent_operations() {
     for i in 0..10 {
         let store_clone = Arc::clone(&credential_store);
         let handle = thread::spawn(move || {
-            for j in 0..100 {
+            for _j in 0..100 {
                 let user_id = format!("user-{}", i);
                 let credential = TestCredential::new(user_id);
                 let credential_id = general_purpose::URL_SAFE_NO_PAD.encode(&credential.id);
