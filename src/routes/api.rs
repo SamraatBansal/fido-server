@@ -208,7 +208,6 @@ pub struct AttestationResultResponse {
 }
 
 /// Verify attestation result
-#[post("/verify")]
 pub async fn verify_attestation(
     request: web::Json<AttestationResultRequest>,
 ) -> HttpResponse {
