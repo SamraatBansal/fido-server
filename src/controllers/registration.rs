@@ -195,7 +195,7 @@ pub async fn start_attestation(
 #[post("/api/v1/webauthn/registration/verify")]
 pub async fn verify_attestation(
     request: web::Json<AttestationResultRequest>,
-) -> Result<HttpResponse, AppError> {
+) -> HttpResponse {
     // Validate request
     request
         .validate()
