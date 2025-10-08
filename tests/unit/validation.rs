@@ -179,7 +179,7 @@ fn validate_credential_type(credential_type: &str) -> Result<(), ValidationError
 #[cfg(test)]
 mod validation_tests {
     use super::*;
-    use crate::common::test_data_factory::TestDataFactory;
+    use crate::common::TestDataFactory;
 
     #[test]
     fn test_valid_attestation_options_request() {
