@@ -1,38 +1,74 @@
 //! FIDO Server Main Entry Point
 
-use actix_cors::Cors;
 use actix_web::{middleware::Logger, App, HttpServer};
 use std::io;
 
+use fido_server::{
+    config::Settings,
+    db::establish_connection,
+    middleware::{cors_config, ErrorHandler, SecurityHeaders},
+    routes::api::configure,
+    services::WebAuthnService,
+};
+
 #[actix_web::main]
 async fn main() -> io::Result<()> {
-    // Initialize logger
-    env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
+    // Initialize tracing
+    tracing_subscriber::fmt()
+        .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
+        .init();
 
-    log::info!("Starting FIDO Server...");
+    // Load configuration
+    let settings = Settings::new()
+        .expect("Failed to load configuration");
 
-    // TODO: Load configuration from config file
-    let host = "127.0.0.1";
-    let port = 8080;
+    tracing::info!("Starting FIDO Server...");
+    tracing::info!("Configuration: {:?}", settings);
 
-    // TODO: Initialize database connection pool
+    // Initialize database connection pool
+    let db_pool = establish_connection(&settings.database.url)
+        .expect("Failed to establish database connection");
 
-    log::info!("Server running at http://{}:{}", host, port);
+    // Initialize WebAuthn service
+    let webauthn_service = WebAuthnService::new(
+        &settings.webauthn.rp_id,
+        &settings.webauthn.rp_name,
+        &settings.webauthn.origin,
+        db_pool.clone(),
+    )
+    .expect("Failed to initialize WebAuthn service");
 
+    let host = settings.server.host.clone();
+    let port = settings.server.port;
+
+    tracing::info!("Server running at http://{}:{}", host, port);
+
+    // Run HTTP server
     HttpServer::new(move || {
-        // Configure CORS
-        let cors = Cors::default()
-            .allow_any_origin()
-            .allow_any_method()
-            .allow_any_header()
-            .max_age(3600);
-
         App::new()
-            .wrap(Logger::default())
-            .wrap(cors)
-            .configure(fido_server::routes::api::configure)
+            // Add data
+            .app_data(web::Data::new(webauthn_service.clone()))
+            .app_data(web::Data::new(settings.clone()))
+            // Add middleware
+            .wrap(ErrorHandler)
+            .wrap(SecurityHeaders)
+            .wrap(cors_config())
+            .wrap(Logger::new("%a %{User-Agent}i %r %s %b %D"))
+            // Configure routes
+            .configure(configure)
+            // Health check endpoint
+            .route("/health", web::get().to(health_check))
     })
     .bind((host, port))?
     .run()
     .await
+}
+
+/// Health check endpoint
+async fn health_check() -> impl actix_web::Responder {
+    actix_web::HttpResponse::Ok().json(serde_json::json!({
+        "status": "healthy",
+        "timestamp": chrono::Utc::now(),
+        "service": "fido-server"
+    }))
 }
