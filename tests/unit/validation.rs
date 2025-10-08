@@ -111,10 +111,12 @@ struct AssertionResultRequest {
 struct AssertionResponse {
     #[validate(length(min = 37, message = "Authenticator data must be at least 37 bytes"))]
     #[validate(custom(function = "validate_base64url"))]
+    #[serde(rename = "authenticatorData")]
     pub authenticator_data: String,
 
     #[validate(length(min = 1, message = "Client data JSON is required"))]
     #[validate(custom(function = "validate_base64url"))]
+    #[serde(rename = "clientDataJSON")]
     pub client_data_json: String,
 
     #[validate(length(min = 1, message = "Signature is required"))]
@@ -122,6 +124,7 @@ struct AssertionResponse {
     pub signature: String,
 
     #[validate(custom(function = "validate_base64url"))]
+    #[serde(rename = "userHandle")]
     pub user_handle: Option<String>,
 }
 
