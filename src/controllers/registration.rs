@@ -43,7 +43,7 @@ pub struct AttestationOptionsRequest {
 }
 
 /// Authenticator selection criteria
-#[derive(Debug, Deserialize, Validate)]
+#[derive(Debug, Deserialize, Serialize, Clone, Validate)]
 pub struct AuthenticatorSelectionCriteria {
     #[validate(custom(function = "crate::utils::validation::validate_authenticator_attachment"))]
     #[serde(rename = "authenticatorAttachment")]
