@@ -5,8 +5,8 @@ diesel::table! {
         id -> Uuid,
         username -> Varchar,
         display_name -> Varchar,
-        created_at -> Timestamp,
-        updated_at -> Timestamp,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
         is_active -> Bool,
     }
 }
@@ -22,9 +22,9 @@ diesel::table! {
         sign_count -> BigInt,
         backup_eligible -> Bool,
         backup_state -> Bool,
-        transports -> Nullable<Jsonb>,
-        created_at -> Timestamp,
-        last_used_at -> Nullable<Timestamp>,
+        transports -> Nullable<Text>,
+        created_at -> Timestamptz,
+        last_used_at -> Nullable<Timestamptz>,
         is_active -> Bool,
     }
 }
@@ -35,9 +35,9 @@ diesel::table! {
         challenge_base64 -> Text,
         user_id -> Nullable<Uuid>,
         challenge_type -> Varchar,
-        expires_at -> Timestamp,
-        created_at -> Timestamp,
-        used_at -> Nullable<Timestamp>,
+        expires_at -> Timestamptz,
+        created_at -> Timestamptz,
+        used_at -> Nullable<Timestamptz>,
     }
 }
 
