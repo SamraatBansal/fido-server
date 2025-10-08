@@ -154,7 +154,7 @@ pub async fn start_assertion(
 #[post("/api/v1/webauthn/authentication/verify")]
 pub async fn verify_assertion(
     request: web::Json<AssertionResultRequest>,
-) -> Result<HttpResponse, AppError> {
+) -> HttpResponse {
     // Validate request
     request
         .validate()
