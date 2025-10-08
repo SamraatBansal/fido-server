@@ -22,7 +22,7 @@ impl Default for UserService {
 
 impl UserService {
     /// Find user by username
-    pub async fn find_by_username(&self, username: &str) -> Result<Option<User>> {
+    pub async fn find_by_username(&self, _username: &str) -> Result<Option<User>> {
         // TODO: Implement actual user lookup
         // For now, return None (user not found)
         Ok(None)
