@@ -136,12 +136,13 @@ impl WebAuthnService {
 
     /// Helper methods
     fn get_or_create_user(&self, conn: &mut PgConnection, username: &str, display_name: &str) -> Result<User> {
-        crate::schema::users::table
+        match crate::schema::users::table
             .filter(crate::schema::users::username.eq(username))
             .first::<User>(conn)
             .optional()
-            .map_err(|e| AppError::DatabaseError(format!("Failed to query user: {}", e)))?
-            .ok_or_else(|| {
+        {
+            Ok(Some(user)) => Ok(user),
+            Ok(None) => {
                 let new_user = NewUser {
                     username: username.to_string(),
                     display_name: display_name.to_string(),
@@ -152,7 +153,8 @@ impl WebAuthnService {
                     .values(&new_user)
                     .get_result::<User>(conn)
                     .map_err(|e| AppError::DatabaseError(format!("Failed to create user: {}", e)))
-            })?
-            .map_err(Into::into)
+            }
+            Err(e) => Err(AppError::DatabaseError(format!("Failed to query user: {}", e))),
+        }
     }
 }
