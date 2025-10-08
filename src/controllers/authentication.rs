@@ -119,9 +119,12 @@ pub async fn start_assertion(
     request: web::Json<AssertionOptionsRequest>,
 ) -> HttpResponse {
     // Validate request
-    request
-        .validate()
-        .map_err(|e| AppError::ValidationError(format!("Invalid request: {}", e)))?;
+    if let Err(e) = request.validate() {
+        return HttpResponse::BadRequest().json(serde_json::json!({
+            "error": format!("Invalid request: {}", e),
+            "status": 400
+        }));
+    }
 
     // TODO: Implement actual WebAuthn challenge generation
     // For now, return a mock response
@@ -144,7 +147,7 @@ pub async fn start_assertion(
             .unwrap_or_else(|| "preferred".to_string()),
     };
 
-    Ok(HttpResponse::Ok().json(response))
+    HttpResponse::Ok().json(response)
 }
 
 /// Verify assertion result
