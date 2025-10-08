@@ -350,6 +350,24 @@ impl TestHelpers {
         headers.insert("Origin".to_string(), "https://example.com".to_string());
         headers
     }
+
+    /// Generates a test challenge
+    pub fn generate_test_challenge() -> String {
+        Self::test_uuid().to_string()
+    }
+
+    /// Creates a mock user ID
+    pub fn create_mock_user_id() -> String {
+        Self::test_uuid().to_string()
+    }
+
+    /// Creates a mock credential ID
+    pub fn create_mock_credential_id() -> Vec<u8> {
+        let mut bytes = vec![0u8; 32];
+        use rand::RngCore;
+        rand::thread_rng().fill_bytes(&mut bytes);
+        bytes
+    }
 }
 
 /// Performance test data generators
