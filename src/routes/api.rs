@@ -1,6 +1,6 @@
 //! API routes configuration
 
-use actix_web::{get, post, web, HttpResponse};
+use actix_web::{web, HttpResponse};
 use base64::Engine;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
