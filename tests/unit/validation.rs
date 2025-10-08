@@ -29,12 +29,15 @@ struct AttestationOptionsRequest {
 #[allow(dead_code)]
 struct AuthenticatorSelectionCriteria {
     #[validate(custom(function = "validate_authenticator_attachment"))]
+    #[serde(rename = "authenticatorAttachment")]
     pub authenticator_attachment: Option<String>,
 
     #[allow(dead_code)]
+    #[serde(rename = "requireResidentKey")]
     pub require_resident_key: Option<bool>,
 
     #[validate(custom(function = "validate_user_verification"))]
+    #[serde(rename = "userVerification")]
     pub user_verification: Option<String>,
 }
 
