@@ -49,22 +49,34 @@ impl Settings {
     ///
     /// Returns an error if configuration cannot be loaded
     pub fn new() -> Result<Self, config::ConfigError> {
-        // TODO: Implement proper configuration loading
-        // This is a placeholder implementation
-        Ok(Self {
-            server: ServerSettings {
-                host: "127.0.0.1".to_string(),
-                port: 8080,
-            },
-            database: DatabaseSettings {
-                url: "postgres://localhost/fido_server".to_string(),
-                max_pool_size: 10,
-            },
-            webauthn: WebAuthnSettings {
-                rp_id: "localhost".to_string(),
-                rp_name: "FIDO Server".to_string(),
-                origin: "http://localhost:8080".to_string(),
-            },
-        })
+        let mut settings = config::Config::builder();
+        
+        // Load from environment variables with prefix FIDO_
+        settings = settings
+            .add_source(config::Environment::with_prefix("FIDO"))
+            .add_source(config::File::with_name("config/default").required(false))
+            .add_source(config::File::with_name("config/local").required(false));
+
+        // Set default values
+        settings = settings
+            .set_default("server.host", "127.0.0.1")?
+            .set_default("server.port", 8080)?
+            .set_default("database.max_pool_size", 10)?
+            .set_default("webauthn.rp_id", "localhost")?
+            .set_default("webauthn.rp_name", "FIDO Server")?
+            .set_default("webauthn.origin", "http://localhost:8080")?;
+
+        // Build configuration
+        let config = settings.build()?;
+        
+        // Try to get database URL from environment or use default
+        let database_url = std::env::var("DATABASE_URL")
+            .unwrap_or_else(|_| "postgres://localhost/fido_server".to_string());
+
+        // Create settings with database URL
+        let mut app_settings: Settings = config.try_deserialize()?;
+        app_settings.database.url = database_url;
+
+        Ok(app_settings)
     }
 }
