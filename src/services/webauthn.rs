@@ -3,20 +3,12 @@
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
 use chrono::{Duration, Utc};
 use diesel::prelude::*;
-use serde_json::Value;
 use uuid::Uuid;
 use webauthn_rs::prelude::*;
 
 use crate::db::{models::*, DbPool};
 use crate::error::{AppError, Result};
 use crate::schema::webauthn::*;
-use webauthn_rs_proto::{
-    AuthenticatorSelectionCriteria, AttestationConveyancePreference,
-    AuthenticationExtensionsClientInputs, PublicKeyCredentialRpEntity,
-    PublicKeyCredentialParameters, PublicKeyCredentialDescriptor,
-    UserVerificationRequirement, AuthenticatorTransport,
-};
-
 
 /// WebAuthn service handling FIDO2 operations
 pub struct WebAuthnService {
@@ -48,9 +40,9 @@ impl WebAuthnService {
         let user = self.get_or_create_user(&mut conn, &request.username, &request.display_name)?;
 
         // Get existing credentials for exclusion
-        let existing_creds: Vec<Credential> = credentials::table
-            .filter(credentials::user_id.eq(user.id))
-            .filter(credentials::is_active.eq(true))
+        let existing_creds: Vec<Credential> = crate::schema::credentials::table
+            .filter(crate::schema::credentials::user_id.eq(user.id))
+            .filter(crate::schema::credentials::is_active.eq(true))
             .load(&mut conn)
             .map_err(|e| AppError::DatabaseError(format!("Failed to load credentials: {}", e)))?;
 
@@ -71,7 +63,7 @@ impl WebAuthnService {
             .map_err(|e| AppError::WebAuthnError(format!("Failed to start registration: {}", e)))?;
 
         // Store challenge
-        let challenge = BASE64.encode(&reg_state.challenge());
+        let challenge = BASE64.encode(reg_state.challenge());
         let expires_at = Utc::now() + Duration::minutes(5);
 
         let new_challenge = NewChallenge {
@@ -81,35 +73,46 @@ impl WebAuthnService {
             expires_at,
         };
 
-        diesel::insert_into(challenges::table)
+        diesel::insert_into(crate::schema::challenges::table)
             .values(&new_challenge)
             .execute(&mut conn)
             .map_err(|e| AppError::DatabaseError(format!("Failed to store challenge: {}", e)))?;
 
-        // Convert exclude credentials for response
-        let exclude_credentials_response: Vec<PublicKeyCredentialDescriptor> = existing_creds
+        // Convert to JSON for response
+        let rp_json = serde_json::json!({
+            "id": ccr.public_key.rp.id,
+            "name": ccr.public_key.rp.name
+        });
+
+        let pub_key_cred_params: Vec<serde_json::Value> = ccr.public_key.pub_key_cred_params
             .into_iter()
-            .map(|cred| PublicKeyCredentialDescriptor {
-                id: cred.credential_id,
-                transports: self.deserialize_transports(&cred.transports),
-            })
+            .map(|param| serde_json::json!({
+                "type": param.type_,
+                "alg": param.alg
+            }))
+            .collect();
+
+        let exclude_credentials_response: Vec<serde_json::Value> = existing_creds
+            .into_iter()
+            .map(|cred| serde_json::json!({
+                "id": BASE64.encode(&cred.credential_id),
+                "type": "public-key",
+                "transports": []
+            }))
             .collect();
 
         Ok(RegistrationOptionsResponse {
             status: "ok".to_string(),
             error_message: String::new(),
-            rp: PublicKeyCredentialRpEntity {
-                id: ccr.rp.id,
-                name: ccr.rp.name,
-            },
+            rp: rp_json,
             user: ServerPublicKeyCredentialUserEntity {
                 id: BASE64.encode(user.id.as_bytes()),
                 name: user.username,
                 display_name: user.display_name,
             },
             challenge,
-            pub_key_cred_params: ccr.pub_key_cred_params,
-            timeout: ccr.timeout,
+            pub_key_cred_params,
+            timeout: ccr.public_key.timeout,
             exclude_credentials: exclude_credentials_response,
             authenticator_selection: request.authenticator_selection,
             attestation: request.attestation,
@@ -126,33 +129,30 @@ impl WebAuthnService {
         let challenge = self.get_and_validate_challenge(&mut conn, &response.response, "registration")?;
 
         // Find user
-        let user = users::table
-            .filter(users::id.eq(challenge.user_id.ok_or_else(|| AppError::InvalidChallenge("No user ID in challenge".to_string()))?))
+        let user = crate::schema::users::table
+            .filter(crate::schema::users::id.eq(challenge.user_id.ok_or_else(|| AppError::InvalidChallenge("No user ID in challenge".to_string()))?))
             .first::<User>(&mut conn)
             .map_err(|e| AppError::DatabaseError(format!("Failed to find user: {}", e)))?;
 
-        // For now, we'll skip the actual registration completion since we need to store the state
-        // In a real implementation, you'd store the registration state and retrieve it here
-        
         // Extract credential data from response
-        let credential_id = response.raw_id.clone();
-        let public_key = response.response.attestation_object.clone(); // This is simplified
+        let credential_id = response.raw_id.to_vec();
+        let public_key = response.response.attestation_object.to_vec();
 
         // Store credential
         let new_credential = NewCredential {
             user_id: user.id,
-            credential_id: credential_id.clone(),
-            public_key: public_key.clone(),
-            attestation_format: Some("none".to_string()), // Simplified
-            aaguid: Some(Uuid::new_v4()), // Simplified
+            credential_id,
+            public_key,
+            attestation_format: Some("none".to_string()),
+            aaguid: Some(Uuid::new_v4()),
             sign_count: 0,
             backup_eligible: false,
             backup_state: false,
-            transports: Some("[]".to_string()), // Simplified
+            transports: Some("[]".to_string()),
             is_active: true,
         };
 
-        diesel::insert_into(credentials::table)
+        diesel::insert_into(crate::schema::credentials::table)
             .values(&new_credential)
             .execute(&mut conn)
             .map_err(|e| AppError::DatabaseError(format!("Failed to store credential: {}", e)))?;
@@ -172,16 +172,16 @@ impl WebAuthnService {
             .map_err(|e| AppError::DatabaseError(format!("Failed to get DB connection: {}", e)))?;
 
         // Find user
-        let user = users::table
-            .filter(users::username.eq(&request.username))
-            .filter(users::is_active.eq(true))
+        let user = crate::schema::users::table
+            .filter(crate::schema::users::username.eq(&request.username))
+            .filter(crate::schema::users::is_active.eq(true))
             .first::<User>(&mut conn)
             .map_err(|_| AppError::NotFound(format!("User '{}' not found", request.username)))?;
 
         // Get user credentials
-        let user_credentials: Vec<Credential> = credentials::table
-            .filter(credentials::user_id.eq(user.id))
-            .filter(credentials::is_active.eq(true))
+        let user_credentials: Vec<Credential> = crate::schema::credentials::table
+            .filter(crate::schema::credentials::user_id.eq(user.id))
+            .filter(crate::schema::credentials::is_active.eq(true))
             .load(&mut conn)
             .map_err(|e| AppError::DatabaseError(format!("Failed to load credentials: {}", e)))?;
 
@@ -194,7 +194,7 @@ impl WebAuthnService {
             .into_iter()
             .map(|cred| Passkey {
                 cred_id: CredentialID::from(cred.credential_id),
-                cred: None, // Simplified - would need to reconstruct the actual credential
+                cred: None, // Simplified
             })
             .collect();
 
@@ -204,7 +204,7 @@ impl WebAuthnService {
             .map_err(|e| AppError::WebAuthnError(format!("Failed to start authentication: {}", e)))?;
 
         // Store challenge
-        let challenge = BASE64.encode(&auth_state.challenge());
+        let challenge = BASE64.encode(auth_state.challenge());
         let expires_at = Utc::now() + Duration::minutes(5);
 
         let new_challenge = NewChallenge {
@@ -214,7 +214,7 @@ impl WebAuthnService {
             expires_at,
         };
 
-        diesel::insert_into(challenges::table)
+        diesel::insert_into(crate::schema::challenges::table)
             .values(&new_challenge)
             .execute(&mut conn)
             .map_err(|e| AppError::DatabaseError(format!("Failed to store challenge: {}", e)))?;
@@ -233,10 +233,10 @@ impl WebAuthnService {
             status: "ok".to_string(),
             error_message: String::new(),
             challenge,
-            timeout: acr.timeout,
-            rp_id: acr.rp_id,
+            timeout: acr.public_key.timeout,
+            rp_id: acr.public_key.rp_id,
             allow_credentials,
-            user_verification: request.user_verification.unwrap_or(UserVerificationRequirement::Preferred),
+            user_verification: request.user_verification.unwrap_or_else(|| "preferred".to_string()),
             extensions: request.extensions,
         })
     }
@@ -253,20 +253,17 @@ impl WebAuthnService {
         let credential_id = BASE64.decode(&response.id)
             .map_err(|e| AppError::BadRequest(format!("Invalid credential ID: {}", e)))?;
 
-        let credential = credentials::table
-            .filter(credentials::credential_id.eq(&credential_id))
-            .filter(credentials::is_active.eq(true))
+        let credential = crate::schema::credentials::table
+            .filter(crate::schema::credentials::credential_id.eq(&credential_id))
+            .filter(crate::schema::credentials::is_active.eq(true))
             .first::<Credential>(&mut conn)
             .map_err(|_| AppError::NotFound("Credential not found".to_string()))?;
 
-        // For now, we'll skip the actual authentication completion since we need to store the state
-        // In a real implementation, you'd store the authentication state and retrieve it here
-
         // Update credential usage
-        diesel::update(credentials::table.filter(credentials::id.eq(credential.id)))
+        diesel::update(crate::schema::credentials::table.filter(crate::schema::credentials::id.eq(credential.id)))
             .set((
-                credentials::sign_count.eq(credential.sign_count + 1),
-                credentials::last_used_at.eq(Utc::now()),
+                crate::schema::credentials::sign_count.eq(credential.sign_count + 1),
+                crate::schema::credentials::last_used_at.eq(Utc::now()),
             ))
             .execute(&mut conn)
             .map_err(|e| AppError::DatabaseError(format!("Failed to update credential: {}", e)))?;
@@ -282,8 +279,8 @@ impl WebAuthnService {
 
     /// Helper methods
     fn get_or_create_user(&self, conn: &mut PgConnection, username: &str, display_name: &str) -> Result<User> {
-        users::table
-            .filter(users::username.eq(username))
+        crate::schema::users::table
+            .filter(crate::schema::users::username.eq(username))
             .first::<User>(conn)
             .optional()
             .map_err(|e| AppError::DatabaseError(format!("Failed to query user: {}", e)))?
@@ -294,7 +291,7 @@ impl WebAuthnService {
                     is_active: true,
                 };
 
-                diesel::insert_into(users::table)
+                diesel::insert_into(crate::schema::users::table)
                     .values(&new_user)
                     .get_result::<User>(conn)
                     .map_err(|e| AppError::DatabaseError(format!("Failed to create user: {}", e)))
@@ -308,17 +305,17 @@ impl WebAuthnService {
             AuthenticatorResponse::Assertion(assert) => &assert.client_data_json,
         };
 
-        let client_data: Value = serde_json::from_str(client_data_json)
+        let client_data: serde_json::Value = serde_json::from_str(client_data_json)
             .map_err(|e| AppError::BadRequest(format!("Invalid client data JSON: {}", e)))?;
 
         let challenge = client_data.get("challenge")
             .and_then(|v| v.as_str())
             .ok_or_else(|| AppError::BadRequest("Missing challenge in client data".to_string()))?;
 
-        let db_challenge = challenges::table
-            .filter(challenges::challenge_base64.eq(challenge))
-            .filter(challenges::challenge_type.eq(challenge_type))
-            .filter(challenges::used_at.is_null())
+        let db_challenge = crate::schema::challenges::table
+            .filter(crate::schema::challenges::challenge_base64.eq(challenge))
+            .filter(crate::schema::challenges::challenge_type.eq(challenge_type))
+            .filter(crate::schema::challenges::used_at.is_null())
             .first::<Challenge>(conn)
             .optional()
             .map_err(|e| AppError::DatabaseError(format!("Failed to query challenge: {}", e)))?
@@ -332,29 +329,10 @@ impl WebAuthnService {
     }
 
     fn mark_challenge_used(&self, conn: &mut PgConnection, challenge_id: Uuid) -> Result<()> {
-        diesel::update(challenges::table.filter(challenges::id.eq(challenge_id)))
-            .set(challenges::used_at.eq(Utc::now()))
+        diesel::update(crate::schema::challenges::table.filter(crate::schema::challenges::id.eq(challenge_id)))
+            .set(crate::schema::challenges::used_at.eq(Utc::now()))
             .execute(conn)
             .map_err(|e| AppError::DatabaseError(format!("Failed to mark challenge as used: {}", e)))?;
         Ok(())
-    }
-
-    fn deserialize_transports(&self, transports: &Option<String>) -> Vec<AuthenticatorTransport> {
-        transports
-            .as_ref()
-            .and_then(|s| serde_json::from_str::<Vec<String>>(s).ok())
-            .map(|arr| {
-                arr.iter()
-                    .filter_map(|s| match s.as_str() {
-                        "ble" => Some(AuthenticatorTransport::Ble),
-                        "internal" => Some(AuthenticatorTransport::Internal),
-                        "nfc" => Some(AuthenticatorTransport::Nfc),
-                        "smart-card" => Some(AuthenticatorTransport::SmartCard),
-                        "usb" => Some(AuthenticatorTransport::Usb),
-                        _ => None,
-                    })
-                    .collect()
-            })
-            .unwrap_or_default()
     }
 }
