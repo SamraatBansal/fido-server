@@ -6,7 +6,7 @@ use fido_server::common::{TestDataFactory, TestHelpers};
 #[tokio::test]
 async fn test_assertion_options_request_validation() {
     // Test valid assertion options request
-    let valid_request = WebAuthnTestDataFactory::valid_assertion_options_request();
+    let valid_request = TestDataFactory::valid_assertion_options_request();
     
     // Validate required fields
     assert!(valid_request.get("username").is_some(), "Username should be present");
@@ -24,7 +24,7 @@ async fn test_assertion_options_request_validation() {
 
 #[tokio::test]
 async fn test_assertion_options_missing_username() {
-    let mut request = WebAuthnTestDataFactory::valid_assertion_options_request();
+    let mut request = TestDataFactory::valid_assertion_options_request();
     request.as_object_mut().unwrap().remove("username");
     
     // Should fail validation due to missing username
@@ -36,7 +36,7 @@ async fn test_assertion_options_missing_username() {
 
 #[tokio::test]
 async fn test_assertion_options_invalid_user_verification() {
-    let mut request = WebAuthnTestDataFactory::valid_assertion_options_request();
+    let mut request = TestDataFactory::valid_assertion_options_request();
     request["userVerification"] = json!("invalid-value");
     
     // Should fail user verification validation
@@ -47,7 +47,7 @@ async fn test_assertion_options_invalid_user_verification() {
 
 #[tokio::test]
 async fn test_assertion_result_request_validation() {
-    let valid_request = WebAuthnTestDataFactory::valid_assertion_result_request();
+    let valid_request = TestDataFactory::valid_assertion_result_request();
     
     // Validate required fields
     assert!(valid_request.get("id").is_some(), "Credential ID should be present");
@@ -80,7 +80,7 @@ async fn test_assertion_result_request_validation() {
 
 #[tokio::test]
 async fn test_assertion_result_missing_response_fields() {
-    let mut request = WebAuthnTestDataFactory::valid_assertion_result_request();
+    let mut request = TestDataFactory::valid_assertion_result_request();
     let response = request["response"].as_object_mut().unwrap();
     
     // Remove authenticator data
@@ -96,7 +96,7 @@ async fn test_assertion_result_missing_response_fields() {
 
 #[tokio::test]
 async fn test_assertion_result_invalid_type() {
-    let mut request = WebAuthnTestDataFactory::valid_assertion_result_request();
+    let mut request = TestDataFactory::valid_assertion_result_request();
     request["type"] = json!("invalid-type");
     
     // Should fail type validation
@@ -105,7 +105,7 @@ async fn test_assertion_result_invalid_type() {
 
 #[tokio::test]
 async fn test_assertion_options_response_schema() {
-    let response = WebAuthnTestDataFactory::fido2_compliant_assertion_response();
+    let response = TestDataFactory::fido2_compliant_assertion_response();
     
     // Validate required response fields
     assert!(response.get("challenge").is_some(), "Challenge should be present");
@@ -153,7 +153,7 @@ async fn test_assertion_result_response_schema() {
 #[tokio::test]
 async fn test_assertion_options_edge_cases() {
     // Test with discouraged user verification
-    let mut request = WebAuthnTestDataFactory::valid_assertion_options_request();
+    let mut request = TestDataFactory::valid_assertion_options_request();
     request["userVerification"] = json!("discouraged");
     
     let user_verification = request["userVerification"].as_str().unwrap();
@@ -180,7 +180,7 @@ async fn test_assertion_options_edge_cases() {
 #[tokio::test]
 async fn test_assertion_result_edge_cases() {
     // Test with empty user handle
-    let mut request = WebAuthnTestDataFactory::valid_assertion_result_request();
+    let mut request = TestDataFactory::valid_assertion_result_request();
     request["response"]["userHandle"] = json!("");
     
     let user_handle = request["response"]["userHandle"].as_str().unwrap();
@@ -199,7 +199,7 @@ async fn test_assertion_result_edge_cases() {
 
 #[tokio::test]
 async fn test_assertion_client_data_json_validation() {
-    let valid_request = WebAuthnTestDataFactory::valid_assertion_result_request();
+    let valid_request = TestDataFactory::valid_assertion_result_request();
     let client_data_b64 = valid_request["response"]["clientDataJSON"].as_str().unwrap();
     let client_data_bytes = general_purpose::URL_SAFE_NO_PAD.decode(client_data_b64).unwrap();
     let client_data_str = String::from_utf8(client_data_bytes).unwrap();
@@ -229,7 +229,7 @@ async fn test_assertion_payload_size_limits() {
     let large_credential_id = "x".repeat(1000);
     let large_credential_id_b64 = general_purpose::URL_SAFE_NO_PAD.encode(large_credential_id.as_bytes());
     
-    let mut request = WebAuthnTestDataFactory::valid_assertion_result_request();
+    let mut request = TestDataFactory::valid_assertion_result_request();
     request["id"] = json!(large_credential_id_b64.clone());
     request["rawId"] = json!(large_credential_id_b64);
     
