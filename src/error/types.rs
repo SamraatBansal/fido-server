@@ -44,6 +44,7 @@ impl fmt::Display for AppError {
             Self::NotFound(msg) => write!(f, "Not found: {msg}"),
             Self::InternalError(msg) => write!(f, "Internal error: {msg}"),
             Self::BadRequest(msg) => write!(f, "Bad request: {msg}"),
+            Self::Unauthorized(msg) => write!(f, "Unauthorized: {msg}"),
             Self::ChallengeExpired(msg) => write!(f, "Challenge expired: {msg}"),
             Self::InvalidChallenge(msg) => write!(f, "Invalid challenge: {msg}"),
             Self::CredentialAlreadyExists(msg) => write!(f, "Credential already exists: {msg}"),
