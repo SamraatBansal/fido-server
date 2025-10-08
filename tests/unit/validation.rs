@@ -50,6 +50,7 @@ struct AttestationResultRequest {
 
     #[validate(length(min = 1, max = 1023, message = "Raw ID must be 1-1023 characters"))]
     #[validate(custom(function = "validate_base64url"))]
+    #[serde(rename = "rawId")]
     pub raw_id: String,
 
     #[validate(nested)]
