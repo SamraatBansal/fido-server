@@ -41,7 +41,7 @@ impl UserService {
     }
 
     /// Get user credentials
-    pub async fn get_user_credentials(&self, user_id: &str) -> Result<Vec<Credential>> {
+    pub async fn get_user_credentials(&self, _user_id: &str) -> Result<Vec<Credential>> {
         // TODO: Implement actual credential lookup
         // For now, return empty vector
         Ok(vec![])
