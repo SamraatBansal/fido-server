@@ -25,7 +25,7 @@ async fn test_attestation_options_request_validation() {
 
 #[tokio::test]
 async fn test_attestation_options_missing_username() {
-    let invalid_request = WebAuthnTestDataFactory::invalid_attestation_options_missing_username();
+    let invalid_request = TestDataFactory::invalid_attestation_options_missing_username();
     
     // Should fail validation due to missing username
     assert!(invalid_request.get("username").is_none(), "Username should be missing");
@@ -37,7 +37,7 @@ async fn test_attestation_options_missing_username() {
 
 #[tokio::test]
 async fn test_attestation_options_invalid_email() {
-    let invalid_request = WebAuthnTestDataFactory::invalid_attestation_options_invalid_email();
+    let invalid_request = TestDataFactory::invalid_attestation_options_invalid_email();
     
     // Should fail email validation
     let username = invalid_request["username"].as_str().unwrap();
@@ -47,7 +47,7 @@ async fn test_attestation_options_invalid_email() {
 
 #[tokio::test]
 async fn test_attestation_result_request_validation() {
-    let valid_request = WebAuthnTestDataFactory::valid_attestation_result_request();
+    let valid_request = TestDataFactory::valid_attestation_result_request();
     
     // Validate required fields
     assert!(valid_request.get("id").is_some(), "Credential ID should be present");
@@ -74,7 +74,7 @@ async fn test_attestation_result_request_validation() {
 
 #[tokio::test]
 async fn test_attestation_result_invalid_base64url() {
-    let invalid_request = WebAuthnTestDataFactory::invalid_base64url_request();
+    let invalid_request = TestDataFactory::invalid_base64url_request();
     
     // Should fail base64url validation
     let id = invalid_request["id"].as_str().unwrap();
@@ -86,7 +86,7 @@ async fn test_attestation_result_invalid_base64url() {
 
 #[tokio::test]
 async fn test_attestation_result_missing_response() {
-    let mut request = WebAuthnTestDataFactory::valid_attestation_result_request();
+    let mut request = TestDataFactory::valid_attestation_result_request();
     request.as_object_mut().unwrap().remove("response");
     
     // Should fail validation due to missing response
@@ -95,7 +95,7 @@ async fn test_attestation_result_missing_response() {
 
 #[tokio::test]
 async fn test_attestation_result_invalid_type() {
-    let mut request = WebAuthnTestDataFactory::valid_attestation_result_request();
+    let mut request = TestDataFactory::valid_attestation_result_request();
     request["type"] = json!("invalid-type");
     
     // Should fail type validation
@@ -104,7 +104,7 @@ async fn test_attestation_result_invalid_type() {
 
 #[tokio::test]
 async fn test_attestation_options_response_schema() {
-    let response = WebAuthnTestDataFactory::fido2_compliant_attestation_response();
+    let response = TestDataFactory::fido2_compliant_attestation_response();
     
     // Validate required response fields
     assert!(response.get("challenge").is_some(), "Challenge should be present");
@@ -162,7 +162,7 @@ async fn test_attestation_result_response_schema() {
 #[tokio::test]
 async fn test_attestation_options_edge_cases() {
     // Test with empty display name
-    let mut request = WebAuthnTestDataFactory::valid_attestation_options_request();
+    let mut request = TestDataFactory::valid_attestation_options_request();
     request["displayName"] = json!("");
     
     let display_name = request["displayName"].as_str().unwrap();
@@ -181,7 +181,7 @@ async fn test_attestation_options_edge_cases() {
 #[tokio::test]
 async fn test_attestation_result_edge_cases() {
     // Test with empty credential ID
-    let mut request = WebAuthnTestDataFactory::valid_attestation_result_request();
+    let mut request = TestDataFactory::valid_attestation_result_request();
     request["id"] = json!("");
     request["rawId"] = json!("");
     
@@ -200,7 +200,7 @@ async fn test_attestation_result_edge_cases() {
 #[tokio::test]
 async fn test_attestation_payload_size_limits() {
     // Test with oversized payload
-    let oversized_request = WebAuthnTestDataFactory::oversized_payload_request();
+    let oversized_request = TestDataFactory::oversized_payload_request();
     let payload_str = oversized_request.to_string();
     
     // Should exceed reasonable size limits
