@@ -5,7 +5,7 @@ use rand::{distributions::Alphanumeric, Rng};
 
 /// Generate a random challenge for WebAuthn operations
 pub fn generate_challenge() -> String {
-    let mut rng = rand::thread_rng();
+    let rng = rand::thread_rng();
     let challenge: String = rng
         .sample_iter(&Alphanumeric)
         .take(32)
