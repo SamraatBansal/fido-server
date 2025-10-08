@@ -111,7 +111,6 @@ pub struct PublicKeyCredentialParameters {
 }
 
 /// Start attestation (registration challenge)
-#[post("/challenge")]
 pub async fn start_attestation(
     request: web::Json<AttestationOptionsRequest>,
 ) -> HttpResponse {
