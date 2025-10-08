@@ -21,6 +21,8 @@ pub enum AppError {
     InternalError(String),
     /// Bad request error
     BadRequest(String),
+    /// Unauthorized error
+    Unauthorized(String),
     /// Challenge expired error
     ChallengeExpired(String),
     /// Invalid challenge error
