@@ -1,11 +1,9 @@
 //! Registration controller for WebAuthn attestation
 
-use actix_web::{post, web, HttpResponse, Result};
+use actix_web::{post, web, HttpResponse};
 use base64::Engine;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
-
-use crate::error::AppError;
 
 /// Registration controller
 pub struct RegistrationController;
