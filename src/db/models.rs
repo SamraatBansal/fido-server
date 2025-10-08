@@ -81,7 +81,7 @@ pub struct NewCredential {
     pub sign_count: i64,
     pub backup_eligible: bool,
     pub backup_state: bool,
-    pub transports: Option<serde_json::Value>,
+    pub transports: Option<String>,
     pub is_active: bool,
 }
 
