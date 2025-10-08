@@ -1,9 +1,8 @@
 //! Unit tests for input validation and data sanitization
 
-use crate::common::test_data_factory::TestDataFactory;
-use serde::{Deserialize, Serialize};
+use base64::Engine;
+use serde::Deserialize;
 use serde_json::Value;
-use std::collections::HashMap;
 use validator::{Validate, ValidationError};
 
 /// Test validation for attestation options requests
