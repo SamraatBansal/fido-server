@@ -66,23 +66,23 @@ where
                     "DENY".parse().unwrap(),
                 );
                 res.headers_mut().insert(
-                    "X-XSS-Protection",
+                    header::HeaderName::from_static("x-xss-protection"),
                     "1; mode=block".parse().unwrap(),
                 );
                 res.headers_mut().insert(
-                    "Strict-Transport-Security",
+                    header::HeaderName::from_static("strict-transport-security"),
                     "max-age=31536000; includeSubDomains".parse().unwrap(),
                 );
                 res.headers_mut().insert(
-                    "Content-Security-Policy",
+                    header::HeaderName::from_static("content-security-policy"),
                     "default-src 'self'".parse().unwrap(),
                 );
                 res.headers_mut().insert(
-                    "Referrer-Policy",
+                    header::HeaderName::from_static("referrer-policy"),
                     "strict-origin-when-cross-origin".parse().unwrap(),
                 );
                 res.headers_mut().insert(
-                    "Permissions-Policy",
+                    header::HeaderName::from_static("permissions-policy"),
                     "geolocation=(), microphone=(), camera=()".parse().unwrap(),
                 );
                 
