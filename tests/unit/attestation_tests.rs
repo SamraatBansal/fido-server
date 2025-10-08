@@ -1,7 +1,7 @@
 //! Unit tests for WebAuthn attestation flow
 
 use serde_json::{json, Value};
-use crate::common::{WebAuthnTestDataFactory, TestHelpers};
+use fido_server::common::{TestDataFactory, TestHelpers};
 use base64::{Engine as _, engine::general_purpose};
 
 #[tokio::test]
