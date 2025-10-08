@@ -2,6 +2,7 @@
 
 use std::collections::HashMap;
 use serde_json::json;
+use base64::engine::general_purpose;
 use fido_server::common::{TestHelpers, SecurityTestVectors};
 
 #[derive(Debug, Clone)]
