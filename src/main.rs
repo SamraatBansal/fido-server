@@ -1,6 +1,6 @@
 //! FIDO Server Main Entry Point
 
-use actix_web::{middleware::Logger, App, HttpServer};
+use actix_web::{middleware::Logger, web, App, HttpServer};
 use std::io;
 
 use fido_server::{
