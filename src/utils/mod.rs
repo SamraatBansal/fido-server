@@ -26,7 +26,7 @@ pub fn validate_base64_url(input: &str) -> Result<Vec<u8>, base64::DecodeError> 
         0 => base64_input,
         2 => format!("{}==", base64_input),
         3 => format!("{}=", base64_input),
-        _ => return Err(base64::DecodeError::InvalidLength),
+        _ => return Err(base64::DecodeError::InvalidLength(0)),
     };
     
     BASE64.decode(padded_input)
