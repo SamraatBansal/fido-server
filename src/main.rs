@@ -50,8 +50,6 @@ async fn main() -> io::Result<()> {
             .app_data(web::Data::new(webauthn_service.clone()))
             .app_data(web::Data::new(settings.clone()))
             // Add middleware
-            .wrap(ErrorHandler)
-            .wrap(SecurityHeaders)
             .wrap(cors_config())
             .wrap(Logger::new("%a %{User-Agent}i %r %s %b %D"))
             // Configure routes
