@@ -268,7 +268,6 @@ pub struct AllowCredential {
 }
 
 /// Start assertion (authentication challenge)
-#[post("/challenge")]
 pub async fn start_assertion(
     request: web::Json<AssertionOptionsRequest>,
 ) -> HttpResponse {
