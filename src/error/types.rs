@@ -42,6 +42,11 @@ impl fmt::Display for AppError {
             Self::NotFound(msg) => write!(f, "Not found: {msg}"),
             Self::InternalError(msg) => write!(f, "Internal error: {msg}"),
             Self::BadRequest(msg) => write!(f, "Bad request: {msg}"),
+            Self::ChallengeExpired(msg) => write!(f, "Challenge expired: {msg}"),
+            Self::InvalidChallenge(msg) => write!(f, "Invalid challenge: {msg}"),
+            Self::CredentialAlreadyExists(msg) => write!(f, "Credential already exists: {msg}"),
+            Self::InvalidSignature(msg) => write!(f, "Invalid signature: {msg}"),
+            Self::RateLimitExceeded(msg) => write!(f, "Rate limit exceeded: {msg}"),
         }
     }
 }
