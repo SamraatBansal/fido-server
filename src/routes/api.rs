@@ -30,7 +30,6 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
 }
 
 /// Health check endpoint
-#[get("/health")]
 pub async fn health_check() -> HttpResponse {
     let response = serde_json::json!({
         "status": "healthy",
