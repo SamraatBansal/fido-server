@@ -117,7 +117,7 @@ pub struct AssertionResultResponse {
 #[post("/api/v1/webauthn/authentication/challenge")]
 pub async fn start_assertion(
     request: web::Json<AssertionOptionsRequest>,
-) -> Result<HttpResponse, AppError> {
+) -> HttpResponse {
     // Validate request
     request
         .validate()
