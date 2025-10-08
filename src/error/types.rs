@@ -21,6 +21,16 @@ pub enum AppError {
     InternalError(String),
     /// Bad request error
     BadRequest(String),
+    /// Challenge expired error
+    ChallengeExpired(String),
+    /// Invalid challenge error
+    InvalidChallenge(String),
+    /// Credential already exists error
+    CredentialAlreadyExists(String),
+    /// Invalid signature error
+    InvalidSignature(String),
+    /// Rate limit exceeded error
+    RateLimitExceeded(String),
 }
 
 impl fmt::Display for AppError {
