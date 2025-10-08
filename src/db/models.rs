@@ -49,6 +49,7 @@ pub struct Credential {
     /// Public key (binary)
     pub public_key: Vec<u8>,
     /// Attestation format
+    #[diesel(sql_type = diesel::sql_types::Text)]
     pub attestation_format: Option<String>,
     /// Authenticator AAGUID
     pub aaguid: Option<Uuid>,
