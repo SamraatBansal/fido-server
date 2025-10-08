@@ -1,16 +1,16 @@
-//! Common test utilities and factories for FIDO2/WebAuthn testing
+//! Common test utilities, fixtures, and factories for FIDO2/WebAuthn testing
 
-use serde_json::{json, Value};
-use base64::{Engine as _, engine::general_purpose};
-use uuid::Uuid;
+use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
 use chrono::{DateTime, Utc};
+use serde_json::{json, Value};
 use std::collections::HashMap;
+use uuid::Uuid;
 
-/// Test data factory for WebAuthn API requests
-pub struct WebAuthnTestDataFactory;
+/// Test data factory for creating valid and invalid FIDO2 payloads
+pub struct TestDataFactory;
 
-impl WebAuthnTestDataFactory {
-    /// Create a valid attestation options request
+impl TestDataFactory {
+    /// Creates a valid attestation options request
     pub fn valid_attestation_options_request() -> Value {
         json!({
             "username": "alice@example.com",
@@ -24,26 +24,44 @@ impl WebAuthnTestDataFactory {
         })
     }
 
-    /// Create a valid attestation result request
-    pub fn valid_attestation_result_request() -> Value {
-        let credential_id = general_purpose::URL_SAFE_NO_PAD.encode(b"test-credential-id");
-        let attestation_object = general_purpose::URL_SAFE_NO_PAD.encode(b"mock-attestation-object");
-        let client_data_json = general_purpose::URL_SAFE_NO_PAD.encode(
-            r#"{"type":"webauthn.create","challenge":"test-challenge","origin":"https://example.com"}"#
-        );
-
+    /// Creates a valid attestation options response
+    pub fn valid_attestation_options_response() -> Value {
         json!({
-            "id": credential_id,
-            "rawId": credential_id,
+            "challenge": URL_SAFE_NO_PAD.encode("valid-challenge-32-bytes-long-!!"),
+            "rp": {
+                "name": "Example RP",
+                "id": "example.com"
+            },
+            "user": {
+                "id": URL_SAFE_NO_PAD.encode("user-id-123"),
+                "name": "alice@example.com",
+                "displayName": "Alice Smith"
+            },
+            "pubKeyCredParams": [
+                {
+                    "type": "public-key",
+                    "alg": -7
+                }
+            ],
+            "timeout": 60000,
+            "attestation": "direct"
+        })
+    }
+
+    /// Creates a valid attestation result request
+    pub fn valid_attestation_result_request() -> Value {
+        json!({
+            "id": URL_SAFE_NO_PAD.encode("credential-id-12345678"),
+            "rawId": URL_SAFE_NO_PAD.encode("credential-id-12345678"),
             "response": {
-                "attestationObject": attestation_object,
-                "clientDataJSON": client_data_json
+                "attestationObject": URL_SAFE_NO_PAD.encode("fake-attestation-object"),
+                "clientDataJSON": URL_SAFE_NO_PAD.encode("{\"type\":\"webauthn.create\",\"challenge\":\"valid-challenge-32-bytes-long-!!\",\"origin\":\"https://example.com\"}")
             },
             "type": "public-key"
         })
     }
 
-    /// Create a valid assertion options request
+    /// Creates a valid assertion options request
     pub fn valid_assertion_options_request() -> Value {
         json!({
             "username": "alice@example.com",
@@ -51,30 +69,40 @@ impl WebAuthnTestDataFactory {
         })
     }
 
-    /// Create a valid assertion result request
-    pub fn valid_assertion_result_request() -> Value {
-        let credential_id = general_purpose::URL_SAFE_NO_PAD.encode(b"test-credential-id");
-        let authenticator_data = general_purpose::URL_SAFE_NO_PAD.encode(b"mock-authenticator-data");
-        let client_data_json = general_purpose::URL_SAFE_NO_PAD.encode(
-            r#"{"type":"webauthn.get","challenge":"test-challenge","origin":"https://example.com"}"#
-        );
-        let signature = general_purpose::URL_SAFE_NO_PAD.encode(b"mock-signature");
-        let user_handle = general_purpose::URL_SAFE_NO_PAD.encode(b"test-user-handle");
-
+    /// Creates a valid assertion options response
+    pub fn valid_assertion_options_response() -> Value {
         json!({
-            "id": credential_id,
-            "rawId": credential_id,
+            "challenge": URL_SAFE_NO_PAD.encode("assertion-challenge-32-bytes-!!"),
+            "rpId": "example.com",
+            "allowCredentials": [
+                {
+                    "type": "public-key",
+                    "id": URL_SAFE_NO_PAD.encode("credential-id-12345678")
+                }
+            ],
+            "timeout": 60000,
+            "userVerification": "preferred"
+        })
+    }
+
+    /// Creates a valid assertion result request
+    pub fn valid_assertion_result_request() -> Value {
+        json!({
+            "id": URL_SAFE_NO_PAD.encode("credential-id-12345678"),
+            "rawId": URL_SAFE_NO_PAD.encode("credential-id-12345678"),
             "response": {
-                "authenticatorData": authenticator_data,
-                "clientDataJSON": client_data_json,
-                "signature": signature,
-                "userHandle": user_handle
+                "authenticatorData": URL_SAFE_NO_PAD.encode("fake-authenticator-data"),
+                "clientDataJSON": URL_SAFE_NO_PAD.encode("{\"type\":\"webauthn.get\",\"challenge\":\"assertion-challenge-32-bytes-!!\",\"origin\":\"https://example.com\"}"),
+                "signature": URL_SAFE_NO_PAD.encode("fake-signature"),
+                "userHandle": URL_SAFE_NO_PAD.encode("user-id-123")
             },
             "type": "public-key"
         })
     }
 
-    /// Create invalid attestation options request (missing username)
+    // Invalid test data factories
+
+    /// Creates attestation options request with missing username
     pub fn invalid_attestation_options_missing_username() -> Value {
         json!({
             "displayName": "Alice Smith",
@@ -87,31 +115,78 @@ impl WebAuthnTestDataFactory {
         })
     }
 
-    /// Create invalid attestation options request (invalid email)
-    pub fn invalid_attestation_options_invalid_email() -> Value {
-        json!({
-            "username": "invalid-email",
-            "displayName": "Alice Smith",
-            "attestation": "direct",
-            "authenticatorSelection": {
-                "authenticatorAttachment": "platform",
-                "requireResidentKey": false,
-                "userVerification": "preferred"
-            }
-        })
-    }
-
-    /// Create malformed JSON request
-    pub fn malformed_json_request() -> String {
-        "{ invalid json }".to_string()
-    }
-
-    /// Create request with oversized payload
-    pub fn oversized_payload_request() -> Value {
-        let large_string = "x".repeat(10_000_000); // 10MB string
+    /// Creates attestation options request with invalid attestation value
+    pub fn invalid_attestation_options_invalid_attestation() -> Value {
         json!({
             "username": "alice@example.com",
-            "displayName": large_string,
+            "displayName": "Alice Smith",
+            "attestation": "invalid_value",
+            "authenticatorSelection": {
+                "authenticatorAttachment": "platform",
+                "requireResidentKey": false,
+                "userVerification": "preferred"
+            }
+        })
+    }
+
+    /// Creates attestation result request with malformed base64url
+    pub fn invalid_attestation_result_malformed_base64() -> Value {
+        json!({
+            "id": "invalid-base64!@#",
+            "rawId": URL_SAFE_NO_PAD.encode("credential-id-12345678"),
+            "response": {
+                "attestationObject": URL_SAFE_NO_PAD.encode("fake-attestation-object"),
+                "clientDataJSON": URL_SAFE_NO_PAD.encode("{\"type\":\"webauthn.create\"}")
+            },
+            "type": "public-key"
+        })
+    }
+
+    /// Creates attestation result request with missing response field
+    pub fn invalid_attestation_result_missing_response() -> Value {
+        json!({
+            "id": URL_SAFE_NO_PAD.encode("credential-id-12345678"),
+            "rawId": URL_SAFE_NO_PAD.encode("credential-id-12345678"),
+            "type": "public-key"
+        })
+    }
+
+    /// Creates assertion result request with invalid signature
+    pub fn invalid_assertion_result_invalid_signature() -> Value {
+        json!({
+            "id": URL_SAFE_NO_PAD.encode("credential-id-12345678"),
+            "rawId": URL_SAFE_NO_PAD.encode("credential-id-12345678"),
+            "response": {
+                "authenticatorData": URL_SAFE_NO_PAD.encode("fake-authenticator-data"),
+                "clientDataJSON": URL_SAFE_NO_PAD.encode("{\"type\":\"webauthn.get\",\"challenge\":\"assertion-challenge-32-bytes-!!\",\"origin\":\"https://example.com\"}"),
+                "signature": "invalid-signature",
+                "userHandle": URL_SAFE_NO_PAD.encode("user-id-123")
+            },
+            "type": "public-key"
+        })
+    }
+
+    /// Creates assertion result request with replayed challenge
+    pub fn invalid_assertion_result_replayed_challenge() -> Value {
+        json!({
+            "id": URL_SAFE_NO_PAD.encode("credential-id-12345678"),
+            "rawId": URL_SAFE_NO_PAD.encode("credential-id-12345678"),
+            "response": {
+                "authenticatorData": URL_SAFE_NO_PAD.encode("fake-authenticator-data"),
+                "clientDataJSON": URL_SAFE_NO_PAD.encode("{\"type\":\"webauthn.get\",\"challenge\":\"old-expired-challenge\",\"origin\":\"https://example.com\"}"),
+                "signature": URL_SAFE_NO_PAD.encode("fake-signature"),
+                "userHandle": URL_SAFE_NO_PAD.encode("user-id-123")
+            },
+            "type": "public-key"
+        })
+    }
+
+    /// Creates oversized payload (greater than 1MB)
+    pub fn oversized_payload() -> Value {
+        let large_string = "x".repeat(2_000_000); // 2MB string
+        json!({
+            "username": "alice@example.com",
+            "displayName": &large_string,
             "attestation": "direct",
             "authenticatorSelection": {
                 "authenticatorAttachment": "platform",
@@ -121,75 +196,58 @@ impl WebAuthnTestDataFactory {
         })
     }
 
-    /// Create request with invalid base64url
-    pub fn invalid_base64url_request() -> Value {
+    /// Creates request with empty values
+    pub fn empty_values_request() -> Value {
         json!({
-            "id": "invalid-base64!@#",
-            "rawId": "invalid-base64!@#",
-            "response": {
-                "attestationObject": "invalid-base64!@#",
-                "clientDataJSON": "invalid-base64!@#"
-            },
-            "type": "public-key"
+            "username": "",
+            "displayName": "",
+            "attestation": "",
+            "authenticatorSelection": {
+                "authenticatorAttachment": "",
+                "requireResidentKey": false,
+                "userVerification": ""
+            }
         })
     }
+}
 
-    /// Create replay attack request (old challenge)
-    pub fn replay_attack_request() -> Value {
-        let credential_id = general_purpose::URL_SAFE_NO_PAD.encode(b"test-credential-id");
-        let attestation_object = general_purpose::URL_SAFE_NO_PAD.encode(b"mock-attestation-object");
-        let client_data_json = general_purpose::URL_SAFE_NO_PAD.encode(
-            r#"{"type":"webauthn.create","challenge":"old-expired-challenge","origin":"https://example.com"}"#
-        );
+/// Security test vectors for various attack scenarios
+pub struct SecurityTestVectors;
 
-        json!({
-            "id": credential_id,
-            "rawId": credential_id,
-            "response": {
-                "attestationObject": attestation_object,
-                "clientDataJSON": client_data_json
-            },
-            "type": "public-key"
-        })
+impl SecurityTestVectors {
+    /// Creates clientDataJSON with invalid origin
+    pub fn client_data_invalid_origin() -> String {
+        URL_SAFE_NO_PAD.encode("{\"type\":\"webauthn.create\",\"challenge\":\"valid-challenge-32-bytes-long-!!\",\"origin\":\"https://malicious.com\"}")
     }
 
-    /// Create request with tampered clientDataJSON
-    pub fn tampered_client_data_request() -> Value {
-        let credential_id = general_purpose::URL_SAFE_NO_PAD.encode(b"test-credential-id");
-        let attestation_object = general_purpose::URL_SAFE_NO_PAD.encode(b"mock-attestation-object");
-        let client_data_json = general_purpose::URL_SAFE_NO_PAD.encode(
-            r#"{"type":"webauthn.create","challenge":"different-challenge","origin":"https://malicious.com"}"#
-        );
-
-        json!({
-            "id": credential_id,
-            "rawId": credential_id,
-            "response": {
-                "attestationObject": attestation_object,
-                "clientDataJSON": client_data_json
-            },
-            "type": "public-key"
-        })
+    /// Creates clientDataJSON with mismatched challenge
+    pub fn client_data_mismatched_challenge() -> String {
+        URL_SAFE_NO_PAD.encode("{\"type\":\"webauthn.create\",\"challenge\":\"different-challenge-32-bytes-long-!!\",\"origin\":\"https://example.com\"}")
     }
 
-    /// Create request with invalid RP ID
-    pub fn invalid_rp_id_request() -> Value {
-        let credential_id = general_purpose::URL_SAFE_NO_PAD.encode(b"test-credential-id");
-        let authenticator_data = general_purpose::URL_SAFE_NO_PAD.encode(b"mock-authenticator-data");
-        let client_data_json = general_purpose::URL_SAFE_NO_PAD.encode(
-            r#"{"type":"webauthn.get","challenge":"test-challenge","origin":"https://malicious.com"}"#
-        );
-        let signature = general_purpose::URL_SAFE_NO_PAD.encode(b"mock-signature");
-        let user_handle = general_purpose::URL_SAFE_NO_PAD.encode(b"test-user-handle");
+    /// Creates clientDataJSON with invalid type
+    pub fn client_data_invalid_type() -> String {
+        URL_SAFE_NO_PAD.encode("{\"type\":\"webauthn.invalid\",\"challenge\":\"valid-challenge-32-bytes-long-!!\",\"origin\":\"https://example.com\"}")
+    }
 
+    /// Creates malformed CBOR data for attestation object
+    pub fn malformed_cbor_attestation() -> String {
+        URL_SAFE_NO_PAD.encode("invalid-cbor-data")
+    }
+
+    /// Creates truncated clientDataJSON
+    pub fn truncated_client_data() -> String {
+        URL_SAFE_NO_PAD.encode("{\"type\":\"webauthn.create\",\"challenge\":\"")
+    }
+
+    /// Creates attestation with invalid algorithm
+    pub fn attestation_invalid_algorithm() -> Value {
         json!({
-            "id": credential_id,
-            "rawId": credential_id,
+            "id": URL_SAFE_NO_PAD.encode("credential-id-12345678"),
+            "rawId": URL_SAFE_NO_PAD.encode("credential-id-12345678"),
             "response": {
-                "authenticatorData": authenticator_data,
-                "clientDataJSON": client_data_json,
-                "signature": signature,
-                "userHandle": user_handle
+                "attestationObject": URL_SAFE_NO_PAD.encode("fake-attestation-with-invalid-alg"),
+                "clientDataJSON": URL_SAFE_NO_PAD.encode("{\"type\":\"webauthn.create\",\"challenge\":\"valid-challenge-32-bytes-long-!!\",\"origin\":\"https://example.com\"}")
             },
             "type": "public-key"
         })
@@ -200,121 +258,104 @@ impl WebAuthnTestDataFactory {
 pub struct TestHelpers;
 
 impl TestHelpers {
-    /// Generate a random challenge for testing
-    pub fn generate_test_challenge() -> String {
-        Uuid::new_v4().to_string()
+    /// Generates a random base64url string of specified length
+    pub fn random_base64url(length: usize) -> String {
+        let mut bytes = vec![0u8; length];
+        use rand::RngCore;
+        rand::thread_rng().fill_bytes(&mut bytes);
+        URL_SAFE_NO_PAD.encode(bytes)
     }
 
-    /// Generate a timestamp for testing
-    pub fn generate_test_timestamp() -> DateTime<Utc> {
+    /// Creates a test timestamp
+    pub fn test_timestamp() -> DateTime<Utc> {
         Utc::now()
     }
 
-    /// Create a mock user ID
-    pub fn create_mock_user_id() -> String {
-        Uuid::new_v4().to_string()
+    /// Creates a test UUID
+    pub fn test_uuid() -> Uuid {
+        Uuid::new_v4()
     }
 
-    /// Create a mock credential ID
-    pub fn create_mock_credential_id() -> Vec<u8> {
-        Uuid::new_v4().as_bytes().to_vec()
-    }
-
-    /// Validate base64url string
+    /// Validates base64url string format
     pub fn is_valid_base64url(input: &str) -> bool {
-        general_purpose::URL_SAFE_NO_PAD.decode(input).is_ok()
+        URL_SAFE_NO_PAD.decode(input).is_ok()
     }
 
-    /// Create test headers
-    pub fn create_test_headers() -> HashMap<String, String> {
+    /// Creates test headers for HTTP requests
+    pub fn test_headers() -> HashMap<String, String> {
         let mut headers = HashMap::new();
         headers.insert("Content-Type".to_string(), "application/json".to_string());
-        headers.insert("User-Agent".to_string(), "FIDO2-Test-Client/1.0".to_string());
+        headers.insert("User-Agent".to_string(), "FIDO-Test-Client/1.0".to_string());
+        headers.insert("Origin".to_string(), "https://example.com".to_string());
         headers
     }
 }
 
-/// Security test vectors
-pub struct SecurityTestVectors;
+/// Performance test data generators
+pub struct PerformanceTestData;
 
-impl SecurityTestVectors {
-    /// Malformed CBOR data
-    pub fn malformed_cbor() -> Vec<u8> {
-        vec![0x99, 0x99, 0x99, 0x99] // Invalid CBOR
+impl PerformanceTestData {
+    /// Creates bulk user data for load testing
+    pub fn bulk_users(count: usize) -> Vec<Value> {
+        (0..count)
+            .map(|i| json!({
+                "username": format!("user{}@example.com", i),
+                "displayName": format!("Test User {}", i),
+                "attestation": "none",
+                "authenticatorSelection": {
+                    "authenticatorAttachment": "cross-platform",
+                    "requireResidentKey": false,
+                    "userVerification": "preferred"
+                }
+            }))
+            .collect()
     }
 
-    /// Truncated clientDataJSON
-    pub fn truncated_client_data_json() -> String {
-        r#"{"type":"webauthn.create","challenge":"test-challenge","origin":"https://example.com""#.to_string()
-    }
-
-    /// Buffer overflow attempt
-    pub fn buffer_overflow_attempt() -> Vec<u8> {
-        vec![0; 1_000_000] // 1MB of zeros
-    }
-
-    /// SQL injection attempt
-    pub fn sql_injection_attempt() -> String {
-        "'; DROP TABLE users; --".to_string()
-    }
-
-    /// XSS attempt
-    pub fn xss_attempt() -> String {
-        "<script>alert('xss')</script>".to_string()
+    /// Creates concurrent request data
+    pub fn concurrent_requests(count: usize) -> Vec<Value> {
+        (0..count)
+            .map(|i| TestDataFactory::valid_attestation_options_request())
+            .collect()
     }
 }
 
-/// Performance test configurations
-pub struct PerformanceTestConfig;
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-impl PerformanceTestConfig {
-    /// Number of concurrent requests for load testing
-    pub const CONCURRENT_REQUESTS: usize = 100;
-    
-    /// Duration for stress testing (seconds)
-    pub const STRESS_TEST_DURATION: u64 = 60;
-    
-    /// Payload size for performance testing (bytes)
-    pub const PERFORMANCE_PAYLOAD_SIZE: usize = 1024;
-}
-
-/// Compliance test data
-pub struct ComplianceTestData;
-
-impl ComplianceTestData {
-    /// FIDO2 compliant attestation options response
-    pub fn fido2_compliant_attestation_response() -> Value {
-        json!({
-            "challenge": "BASE64URLSTRING",
-            "rp": { 
-                "name": "Example RP", 
-                "id": "example.com" 
-            },
-            "user": { 
-                "id": "BASE64URL", 
-                "name": "alice", 
-                "displayName": "Alice Smith" 
-            },
-            "pubKeyCredParams": [{ 
-                "type": "public-key", 
-                "alg": -7 
-            }],
-            "timeout": 60000,
-            "attestation": "direct"
-        })
+    #[test]
+    fn test_valid_attestation_options_request() {
+        let request = TestDataFactory::valid_attestation_options_request();
+        assert_eq!(request["username"], "alice@example.com");
+        assert_eq!(request["displayName"], "Alice Smith");
+        assert_eq!(request["attestation"], "direct");
     }
 
-    /// FIDO2 compliant assertion options response
-    pub fn fido2_compliant_assertion_response() -> Value {
-        json!({
-            "challenge": "BASE64URLSTRING",
-            "rpId": "example.com",
-            "allowCredentials": [{ 
-                "type": "public-key", 
-                "id": "BASE64URL" 
-            }],
-            "timeout": 60000,
-            "userVerification": "preferred"
-        })
+    #[test]
+    fn test_base64url_validation() {
+        let valid = TestHelpers::random_base64url(32);
+        assert!(TestHelpers::is_valid_base64url(&valid));
+        
+        let invalid = "invalid-base64!@#";
+        assert!(!TestHelpers::is_valid_base64url(invalid));
+    }
+
+    #[test]
+    fn test_security_vectors() {
+        let invalid_origin = SecurityTestVectors::client_data_invalid_origin();
+        assert!(TestHelpers::is_valid_base64url(&invalid_origin));
+        
+        let malformed_cbor = SecurityTestVectors::malformed_cbor_attestation();
+        assert!(TestHelpers::is_valid_base64url(&malformed_cbor));
+    }
+
+    #[test]
+    fn test_performance_data_generation() {
+        let users = PerformanceTestData::bulk_users(10);
+        assert_eq!(users.len(), 10);
+        
+        for (i, user) in users.iter().enumerate() {
+            assert_eq!(user["username"], format!("user{}@example.com", i));
+        }
     }
 }
