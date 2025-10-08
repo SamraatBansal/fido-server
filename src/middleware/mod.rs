@@ -8,4 +8,4 @@ pub mod security;
 pub use cors::cors_config;
 pub use error_handler::ErrorHandler;
 pub use rate_limiting::{rate_limiter, strict_rate_limiter};
-pub use security::{security_headers, SecurityHeaders};
+pub use security::security_headers;
