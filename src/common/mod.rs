@@ -344,6 +344,11 @@ impl SecurityTestVectors {
             "type": "public-key"
         })
     }
+
+    /// Creates malformed CBOR data
+    pub fn malformed_cbor() -> String {
+        URL_SAFE_NO_PAD.encode("invalid-cbor-data")
+    }
 }
 
 /// Test helper utilities
