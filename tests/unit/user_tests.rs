@@ -1,8 +1,7 @@
 //! Unit tests for user management
 
 use std::collections::HashMap;
-use uuid::Uuid;
-use crate::common::{TestHelpers, SecurityTestVectors};
+use fido_server::common::{TestHelpers, SecurityTestVectors};
 
 #[derive(Debug, Clone)]
 pub struct TestUser {
