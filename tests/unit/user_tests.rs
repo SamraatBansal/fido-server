@@ -351,9 +351,21 @@ fn is_valid_email(email: &str) -> bool {
         return false;
     }
     
-    // Basic regex for structure validation
+    // Check each domain label (separated by dots)
+    let domain_labels: Vec<&str> = domain_part.split('.').collect();
+    for label in domain_labels {
+        if label.is_empty() || label.len() > 63 {
+            return false;
+        }
+        // Domain label cannot start or end with hyphen
+        if label.starts_with('-') || label.ends_with('-') {
+            return false;
+        }
+    }
+    
+    // Basic regex for structure validation (allow + in local part)
     let email_regex = regex::Regex::new(
-        r"^[a-zA-Z0-9](\.?[a-zA-Z0-9_-])*@[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*\.[a-zA-Z]{2,}$"
+        r"^[a-zA-Z0-9](\.?[a-zA-Z0-9_+-])*@[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*\.[a-zA-Z]{2,}$"
     ).unwrap();
     
     email_regex.is_match(email)
