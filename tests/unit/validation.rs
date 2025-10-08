@@ -66,10 +66,12 @@ struct AttestationResultRequest {
 struct AttestationResponse {
     #[validate(length(min = 1, message = "Attestation object is required"))]
     #[validate(custom(function = "validate_base64url"))]
+    #[serde(rename = "attestationObject")]
     pub attestation_object: String,
 
     #[validate(length(min = 1, message = "Client data JSON is required"))]
     #[validate(custom(function = "validate_base64url"))]
+    #[serde(rename = "clientDataJSON")]
     pub client_data_json: String,
 }
 
