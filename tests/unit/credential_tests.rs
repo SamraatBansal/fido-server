@@ -1,10 +1,8 @@
 //! Unit tests for credential management
 
 use std::collections::HashMap;
-use uuid::Uuid;
-use serde_json::{json, Value};
-use crate::common::{TestHelpers, SecurityTestVectors};
-use base64::{Engine as _, engine::general_purpose};
+use serde_json::json;
+use fido_server::common::{TestHelpers, SecurityTestVectors};
 
 #[derive(Debug, Clone)]
 pub struct TestCredential {
