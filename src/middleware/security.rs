@@ -96,7 +96,7 @@ pub fn security_headers() -> header::HeaderMap {
     let mut headers = header::HeaderMap::new();
     headers.insert(header::X_CONTENT_TYPE_OPTIONS, "nosniff".parse().unwrap());
     headers.insert(header::X_FRAME_OPTIONS, "DENY".parse().unwrap());
-    headers.insert("X-XSS-Protection", "1; mode=block".parse().unwrap());
+    headers.insert(header::HeaderName::from_static("x-xss-protection"), "1; mode=block".parse().unwrap());
     headers.insert(
         header::HeaderName::from_static("strict-transport-security"),
         "max-age=31536000; includeSubDomains".parse().unwrap(),
