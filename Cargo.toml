@@ -56,6 +56,9 @@ env_logger = "0.11"
 thiserror = "1.0"
 anyhow = "1.0"
 
+# Validation
+validator = { version = "0.18", features = ["derive"] }
+
 # Time
 chrono = { version = "0.4", features = ["serde"] }
 
