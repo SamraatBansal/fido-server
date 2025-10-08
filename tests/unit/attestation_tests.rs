@@ -6,7 +6,7 @@ use fido_server::common::{TestDataFactory, TestHelpers};
 #[tokio::test]
 async fn test_attestation_options_request_validation() {
     // Test valid attestation options request
-    let valid_request = WebAuthnTestDataFactory::valid_attestation_options_request();
+    let valid_request = TestDataFactory::valid_attestation_options_request();
     
     // Validate required fields
     assert!(valid_request.get("username").is_some(), "Username should be present");
