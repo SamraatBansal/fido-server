@@ -3,6 +3,12 @@
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 use webauthn_rs::prelude::*;
+use webauthn_rs_proto::{
+    AuthenticatorSelectionCriteria, AttestationConveyancePreference,
+    AuthenticationExtensionsClientInputs, PublicKeyCredentialRpEntity,
+    PublicKeyCredentialParameters, PublicKeyCredentialDescriptor,
+    UserVerificationRequirement, AuthenticatorTransport,
+};
 
 /// Registration options request
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
