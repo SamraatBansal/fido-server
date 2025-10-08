@@ -6,7 +6,7 @@ use std::io;
 use fido_server::{
     config::Settings,
     db::establish_connection,
-    middleware::{cors_config, ErrorHandler, SecurityHeaders},
+    middleware::{cors_config, security_headers},
     routes::api::configure,
     services::WebAuthnService,
 };
