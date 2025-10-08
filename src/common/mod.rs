@@ -270,6 +270,37 @@ impl TestDataFactory {
             }
         })
     }
+
+    /// Creates FIDO2 compliant assertion response
+    pub fn fido2_compliant_assertion_response() -> Value {
+        json!({
+            "challenge": URL_SAFE_NO_PAD.encode("assertion-challenge-32-bytes-!!"),
+            "rpId": "example.com",
+            "allowCredentials": [
+                {
+                    "type": "public-key",
+                    "id": URL_SAFE_NO_PAD.encode("credential-id-12345678"),
+                    "transports": ["usb", "nfc", "ble", "internal"]
+                }
+            ],
+            "timeout": 60000,
+            "userVerification": "preferred"
+        })
+    }
+
+    /// Creates attestation options request with invalid email
+    pub fn invalid_attestation_options_invalid_email() -> Value {
+        json!({
+            "username": "invalid-email",
+            "displayName": "Alice Smith",
+            "attestation": "direct",
+            "authenticatorSelection": {
+                "authenticatorAttachment": "platform",
+                "requireResidentKey": false,
+                "userVerification": "preferred"
+            }
+        })
+    }
 }
 
 /// Security test vectors for various attack scenarios
