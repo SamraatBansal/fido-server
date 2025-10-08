@@ -51,7 +51,7 @@ impl FidoService {
     }
 
     /// Generate authentication challenge
-    pub async fn generate_authentication_challenge(&self, username: &str) -> Result<String> {
+    pub async fn generate_authentication_challenge(&self, _username: &str) -> Result<String> {
         // TODO: Implement proper WebAuthn challenge generation
         // For now, just generate a random challenge
         Ok(generate_challenge())
