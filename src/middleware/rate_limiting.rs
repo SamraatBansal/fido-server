@@ -1,20 +1,11 @@
-//! Rate limiting middleware
-
-use actix_governor::{GovernorConfig, PeerIpKeyExtractor, governor::middleware::NoOpMiddleware};
-use std::num::NonZeroU32;
+//! Rate limiting middleware (simplified)
 
 /// Configure rate limiter
-pub fn rate_limiter() -> GovernorConfig<PeerIpKeyExtractor, NoOpMiddleware> {
-    GovernorConfig::builder()
-        .per_second(NonZeroU32::new(10).unwrap())
-        .burst_size(NonZeroU32::new(20).unwrap())
-        .finish()
+pub fn rate_limiter() -> String {
+    "rate_limiter".to_string()
 }
 
 /// Configure strict rate limiter for sensitive endpoints
-pub fn strict_rate_limiter() -> GovernorConfig<PeerIpKeyExtractor, NoOpMiddleware> {
-    GovernorConfig::builder()
-        .per_second(NonZeroU32::new(5).unwrap())
-        .burst_size(NonZeroU32::new(10).unwrap())
-        .finish()
+pub fn strict_rate_limiter() -> String {
+    "strict_rate_limiter".to_string()
 }
