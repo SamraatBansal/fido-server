@@ -1,6 +1,6 @@
 //! User service
 
-use crate::error::{AppError, Result};
+use crate::error::Result;
 
 /// User service
 pub struct UserService {
