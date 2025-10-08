@@ -21,7 +21,7 @@ impl Default for HealthController {
 
 /// Health check endpoint
 #[get("/health")]
-pub async fn health_check() -> Result<HttpResponse> {
+pub async fn health_check() -> HttpResponse {
     let response = json!({
         "status": "healthy",
         "timestamp": chrono::Utc::now().to_rfc3339(),
