@@ -419,20 +419,24 @@ impl TestConfig {
         Self { config }
     }
 
+    #[allow(missing_docs)]
     pub fn with_rp_id(mut self, rp_id: &str) -> Self {
         self.config.insert("rp_id".to_string(), rp_id.to_string());
         self
     }
 
+    #[allow(missing_docs)]
     pub fn with_origin(mut self, origin: &str) -> Self {
         self.config.insert("origin".to_string(), origin.to_string());
         self
     }
 
+    #[allow(missing_docs)]
     pub fn get(&self, key: &str) -> Option<&String> {
         self.config.get(key)
     }
 
+    #[allow(missing_docs)]
     pub fn build(self) -> HashMap<String, String> {
         self.config
     }
