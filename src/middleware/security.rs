@@ -99,19 +99,19 @@ pub fn security_headers() -> header::HeaderMap {
     headers.insert(header::X_FRAME_OPTIONS, "DENY".parse().unwrap());
     headers.insert("X-XSS-Protection", "1; mode=block".parse().unwrap());
     headers.insert(
-        "Strict-Transport-Security",
+        header::HeaderName::from_static("strict-transport-security"),
         "max-age=31536000; includeSubDomains".parse().unwrap(),
     );
     headers.insert(
-        "Content-Security-Policy",
+        header::HeaderName::from_static("content-security-policy"),
         "default-src 'self'".parse().unwrap(),
     );
     headers.insert(
-        "Referrer-Policy",
+        header::HeaderName::from_static("referrer-policy"),
         "strict-origin-when-cross-origin".parse().unwrap(),
     );
     headers.insert(
-        "Permissions-Policy",
+        header::HeaderName::from_static("permissions-policy"),
         "geolocation=(), microphone=(), camera=()".parse().unwrap(),
     );
     headers
