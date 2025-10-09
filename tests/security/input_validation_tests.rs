@@ -43,7 +43,7 @@ mod tests {
         // Invalid RP IDs
         assert!(!validate_rp_id(""));
         assert!(!validate_rp_id("invalid"));
-        assert!(!validate_rp_id("a".repeat(256)));
+        assert!(!validate_rp_id(&"a".repeat(256)));
     }
 
     #[test]
