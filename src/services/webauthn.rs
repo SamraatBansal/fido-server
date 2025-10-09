@@ -16,7 +16,7 @@ pub struct WebAuthnService {
 
 impl WebAuthnService {
     /// Create new WebAuthn service
-    pub fn new(rp_id: &str, rp_name: &str, origin: &str) -> FidoResult<Self> {
+    pub fn new(rp_id: &str, rp_name: &str, origin: &str) -> AppResult<Self> {
         Ok(Self {
             rp_id: rp_id.to_string(),
             rp_name: rp_name.to_string(),
