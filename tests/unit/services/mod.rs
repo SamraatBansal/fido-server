@@ -429,7 +429,7 @@ fn get_credentials_by_user_id(user_id: Uuid) -> Vec<TestCredential> {
     vec![TestCredential::new(user_id), TestCredential::new(user_id)]
 }
 
-fn get_credential_by_id(id: String) -> TestCredential {
+fn get_credential_by_id(_id: String) -> TestCredential {
     TestCredential::valid()
 }
 
