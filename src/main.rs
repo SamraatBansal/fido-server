@@ -32,7 +32,7 @@ async fn main() -> io::Result<()> {
                 header::ACCEPT,
             ])
             .supports_credentials()
-            .max_age(Duration::from_secs(3600));
+            .max_age(3600);
 
         App::new()
             .wrap(Logger::default())
