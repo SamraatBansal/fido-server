@@ -2,7 +2,7 @@
 
 use actix_web::http::StatusCode;
 use crate::common::{create_test_app, post_json};
-use crate::fixtures::*;
+use fido2_webauthn_server::schema::*;
 
 #[cfg(test)]
 mod input_validation_tests {
