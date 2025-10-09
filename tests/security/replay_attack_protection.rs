@@ -23,7 +23,7 @@ mod replay_attack_tests {
         assert_eq!(response2.status(), StatusCode::OK);
         assert_eq!(response3.status(), StatusCode::OK);
         
-        let options1: crate::fixtures::ServerPublicKeyCredentialCreationOptionsResponse = 
+        let options1: ServerPublicKeyCredentialCreationOptionsResponse = 
             read_body_json(response1).await;
         let options2: crate::fixtures::ServerPublicKeyCredentialCreationOptionsResponse = 
             read_body_json(response2).await;
@@ -235,7 +235,7 @@ mod replay_attack_tests {
         let response1 = post_json(&app, "/attestation/options", request.clone()).await;
         let response2 = post_json(&app, "/attestation/options", request).await;
         
-        let options1: crate::fixtures::ServerPublicKeyCredentialCreationOptionsResponse = 
+        let options1: ServerPublicKeyCredentialCreationOptionsResponse = 
             read_body_json(response1).await;
         let options2: crate::fixtures::ServerPublicKeyCredentialCreationOptionsResponse = 
             read_body_json(response2).await;
