@@ -2,9 +2,8 @@
 
 use actix_web::{web, HttpResponse, Result};
 use serde_json::json;
-use crate::services::{WebAuthnService, UserService};
-use crate::schema::user::CreateUserRequest;
-use crate::schema::webauthn::{AttestationResponse};
+use crate::services::WebAuthnService;
+use crate::schema::*;
 
 /// Handle attestation options request
 pub async fn attestation_options(
