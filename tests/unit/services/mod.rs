@@ -417,7 +417,7 @@ fn lookup_user_by_username(username: &str) -> Option<TestUser> {
     }
 }
 
-fn get_user_by_id(id: Uuid) -> TestUser {
+fn get_user_by_id(_id: Uuid) -> TestUser {
     TestUser::valid()
 }
 
