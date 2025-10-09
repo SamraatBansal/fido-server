@@ -1,88 +1,144 @@
-//! Validation utilities
+//! Validation utilities for WebAuthn operations
 
 use lazy_static::lazy_static;
 use regex::Regex;
-use base64::{Engine as _, engine::general_purpose::URL_SAFE_NO_PAD};
+use validator::{ValidationError, ValidationErrors};
 
 lazy_static! {
-    /// Username validation regex - alphanumeric + @._+-
-    pub static ref USERNAME_REGEX: Regex = Regex::new(r"^[a-zA-Z0-9@._+-]+$").unwrap();
-}
-
-/// Validate RP ID according to FIDO2 specification
-pub fn validate_rp_id(rp_id: &str) -> bool {
-    // Basic validation - should be a valid domain
-    !rp_id.is_empty() && rp_id.len() <= 255 && 
-    (rp_id.contains('.') || rp_id == "localhost" || rp_id.starts_with("localhost."))
-}
-
-/// Validate origin according to WebAuthn specification
-pub fn validate_origin(origin: &str, rp_id: &str) -> bool {
-    // Check if origin matches RP ID
-    origin.contains(rp_id) && origin.starts_with("https://")
-}
-
-/// Check if attestation format is supported
-pub fn supports_attestation_format(format: &str) -> bool {
-    matches!(format, "packed" | "fido-u2f" | "none" | "android-key" | "android-safetynet")
-}
-
-/// Check if cipher suite is strong
-pub fn is_strong_cipher_suite(cipher: &str) -> bool {
-    // List of strong cipher suites
-    matches!(cipher, 
-        "TLS_AES_256_GCM_SHA384" | 
-        "TLS_CHACHA20_POLY1305_SHA256" | 
-        "TLS_AES_128_GCM_SHA256"
-    )
-}
-
-/// Validate challenge according to FIDO2 specification
-pub fn validate_challenge(challenge: &str) -> bool {
-    // Challenge must be base64url-encoded and at least 16 bytes when decoded
-    if challenge.is_empty() {
-        return false;
-    }
-    
-    // Try to decode as base64url
-    match URL_SAFE_NO_PAD.decode(challenge) {
-        Ok(decoded) => decoded.len() >= 16,
-        Err(_) => false,
-    }
-}
-
-/// Validate credential ID according to WebAuthn specification
-pub fn validate_credential_id(credential_id: &str) -> bool {
-    // Credential ID must be base64url-encoded
-    if credential_id.is_empty() || credential_id.len() > 1024 {
-        return false;
-    }
-    
-    URL_SAFE_NO_PAD.decode(credential_id).is_ok()
-}
-
-/// Validate user verification requirement
-pub fn validate_user_verification(uv: &str) -> bool {
-    matches!(uv, "required" | "preferred" | "discouraged")
+    pub static ref USERNAME_REGEX: Regex = Regex::new(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$").unwrap();
+    pub static ref CREDENTIAL_ID_REGEX: Regex = Regex::new(r"^[a-zA-Z0-9_-]+$").unwrap();
+    pub static ref BASE64URL_REGEX: Regex = Regex::new(r"^[A-Za-z0-9_-]*$").unwrap();
 }
 
 /// Validate attestation conveyance preference
-pub fn validate_attestation_conveyance(attestation: &str) -> bool {
-    matches!(attestation, "none" | "indirect" | "direct" | "enterprise")
+pub fn validate_attestation(attestation: &str) -> Result<(), ValidationError> {
+    match attestation {
+        "none" | "indirect" | "direct" => Ok(()),
+        _ => Err(ValidationError::new("invalid_attestation")),
+    }
 }
 
-/// Check if algorithm is supported
-pub fn is_supported_algorithm(alg: i64) -> bool {
-    // Supported COSE algorithms
-    matches!(alg, -7 | -257 | -35 | -36 | -258 | -259 | -37 | -38 | -39)
+/// Validate user verification requirement
+pub fn validate_user_verification(uv: &str) -> Result<(), ValidationError> {
+    match uv {
+        "required" | "preferred" | "discouraged" => Ok(()),
+        _ => Err(ValidationError::new("invalid_user_verification")),
+    }
 }
 
-/// Validate authenticator attachment
-pub fn validate_authenticator_attachment(attachment: &str) -> bool {
-    matches!(attachment, "platform" | "cross-platform" | "null")
+/// Validate credential type
+pub fn validate_credential_type(cred_type: &str) -> Result<(), ValidationError> {
+    if cred_type == "public-key" {
+        Ok(())
+    } else {
+        Err(ValidationError::new("invalid_credential_type"))
+    }
 }
 
-/// Validate resident key requirement
-pub fn validate_resident_key_requirement(requirement: &str) -> bool {
-    matches!(requirement, "required" | "preferred" | "discouraged")
+/// Validate base64url encoding
+pub fn validate_base64url(data: &str) -> Result<(), ValidationError> {
+    if BASE64URL_REGEX.is_match(data) {
+        Ok(())
+    } else {
+        Err(ValidationError::new("invalid_base64url"))
+    }
+}
+
+/// Validate challenge length and format
+pub fn validate_challenge(challenge: &str) -> Result<(), ValidationError> {
+    if challenge.len() < 16 || challenge.len() > 128 {
+        return Err(ValidationError::new("invalid_challenge_length"));
+    }
+    
+    if !BASE64URL_REGEX.is_match(challenge) {
+        return Err(ValidationError::new("invalid_challenge_format"));
+    }
+    
+    Ok(())
+}
+
+/// Validate credential ID format
+pub fn validate_credential_id(id: &str) -> Result<(), ValidationError> {
+    if id.is_empty() || id.len() > 1023 {
+        return Err(ValidationError::new("invalid_credential_id_length"));
+    }
+    
+    if !BASE64URL_REGEX.is_match(id) {
+        return Err(ValidationError::new("invalid_credential_id_format"));
+    }
+    
+    Ok(())
+}
+
+/// Validate authenticator data format
+pub fn validate_authenticator_data(data: &str) -> Result<(), ValidationError> {
+    if data.len() < 37 {
+        return Err(ValidationError::new("invalid_authenticator_data_length"));
+    }
+    
+    if !BASE64URL_REGEX.is_match(data) {
+        return Err(ValidationError::new("invalid_authenticator_data_format"));
+    }
+    
+    Ok(())
+}
+
+/// Validate signature format
+pub fn validate_signature(signature: &str) -> Result<(), ValidationError> {
+    if signature.is_empty() {
+        return Err(ValidationError::new("empty_signature"));
+    }
+    
+    if !BASE64URL_REGEX.is_match(signature) {
+        return Err(ValidationError::new("invalid_signature_format"));
+    }
+    
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_validate_attestation() {
+        assert!(validate_attestation("none").is_ok());
+        assert!(validate_attestation("indirect").is_ok());
+        assert!(validate_attestation("direct").is_ok());
+        assert!(validate_attestation("invalid").is_err());
+    }
+
+    #[test]
+    fn test_validate_user_verification() {
+        assert!(validate_user_verification("required").is_ok());
+        assert!(validate_user_verification("preferred").is_ok());
+        assert!(validate_user_verification("discouraged").is_ok());
+        assert!(validate_user_verification("invalid").is_err());
+    }
+
+    #[test]
+    fn test_validate_credential_type() {
+        assert!(validate_credential_type("public-key").is_ok());
+        assert!(validate_credential_type("invalid").is_err());
+    }
+
+    #[test]
+    fn test_validate_challenge() {
+        // Valid challenges
+        assert!(validate_challenge("A".repeat(16).as_str()).is_ok());
+        assert!(validate_challenge("A".repeat(64).as_str()).is_ok());
+        
+        // Invalid challenges
+        assert!(validate_challenge("short").is_err()); // Too short
+        assert!(validate_challenge(&"A".repeat(129)).is_err()); // Too long
+        assert!(validate_challenge("invalid+chars").is_err()); // Invalid chars
+    }
+
+    #[test]
+    fn test_validate_base64url() {
+        assert!(validate_base64url("valid_base64url_string123").is_ok());
+        assert!(validate_base64url("invalid+chars").is_err());
+        assert!(validate_base64url("invalid/chars").is_err());
+        assert!(validate_base64url("invalid=padding").is_err());
+    }
 }
