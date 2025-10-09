@@ -32,9 +32,7 @@ pub async fn assertion_result(
         Ok(result) => Ok(HttpResponse::Ok().json(result)),
         Err(e) => {
             tracing::error!("Failed to verify assertion: {}", e);
-            Ok(HttpResponse::BadRequest().json(json!({
-                "error": e.to_string()
-            })))
+            Ok(HttpResponse::BadRequest().json(ServerResponse::error(e.to_string())))
         }
     }
 }
