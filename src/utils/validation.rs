@@ -57,7 +57,7 @@ pub fn validate_credential_id(credential_id: &str) -> bool {
         return false;
     }
     
-    base64::decode_config(credential_id, base64::URL_SAFE_NO_PAD).is_ok()
+    URL_SAFE_NO_PAD.decode(credential_id).is_ok()
 }
 
 /// Validate user verification requirement
