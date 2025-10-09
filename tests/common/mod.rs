@@ -191,48 +191,20 @@ impl TestAssertions {
 pub mod mocks {
     use super::*;
     use mockall::mock;
-    use async_trait::async_trait;
 
     mock! {
         pub WebAuthnService {}
 
-        #[async_trait]
-        impl services::WebAuthnServiceTrait for WebAuthnService {
-            async fn generate_registration_challenge(
-                &self,
-                username: &str,
-                display_name: &str,
-                authenticator_selection: Option<AuthenticatorSelectionCriteria>,
-                attestation: Option<String>,
-            ) -> Result<ServerPublicKeyCredentialCreationOptionsResponse, AppError>;
-
-            async fn verify_registration(
-                &self,
-                response: ServerPublicKeyCredentialAttestationResponse,
-            ) -> Result<ServerResponse, AppError>;
-
-            async fn generate_authentication_challenge(
-                &self,
-                username: Option<String>,
-                user_verification: Option<String>,
-            ) -> Result<ServerPublicKeyCredentialGetOptionsResponse, AppError>;
-
-            async fn verify_authentication(
-                &self,
-                response: ServerPublicKeyCredentialAssertionResponse,
-            ) -> Result<ServerResponse, AppError>;
+        impl Clone for WebAuthnService {
+            fn clone(&self) -> Self;
         }
     }
 
     mock! {
         pub UserService {}
 
-        #[async_trait]
-        impl services::UserServiceTrait for UserService {
-            async fn user_exists(&self, username: &str) -> Result<bool, AppError>;
-            async fn create_user(&self, username: &str, display_name: &str) -> Result<(), AppError>;
-            async fn get_user_credentials(&self, username: &str) -> Result<Vec<ServerPublicKeyCredentialDescriptor>, AppError>;
-            async fn add_credential(&self, username: &str, credential: &ServerPublicKeyCredentialAttestationResponse) -> Result<(), AppError>;
+        impl Clone for UserService {
+            fn clone(&self) -> Self;
         }
     }
 }
