@@ -70,7 +70,7 @@ mod tests {
     #[test]
     fn test_base64url_safety() {
         // Ensure challenges use base64url encoding (URL-safe, no padding)
-        let challenge = generate_secure_challenge().unwrap();
+        let challenge = fido2_webauthn_server::utils::crypto::generate_secure_challenge().unwrap();
         
         // Should not contain URL-unsafe characters
         assert!(!challenge.contains('+'));
