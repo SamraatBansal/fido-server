@@ -17,6 +17,8 @@ pub struct TestApp {
     pub user_service: services::UserService,
 }
 
+pub type TestAppType = test::TestApp;
+
 impl TestApp {
     /// Create a new test application instance
     pub async fn new() -> Self {
