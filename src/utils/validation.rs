@@ -44,7 +44,7 @@ pub fn validate_challenge(challenge: &str) -> bool {
     }
     
     // Try to decode as base64url
-    match base64::decode_config(challenge, base64::URL_SAFE_NO_PAD) {
+    match URL_SAFE_NO_PAD.decode(challenge) {
         Ok(decoded) => decoded.len() >= 16,
         Err(_) => false,
     }
