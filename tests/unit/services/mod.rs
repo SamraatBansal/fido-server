@@ -416,31 +416,55 @@ fn supports_algorithm(alg: i32) -> bool {
 }
 
 fn lookup_user_by_username(username: &str) -> Option<TestUser> {
-    if username == "alice" {
-        let mut user = TestUser::valid();
-        user.username = "alice".to_string();
-        Some(user)
-    } else {
-        None
-    }
+    let store = USER_STORE.lock().unwrap();
+    store.values().find(|u| u.username == username).cloned()
 }
 
-fn get_user_by_id(_id: Uuid) -> TestUser {
-    TestUser::valid()
+fn get_user_by_id(id: Uuid) -> TestUser {
+    let store = USER_STORE.lock().unwrap();
+    store.get(&id).cloned().unwrap_or_else(|| {
+        let user = TestUser::valid();
+        // Store it for future retrieval
+        drop(store);
+        let mut store = USER_STORE.lock().unwrap();
+        store.insert(id, user.clone());
+        user
+    })
 }
 
-fn lookup_credential_by_id(_id: &str) -> Option<TestCredential> {
-    Some(TestCredential::valid())
+fn update_user(user: TestUser) {
+    let mut store = USER_STORE.lock().unwrap();
+    store.insert(user.id, user);
+}
+
+fn lookup_credential_by_id(id: &str) -> Option<TestCredential> {
+    let store = CREDENTIAL_STORE.lock().unwrap();
+    store.get(id).cloned()
 }
 
 fn get_credentials_by_user_id(user_id: Uuid) -> Vec<TestCredential> {
-    vec![TestCredential::new(user_id), TestCredential::new(user_id)]
+    let store = CREDENTIAL_STORE.lock().unwrap();
+    store.values().filter(|c| c.user_id == user_id).cloned().collect()
 }
 
-fn get_credential_by_id(_id: String) -> TestCredential {
-    TestCredential::valid()
+fn get_credential_by_id(id: String) -> TestCredential {
+    let store = CREDENTIAL_STORE.lock().unwrap();
+    store.get(&id).cloned().unwrap_or_else(|| {
+        let credential = TestCredential::valid();
+        // Store it for future retrieval
+        drop(store);
+        let mut store = CREDENTIAL_STORE.lock().unwrap();
+        store.insert(id.clone(), credential.clone());
+        credential
+    })
 }
 
-fn delete_credential(_id: &str) {
-    // Mock implementation
+fn update_credential(id: &str, credential: TestCredential) {
+    let mut store = CREDENTIAL_STORE.lock().unwrap();
+    store.insert(id.to_string(), credential);
+}
+
+fn delete_credential(id: &str) {
+    let mut store = CREDENTIAL_STORE.lock().unwrap();
+    store.remove(id);
 }
