@@ -71,7 +71,7 @@ impl TestApp {
         
         if resp.status().is_success() {
             let body = test::read_body(resp).await;
-            serde_json::from_slice(&body).map_err(|e| AppError::Serialization(e.to_string()))
+            serde_json::from_slice(&body).map_err(AppError::SerializationError)
         } else {
             Err(AppError::BadRequest(format!("Request failed: {}", resp.status())))
         }
