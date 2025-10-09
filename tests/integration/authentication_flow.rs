@@ -19,7 +19,7 @@ mod authentication_flow_tests {
         
         assert_eq!(response.status(), StatusCode::OK, "Authentication options request should succeed");
         
-        let options_response: crate::fixtures::ServerPublicKeyCredentialGetOptionsResponse = 
+        let options_response: ServerPublicKeyCredentialGetOptionsResponse = 
             read_body_json(response).await;
         
         assert_eq!(options_response.status, "ok", "Response status should be ok");
@@ -52,7 +52,7 @@ mod authentication_flow_tests {
         let response = post_json(&app, "/assertion/options", request).await;
         assert_eq!(response.status(), StatusCode::OK, "Request with required UV should succeed");
         
-        let options_response: crate::fixtures::ServerPublicKeyCredentialGetOptionsResponse = 
+        let options_response: ServerPublicKeyCredentialGetOptionsResponse = 
             read_body_json(response).await;
         
         assert_eq!(options_response.user_verification, Some("required".to_string()));
@@ -64,7 +64,7 @@ mod authentication_flow_tests {
         let response = post_json(&app, "/assertion/options", request).await;
         assert_eq!(response.status(), StatusCode::OK, "Request with discouraged UV should succeed");
         
-        let options_response: crate::fixtures::ServerPublicKeyCredentialGetOptionsResponse = 
+        let options_response: ServerPublicKeyCredentialGetOptionsResponse = 
             read_body_json(response).await;
         
         assert_eq!(options_response.user_verification, Some("discouraged".to_string()));
@@ -80,7 +80,7 @@ mod authentication_flow_tests {
         
         assert_eq!(response.status(), StatusCode::OK, "Request without username should succeed");
         
-        let options_response: crate::fixtures::ServerPublicKeyCredentialGetOptionsResponse = 
+        let options_response: ServerPublicKeyCredentialGetOptionsResponse = 
             read_body_json(response).await;
         
         assert_eq!(options_response.status, "ok", "Response status should be ok");
@@ -161,7 +161,7 @@ mod authentication_flow_tests {
         
         assert_eq!(response.status(), StatusCode::OK);
         
-        let options_response: crate::fixtures::ServerPublicKeyCredentialGetOptionsResponse = 
+        let options_response: ServerPublicKeyCredentialGetOptionsResponse = 
             read_body_json(response).await;
         
         // Verify RP ID consistency
@@ -177,7 +177,7 @@ mod authentication_flow_tests {
         
         assert_eq!(response.status(), StatusCode::OK);
         
-        let options_response: crate::fixtures::ServerPublicKeyCredentialGetOptionsResponse = 
+        let options_response: ServerPublicKeyCredentialGetOptionsResponse = 
             read_body_json(response).await;
         
         // For mock implementation, allowCredentials should be None
@@ -194,7 +194,7 @@ mod authentication_flow_tests {
         
         assert_eq!(response.status(), StatusCode::OK);
         
-        let options_response: crate::fixtures::ServerPublicKeyCredentialGetOptionsResponse = 
+        let options_response: ServerPublicKeyCredentialGetOptionsResponse = 
             read_body_json(response).await;
         
         // Verify timeout configuration
@@ -210,7 +210,7 @@ mod authentication_flow_tests {
         
         assert_eq!(response.status(), StatusCode::OK);
         
-        let options_response: crate::fixtures::ServerPublicKeyCredentialGetOptionsResponse = 
+        let options_response: ServerPublicKeyCredentialGetOptionsResponse = 
             read_body_json(response).await;
         
         // Extensions should be None for basic authentication
@@ -236,7 +236,7 @@ mod authentication_flow_tests {
             let response = post_json(&app, "/assertion/options", request).await;
             assert_eq!(response.status(), StatusCode::OK, "Request for user '{}' should succeed", username);
             
-            let options_response: crate::fixtures::ServerPublicKeyCredentialGetOptionsResponse = 
+            let options_response: ServerPublicKeyCredentialGetOptionsResponse = 
                 read_body_json(response).await;
             
             assert_eq!(options_response.status, "ok", "Response status should be ok");
@@ -253,7 +253,7 @@ mod authentication_flow_tests {
         
         assert_eq!(response.status(), StatusCode::OK);
         
-        let options_response: crate::fixtures::ServerPublicKeyCredentialGetOptionsResponse = 
+        let options_response: ServerPublicKeyCredentialGetOptionsResponse = 
             read_body_json(response).await;
         
         let challenge = &options_response.challenge;
