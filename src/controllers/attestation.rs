@@ -1,6 +1,6 @@
 //! Attestation (registration) controller
 
-use actix_web::{web, HttpResponse, Result};
+use actix_web::{HttpResponse, Result};
 use serde_json::json;
 
 /// Handle attestation options request
