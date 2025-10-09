@@ -16,5 +16,4 @@ pub mod routes;
 #[cfg(test)]
 pub mod test_utils;
 
-pub use config::Config;
 pub use error::{AppError, AppResult};
