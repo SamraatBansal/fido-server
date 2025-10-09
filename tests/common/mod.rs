@@ -12,12 +12,12 @@ use uuid::Uuid;
 
 /// Test application configuration
 pub struct TestApp {
-    pub app: test::TestApp,
+    pub app: actix_web::test::TestApp,
     pub webauthn_service: services::WebAuthnService,
     pub user_service: services::UserService,
 }
 
-pub type TestAppType = test::TestApp;
+pub type TestAppType = actix_web::test::TestApp;
 
 impl TestApp {
     /// Create a new test application instance
