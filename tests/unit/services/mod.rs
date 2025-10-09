@@ -2,8 +2,13 @@
 
 use crate::common::*;
 use std::collections::HashMap;
+use std::sync::Mutex;
 use uuid::Uuid;
 use base64::{Engine as _, engine::general_purpose::URL_SAFE_NO_PAD};
+
+// Mock storage for testing
+static USER_STORE: Mutex<HashMap<Uuid, TestUser>> = Mutex::new(HashMap::new());
+static CREDENTIAL_STORE: Mutex<HashMap<String, TestCredential>> = Mutex::new(HashMap::new());
 
 #[cfg(test)]
 mod webauthn_service_tests {
