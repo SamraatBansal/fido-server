@@ -421,7 +421,7 @@ fn get_user_by_id(_id: Uuid) -> TestUser {
     TestUser::valid()
 }
 
-fn lookup_credential_by_id(id: &str) -> Option<TestCredential> {
+fn lookup_credential_by_id(_id: &str) -> Option<TestCredential> {
     Some(TestCredential::valid())
 }
 
