@@ -4,7 +4,7 @@ use actix_web::{test, App, http::StatusCode};
 use fido2_webauthn_server::{
     routes::api::configure,
     services::{WebAuthnService, UserService},
-    schema::ServerPublicKeyCredentialCreationOptionsRequest,
+    schema::{ServerPublicKeyCredentialCreationOptionsRequest, ServerPublicKeyCredentialAttestationResponse, ServerAuthenticatorAttestationResponse, ServerPublicKeyCredentialAssertionResponse, ServerAuthenticatorAssertionResponse},
 };
 
 #[actix_web::test]
