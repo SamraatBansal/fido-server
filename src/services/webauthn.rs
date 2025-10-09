@@ -102,18 +102,22 @@ impl WebAuthnService {
     pub async fn generate_authentication_challenge(
         &self,
         _username: &str,
-    ) -> FidoResult<CredentialRequestOptions> {
+    ) -> AppResult<ServerPublicKeyCredentialGetOptionsResponse> {
         // In a real implementation, we would:
         // 1. Find the user by username
         // 2. Get their credentials
         // 3. Generate challenge options
         
         // For now, return a mock response
-        Ok(CredentialRequestOptions {
-            challenge: crate::utils::crypto::generate_secure_challenge()?,
-            allow_credentials: vec![],
-            user_verification: "required".to_string(),
-            timeout: 60000,
+        Ok(ServerPublicKeyCredentialGetOptionsResponse {
+            status: "ok".to_string(),
+            error_message: "".to_string(),
+            challenge: crate::utils::crypto::generate_secure_challenge(),
+            timeout: Some(60000),
+            rp_id: self.rp_id.clone(),
+            allow_credentials: None,
+            user_verification: Some("required".to_string()),
+            extensions: None,
         })
     }
 
