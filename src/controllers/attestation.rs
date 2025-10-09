@@ -9,7 +9,7 @@ use crate::schema::webauthn::{AttestationResponse};
 /// Handle attestation options request
 pub async fn attestation_options(
     webauthn_service: web::Data<WebAuthnService>,
-    user_service: web::Data<UserService>,
+    _user_service: web::Data<UserService>,
     request: web::Json<CreateUserRequest>,
 ) -> Result<HttpResponse> {
     match webauthn_service.generate_registration_challenge(&request.username, &request.display_name).await {
