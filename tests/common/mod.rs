@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use uuid::Uuid;
 
 /// Test user data structure
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct TestUser {
     pub id: Uuid,
     pub username: String,
