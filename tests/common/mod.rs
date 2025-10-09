@@ -38,7 +38,7 @@ impl TestApp {
         ).await;
 
         Self {
-            app,
+            app: Box::new(app),
             webauthn_service,
             user_service,
         }
