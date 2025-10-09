@@ -33,7 +33,7 @@ mod tests {
         
         let mut byte_counts = std::collections::HashMap::new();
         for challenge in &challenges {
-            let decoded = base64::decode_config(challenge, base64::URL_SAFE_NO_PAD).unwrap();
+            let decoded = URL_SAFE_NO_PAD.decode(challenge).unwrap();
             for byte in decoded {
                 *byte_counts.entry(byte).or_insert(0) += 1;
             }
