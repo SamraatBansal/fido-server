@@ -132,7 +132,7 @@ mod assertion_endpoints_tests {
         
         assert_eq!(response.status(), StatusCode::OK);
         
-        let options_response: crate::fixtures::ServerPublicKeyCredentialGetOptionsResponse = 
+        let options_response: ServerPublicKeyCredentialGetOptionsResponse = 
             read_body_json(response).await;
         
         assert_eq!(options_response.status, "ok");
