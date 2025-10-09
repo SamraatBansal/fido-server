@@ -48,6 +48,9 @@ pub enum AppError {
     
     #[error("Internal server error: {0}")]
     InternalError(String),
+    
+    #[error("Bad request: {0}")]
+    BadRequest(String),
 }
 
 impl From<ValidationErrors> for AppError {
