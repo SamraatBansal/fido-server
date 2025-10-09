@@ -2,7 +2,6 @@
 
 use crate::error::{AppError, AppResult};
 use uuid::Uuid;
-use chrono::Utc;
 
 /// User service
 pub struct UserService {
