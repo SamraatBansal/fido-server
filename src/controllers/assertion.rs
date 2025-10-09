@@ -8,12 +8,9 @@ use crate::schema::*;
 /// Handle assertion options request
 pub async fn assertion_options(
     webauthn_service: web::Data<WebAuthnService>,
-    _user_service: web::Data<UserService>,
-    request: web::Json<serde_json::Value>,
+    request: web::Json<ServerPublicKeyCredentialGetOptionsRequest>,
 ) -> Result<HttpResponse> {
-    let username = request.get("username")
-        .and_then(|v| v.as_str())
-        .ok_or_else(|| actix_web::error::ErrorBadRequest("Missing username"))?;
+    let username = request.username.as_deref().unwrap_or("");
 
     match webauthn_service.generate_authentication_challenge(username).await {
         Ok(options) => Ok(HttpResponse::Ok().json(options)),
