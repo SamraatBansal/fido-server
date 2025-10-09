@@ -3,6 +3,7 @@
 use crate::error::{FidoError, FidoResult};
 use crate::db::models::User;
 use uuid::Uuid;
+use chrono::Utc;
 
 /// User service
 pub struct UserService {
@@ -16,20 +17,53 @@ impl UserService {
     }
 
     /// Create a new user
-    pub async fn create_user(&self, _username: &str, _display_name: &str) -> FidoResult<User> {
-        // TODO: Implement user creation
-        Err(FidoError::Internal("Not implemented".to_string()))
+    pub async fn create_user(&self, username: &str, display_name: &str) -> FidoResult<User> {
+        // Validate input
+        if username.is_empty() || username.len() > 255 {
+            return Err(FidoError::InvalidRequest("Username must be between 1 and 255 characters".to_string()));
+        }
+        
+        if display_name.is_empty() || display_name.len() > 255 {
+            return Err(FidoError::InvalidRequest("Display name must be between 1 and 255 characters".to_string()));
+        }
+
+        // Validate username format (alphanumeric + @._+-)
+        if !crate::utils::validation::USERNAME_REGEX.is_match(username) {
+            return Err(FidoError::InvalidRequest("Username contains invalid characters".to_string()));
+        }
+
+        let now = Utc::now();
+        let user = User {
+            id: Uuid::new_v4(),
+            username: username.to_string(),
+            display_name: display_name.to_string(),
+            created_at: now,
+            updated_at: now,
+        };
+
+        // TODO: Store user in database
+        // For now, just return the user
+        Ok(user)
     }
 
     /// Find user by username
-    pub async fn find_by_username(&self, _username: &str) -> FidoResult<Option<User>> {
-        // TODO: Implement user lookup
+    pub async fn find_by_username(&self, username: &str) -> FidoResult<Option<User>> {
+        // TODO: Implement user lookup in database
+        // For now, return None
         Ok(None)
     }
 
     /// Find user by ID
-    pub async fn find_by_id(&self, _user_id: &Uuid) -> FidoResult<Option<User>> {
-        // TODO: Implement user lookup by ID
+    pub async fn find_by_id(&self, user_id: &Uuid) -> FidoResult<Option<User>> {
+        // TODO: Implement user lookup by ID in database
+        // For now, return None
         Ok(None)
+    }
+
+    /// Update user
+    pub async fn update_user(&self, user: &User) -> FidoResult<User> {
+        // TODO: Implement user update in database
+        // For now, just return the user
+        Ok(user.clone())
     }
 }
