@@ -185,10 +185,10 @@ pub fn create_attestation_result_request(challenge: &str) -> serde_json::Value {
 /// Generate an invalid attestation result request (missing id)
 pub fn create_invalid_attestation_result_request_missing_id() -> serde_json::Value {
     json!({
-        "rawId": general_purpose::URL_SAFE.encode(Uuid::new_v4().as_bytes()),
+        "rawId": general_purpose::URL_SAFE_NO_PAD.encode(Uuid::new_v4().as_bytes()),
         "response": {
-            "attestationObject": general_purpose::URL_SAFE.encode(b"mock_attestation_object"),
-            "clientDataJSON": general_purpose::URL_SAFE.encode(b"mock_client_data")
+            "attestationObject": general_purpose::URL_SAFE_NO_PAD.encode(b"mock_attestation_object"),
+            "clientDataJSON": general_purpose::URL_SAFE_NO_PAD.encode(b"mock_client_data")
         },
         "type": "public-key"
     })
