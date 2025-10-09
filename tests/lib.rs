@@ -3,6 +3,5 @@
 //! This module provides common utilities and setup for all integration tests.
 
 pub mod common;
-pub mod unit;
 
 pub use common::*;
