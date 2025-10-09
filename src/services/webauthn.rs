@@ -1,11 +1,11 @@
 //! WebAuthn service
 
-use crate::error::{FidoError, FidoResult};
+use crate::error::FidoResult;
 use crate::schema::webauthn::*;
 use crate::schema::credential::{RegistrationResult, AuthenticationResult};
-use crate::db::models::{User, Challenge};
+use crate::db::models::Challenge;
 use uuid::Uuid;
-use chrono::Utc;
+use base64::{Engine as _, engine::general_purpose::URL_SAFE_NO_PAD};
 
 /// WebAuthn service
 pub struct WebAuthnService {
