@@ -37,7 +37,7 @@ mod webauthn_service_tests {
         // Test entropy quality (basic statistical test)
         let mut byte_counts = HashMap::new();
         for challenge in &challenges {
-            let decoded = base64::decode_config(challenge, base64::URL_SAFE_NO_PAD).unwrap();
+            let decoded = URL_SAFE_NO_PAD.decode(challenge).unwrap();
             for byte in decoded {
                 *byte_counts.entry(byte).or_insert(0) += 1;
             }
