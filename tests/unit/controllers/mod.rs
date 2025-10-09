@@ -345,7 +345,7 @@ mod edge_case_tests {
         });
         
         assert_eq!(empty_username_request["username"], "");
-        assert!(!empty_username_request["username"].as_str().unwrap().is_empty());
+        assert!(empty_username_request["username"].as_str().unwrap().is_empty());
     }
 
     #[tokio::test]
