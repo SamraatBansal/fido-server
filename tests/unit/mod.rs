@@ -1,12 +1,6 @@
-//! Unit tests for FIDO2/WebAuthn Relying Party Server
-//! 
-//! This module contains comprehensive unit tests for all components of the system,
-//! focusing on isolated testing of individual functions and methods with mocked dependencies.
+//! Unit tests for individual components
 
-pub mod controllers;
-pub mod services;
-pub mod utils;
-pub mod validation;
-pub mod error_handling;
-
-pub use crate::common::*;
+mod schema_validation;
+mod webauthn_service;
+mod utils;
+mod validation;
