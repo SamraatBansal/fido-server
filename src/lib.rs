@@ -13,7 +13,6 @@ pub mod middleware;
 pub mod utils;
 pub mod routes;
 
-#[cfg(test)]
-pub mod test_utils;
+
 
 pub use error::{AppError, AppResult};
