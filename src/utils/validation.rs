@@ -12,7 +12,8 @@ lazy_static! {
 /// Validate RP ID according to FIDO2 specification
 pub fn validate_rp_id(rp_id: &str) -> bool {
     // Basic validation - should be a valid domain
-    !rp_id.is_empty() && rp_id.contains('.') && rp_id.len() <= 255
+    !rp_id.is_empty() && rp_id.len() <= 255 && 
+    (rp_id.contains('.') || rp_id == "localhost" || rp_id.starts_with("localhost."))
 }
 
 /// Validate origin according to WebAuthn specification
