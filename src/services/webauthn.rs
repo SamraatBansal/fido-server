@@ -6,6 +6,7 @@ use uuid::Uuid;
 use base64::{Engine as _, engine::general_purpose::URL_SAFE_NO_PAD};
 
 /// WebAuthn service
+#[derive(Clone)]
 pub struct WebAuthnService {
     rp_id: String,
     rp_name: String,
