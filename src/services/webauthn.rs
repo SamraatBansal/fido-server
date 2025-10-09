@@ -47,8 +47,8 @@ impl WebAuthnService {
     /// Verify authentication assertion
     pub async fn verify_authentication(
         &self,
-        assertion: &AssertionResponse,
-        challenge_id: &str,
+        _assertion: &AssertionResponse,
+        _challenge_id: &str,
     ) -> FidoResult<AuthenticationResult> {
         // TODO: Implement authentication verification
         Err(FidoError::Internal("Not implemented".to_string()))
