@@ -54,16 +54,6 @@ pub struct AuthenticatorSelectionCriteria {
     pub require_resident_key: bool,
 }
 
-impl From<&webauthn_rs::proto::AuthenticatorSelectionCriteria> for AuthenticatorSelectionCriteria {
-    fn from(criteria: &webauthn_rs::proto::AuthenticatorSelectionCriteria) -> Self {
-        Self {
-            authenticator_attachment: criteria.authenticator_attachment.clone(),
-            user_verification: criteria.user_verification.to_string(),
-            require_resident_key: criteria.resident_key == webauthn_rs::proto::ResidentKeyRequirement::Required,
-        }
-    }
-}
-
 /// Allow credentials for authentication
 #[derive(Debug, Serialize)]
 pub struct AllowCredentials {
