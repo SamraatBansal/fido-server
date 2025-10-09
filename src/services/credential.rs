@@ -61,7 +61,7 @@ impl CredentialService {
     }
 
     /// Delete credential
-    pub async fn delete_credential(&self, credential_id: &str) -> FidoResult<()> {
+    pub async fn delete_credential(&self, _credential_id: &str) -> FidoResult<()> {
         // TODO: Implement credential deletion in database
         // For now, just return Ok
         Ok(())
