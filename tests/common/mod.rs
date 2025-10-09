@@ -196,7 +196,7 @@ pub async fn create_test_app() -> TestApp {
 
 /// Make a POST request with JSON body
 pub async fn post_json<T: serde::Serialize>(
-    app: &test::TestApp,
+    app: &TestAppType,
     path: &str,
     body: &T,
 ) -> ServiceResponse {
