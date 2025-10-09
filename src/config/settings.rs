@@ -1,70 +1,77 @@
-//! Application settings and configuration
+//! Application settings
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 /// Application settings
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Settings {
-    /// Server configuration
     pub server: ServerSettings,
-    /// Database configuration
-    pub database: DatabaseSettings,
-    /// WebAuthn configuration
     pub webauthn: WebAuthnSettings,
+    pub database: DatabaseSettings,
+}
+
+impl Default for Settings {
+    fn default() -> Self {
+        Self {
+            server: ServerSettings::default(),
+            webauthn: WebAuthnSettings::default(),
+            database: DatabaseSettings::default(),
+        }
+    }
 }
 
 /// Server settings
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ServerSettings {
-    /// Host address
     pub host: String,
-    /// Port number
     pub port: u16,
+    pub workers: Option<usize>,
 }
 
-/// Database settings
-#[derive(Debug, Deserialize, Clone)]
-pub struct DatabaseSettings {
-    /// Database URL
-    pub url: String,
-    /// Maximum pool size
-    pub max_pool_size: u32,
+impl Default for ServerSettings {
+    fn default() -> Self {
+        Self {
+            host: "127.0.0.1".to_string(),
+            port: 8080,
+            workers: None,
+        }
+    }
 }
 
 /// WebAuthn settings
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WebAuthnSettings {
-    /// Relying party ID
     pub rp_id: String,
-    /// Relying party name
     pub rp_name: String,
-    /// Origin URL
     pub origin: String,
+    pub timeout: u64,
 }
 
-impl Settings {
-    /// Load settings from environment variables and config files
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if configuration cannot be loaded
-    pub fn new() -> Result<Self, Box<dyn std::error::Error>> {
-        // TODO: Implement proper configuration loading
-        // This is a placeholder implementation
-        Ok(Self {
-            server: ServerSettings {
-                host: "127.0.0.1".to_string(),
-                port: 8080,
-            },
-            database: DatabaseSettings {
-                url: "postgres://localhost/fido_server".to_string(),
-                max_pool_size: 10,
-            },
-            webauthn: WebAuthnSettings {
-                rp_id: "localhost".to_string(),
-                rp_name: "FIDO Server".to_string(),
-                origin: "http://localhost:8080".to_string(),
-            },
-        })
+impl Default for WebAuthnSettings {
+    fn default() -> Self {
+        Self {
+            rp_id: "localhost".to_string(),
+            rp_name: "FIDO2 WebAuthn Server".to_string(),
+            origin: "http://localhost:8080".to_string(),
+            timeout: 60000,
+        }
+    }
+}
+
+/// Database settings
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DatabaseSettings {
+    pub url: String,
+    pub max_connections: u32,
+    pub min_connections: u32,
+}
+
+impl Default for DatabaseSettings {
+    fn default() -> Self {
+        Self {
+            url: "postgresql://localhost/fido2_test".to_string(),
+            max_connections: 10,
+            min_connections: 1,
+        }
     }
 }
