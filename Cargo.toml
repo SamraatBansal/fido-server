@@ -56,6 +56,11 @@ diesel = { version = "2.1", features = ["postgres", "r2d2"] }
 
 # Validation
 validator = { version = "0.18", features = ["derive"] }
+regex = "1.0"
+lazy_static = "1.4"
+
+# HTTP Authentication
+actix-web-httpauth = "0.8"
 
 # Testing (dev dependencies only)
 [dev-dependencies]
