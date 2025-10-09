@@ -1,7 +1,6 @@
 //! Attestation (registration) controller
 
 use actix_web::{web, HttpResponse, Result};
-use serde_json::json;
 use crate::services::WebAuthnService;
 use crate::schema::*;
 
