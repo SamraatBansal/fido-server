@@ -187,6 +187,46 @@ impl TestAssertions {
     }
 }
 
+/// Create a test app for integration tests
+pub async fn create_test_app() -> TestApp {
+    TestApp::new().await
+}
+
+/// Make a POST request with JSON body
+pub async fn post_json<T: serde::Serialize>(
+    app: &test::TestApp,
+    path: &str,
+    body: &T,
+) -> ServiceResponse {
+    let req = test::TestRequest::post()
+        .uri(path)
+        .set_json(body)
+        .to_request();
+
+    test::call_service(app, req).await
+}
+
+/// Read JSON response body
+pub async fn read_body_json<T: serde::de::DeserializeOwned>(
+    resp: ServiceResponse,
+) -> Result<T, AppError> {
+    if resp.status().is_success() {
+        let body = test::read_body(resp).await;
+        serde_json::from_slice(&body).map_err(|e| AppError::SerializationError(e))
+    } else {
+        Err(AppError::ValidationError(format!("Request failed: {}", resp.status())))
+    }
+}
+
+/// Create a test WebAuthn service
+pub async fn create_test_webauthn_service() -> services::WebAuthnService {
+    services::WebAuthnService::new(
+        "localhost",
+        "FIDO Test Server",
+        "http://localhost:8080",
+    ).expect("Failed to create WebAuthn service")
+}
+
 /// Mock service implementations for testing
 pub mod mocks {
     use super::*;
