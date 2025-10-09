@@ -76,6 +76,7 @@ impl ResponseError for AppError {
             AppError::SerializationError(_) => HttpResponse::InternalServerError(),
             AppError::Base64Error(_) => HttpResponse::BadRequest(),
             AppError::InternalError(_) => HttpResponse::InternalServerError(),
+            AppError::BadRequest(_) => HttpResponse::BadRequest(),
         };
 
         status.json(crate::schema::ServerResponse {
