@@ -20,8 +20,8 @@ pub async fn create_pool(database_url: &str) -> Result<DbPool, sqlx::Error> {
 
 /// Initialize database with migrations
 pub async fn init_database(pool: &DbPool) -> Result<(), sqlx::Error> {
-    // Run migrations
-    sqlx::migrate!("./migrations").run(pool).await?;
+    // Run migrations - disabled for now since migrations directory doesn't exist
+    // sqlx::migrate!("./migrations").run(pool).await?;
     Ok(())
 }
 
