@@ -98,7 +98,7 @@ mod webauthn_service_tests {
         
         // Validate credential ID
         assert!(!credential.id.is_empty());
-        let decoded_id = base64::decode_config(&credential.id, base64::URL_SAFE_NO_PAD);
+        let decoded_id = URL_SAFE_NO_PAD.decode(&credential.id);
         assert!(decoded_id.is_ok());
         
         // Validate public key
