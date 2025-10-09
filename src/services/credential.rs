@@ -15,19 +15,15 @@ impl CredentialService {
     }
 
     /// Create a new credential
-    pub async fn create_credential(&self, credential: &Credential) -> FidoResult<Credential> {
+    pub async fn create_credential(&self, credential_id: &str, user_id: &Uuid) -> AppResult<()> {
         // Validate credential
-        if credential.credential_id.is_empty() {
-            return Err(FidoError::InvalidRequest("Credential ID cannot be empty".to_string()));
-        }
-
-        if credential.public_key.is_empty() {
-            return Err(FidoError::InvalidRequest("Public key cannot be empty".to_string()));
+        if credential_id.is_empty() {
+            return Err(AppError::ValidationError("Credential ID cannot be empty".to_string()));
         }
 
         // TODO: Store credential in database
-        // For now, just return the credential
-        Ok(credential.clone())
+        // For now, just return success
+        Ok(())
     }
 
     /// Find credential by credential ID
