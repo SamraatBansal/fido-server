@@ -46,6 +46,7 @@ env_logger = "0.10"
 
 # Async
 futures = "0.3"
+futures-util = "0.3"
 async-trait = "0.1"
 
 # Static regex compilation
