@@ -7,8 +7,9 @@ use uuid::Uuid;
 use base64::{Engine as _, engine::general_purpose::URL_SAFE_NO_PAD};
 
 // Mock storage for testing
-static USER_STORE: Mutex<HashMap<Uuid, TestUser>> = Mutex::new(HashMap::new());
-static CREDENTIAL_STORE: Mutex<HashMap<String, TestCredential>> = Mutex::new(HashMap::new());
+use std::sync::LazyLock;
+static USER_STORE: LazyLock<Mutex<HashMap<Uuid, TestUser>>> = LazyLock::new(|| Mutex::new(HashMap::new()));
+static CREDENTIAL_STORE: LazyLock<Mutex<HashMap<String, TestCredential>>> = LazyLock::new(|| Mutex::new(HashMap::new()));
 
 #[cfg(test)]
 mod webauthn_service_tests {
