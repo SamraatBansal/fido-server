@@ -51,12 +51,14 @@ impl WebAuthnService {
         // };
 
         // Convert to our response format
-        Ok(CredentialCreationOptions {
-            rp: RelyingParty {
-                id: self.rp_id.clone(),
+        Ok(ServerPublicKeyCredentialCreationOptionsResponse {
+            status: "ok".to_string(),
+            error_message: "".to_string(),
+            rp: PublicKeyCredentialRpEntity {
                 name: self.rp_name.clone(),
+                id: Some(self.rp_id.clone()),
             },
-            user: crate::schema::webauthn::User {
+            user: ServerPublicKeyCredentialUserEntity {
                 id: URL_SAFE_NO_PAD.encode(&user_id_bytes),
                 name: username.to_string(),
                 display_name: display_name.to_string(),
@@ -67,18 +69,16 @@ impl WebAuthnService {
                     cred_type: "public-key".to_string(),
                     alg: -7, // ES256
                 },
-                PublicKeyCredentialParameters {
-                    cred_type: "public-key".to_string(),
-                    alg: -257, // RS256
-                },
             ],
-            timeout: 60000,
-            attestation: "direct".to_string(),
-            authenticator_selection: AuthenticatorSelectionCriteria {
+            timeout: Some(60000),
+            exclude_credentials: None,
+            authenticator_selection: Some(AuthenticatorSelectionCriteria {
                 authenticator_attachment: Some("platform".to_string()),
-                user_verification: "required".to_string(),
-                require_resident_key: false,
-            },
+                user_verification: Some("required".to_string()),
+                require_resident_key: Some(false),
+            }),
+            attestation: Some("direct".to_string()),
+            extensions: None,
         })
     }
 
