@@ -9,7 +9,7 @@ async fn main() -> io::Result<()> {
     // Initialize logger
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
 
-    log::info!("Starting FIDO Server...");
+    tracing::info!("Starting FIDO Server...");
 
     // TODO: Load configuration from config file
     let host = "127.0.0.1";
@@ -17,7 +17,7 @@ async fn main() -> io::Result<()> {
 
     // TODO: Initialize database connection pool
 
-    log::info!("Server running at http://{}:{}", host, port);
+    tracing::info!("Server running at http://{}:{}", host, port);
 
     HttpServer::new(move || {
         // Configure CORS
@@ -30,7 +30,7 @@ async fn main() -> io::Result<()> {
         App::new()
             .wrap(Logger::default())
             .wrap(cors)
-            .configure(fido_server::routes::api::configure)
+            .configure(fido2_webauthn_server::routes::api::configure)
     })
     .bind((host, port))?
     .run()
