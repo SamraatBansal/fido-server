@@ -366,6 +366,9 @@ mod credential_service_tests {
         credential.sign_count += 1;
         assert!(credential.sign_count > original_sign_count);
         
+        // Store the updated credential
+        update_credential(&credential.id, credential.clone());
+        
         // Verify update persistence
         let updated_credential = get_credential_by_id(credential.id);
         assert_eq!(updated_credential.sign_count, credential.sign_count);
