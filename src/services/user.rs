@@ -47,14 +47,14 @@ impl UserService {
     }
 
     /// Find user by username
-    pub async fn find_by_username(&self, username: &str) -> FidoResult<Option<User>> {
+    pub async fn find_by_username(&self, _username: &str) -> FidoResult<Option<User>> {
         // TODO: Implement user lookup in database
         // For now, return None
         Ok(None)
     }
 
     /// Find user by ID
-    pub async fn find_by_id(&self, user_id: &Uuid) -> FidoResult<Option<User>> {
+    pub async fn find_by_id(&self, _user_id: &Uuid) -> FidoResult<Option<User>> {
         // TODO: Implement user lookup by ID in database
         // For now, return None
         Ok(None)
