@@ -97,7 +97,7 @@ mod attestation_tests {
         let request = create_invalid_attestation_result_request_invalid_base64();
         
         let raw_id = request["rawId"].as_str().unwrap();
-        assert!(base64::decode_config(raw_id, base64::URL_SAFE_NO_PAD).is_err());
+        assert!(URL_SAFE_NO_PAD.decode(raw_id).is_err());
     }
 
     #[tokio::test]
