@@ -252,12 +252,12 @@ pub fn create_assertion_result_request(challenge: &str, credential_id: &str) -> 
 /// Generate an invalid assertion result request (missing signature)
 pub fn create_invalid_assertion_result_request_missing_signature() -> serde_json::Value {
     json!({
-        "id": general_purpose::URL_SAFE.encode(Uuid::new_v4().as_bytes()),
-        "rawId": general_purpose::URL_SAFE.encode(Uuid::new_v4().as_bytes()),
+        "id": general_purpose::URL_SAFE_NO_PAD.encode(Uuid::new_v4().as_bytes()),
+        "rawId": general_purpose::URL_SAFE_NO_PAD.encode(Uuid::new_v4().as_bytes()),
         "response": {
-            "authenticatorData": general_purpose::URL_SAFE.encode(b"mock_authenticator_data"),
-            "clientDataJSON": general_purpose::URL_SAFE.encode(b"mock_client_data"),
-            "userHandle": general_purpose::URL_SAFE.encode(Uuid::new_v4().as_bytes())
+            "authenticatorData": general_purpose::URL_SAFE_NO_PAD.encode(b"mock_authenticator_data"),
+            "clientDataJSON": general_purpose::URL_SAFE_NO_PAD.encode(b"mock_client_data"),
+            "userHandle": general_purpose::URL_SAFE_NO_PAD.encode(Uuid::new_v4().as_bytes())
         },
         "type": "public-key"
     })
