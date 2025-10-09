@@ -1,13 +1,14 @@
 //! Cryptographic utilities
 
 use rand::{thread_rng, Rng};
-use crate::error::{FidoError, FidoResult};
+use crate::error::FidoResult;
+use base64::{Engine as _, engine::general_purpose::URL_SAFE_NO_PAD};
 
 /// Generate a cryptographically secure challenge
 pub fn generate_secure_challenge() -> FidoResult<String> {
     let mut rng = thread_rng();
     let challenge_bytes: Vec<u8> = (0..32).map(|_| rng.gen()).collect();
-    Ok(base64::encode_config(&challenge_bytes, base64::URL_SAFE_NO_PAD))
+    Ok(URL_SAFE_NO_PAD.encode(&challenge_bytes))
 }
 
 /// Calculate entropy score for challenge quality testing
