@@ -1,9 +1,13 @@
-//! Schema module for request/response models
+//! Request and response schemas for FIDO2/WebAuthn APIs
 
-pub mod user;
-pub mod credential;
-pub mod webauthn;
+use serde::{Deserialize, Serialize};
+use validator::Validate;
+use uuid::Uuid;
 
-pub use user::*;
-pub use credential::*;
-pub use webauthn::*;
+pub mod attestation;
+pub mod assertion;
+pub mod common;
+
+pub use attestation::*;
+pub use assertion::*;
+pub use common::*;
