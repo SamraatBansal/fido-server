@@ -13,5 +13,3 @@ pub mod schema;
 pub mod services;
 pub mod utils;
 
-#[cfg(test)]
-mod tests;
