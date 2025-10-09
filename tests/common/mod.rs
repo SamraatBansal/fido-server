@@ -174,7 +174,7 @@ impl TestAssertions {
         assert!(challenge.len() <= 128, "Challenge should not exceed 128 characters");
         
         // Test that it's valid base64url
-        assert!(base64::decode_config(challenge, base64::URL_SAFE_NO_PAD).is_ok(), 
+        assert!(base64::engine::general_purpose::URL_SAFE_NO_PAD.decode(challenge).is_ok(), 
                 "Challenge should be valid base64url");
     }
 
@@ -182,7 +182,7 @@ impl TestAssertions {
     pub fn assert_valid_credential_id(cred_id: &str) {
         assert!(!cred_id.is_empty(), "Credential ID should not be empty");
         assert!(cred_id.len() <= 1024, "Credential ID should not exceed 1024 characters");
-        assert!(base64::decode_config(cred_id, base64::URL_SAFE_NO_PAD).is_ok(),
+        assert!(base64::engine::general_purpose::URL_SAFE_NO_PAD.decode(cred_id).is_ok(),
                 "Credential ID should be valid base64url");
     }
 }
