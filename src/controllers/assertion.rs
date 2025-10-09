@@ -15,9 +15,7 @@ pub async fn assertion_options(
         Ok(options) => Ok(HttpResponse::Ok().json(options)),
         Err(e) => {
             tracing::error!("Failed to generate assertion options: {}", e);
-            Ok(HttpResponse::BadRequest().json(json!({
-                "error": e.to_string()
-            })))
+            Ok(HttpResponse::BadRequest().json(ServerResponse::error(e.to_string())))
         }
     }
 }
