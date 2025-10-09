@@ -103,7 +103,7 @@ mod replay_attack_tests {
             let response = post_json(&app, "/attestation/options", request.clone()).await;
             assert_eq!(response.status(), StatusCode::OK);
             
-            let options_response: crate::fixtures::ServerPublicKeyCredentialCreationOptionsResponse = 
+            let options_response: ServerPublicKeyCredentialCreationOptionsResponse = 
                 read_body_json(response).await;
             
             let challenge = &options_response.challenge;
@@ -127,7 +127,7 @@ mod replay_attack_tests {
         
         assert_eq!(response.status(), StatusCode::OK);
         
-        let options_response: crate::fixtures::ServerPublicKeyCredentialCreationOptionsResponse = 
+        let options_response: ServerPublicKeyCredentialCreationOptionsResponse = 
             read_body_json(response).await;
         
         let challenge = &options_response.challenge;
@@ -155,7 +155,7 @@ mod replay_attack_tests {
             let response = post_json(&app, "/attestation/options", request.clone()).await;
             assert_eq!(response.status(), StatusCode::OK);
             
-            let options_response: crate::fixtures::ServerPublicKeyCredentialCreationOptionsResponse = 
+            let options_response: ServerPublicKeyCredentialCreationOptionsResponse = 
                 read_body_json(response).await;
             
             user_ids.push(options_response.user.id.clone());
@@ -265,7 +265,7 @@ mod replay_attack_tests {
             set.spawn(async move {
                 let response = post_json(&*app_clone, "/attestation/options", request).await;
                 if response.status() == StatusCode::OK {
-                    let options_response: crate::fixtures::ServerPublicKeyCredentialCreationOptionsResponse = 
+                    let options_response: ServerPublicKeyCredentialCreationOptionsResponse = 
                         read_body_json(response).await;
                     challenges_clone.lock().unwrap().push(options_response.challenge);
                 }
