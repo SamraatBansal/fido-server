@@ -78,6 +78,6 @@ mod tests {
         assert!(!challenge.contains('='));
         
         // Should be valid base64url
-        assert!(base64::decode_config(&challenge, base64::URL_SAFE_NO_PAD).is_ok());
+        assert!(URL_SAFE_NO_PAD.decode(&challenge).is_ok());
     }
 }
