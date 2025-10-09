@@ -1,6 +1,6 @@
-//! Security tests for FIDO2/WebAuthn implementation
+//! Security-focused tests
 
-pub mod authentication_tests;
-pub mod input_validation_tests;
-pub mod cryptographic_tests;
-pub mod compliance_tests;
+mod replay_attack_protection;
+mod cryptographic_security;
+mod input_validation;
+mod authentication_security;
