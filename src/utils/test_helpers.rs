@@ -2,7 +2,7 @@
 
 use crate::schema::*;
 use serde_json::json;
-use uuid::Uuid;
+use base64::Engine;
 
 /// Create a test registration options request
 pub fn create_test_registration_request() -> ServerPublicKeyCredentialCreationOptionsRequest {
