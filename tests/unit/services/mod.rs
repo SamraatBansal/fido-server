@@ -345,6 +345,10 @@ mod credential_service_tests {
         let credential1 = TestCredential::new(user_id);
         let credential2 = TestCredential::new(user_id);
         
+        // Store the credentials first
+        update_credential(&credential1.id, credential1.clone());
+        update_credential(&credential2.id, credential2.clone());
+        
         let user_credentials = get_credentials_by_user_id(user_id);
         assert_eq!(user_credentials.len(), 2);
         assert!(user_credentials.iter().any(|c| c.id == credential1.id));
