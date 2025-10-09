@@ -58,8 +58,8 @@ mod tests {
     #[test]
     fn test_challenge_unpredictability() {
         // Challenges should be unpredictable
-        let challenge1 = generate_secure_challenge().unwrap();
-        let challenge2 = generate_secure_challenge().unwrap();
+        let challenge1 = fido2_webauthn_server::utils::crypto::generate_secure_challenge().unwrap();
+        let challenge2 = fido2_webauthn_server::utils::crypto::generate_secure_challenge().unwrap();
         
         assert_ne!(challenge1, challenge2);
         
