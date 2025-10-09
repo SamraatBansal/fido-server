@@ -37,23 +37,23 @@ impl UserService {
     }
 
     /// Find user by username
-    pub async fn find_by_username(&self, _username: &str) -> FidoResult<Option<User>> {
+    pub async fn find_by_username(&self, _username: &str) -> AppResult<Option<Uuid>> {
         // TODO: Implement user lookup in database
         // For now, return None
         Ok(None)
     }
 
     /// Find user by ID
-    pub async fn find_by_id(&self, _user_id: &Uuid) -> FidoResult<Option<User>> {
+    pub async fn find_by_id(&self, _user_id: &Uuid) -> AppResult<bool> {
         // TODO: Implement user lookup by ID in database
-        // For now, return None
-        Ok(None)
+        // For now, return false
+        Ok(false)
     }
 
     /// Update user
-    pub async fn update_user(&self, user: &User) -> FidoResult<User> {
+    pub async fn update_user(&self, _user_id: &Uuid) -> AppResult<()> {
         // TODO: Implement user update in database
-        // For now, just return the user
-        Ok(user.clone())
+        // For now, just return success
+        Ok(())
     }
 }
