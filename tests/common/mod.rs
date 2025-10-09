@@ -10,7 +10,11 @@ use base64::Engine;
 
 /// Test application configuration
 pub struct TestApp {
-    pub app: actix_web::test::TestApp,
+    pub app: Box<dyn actix_web::dev::Service<
+        actix_web::dev::ServiceRequest,
+        Response = actix_web::dev::ServiceResponse,
+        Error = actix_web::Error,
+    > + Unpin>,
     pub webauthn_service: services::WebAuthnService,
     pub user_service: services::UserService,
 }
