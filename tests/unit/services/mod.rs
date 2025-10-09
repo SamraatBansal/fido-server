@@ -412,7 +412,9 @@ fn supports_algorithm(alg: i32) -> bool {
 
 fn lookup_user_by_username(username: &str) -> Option<TestUser> {
     if username == "alice" {
-        Some(TestUser::valid())
+        let mut user = TestUser::valid();
+        user.username = "alice".to_string();
+        Some(user)
     } else {
         None
     }
