@@ -1,16 +1,17 @@
-//! Error types for the FIDO2/WebAuthn server
+//! Error types and handling for the WebAuthn server
 
 use thiserror::Error;
+use actix_web::{HttpResponse, ResponseError};
+use validator::ValidationErrors;
 
-pub type AppResult<T> = Result<T, AppError>;
-
+/// Application error type
 #[derive(Debug, Error)]
 pub enum AppError {
     #[error("Validation error: {0}")]
     ValidationError(String),
     
     #[error("WebAuthn error: {0}")]
-    WebAuthnError(#[from] webauthn_rs::error::WebauthnError),
+    WebAuthnError(String),
     
     #[error("Database error: {0}")]
     DatabaseError(#[from] sqlx::Error),
@@ -21,60 +22,95 @@ pub enum AppError {
     #[error("Base64 decoding error: {0}")]
     Base64Error(#[from] base64::DecodeError),
     
-    #[error("Invalid challenge: {0}")]
-    InvalidChallenge(String),
+    #[error("Challenge not found or expired")]
+    ChallengeNotFound,
     
-    #[error("Invalid credential: {0}")]
-    InvalidCredential(String),
+    #[error("Invalid challenge format")]
+    InvalidChallenge,
     
-    #[error("User not found: {0}")]
-    UserNotFound(String),
+    #[error("Credential not found")]
+    CredentialNotFound,
     
-    #[error("Invalid attestation: {0}")]
-    InvalidAttestation(String),
+    #[error("User not found")]
+    UserNotFound,
     
-    #[error("Invalid assertion: {0}")]
-    InvalidAssertion(String),
+    #[error("Invalid signature")]
+    InvalidSignature,
+    
+    #[error("Invalid origin")]
+    InvalidOrigin,
+    
+    #[error("Invalid RP ID")]
+    InvalidRpId,
     
     #[error("Replay attack detected")]
     ReplayAttack,
-    
-    #[error("Origin mismatch")]
-    OriginMismatch,
-    
-    #[error("RP ID mismatch")]
-    RpIdMismatch,
     
     #[error("Internal server error: {0}")]
     InternalError(String),
 }
 
-impl AppError {
-    pub fn validation(msg: impl Into<String>) -> Self {
-        Self::ValidationError(msg.into())
+impl From<ValidationErrors> for AppError {
+    fn from(errors: ValidationErrors) -> Self {
+        AppError::ValidationError(format!("Validation failed: {:?}", errors))
     }
-    
-    pub fn invalid_challenge(msg: impl Into<String>) -> Self {
-        Self::InvalidChallenge(msg.into())
+}
+
+impl ResponseError for AppError {
+    fn error_response(&self) -> HttpResponse {
+        let status = match self {
+            AppError::ValidationError(_) => HttpResponse::BadRequest(),
+            AppError::WebAuthnError(_) => HttpResponse::BadRequest(),
+            AppError::ChallengeNotFound => HttpResponse::BadRequest(),
+            AppError::InvalidChallenge => HttpResponse::BadRequest(),
+            AppError::CredentialNotFound => HttpResponse::NotFound(),
+            AppError::UserNotFound => HttpResponse::NotFound(),
+            AppError::InvalidSignature => HttpResponse::BadRequest(),
+            AppError::InvalidOrigin => HttpResponse::BadRequest(),
+            AppError::InvalidRpId => HttpResponse::BadRequest(),
+            AppError::ReplayAttack => HttpResponse::BadRequest(),
+            AppError::DatabaseError(_) => HttpResponse::InternalServerError(),
+            AppError::SerializationError(_) => HttpResponse::InternalServerError(),
+            AppError::Base64Error(_) => HttpResponse::BadRequest(),
+            AppError::InternalError(_) => HttpResponse::InternalServerError(),
+        };
+
+        status.json(crate::schema::ServerResponse {
+            status: "failed".to_string(),
+            error_message: self.to_string(),
+        })
     }
-    
-    pub fn invalid_credential(msg: impl Into<String>) -> Self {
-        Self::InvalidCredential(msg.into())
+}
+
+/// Result type alias for application operations
+pub type AppResult<T> = Result<T, AppError>;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use actix_web::http::StatusCode;
+
+    #[test]
+    fn test_validation_error_response() {
+        let error = AppError::ValidationError("Invalid input".to_string());
+        let response = error.error_response();
+        
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
     }
-    
-    pub fn user_not_found(msg: impl Into<String>) -> Self {
-        Self::UserNotFound(msg.into())
+
+    #[test]
+    fn test_not_found_error_response() {
+        let error = AppError::UserNotFound;
+        let response = error.error_response();
+        
+        assert_eq!(response.status(), StatusCode::NOT_FOUND);
     }
-    
-    pub fn invalid_attestation(msg: impl Into<String>) -> Self {
-        Self::InvalidAttestation(msg.into())
-    }
-    
-    pub fn invalid_assertion(msg: impl Into<String>) -> Self {
-        Self::InvalidAssertion(msg.into())
-    }
-    
-    pub fn internal(msg: impl Into<String>) -> Self {
-        Self::InternalError(msg.into())
+
+    #[test]
+    fn test_internal_error_response() {
+        let error = AppError::InternalError("Something went wrong".to_string());
+        let response = error.error_response();
+        
+        assert_eq!(response.status(), StatusCode::INTERNAL_SERVER_ERROR);
     }
 }
