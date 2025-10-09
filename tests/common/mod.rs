@@ -16,7 +16,7 @@ pub struct TestUser {
 }
 
 /// Test credential data structure
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct TestCredential {
     pub id: String,
     pub user_id: Uuid,
