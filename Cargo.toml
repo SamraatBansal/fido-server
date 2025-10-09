@@ -27,7 +27,7 @@ sha2 = "0.10"
 hmac = "0.12"
 
 # Validation
-validator = { version = "0.16", features = ["derive"] }
+validator = { version = "0.18", features = ["derive"] }
 regex = "1.0"
 
 # Error handling
