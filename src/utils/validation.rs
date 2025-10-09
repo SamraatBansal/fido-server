@@ -2,6 +2,7 @@
 
 use lazy_static::lazy_static;
 use regex::Regex;
+use base64;
 
 lazy_static! {
     /// Username validation regex - alphanumeric + @._+-
