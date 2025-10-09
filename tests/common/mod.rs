@@ -72,7 +72,7 @@ impl TestCredential {
     /// Create a new test credential
     pub fn new(user_id: Uuid) -> Self {
         Self {
-            id: general_purpose::URL_SAFE.encode(Uuid::new_v4().as_bytes()),
+            id: general_purpose::URL_SAFE_NO_PAD.encode(Uuid::new_v4().as_bytes()),
             user_id,
             public_key: vec![1, 2, 3, 4], // Mock public key
             sign_count: 0,
