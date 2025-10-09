@@ -85,9 +85,9 @@ impl WebAuthnService {
     /// Verify registration attestation
     pub async fn verify_registration(
         &self,
-        attestation: &AttestationResponse,
+        _attestation: &ServerPublicKeyCredentialAttestationResponse,
         _challenge_id: &str,
-    ) -> FidoResult<RegistrationResult> {
+    ) -> AppResult<ServerResponse> {
         // In a real implementation, we would:
         // 1. Retrieve the challenge from database
         // 2. Verify it's not expired and not consumed
@@ -95,10 +95,7 @@ impl WebAuthnService {
         // 4. Store the credential
         
         // For now, return a mock result
-        Ok(RegistrationResult {
-            credential_id: attestation.id.clone(),
-            user_id: Uuid::new_v4(),
-        })
+        Ok(ServerResponse::success())
     }
 
     /// Generate authentication challenge
