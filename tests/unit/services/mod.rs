@@ -277,6 +277,9 @@ mod user_service_tests {
         
         let user = TestUser::valid();
         
+        // Store the user first
+        update_user(user.clone());
+        
         // Simulate user lookup by username
         assert_eq!(lookup_user_by_username(&user.username), Some(user.clone()));
         
