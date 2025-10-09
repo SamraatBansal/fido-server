@@ -124,9 +124,9 @@ impl WebAuthnService {
     /// Verify authentication assertion
     pub async fn verify_authentication(
         &self,
-        _assertion: &AssertionResponse,
+        _assertion: &ServerPublicKeyCredentialAssertionResponse,
         _challenge_id: &str,
-    ) -> FidoResult<AuthenticationResult> {
+    ) -> AppResult<ServerResponse> {
         // In a real implementation, we would:
         // 1. Retrieve the challenge from database
         // 2. Verify it's not expired and not consumed
@@ -134,10 +134,6 @@ impl WebAuthnService {
         // 4. Update credential sign count
         
         // For now, return a mock result
-        Ok(AuthenticationResult {
-            authenticated: true,
-            user_id: Uuid::new_v4(),
-            credential_id: "mock_credential_id".to_string(),
-        })
+        Ok(ServerResponse::success())
     }
 }
