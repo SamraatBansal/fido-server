@@ -150,12 +150,12 @@ mod input_validation_tests {
 
         // Test potentially dangerous Unicode sequences
         let unicode_payloads = vec![
-            ("admin\ufeff@example.com", "Zero-width no-break space"),
-            ("admin\u200b@example.com", "Zero-width space"),
-            ("admin\u202e@example.com", "Right-to-left override"),
-            ("admin\ufeff@example.com", "Byte order mark"),
-            ("admin\u2060@example.com", "Word joiner"),
-            ("admin\u180e@example.com", "Mongolian vowel separator"),
+            ("admin\u{feff}@example.com", "Zero-width no-break space"),
+            ("admin\u{200b}@example.com", "Zero-width space"),
+            ("admin\u{202e}@example.com", "Right-to-left override"),
+            ("admin\u{feff}@example.com", "Byte order mark"),
+            ("admin\u{2060}@example.com", "Word joiner"),
+            ("admin\u{180e}@example.com", "Mongolian vowel separator"),
         ];
 
         for (payload, description) in unicode_payloads {
