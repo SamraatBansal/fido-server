@@ -1,6 +1,7 @@
-//! FIDO Server Library
-//!
-//! A FIDO2/WebAuthn conformant server implementation in Rust.
+//! FIDO2/WebAuthn Relying Party Server
+//! 
+//! This library provides a complete implementation of a FIDO2/WebAuthn conformant
+//! Relying Party Server with comprehensive testing and security features.
 
 pub mod config;
 pub mod controllers;
@@ -12,4 +13,5 @@ pub mod schema;
 pub mod services;
 pub mod utils;
 
-pub use error::{AppError, Result};
+#[cfg(test)]
+mod tests;
