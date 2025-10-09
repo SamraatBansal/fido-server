@@ -327,6 +327,9 @@ mod credential_service_tests {
         
         let credential = TestCredential::valid();
         
+        // Store the credential first
+        update_credential(&credential.id, credential.clone());
+        
         // Simulate credential lookup by ID
         assert_eq!(lookup_credential_by_id(&credential.id), Some(credential.clone()));
         
