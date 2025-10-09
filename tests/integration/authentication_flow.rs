@@ -138,7 +138,7 @@ mod authentication_flow_tests {
         assert_eq!(response2.status(), StatusCode::OK);
         assert_eq!(response3.status(), StatusCode::OK);
         
-        let options1: crate::fixtures::ServerPublicKeyCredentialGetOptionsResponse = 
+        let options1: ServerPublicKeyCredentialGetOptionsResponse = 
             read_body_json(response1).await;
         let options2: crate::fixtures::ServerPublicKeyCredentialGetOptionsResponse = 
             read_body_json(response2).await;
