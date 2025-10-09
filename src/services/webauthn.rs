@@ -33,7 +33,7 @@ impl WebAuthnService {
         let user_uuid = Uuid::new_v4();
         
         // Generate a secure challenge
-        let challenge_bytes = crate::utils::crypto::generate_secure_challenge()?;
+        let challenge_bytes = crate::utils::crypto::generate_secure_challenge();
         
         // Create WebAuthn user data
         let user_id_bytes = user_uuid.as_bytes().to_vec();
