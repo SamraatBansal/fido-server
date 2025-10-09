@@ -33,21 +33,21 @@ impl CredentialService {
     }
 
     /// Find credential by credential ID
-    pub async fn find_by_credential_id(&self, credential_id: &str) -> FidoResult<Option<Credential>> {
+    pub async fn find_by_credential_id(&self, _credential_id: &str) -> FidoResult<Option<Credential>> {
         // TODO: Implement credential lookup in database
         // For now, return None
         Ok(None)
     }
 
     /// Find credentials by user ID
-    pub async fn find_by_user_id(&self, user_id: &Uuid) -> FidoResult<Vec<Credential>> {
+    pub async fn find_by_user_id(&self, _user_id: &Uuid) -> FidoResult<Vec<Credential>> {
         // TODO: Implement credential lookup by user in database
         // For now, return empty vector
         Ok(vec![])
     }
 
     /// Update credential sign count
-    pub async fn update_sign_count(&self, credential_id: &Uuid, sign_count: u64) -> FidoResult<()> {
+    pub async fn update_sign_count(&self, _credential_id: &Uuid, _sign_count: u64) -> FidoResult<()> {
         // TODO: Implement sign count update in database
         // For now, just return Ok
         Ok(())
