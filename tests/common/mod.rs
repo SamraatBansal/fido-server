@@ -165,12 +165,13 @@ pub fn create_invalid_attestation_options_request_empty_username() -> serde_json
 
 /// Generate a valid attestation result request
 pub fn create_attestation_result_request(challenge: &str) -> serde_json::Value {
+    let credential_id = general_purpose::URL_SAFE_NO_PAD.encode(Uuid::new_v4().as_bytes());
     json!({
-        "id": general_purpose::URL_SAFE.encode(Uuid::new_v4().as_bytes()),
-        "rawId": general_purpose::URL_SAFE.encode(Uuid::new_v4().as_bytes()),
+        "id": credential_id.clone(),
+        "rawId": credential_id,
         "response": {
-            "attestationObject": general_purpose::URL_SAFE.encode(b"mock_attestation_object"),
-            "clientDataJSON": general_purpose::URL_SAFE.encode(
+            "attestationObject": general_purpose::URL_SAFE_NO_PAD.encode(b"mock_attestation_object"),
+            "clientDataJSON": general_purpose::URL_SAFE_NO_PAD.encode(
                 format!(
                     r#"{{"type":"webauthn.create","challenge":"{}","origin":"https://example.com"}}"#,
                     challenge
