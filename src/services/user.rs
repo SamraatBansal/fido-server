@@ -4,6 +4,7 @@ use crate::error::{AppError, AppResult};
 use uuid::Uuid;
 
 /// User service
+#[derive(Clone)]
 pub struct UserService {
     // TODO: Add user repository
 }
