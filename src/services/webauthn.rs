@@ -2,9 +2,7 @@
 
 use crate::error::{FidoError, FidoResult};
 use crate::schema::webauthn::*;
-use crate::db::models::{User, Credential, Challenge};
-use uuid::Uuid;
-use std::sync::Arc;
+use crate::schema::credential::{RegistrationResult, AuthenticationResult};
 
 /// WebAuthn service
 pub struct WebAuthnService {
