@@ -3,7 +3,6 @@
 use crate::error::{FidoError, FidoResult};
 use crate::db::models::Credential;
 use uuid::Uuid;
-use chrono::Utc;
 
 /// Credential service
 pub struct CredentialService {
