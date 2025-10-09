@@ -29,7 +29,7 @@ impl WebAuthnService {
         &self,
         username: &str,
         display_name: &str,
-    ) -> FidoResult<CredentialCreationOptions> {
+    ) -> AppResult<CredentialCreationOptions> {
         let user_uuid = Uuid::new_v4();
         
         // Generate a secure challenge
