@@ -3,7 +3,6 @@
 use crate::error::AppResult;
 use crate::schema::*;
 use uuid::Uuid;
-use chrono::Utc;
 use base64::{Engine as _, engine::general_purpose::URL_SAFE_NO_PAD};
 
 /// WebAuthn service
