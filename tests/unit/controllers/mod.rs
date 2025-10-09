@@ -155,7 +155,7 @@ mod assertion_tests {
     async fn test_assertion_result_valid_request() {
         // Test valid assertion result request
         let challenge = generate_secure_challenge();
-        let credential_id = general_purpose::URL_SAFE.encode(Uuid::new_v4().as_bytes());
+        let credential_id = URL_SAFE_NO_PAD.encode(Uuid::new_v4().as_bytes());
         let request = create_assertion_result_request(&challenge, &credential_id);
         
         // Validate required fields
@@ -194,7 +194,7 @@ mod assertion_tests {
     async fn test_assertion_result_client_data_json_structure() {
         // Test clientDataJSON structure for assertion
         let challenge = generate_secure_challenge();
-        let credential_id = general_purpose::URL_SAFE.encode(Uuid::new_v4().as_bytes());
+        let credential_id = URL_SAFE_NO_PAD.encode(Uuid::new_v4().as_bytes());
         let request = create_assertion_result_request(&challenge, &credential_id);
         
         let client_data_b64 = request["response"]["clientDataJSON"].as_str().unwrap();
@@ -210,7 +210,7 @@ mod assertion_tests {
     async fn test_assertion_result_replay_attack() {
         // Test replay attack scenario
         let old_challenge = "reused_challenge_12345";
-        let credential_id = general_purpose::URL_SAFE.encode(Uuid::new_v4().as_bytes());
+        let credential_id = URL_SAFE_NO_PAD.encode(Uuid::new_v4().as_bytes());
         let request = create_replay_assertion_result_request(old_challenge, &credential_id);
         
         let client_data_b64 = request["response"]["clientDataJSON"].as_str().unwrap();
