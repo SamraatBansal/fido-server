@@ -1,9 +1,9 @@
 //! Common test utilities and helpers
 
-use actix_web::{test, App};
+use actix_web::{test, App, dev::ServiceResponse};
 use fido2_webauthn_server::{
-    config, routes, services, 
-    schema::{*, *},
+    routes, services, 
+    schema::*,
     error::AppError,
 };
 use serde_json::json;
@@ -12,7 +12,7 @@ use uuid::Uuid;
 
 /// Test application configuration
 pub struct TestApp {
-    pub app: actix_web::test::TestApp,
+    pub app: test::TestApp,
     pub webauthn_service: services::WebAuthnService,
     pub user_service: services::UserService,
 }
@@ -23,7 +23,7 @@ impl TestApp {
         let webauthn_service = services::WebAuthnService::new(
             "localhost",
             "FIDO Test Server",
-            &["http://localhost:8080"],
+            "http://localhost:8080",
         ).expect("Failed to create WebAuthn service");
 
         let user_service = services::UserService::new();
