@@ -57,7 +57,7 @@ impl WebAuthnService {
                 name: self.rp_name.clone(),
             },
             user: crate::schema::webauthn::User {
-                id: base64::encode_config(&user_id_bytes, base64::URL_SAFE_NO_PAD),
+                id: URL_SAFE_NO_PAD.encode(&user_id_bytes),
                 name: username.to_string(),
                 display_name: display_name.to_string(),
             },
