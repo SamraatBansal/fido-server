@@ -4,7 +4,6 @@ use actix_web::{web, HttpResponse, Result};
 use serde_json::json;
 use crate::services::{WebAuthnService, UserService};
 use crate::schema::webauthn::{AssertionResponse};
-use crate::error::FidoError;
 
 /// Handle assertion options request
 pub async fn assertion_options(
