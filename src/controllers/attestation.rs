@@ -24,7 +24,7 @@ pub async fn attestation_options(
 /// Handle attestation result request
 pub async fn attestation_result(
     webauthn_service: web::Data<WebAuthnService>,
-    request: web::Json<AttestationResponse>,
+    request: web::Json<ServerPublicKeyCredentialAttestationResponse>,
 ) -> Result<HttpResponse> {
     // TODO: Get challenge ID from request or session
     let challenge_id = "mock_challenge_id";
