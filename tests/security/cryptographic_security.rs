@@ -2,6 +2,7 @@
 
 use crate::fixtures::*;
 use fido2_webauthn_server::utils::crypto;
+use std::time::Instant;
 
 #[cfg(test)]
 mod cryptographic_tests {
