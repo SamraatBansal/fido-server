@@ -39,16 +39,16 @@ impl WebAuthnService {
         let user_id_bytes = user_uuid.as_bytes().to_vec();
 
         // Store challenge (in real implementation, this would go to database)
-        let _challenge = Challenge {
-            id: Uuid::new_v4(),
-            user_id: Some(user_uuid),
-            username: Some(username.to_string()),
-            challenge_data: challenge_bytes.clone(),
-            challenge_type: "registration".to_string(),
-            expires_at: Utc::now() + chrono::Duration::minutes(5),
-            created_at: Utc::now(),
-            consumed: false,
-        };
+        // let _challenge = Challenge {
+        //     id: Uuid::new_v4(),
+        //     user_id: Some(user_uuid),
+        //     username: Some(username.to_string()),
+        //     challenge_data: challenge_bytes.clone(),
+        //     challenge_type: "registration".to_string(),
+        //     expires_at: Utc::now() + chrono::Duration::minutes(5),
+        //     created_at: Utc::now(),
+        //     consumed: false,
+        // };
 
         // Convert to our response format
         Ok(CredentialCreationOptions {
