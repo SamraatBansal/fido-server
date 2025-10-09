@@ -21,7 +21,7 @@ mod tests {
     #[test]
     fn test_credential_id_validation() {
         // Valid credential IDs
-        let valid_credential_id = general_purpose::URL_SAFE_NO_PAD.encode(&[1, 2, 3, 4]);
+        let valid_credential_id = URL_SAFE_NO_PAD.encode(&[1, 2, 3, 4]);
         assert!(validate_credential_id(&valid_credential_id));
         
         // Invalid credential IDs
