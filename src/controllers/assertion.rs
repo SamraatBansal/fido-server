@@ -26,7 +26,7 @@ pub async fn assertion_options(
 /// Handle assertion result request
 pub async fn assertion_result(
     webauthn_service: web::Data<WebAuthnService>,
-    request: web::Json<AssertionResponse>,
+    request: web::Json<ServerPublicKeyCredentialAssertionResponse>,
 ) -> Result<HttpResponse> {
     // TODO: Get challenge ID from request or session
     let challenge_id = "mock_challenge_id";
