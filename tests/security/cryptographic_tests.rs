@@ -2,7 +2,6 @@
 
 #[cfg(test)]
 mod tests {
-    use crate::common::*;
     use fido2_webauthn_server::utils::crypto::*;
     use base64::{Engine as _, engine::general_purpose::URL_SAFE_NO_PAD};
 
