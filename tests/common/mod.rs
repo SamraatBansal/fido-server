@@ -235,15 +235,15 @@ pub fn create_assertion_result_request(challenge: &str, credential_id: &str) -> 
         "id": credential_id,
         "rawId": credential_id,
         "response": {
-            "authenticatorData": general_purpose::URL_SAFE.encode(b"mock_authenticator_data"),
-            "clientDataJSON": general_purpose::URL_SAFE.encode(
+            "authenticatorData": general_purpose::URL_SAFE_NO_PAD.encode(b"mock_authenticator_data"),
+            "clientDataJSON": general_purpose::URL_SAFE_NO_PAD.encode(
                 format!(
                     r#"{{"type":"webauthn.get","challenge":"{}","origin":"https://example.com"}}"#,
                     challenge
                 ).as_bytes()
             ),
-            "signature": general_purpose::URL_SAFE.encode(b"mock_signature"),
-            "userHandle": general_purpose::URL_SAFE.encode(Uuid::new_v4().as_bytes())
+            "signature": general_purpose::URL_SAFE_NO_PAD.encode(b"mock_signature"),
+            "userHandle": general_purpose::URL_SAFE_NO_PAD.encode(Uuid::new_v4().as_bytes())
         },
         "type": "public-key"
     })
