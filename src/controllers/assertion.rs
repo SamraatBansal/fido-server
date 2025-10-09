@@ -14,7 +14,7 @@ pub async fn assertion_options(
 ) -> Result<HttpResponse> {
     let username = request.get("username")
         .and_then(|v| v.as_str())
-        .ok_or_else(|| FidoError::InvalidRequest("Missing username".to_string()))?;
+        .ok_or_else(|| actix_web::error::ErrorBadRequest("Missing username"))?;
 
     match webauthn_service.generate_authentication_challenge(username).await {
         Ok(options) => Ok(HttpResponse::Ok().json(options)),
