@@ -79,7 +79,7 @@ mod attestation_tests {
         
         // Validate base64url encoding
         let id = request["id"].as_str().unwrap();
-        assert!(base64::decode_config(id, base64::URL_SAFE_NO_PAD).is_ok());
+        assert!(URL_SAFE_NO_PAD.decode(id).is_ok());
     }
 
     #[tokio::test]
