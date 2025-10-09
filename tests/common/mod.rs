@@ -196,11 +196,11 @@ pub async fn create_test_app() -> TestApp {
 
 /// Make a POST request with JSON body
 pub async fn post_json<T: serde::Serialize>(
-    app: &impl actix_web::dev::Service<
+    app: &Box<dyn actix_web::dev::Service<
         actix_web::dev::ServiceRequest,
         Response = actix_web::dev::ServiceResponse,
         Error = actix_web::Error,
-    >,
+    > + Unpin>,
     path: &str,
     body: &T,
 ) -> ServiceResponse {
