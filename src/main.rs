@@ -1,7 +1,7 @@
 //! FIDO Server Main Entry Point
 
 use actix_cors::Cors;
-use actix_web::{middleware::Logger, App, HttpServer};
+use actix_web::{middleware::Logger, App, HttpServer, http::header};
 use std::io;
 
 #[actix_web::main]
@@ -20,12 +20,18 @@ async fn main() -> io::Result<()> {
     tracing::info!("Server running at http://{}:{}", host, port);
 
     HttpServer::new(move || {
-        // Configure CORS
+        // Configure CORS with security best practices
         let cors = Cors::default()
-            .allow_any_origin()
-            .allow_any_method()
-            .allow_any_header()
-            .max_age(3600);
+            .allowed_origin("http://localhost:8080")
+            .allowed_origin("https://localhost:8080")
+            .allowed_methods(vec!["GET", "POST", "OPTIONS"])
+            .allowed_headers(vec![
+                header::CONTENT_TYPE,
+                header::AUTHORIZATION,
+                header::ACCEPT,
+            ])
+            .supports_credentials()
+            .max_age(Duration::from_secs(3600));
 
         App::new()
             .wrap(Logger::default())
