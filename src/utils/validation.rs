@@ -34,3 +34,53 @@ pub fn is_strong_cipher_suite(cipher: &str) -> bool {
         "TLS_AES_128_GCM_SHA256"
     )
 }
+
+/// Validate challenge according to FIDO2 specification
+pub fn validate_challenge(challenge: &str) -> bool {
+    // Challenge must be base64url-encoded and at least 16 bytes when decoded
+    if challenge.is_empty() {
+        return false;
+    }
+    
+    // Try to decode as base64url
+    match base64::decode_config(challenge, base64::URL_SAFE_NO_PAD) {
+        Ok(decoded) => decoded.len() >= 16,
+        Err(_) => false,
+    }
+}
+
+/// Validate credential ID according to WebAuthn specification
+pub fn validate_credential_id(credential_id: &str) -> bool {
+    // Credential ID must be base64url-encoded
+    if credential_id.is_empty() || credential_id.len() > 1024 {
+        return false;
+    }
+    
+    base64::decode_config(credential_id, base64::URL_SAFE_NO_PAD).is_ok()
+}
+
+/// Validate user verification requirement
+pub fn validate_user_verification(uv: &str) -> bool {
+    matches!(uv, "required" | "preferred" | "discouraged")
+}
+
+/// Validate attestation conveyance preference
+pub fn validate_attestation_conveyance(attestation: &str) -> bool {
+    matches!(attestation, "none" | "indirect" | "direct" | "enterprise")
+}
+
+/// Check if algorithm is supported
+pub fn is_supported_algorithm(alg: i64) -> bool {
+    // Supported COSE algorithms
+    matches!(alg, -7 | -257 | -35 | -36 | -258 | -259 | -37 | -38 | -39)
+}
+
+/// Validate authenticator attachment
+pub fn validate_authenticator_attachment(attachment: &str) -> bool {
+    matches!(attachment, "platform" | "cross-platform" | "null")
+}
+
+/// Validate resident key requirement
+pub fn validate_resident_key_requirement(requirement: &str) -> bool {
+    matches!(requirement, "required" | "preferred" | "discouraged")
+}
