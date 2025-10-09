@@ -6,9 +6,7 @@ use fido2_webauthn_server::{
     schema::*,
     error::AppError,
 };
-use serde_json::json;
-use std::collections::HashMap;
-use uuid::Uuid;
+use base64::Engine;
 
 /// Test application configuration
 pub struct TestApp {
