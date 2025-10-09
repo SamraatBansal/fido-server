@@ -30,9 +30,7 @@ pub async fn attestation_result(
         Ok(result) => Ok(HttpResponse::Ok().json(result)),
         Err(e) => {
             tracing::error!("Failed to verify attestation: {}", e);
-            Ok(HttpResponse::BadRequest().json(json!({
-                "error": e.to_string()
-            })))
+            Ok(HttpResponse::BadRequest().json(ServerResponse::error(e.to_string())))
         }
     }
 }
