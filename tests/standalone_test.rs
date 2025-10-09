@@ -152,6 +152,7 @@ async fn test_attestation_result_basic() {
     
     // Try to parse as JSON
     let response_json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+    println!("Attestation Response JSON: {}", serde_json::to_string_pretty(&response_json).unwrap());
     assert_eq!(response_json["status"], "ok");
     assert_eq!(response_json["errorMessage"], "");
 }
