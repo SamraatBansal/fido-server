@@ -97,7 +97,7 @@ impl WebAuthnService {
                 alg: p.alg,
             }).collect(),
             timeout: ccr.timeout as u64,
-            attestation: ccr.attestation.unwrap_or(AttestationConveyancePreference::None).to_string(),
+            attestation: ccr.attestation.map(|a| a.to_string()).unwrap_or_else(|| "none".to_string()),
             authenticator_selection: AuthenticatorSelectionCriteria {
                 authenticator_attachment: ccr.authenticator_selection.as_ref().and_then(|a| a.authenticator_attachment.clone()),
                 user_verification: ccr.authenticator_selection
