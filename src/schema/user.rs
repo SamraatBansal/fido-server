@@ -8,7 +8,7 @@ use validator::Validate;
 #[derive(Debug, Deserialize, Validate)]
 pub struct CreateUserRequest {
     #[validate(length(min = 3, max = 255, message = "Username must be between 3 and 255 characters"))]
-    #[validate(regex(path = "crate::utils::validation::USERNAME_REGEX"))]
+    #[validate(regex(path = *crate::utils::validation::USERNAME_REGEX))]
     pub username: String,
     
     #[validate(length(min = 1, max = 255, message = "Display name must be between 1 and 255 characters"))]
