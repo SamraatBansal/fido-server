@@ -58,7 +58,7 @@ impl From<ValidationErrors> for AppError {
 
 impl ResponseError for AppError {
     fn error_response(&self) -> HttpResponse {
-        let status = match self {
+        let mut status = match self {
             AppError::ValidationError(_) => HttpResponse::BadRequest(),
             AppError::WebAuthnError(_) => HttpResponse::BadRequest(),
             AppError::ChallengeNotFound => HttpResponse::BadRequest(),
