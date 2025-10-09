@@ -209,7 +209,7 @@ pub async fn post_json<T: serde::Serialize>(
         .set_json(body)
         .to_request();
 
-    test::call_service(app, req).await
+    test::call_service(app.as_ref(), req).await
 }
 
 /// Read JSON response body
