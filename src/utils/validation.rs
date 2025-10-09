@@ -2,7 +2,7 @@
 
 use lazy_static::lazy_static;
 use regex::Regex;
-use validator::{ValidationError, ValidationErrors};
+use validator::ValidationError;
 
 lazy_static! {
     pub static ref USERNAME_REGEX: Regex = Regex::new(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$").unwrap();
