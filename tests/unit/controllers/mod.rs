@@ -2,6 +2,8 @@
 
 use crate::common::*;
 use serde_json::json;
+use base64::{Engine as _, engine::general_purpose::URL_SAFE_NO_PAD};
+use uuid::Uuid;
 
 #[cfg(test)]
 mod attestation_tests {
