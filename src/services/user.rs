@@ -1,7 +1,6 @@
 //! User service
 
-use crate::error::{FidoError, FidoResult};
-use crate::db::models::User;
+use crate::error::{AppError, AppResult};
 use uuid::Uuid;
 use chrono::Utc;
 
