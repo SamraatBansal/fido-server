@@ -1,7 +1,6 @@
 //! Credential service
 
-use crate::error::{FidoError, FidoResult};
-use crate::db::models::Credential;
+use crate::error::{AppError, AppResult};
 use uuid::Uuid;
 
 /// Credential service
