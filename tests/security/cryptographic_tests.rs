@@ -22,7 +22,7 @@ mod tests {
         
         // Test base64url encoding
         for challenge in &challenges {
-            assert!(base64::decode_config(challenge, base64::URL_SAFE_NO_PAD).is_ok());
+            assert!(URL_SAFE_NO_PAD.decode(challenge).is_ok());
         }
     }
 
