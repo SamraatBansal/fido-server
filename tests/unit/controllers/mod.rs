@@ -107,7 +107,7 @@ mod attestation_tests {
         let request = create_attestation_result_request(&challenge);
         
         let client_data_b64 = request["response"]["clientDataJSON"].as_str().unwrap();
-        let client_data_bytes = base64::decode_config(client_data_b64, base64::URL_SAFE_NO_PAD).unwrap();
+        let client_data_bytes = URL_SAFE_NO_PAD.decode(client_data_b64).unwrap();
         let client_data: serde_json::Value = serde_json::from_slice(&client_data_bytes).unwrap();
         
         assert_eq!(client_data["type"], "webauthn.create");
@@ -198,7 +198,7 @@ mod assertion_tests {
         let request = create_assertion_result_request(&challenge, &credential_id);
         
         let client_data_b64 = request["response"]["clientDataJSON"].as_str().unwrap();
-        let client_data_bytes = base64::decode_config(client_data_b64, base64::URL_SAFE_NO_PAD).unwrap();
+        let client_data_bytes = URL_SAFE_NO_PAD.decode(client_data_b64).unwrap();
         let client_data: serde_json::Value = serde_json::from_slice(&client_data_bytes).unwrap();
         
         assert_eq!(client_data["type"], "webauthn.get");
@@ -214,7 +214,7 @@ mod assertion_tests {
         let request = create_replay_assertion_result_request(old_challenge, &credential_id);
         
         let client_data_b64 = request["response"]["clientDataJSON"].as_str().unwrap();
-        let client_data_bytes = base64::decode_config(client_data_b64, base64::URL_SAFE_NO_PAD).unwrap();
+        let client_data_bytes = URL_SAFE_NO_PAD.decode(client_data_b64).unwrap();
         let client_data: serde_json::Value = serde_json::from_slice(&client_data_bytes).unwrap();
         
         // This should be detected as a replay attack
