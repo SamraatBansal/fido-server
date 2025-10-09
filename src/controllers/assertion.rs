@@ -8,7 +8,7 @@ use crate::schema::webauthn::{AssertionResponse};
 /// Handle assertion options request
 pub async fn assertion_options(
     webauthn_service: web::Data<WebAuthnService>,
-    user_service: web::Data<UserService>,
+    _user_service: web::Data<UserService>,
     request: web::Json<serde_json::Value>,
 ) -> Result<HttpResponse> {
     let username = request.get("username")
