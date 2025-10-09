@@ -16,33 +16,24 @@ impl UserService {
     }
 
     /// Create a new user
-    pub async fn create_user(&self, username: &str, display_name: &str) -> FidoResult<User> {
+    pub async fn create_user(&self, username: &str, display_name: &str) -> AppResult<Uuid> {
         // Validate input
         if username.is_empty() || username.len() > 255 {
-            return Err(FidoError::InvalidRequest("Username must be between 1 and 255 characters".to_string()));
+            return Err(AppError::ValidationError("Username must be between 1 and 255 characters".to_string()));
         }
         
         if display_name.is_empty() || display_name.len() > 255 {
-            return Err(FidoError::InvalidRequest("Display name must be between 1 and 255 characters".to_string()));
+            return Err(AppError::ValidationError("Display name must be between 1 and 255 characters".to_string()));
         }
 
         // Validate username format (alphanumeric + @._+-)
         if !crate::utils::validation::USERNAME_REGEX.is_match(username) {
-            return Err(FidoError::InvalidRequest("Username contains invalid characters".to_string()));
+            return Err(AppError::ValidationError("Username contains invalid characters".to_string()));
         }
 
-        let now = Utc::now();
-        let user = User {
-            id: Uuid::new_v4(),
-            username: username.to_string(),
-            display_name: display_name.to_string(),
-            created_at: now,
-            updated_at: now,
-        };
-
         // TODO: Store user in database
-        // For now, just return the user
-        Ok(user)
+        // For now, just return a new user ID
+        Ok(Uuid::new_v4())
     }
 
     /// Find user by username
