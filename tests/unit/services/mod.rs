@@ -294,6 +294,9 @@ mod user_service_tests {
         user.display_name = "Alice Johnson".to_string();
         assert_ne!(user.display_name, original_display_name);
         
+        // Store the updated user
+        update_user(user.clone());
+        
         // Verify update persistence
         let updated_user = get_user_by_id(user.id);
         assert_eq!(updated_user.display_name, user.display_name);
