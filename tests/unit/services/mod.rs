@@ -3,6 +3,7 @@
 use crate::common::*;
 use std::collections::HashMap;
 use uuid::Uuid;
+use base64::{Engine as _, engine::general_purpose::URL_SAFE_NO_PAD};
 
 #[cfg(test)]
 mod webauthn_service_tests {
