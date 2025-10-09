@@ -12,6 +12,7 @@ use base64::{Engine as _, engine::general_purpose::URL_SAFE_NO_PAD};
 pub struct WebAuthnService {
     rp_id: String,
     rp_name: String,
+    #[allow(dead_code)]
     origin: String,
 }
 
