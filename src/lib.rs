@@ -1,15 +1,20 @@
-//! FIDO2/WebAuthn Relying Party Server
+//! FIDO2/WebAuthn Conformance Test Server
 //! 
-//! This library provides a complete implementation of a FIDO2/WebAuthn conformant
-//! Relying Party Server with comprehensive testing and security features.
+//! This library provides a comprehensive FIDO2/WebAuthn server implementation
+//! designed for conformance testing with full test coverage.
 
 pub mod config;
 pub mod controllers;
+pub mod services;
 pub mod db;
+pub mod schema;
 pub mod error;
 pub mod middleware;
-pub mod routes;
-pub mod schema;
-pub mod services;
 pub mod utils;
+pub mod routes;
 
+#[cfg(test)]
+pub mod test_utils;
+
+pub use config::Config;
+pub use error::{AppError, AppResult};
