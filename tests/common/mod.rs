@@ -1,20 +1,11 @@
-//! Common test utilities and fixtures for FIDO2/WebAuthn testing
+//! Common test utilities and helpers for FIDO2/WebAuthn testing
 
+pub mod factories;
 pub mod fixtures;
 pub mod helpers;
-pub mod mocks;
-pub mod test_data;
+pub mod mock_server;
 
+pub use factories::*;
 pub use fixtures::*;
 pub use helpers::*;
-pub use mocks::*;
-pub use test_data::*;
-
-// Re-export common testing dependencies
-pub use actix_web::{
-    dev::ServiceResponse,
-    http::{header::ContentType, StatusCode},
-    test, App,
-};
-pub use serde_json::{json, Value};
-pub use uuid::Uuid;
+pub use mock_server::*;
