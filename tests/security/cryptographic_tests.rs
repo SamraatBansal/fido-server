@@ -9,7 +9,7 @@ mod tests {
     #[test]
     fn test_challenge_entropy() {
         // Generate multiple challenges and test entropy
-        let challenges: Vec<String> = (0..1000).map(|_| generate_secure_challenge().unwrap()).collect();
+        let challenges: Vec<String> = (0..1000).map(|_| fido2_webauthn_server::utils::crypto::generate_secure_challenge().unwrap()).collect();
         
         // Test uniqueness
         let unique_challenges: std::collections::HashSet<_> = challenges.iter().collect();
@@ -29,7 +29,7 @@ mod tests {
     #[test]
     fn test_entropy_quality() {
         // Test entropy quality with statistical analysis
-        let challenges: Vec<String> = (0..1000).map(|_| generate_secure_challenge().unwrap()).collect();
+        let challenges: Vec<String> = (0..1000).map(|_| fido2_webauthn_server::utils::crypto::generate_secure_challenge().unwrap()).collect();
         
         let mut byte_counts = std::collections::HashMap::new();
         for challenge in &challenges {
