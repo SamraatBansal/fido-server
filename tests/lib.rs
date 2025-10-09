@@ -2,6 +2,5 @@
 //!
 //! This module provides common utilities and setup for all integration tests.
 
-pub mod common;
-
-pub use common::*;
+// pub mod common; // Temporarily disabled
+// pub use common::*;
