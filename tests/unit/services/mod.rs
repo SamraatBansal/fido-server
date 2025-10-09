@@ -56,7 +56,7 @@ mod webauthn_service_tests {
     async fn test_challenge_expiration() {
         // Test challenge expiration logic
         
-        let mut challenge = TestChallenge::registration();
+        let challenge = TestChallenge::registration();
         
         // Initially not expired
         assert!(challenge.expires_at > chrono::Utc::now());
