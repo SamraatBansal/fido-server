@@ -1,6 +1,6 @@
 //! Credential-related request/response schemas
 
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use uuid::Uuid;
 
 /// Credential response
