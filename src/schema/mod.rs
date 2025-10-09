@@ -150,6 +150,7 @@ pub struct ServerPublicKeyCredentialGetOptionsResponse {
     pub error_message: String,
     pub challenge: String,
     pub timeout: Option<u64>,
+    #[serde(rename = "rpId")]
     pub rp_id: String,
     pub allow_credentials: Option<Vec<ServerPublicKeyCredentialDescriptor>>,
     pub user_verification: Option<String>,
