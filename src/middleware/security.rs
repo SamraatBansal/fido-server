@@ -13,6 +13,6 @@ pub async fn auth_validator(
 }
 
 /// Create authentication middleware
-pub fn auth_middleware() -> HttpAuthentication<actix_web_httpauth::extractors::bearer::BearerAuth> {
+pub fn auth_middleware() -> HttpAuthentication<actix_web_httpauth::extractors::bearer::BearerAuth, _> {
     HttpAuthentication::bearer(auth_validator)
 }
