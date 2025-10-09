@@ -48,7 +48,7 @@ impl Settings {
     /// # Errors
     ///
     /// Returns an error if configuration cannot be loaded
-    pub fn new() -> Result<Self, config::ConfigError> {
+    pub fn new() -> Result<Self, Box<dyn std::error::Error>> {
         // TODO: Implement proper configuration loading
         // This is a placeholder implementation
         Ok(Self {
