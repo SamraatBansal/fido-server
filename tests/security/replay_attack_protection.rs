@@ -2,7 +2,7 @@
 
 use actix_web::http::StatusCode;
 use crate::common::{create_test_app, post_json, read_body_json};
-use crate::fixtures::*;
+use fido2_webauthn_server::schema::*;
 
 #[cfg(test)]
 mod replay_attack_tests {
