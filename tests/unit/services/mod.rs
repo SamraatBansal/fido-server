@@ -380,6 +380,9 @@ mod credential_service_tests {
         
         let credential = TestCredential::valid();
         
+        // Store the credential first
+        update_credential(&credential.id, credential.clone());
+        
         // Verify credential exists
         assert!(lookup_credential_by_id(&credential.id).is_some());
         
