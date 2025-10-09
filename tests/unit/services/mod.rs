@@ -27,7 +27,7 @@ mod webauthn_service_tests {
         
         // Test base64url encoding validity
         for challenge in &challenges {
-            let decoded = base64::decode_config(challenge, base64::URL_SAFE_NO_PAD);
+            let decoded = URL_SAFE_NO_PAD.decode(challenge);
             assert!(decoded.is_ok(), "Challenge must be valid base64url");
             
             let decoded_bytes = decoded.unwrap();
