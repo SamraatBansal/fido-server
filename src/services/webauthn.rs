@@ -8,6 +8,7 @@ use uuid::Uuid;
 use std::sync::Arc;
 use webauthn_rs::prelude::*;
 use chrono::Utc;
+use base64::{Engine as _, engine::general_purpose::URL_SAFE_NO_PAD};
 
 /// WebAuthn service
 pub struct WebAuthnService {
