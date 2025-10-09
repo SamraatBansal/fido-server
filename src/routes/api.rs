@@ -12,7 +12,7 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
     let user_service = UserService::new();
 
     cfg.service(
-        web::scope("/api/v1")
+        web::scope("")
             .app_data(web::Data::new(webauthn_service))
             .app_data(web::Data::new(user_service))
             .route("/attestation/options", web::post().to(controllers::attestation::attestation_options))
