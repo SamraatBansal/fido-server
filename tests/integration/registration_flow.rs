@@ -19,7 +19,7 @@ mod registration_flow_tests {
         
         assert_eq!(response.status(), StatusCode::OK, "Registration options request should succeed");
         
-        let options_response: crate::fixtures::ServerPublicKeyCredentialCreationOptionsResponse = 
+        let options_response: ServerPublicKeyCredentialCreationOptionsResponse = 
             read_body_json(response).await;
         
         assert_eq!(options_response.status, "ok", "Response status should be ok");
@@ -58,7 +58,7 @@ mod registration_flow_tests {
         let response = post_json(&app, "/attestation/options", request).await;
         assert_eq!(response.status(), StatusCode::OK, "Request with platform authenticator should succeed");
         
-        let options_response: crate::fixtures::ServerPublicKeyCredentialCreationOptionsResponse = 
+        let options_response: ServerPublicKeyCredentialCreationOptionsResponse = 
             read_body_json(response).await;
         
         assert_eq!(options_response.authenticator_selection.as_ref().unwrap().authenticator_attachment, 
@@ -80,7 +80,7 @@ mod registration_flow_tests {
         let response = post_json(&app, "/attestation/options", request).await;
         assert_eq!(response.status(), StatusCode::OK, "Request with none attestation should succeed");
         
-        let options_response: crate::fixtures::ServerPublicKeyCredentialCreationOptionsResponse = 
+        let options_response: ServerPublicKeyCredentialCreationOptionsResponse = 
             read_body_json(response).await;
         
         assert_eq!(options_response.attestation, Some("none".to_string()));
@@ -92,7 +92,7 @@ mod registration_flow_tests {
         let response = post_json(&app, "/attestation/options", request).await;
         assert_eq!(response.status(), StatusCode::OK, "Request with indirect attestation should succeed");
         
-        let options_response: crate::fixtures::ServerPublicKeyCredentialCreationOptionsResponse = 
+        let options_response: ServerPublicKeyCredentialCreationOptionsResponse = 
             read_body_json(response).await;
         
         assert_eq!(options_response.attestation, Some("indirect".to_string()));
@@ -184,7 +184,7 @@ mod registration_flow_tests {
         
         assert_eq!(response.status(), StatusCode::OK);
         
-        let options_response: crate::fixtures::ServerPublicKeyCredentialCreationOptionsResponse = 
+        let options_response: ServerPublicKeyCredentialCreationOptionsResponse = 
             read_body_json(response).await;
         
         // Verify user data consistency
@@ -206,7 +206,7 @@ mod registration_flow_tests {
         
         assert_eq!(response.status(), StatusCode::OK);
         
-        let options_response: crate::fixtures::ServerPublicKeyCredentialCreationOptionsResponse = 
+        let options_response: ServerPublicKeyCredentialCreationOptionsResponse = 
             read_body_json(response).await;
         
         // Verify RP data consistency
@@ -223,7 +223,7 @@ mod registration_flow_tests {
         
         assert_eq!(response.status(), StatusCode::OK);
         
-        let options_response: crate::fixtures::ServerPublicKeyCredentialCreationOptionsResponse = 
+        let options_response: ServerPublicKeyCredentialCreationOptionsResponse = 
             read_body_json(response).await;
         
         // Verify credential parameters
@@ -249,7 +249,7 @@ mod registration_flow_tests {
         
         assert_eq!(response.status(), StatusCode::OK);
         
-        let options_response: crate::fixtures::ServerPublicKeyCredentialCreationOptionsResponse = 
+        let options_response: ServerPublicKeyCredentialCreationOptionsResponse = 
             read_body_json(response).await;
         
         // Verify timeout configuration
@@ -265,7 +265,7 @@ mod registration_flow_tests {
         
         assert_eq!(response.status(), StatusCode::OK);
         
-        let options_response: crate::fixtures::ServerPublicKeyCredentialCreationOptionsResponse = 
+        let options_response: ServerPublicKeyCredentialCreationOptionsResponse = 
             read_body_json(response).await;
         
         // For new registration, excludeCredentials should be empty or None
@@ -284,7 +284,7 @@ mod registration_flow_tests {
         
         assert_eq!(response.status(), StatusCode::OK);
         
-        let options_response: crate::fixtures::ServerPublicKeyCredentialCreationOptionsResponse = 
+        let options_response: ServerPublicKeyCredentialCreationOptionsResponse = 
             read_body_json(response).await;
         
         // Extensions should be None for basic registration
