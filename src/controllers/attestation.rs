@@ -8,8 +8,7 @@ use crate::schema::*;
 /// Handle attestation options request
 pub async fn attestation_options(
     webauthn_service: web::Data<WebAuthnService>,
-    _user_service: web::Data<UserService>,
-    request: web::Json<CreateUserRequest>,
+    request: web::Json<ServerPublicKeyCredentialCreationOptionsRequest>,
 ) -> Result<HttpResponse> {
     match webauthn_service.generate_registration_challenge(&request.username, &request.display_name).await {
         Ok(options) => Ok(HttpResponse::Ok().json(options)),
