@@ -5,6 +5,7 @@ use crate::schema::webauthn::*;
 use crate::schema::credential::{RegistrationResult, AuthenticationResult};
 use crate::db::models::Challenge;
 use uuid::Uuid;
+use chrono::Utc;
 use base64::{Engine as _, engine::general_purpose::URL_SAFE_NO_PAD};
 
 /// WebAuthn service
