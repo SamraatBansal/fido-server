@@ -15,7 +15,7 @@ impl CredentialService {
     }
 
     /// Create a new credential
-    pub async fn create_credential(&self, credential_id: &str, user_id: &Uuid) -> AppResult<()> {
+    pub async fn create_credential(&self, credential_id: &str, _user_id: &Uuid) -> AppResult<()> {
         // Validate credential
         if credential_id.is_empty() {
             return Err(AppError::ValidationError("Credential ID cannot be empty".to_string()));
