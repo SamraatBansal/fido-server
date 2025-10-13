@@ -285,8 +285,8 @@ pub async fn assert_error_response(response: ServiceResponse, expected_status: u
 mod tests {
     use super::*;
 
-    #[test]
-    fn test_generate_secure_challenge() {
+    #[tokio::test]
+    async fn test_generate_secure_challenge() {
         let challenge1 = generate_secure_challenge();
         let challenge2 = generate_secure_challenge();
         
@@ -295,8 +295,8 @@ mod tests {
         assert!(is_valid_base64url(&challenge1));
     }
 
-    #[test]
-    fn test_random_username() {
+    #[tokio::test]
+    async fn test_random_username() {
         let username1 = random_username();
         let username2 = random_username();
         
@@ -305,8 +305,8 @@ mod tests {
         assert!(username1.len() > 8);
     }
 
-    #[test]
-    fn test_extract_challenge_from_client_data() {
+    #[tokio::test]
+    async fn test_extract_challenge_from_client_data() {
         let challenge = "test_challenge_123";
         let client_data = create_mock_client_data_json(challenge, "https://example.com", "webauthn.create");
         
@@ -314,8 +314,8 @@ mod tests {
         assert_eq!(extracted, challenge);
     }
 
-    #[test]
-    fn test_extract_origin_from_client_data() {
+    #[tokio::test]
+    async fn test_extract_origin_from_client_data() {
         let origin = "https://example.com";
         let client_data = create_mock_client_data_json("challenge", origin, "webauthn.create");
         
