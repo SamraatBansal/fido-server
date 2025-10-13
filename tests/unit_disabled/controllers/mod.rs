@@ -7,7 +7,7 @@ use uuid::Uuid;
 
 #[cfg(test)]
 mod attestation_tests {
-    use super::*;
+    
 
     #[tokio::test]
     async fn test_attestation_options_valid_request() {
@@ -118,7 +118,7 @@ mod attestation_tests {
 
 #[cfg(test)]
 mod assertion_tests {
-    use super::*;
+    
 
     #[tokio::test]
     async fn test_assertion_options_valid_request() {
@@ -224,7 +224,7 @@ mod assertion_tests {
 
 #[cfg(test)]
 mod response_validation_tests {
-    use super::*;
+    
 
     #[tokio::test]
     async fn test_attestation_options_response_schema() {
@@ -334,7 +334,7 @@ mod response_validation_tests {
 
 #[cfg(test)]
 mod edge_case_tests {
-    use super::*;
+    
 
     #[tokio::test]
     async fn test_empty_values() {

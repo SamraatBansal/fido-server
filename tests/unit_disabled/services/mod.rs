@@ -13,7 +13,7 @@ static CREDENTIAL_STORE: LazyLock<Mutex<HashMap<String, TestCredential>>> = Lazy
 
 #[cfg(test)]
 mod webauthn_service_tests {
-    use super::*;
+    
 
     #[tokio::test]
     async fn test_challenge_generation_security() {
@@ -257,7 +257,7 @@ mod webauthn_service_tests {
 
 #[cfg(test)]
 mod user_service_tests {
-    use super::*;
+    
 
     #[tokio::test]
     async fn test_user_creation() {
@@ -309,7 +309,7 @@ mod user_service_tests {
 
 #[cfg(test)]
 mod credential_service_tests {
-    use super::*;
+    
 
     #[tokio::test]
     async fn test_credential_creation() {

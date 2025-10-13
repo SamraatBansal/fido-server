@@ -6,7 +6,7 @@ use fido2_webauthn_server::schema::*;
 
 #[cfg(test)]
 mod replay_attack_tests {
-    use super::*;
+    
 
     #[tokio::test]
     async fn test_challenge_uniqueness_prevents_replay() {

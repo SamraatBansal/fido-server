@@ -96,7 +96,7 @@ pub fn valid_assertion_result_request() -> Value {
 
 /// Invalid request fixtures for negative testing
 pub mod invalid {
-    use super::*;
+    
 
     /// Empty request
     pub fn empty_request() -> Value {
@@ -164,7 +164,7 @@ pub mod invalid {
 
 /// Security test fixtures
 pub mod security {
-    use super::*;
+    
 
     /// Request with replayed challenge
     pub fn replayed_challenge(old_challenge: &str) -> Value {
@@ -228,7 +228,7 @@ pub mod security {
 
 /// Performance test fixtures
 pub mod performance {
-    use super::*;
+    
 
     /// Generate multiple concurrent requests
     pub fn generate_concurrent_requests(count: usize) -> Vec<Value> {
@@ -259,7 +259,7 @@ pub mod performance {
 
 /// Compliance test fixtures for FIDO2 specification
 pub mod compliance {
-    use super::*;
+    
 
     /// Request with all supported algorithms
     pub fn all_algorithms_request() -> Value {

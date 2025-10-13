@@ -6,7 +6,7 @@ use fido2_webauthn_server::schema::*;
 
 #[cfg(test)]
 mod attestation_endpoints_tests {
-    use super::*;
+    
 
     #[tokio::test]
     async fn test_attestation_options_endpoint_success() {
@@ -121,7 +121,7 @@ mod attestation_endpoints_tests {
 
 #[cfg(test)]
 mod assertion_endpoints_tests {
-    use super::*;
+    
 
     #[tokio::test]
     async fn test_assertion_options_endpoint_success() {
@@ -221,7 +221,7 @@ mod assertion_endpoints_tests {
 
 #[cfg(test)]
 mod endpoint_error_handling_tests {
-    use super::*;
+    
 
     #[tokio::test]
     async fn test_endpoint_error_response_format() {
@@ -314,7 +314,7 @@ mod endpoint_error_handling_tests {
 
 #[cfg(test)]
 mod endpoint_security_tests {
-    use super::*;
+    
 
     #[tokio::test]
     async fn test_endpoint_sql_injection_attempt() {

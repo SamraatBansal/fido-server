@@ -5,7 +5,7 @@ use fido2_webauthn_server::schema::*;
 
 #[cfg(test)]
 mod webauthn_service_tests {
-    use super::*;
+    
 
     #[test]
     fn test_webauthn_service_creation() {

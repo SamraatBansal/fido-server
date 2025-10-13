@@ -6,7 +6,7 @@ use fido2_webauthn_server::schema::*;
 
 #[cfg(test)]
 mod authentication_flow_tests {
-    use super::*;
+    
 
     #[tokio::test]
     async fn test_complete_authentication_flow_success() {

@@ -5,7 +5,7 @@ use validator::ValidationError;
 
 #[cfg(test)]
 mod validation_function_tests {
-    use super::*;
+    
 
     #[test]
     fn test_attestation_validation_all_values() {
@@ -198,7 +198,7 @@ mod validation_function_tests {
 
 #[cfg(test)]
 mod regex_tests {
-    use super::*;
+    
 
     #[test]
     fn test_username_regex_email_patterns() {
@@ -349,7 +349,7 @@ mod regex_tests {
 
 #[cfg(test)]
 mod error_message_tests {
-    use super::*;
+    
 
     #[test]
     fn test_validation_error_types() {

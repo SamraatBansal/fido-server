@@ -6,7 +6,7 @@ use fido2_webauthn_server::schema::*;
 
 #[cfg(test)]
 mod authentication_security_tests {
-    use super::*;
+    
 
     #[tokio::test]
     async fn test_origin_validation() {

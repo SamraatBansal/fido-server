@@ -235,7 +235,7 @@ pub async fn create_test_webauthn_service() -> services::WebAuthnService {
 
 /// Mock service implementations for testing
 pub mod mocks {
-    use super::*;
+    
     use mockall::mock;
 
     mock! {

@@ -4,7 +4,7 @@ use fido2_webauthn_server::utils::{crypto, validation};
 
 #[cfg(test)]
 mod crypto_tests {
-    use super::*;
+    
 
     #[test]
     fn test_generate_secure_challenge() {
@@ -109,7 +109,7 @@ mod crypto_tests {
 
 #[cfg(test)]
 mod validation_tests {
-    use super::*;
+    
     use validator::ValidationError;
 
     #[test]

@@ -5,7 +5,7 @@ use validator::Validate;
 
 #[cfg(test)]
 mod registration_request_tests {
-    use super::*;
+    
 
     #[test]
     fn test_valid_registration_request() {
@@ -62,7 +62,7 @@ mod registration_request_tests {
 
 #[cfg(test)]
 mod authentication_request_tests {
-    use super::*;
+    
 
     #[test]
     fn test_valid_authentication_request() {
@@ -90,7 +90,7 @@ mod authentication_request_tests {
 
 #[cfg(test)]
 mod attestation_response_tests {
-    use super::*;
+    
 
     #[test]
     fn test_valid_attestation_response() {
@@ -134,7 +134,7 @@ mod attestation_response_tests {
 
 #[cfg(test)]
 mod assertion_response_tests {
-    use super::*;
+    
 
     #[test]
     fn test_valid_assertion_response() {
@@ -178,7 +178,7 @@ mod assertion_response_tests {
 
 #[cfg(test)]
 mod server_response_tests {
-    use super::*;
+    
 
     #[test]
     fn test_server_response_success() {
@@ -206,7 +206,7 @@ mod server_response_tests {
 
 #[cfg(test)]
 mod credential_descriptor_tests {
-    use super::*;
+    
 
     #[test]
     fn test_valid_credential_descriptor() {
@@ -228,7 +228,7 @@ mod credential_descriptor_tests {
 
 #[cfg(test)]
 mod authenticator_selection_tests {
-    use super::*;
+    
 
     #[test]
     fn test_authenticator_selection_criteria() {
