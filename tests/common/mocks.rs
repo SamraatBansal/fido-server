@@ -2,8 +2,6 @@
 
 use mockall::mock;
 use async_trait::async_trait;
-use uuid::Uuid;
-use std::collections::HashMap;
 
 // Mock WebAuthn Service
 mock! {
