@@ -122,6 +122,7 @@ pub struct ServerPublicKeyCredentialAttestationResponse {
     pub id: String,
     
     #[validate(length(min = 1))]
+    #[serde(rename = "rawId")]
     pub raw_id: String,
     
     #[validate]
