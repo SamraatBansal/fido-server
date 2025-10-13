@@ -115,7 +115,7 @@ impl WebAuthnService {
             challenge: crate::utils::crypto::generate_secure_challenge(),
             timeout: Some(60000),
             rp_id: self.rp_id.clone(),
-            allow_credentials: None,
+            allow_credentials: Some(vec![]),
             user_verification: Some("required".to_string()),
             extensions: None,
         })
