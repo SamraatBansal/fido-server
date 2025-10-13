@@ -261,7 +261,6 @@ pub mod performance {
 
 /// Compliance test fixtures for FIDO2 specification
 pub mod compliance {
-    use super::*;
     use serde_json::{json, Value};
 
     /// Request with all supported algorithms
