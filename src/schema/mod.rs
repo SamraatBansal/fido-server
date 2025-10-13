@@ -196,14 +196,17 @@ pub struct ServerPublicKeyCredentialAssertionResponse {
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 pub struct ServerAuthenticatorAssertionResponse {
     #[validate(length(min = 1))]
+    #[serde(rename = "authenticatorData")]
     pub authenticator_data: String,
     
     #[validate(length(min = 1))]
+    #[serde(rename = "clientDataJSON")]
     pub client_data_json: String,
     
     #[validate(length(min = 1))]
     pub signature: String,
     
+    #[serde(rename = "userHandle")]
     pub user_handle: Option<String>,
 }
 
