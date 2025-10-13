@@ -150,6 +150,7 @@ pub struct ServerPublicKeyCredentialGetOptionsRequest {
     pub username: Option<String>,
     
     #[validate(custom = "crate::utils::validation::validate_user_verification")]
+    #[serde(rename = "userVerification")]
     pub user_verification: Option<String>,
 }
 
