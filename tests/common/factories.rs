@@ -1,8 +1,6 @@
 //! Test data factories for generating valid and invalid test payloads
 
 use serde_json::{json, Value};
-use uuid::Uuid;
-use base64::{Engine as _, engine::general_purpose};
 
 /// Factory for creating registration (attestation) request payloads
 pub struct RegistrationFactory;
