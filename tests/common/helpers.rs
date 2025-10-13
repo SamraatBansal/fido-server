@@ -196,6 +196,8 @@ where
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
     #[tokio::test]
     async fn test_generate_secure_challenge() {
         let challenge1 = generate_secure_challenge();
