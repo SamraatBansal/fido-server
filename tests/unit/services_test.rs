@@ -2,8 +2,6 @@
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     #[test]
     fn test_webauthn_service_challenge_generation() {
         // Placeholder test - will be implemented
