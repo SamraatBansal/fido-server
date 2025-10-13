@@ -12,7 +12,7 @@ pub async fn create_test_app() -> impl actix_web::dev::Service<
     Response = ServiceResponse,
     Error = actix_web::Error,
 > {
-    test::init_service(
+    let app = test::init_service(
         App::new().service(
             actix_web::web::resource("/attestation/options")
                 .route(actix_web::web::post().to(mock_attestation_options)),
@@ -29,7 +29,9 @@ pub async fn create_test_app() -> impl actix_web::dev::Service<
             actix_web::web::resource("/assertion/result")
                 .route(actix_web::web::post().to(mock_assertion_result)),
         )
-    ).await
+    ).await;
+    
+    app
 }
 
 /// Mock handler for attestation options
