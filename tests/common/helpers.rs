@@ -44,7 +44,9 @@ async fn mock_attestation_options(
     }
     
     let response = json!({
-        "challenge": crate::common::fixtures::valid_attestation_options_response()["challenge"],
+        "status": "ok",
+        "errorMessage": "",
+        "challenge": generate_secure_challenge(),
         "rp": { "name": "Example RP", "id": "example.com" },
         "user": { 
             "id": URL_SAFE_NO_PAD.encode(request["username"].as_str().unwrap_or("")),
