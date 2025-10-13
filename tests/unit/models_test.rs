@@ -2,8 +2,6 @@
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     #[test]
     fn test_user_model_validation() {
         // Placeholder test - will be implemented
