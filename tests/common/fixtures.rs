@@ -230,7 +230,6 @@ pub mod security {
 
 /// Performance test fixtures
 pub mod performance {
-    use super::*;
     use serde_json::{json, Value};
 
     /// Generate multiple concurrent requests
