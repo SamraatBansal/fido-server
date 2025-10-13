@@ -259,19 +259,19 @@ where
 }
 
 /// Assert response status and extract JSON
-pub fn assert_response_json(response: &ServiceResponse, expected_status: u16) -> Value {
+pub async fn assert_response_json(response: ServiceResponse, expected_status: u16) -> Value {
     assert_eq!(response.status().as_u16(), expected_status);
     
-    let body = test::read_body(response);
+    let body = test::read_body(response).await;
     let json: Value = serde_json::from_slice(&body).expect("Failed to parse JSON response");
     json
 }
 
 /// Assert error response
-pub fn assert_error_response(response: &ServiceResponse, expected_status: u16, expected_message: &str) {
+pub async fn assert_error_response(response: ServiceResponse, expected_status: u16, expected_message: &str) {
     assert_eq!(response.status().as_u16(), expected_status);
     
-    let body = test::read_body(response);
+    let body = test::read_body(response).await;
     let json: Value = serde_json::from_slice(&body).expect("Failed to parse JSON response");
     
     if let Some(error) = json.get("error") {
