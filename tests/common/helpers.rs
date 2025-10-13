@@ -92,7 +92,9 @@ async fn mock_assertion_options(
     }
     
     let response = json!({
-        "challenge": crate::common::fixtures::valid_assertion_options_response()["challenge"],
+        "status": "ok",
+        "errorMessage": "",
+        "challenge": generate_secure_challenge(),
         "rpId": "example.com",
         "allowCredentials": [{ 
             "type": "public-key", 
