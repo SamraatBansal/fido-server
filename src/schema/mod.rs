@@ -131,6 +131,7 @@ pub struct ServerPublicKeyCredentialAttestationResponse {
     #[serde(rename = "type")]
     pub cred_type: String,
     
+    #[serde(rename = "getClientExtensionResults")]
     pub get_client_extension_results: Option<AuthenticationExtensionsClientOutputs>,
 }
 
@@ -189,6 +190,7 @@ pub struct ServerPublicKeyCredentialAssertionResponse {
     #[serde(rename = "type")]
     pub cred_type: String,
     
+    #[serde(rename = "getClientExtensionResults")]
     pub get_client_extension_results: Option<AuthenticationExtensionsClientOutputs>,
 }
 
