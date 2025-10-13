@@ -6,6 +6,7 @@ use std::time::Duration;
 use uuid::Uuid;
 
 /// Mock handler for attestation options
+#[allow(dead_code)]
 async fn mock_attestation_options(
     req: actix_web::web::Json<Value>,
 ) -> Result<actix_web::web::Json<Value>, actix_web::Error> {
