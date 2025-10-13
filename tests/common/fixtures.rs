@@ -230,7 +230,8 @@ pub mod security {
 
 /// Performance test fixtures
 pub mod performance {
-    
+    use super::*;
+    use serde_json::{json, Value};
 
     /// Generate multiple concurrent requests
     pub fn generate_concurrent_requests(count: usize) -> Vec<Value> {
