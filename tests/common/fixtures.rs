@@ -96,7 +96,8 @@ pub fn valid_assertion_result_request() -> Value {
 
 /// Invalid request fixtures for negative testing
 pub mod invalid {
-    
+    use super::*;
+    use serde_json::{json, Value};
 
     /// Empty request
     pub fn empty_request() -> Value {
