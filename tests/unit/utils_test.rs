@@ -2,8 +2,6 @@
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     #[test]
     fn test_crypto_utilities() {
         // Placeholder test - will be implemented
