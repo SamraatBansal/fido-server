@@ -56,6 +56,7 @@ async fn mock_attestation_result(
 }
 
 /// Mock handler for assertion options
+#[allow(dead_code)]
 async fn mock_assertion_options(
     req: actix_web::web::Json<Value>,
 ) -> Result<actix_web::web::Json<Value>, actix_web::Error> {
