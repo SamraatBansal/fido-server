@@ -1,6 +1,6 @@
 //! Test helper functions and utilities
 
-use actix_web::{dev::ServiceResponse, test, App, http};
+use actix_web::{dev::ServiceResponse, test, App};
 use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
 use serde_json::{json, Value};
 use std::time::Duration;
