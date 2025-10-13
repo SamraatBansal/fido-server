@@ -215,7 +215,7 @@ pub fn extract_origin_from_client_data(client_data_b64: &str) -> Result<String, 
 }
 
 /// Create a mock attestation object
-pub fn create_mock_attestation_object(challenge: &str) -> String {
+pub fn create_mock_attestation_object(_challenge: &str) -> String {
     let mock_data = json!({
         "fmt": "packed",
         "attStmt": {},
