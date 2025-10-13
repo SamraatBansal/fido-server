@@ -42,7 +42,9 @@ mod tests {
         let resp = test::call_service(&app, req).await;
         assert_eq!(resp.status(), 200);
 
-        let body: serde_json::Value = test::read_body(resp).await;
+        let body_bytes = test::read_body(resp).await;
+        let body: serde_json::Value = serde_json::from_slice(&body_bytes)
+            .expect("Failed to parse JSON response");
         
         // Verify response structure according to specification
         assert_eq!(body["status"], "ok");
@@ -86,7 +88,9 @@ mod tests {
         let resp = test::call_service(&app, req).await;
         assert_eq!(resp.status(), 400);
 
-        let body: serde_json::Value = test::read_body(resp).await;
+        let body_bytes = test::read_body(resp).await;
+        let body: serde_json::Value = serde_json::from_slice(&body_bytes)
+            .expect("Failed to parse JSON response");
         
         // Verify error response structure
         assert_eq!(body["status"], "failed");
@@ -129,7 +133,9 @@ mod tests {
         let resp = test::call_service(&app, req).await;
         assert_eq!(resp.status(), 200);
 
-        let body: serde_json::Value = test::read_body(resp).await;
+        let body_bytes = test::read_body(resp).await;
+        let body: serde_json::Value = serde_json::from_slice(&body_bytes)
+            .expect("Failed to parse JSON response");
         
         // Verify response structure according to specification
         assert_eq!(body["status"], "ok");
@@ -165,7 +171,9 @@ mod tests {
         let resp = test::call_service(&app, req).await;
         assert_eq!(resp.status(), 200);
 
-        let body: serde_json::Value = test::read_body(resp).await;
+        let body_bytes = test::read_body(resp).await;
+        let body: serde_json::Value = serde_json::from_slice(&body_bytes)
+            .expect("Failed to parse JSON response");
         
         // Verify response structure according to specification
         assert_eq!(body["status"], "ok");
@@ -214,7 +222,9 @@ mod tests {
         let resp = test::call_service(&app, req).await;
         assert_eq!(resp.status(), 200);
 
-        let body: serde_json::Value = test::read_body(resp).await;
+        let body_bytes = test::read_body(resp).await;
+        let body: serde_json::Value = serde_json::from_slice(&body_bytes)
+            .expect("Failed to parse JSON response");
         
         // Verify response structure according to specification
         assert_eq!(body["status"], "ok");
