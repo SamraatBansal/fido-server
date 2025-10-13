@@ -1,6 +1,6 @@
 //! Test helper functions and utilities
 
-use actix_web::{dev::ServiceResponse, test, App};
+use actix_web::{dev::ServiceResponse, test, App, http};
 use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
 use serde_json::{json, Value};
 use std::time::Duration;
@@ -12,24 +12,24 @@ pub async fn create_test_app() -> impl actix_web::dev::Service<
     Response = ServiceResponse,
     Error = actix_web::Error,
 > {
-    // This would be replaced with actual app creation
-    // For now, we'll create a mock app structure
-    App::new().service(
-        actix_web::web::resource("/attestation/options")
-            .route(actix_web::web::post().to(mock_attestation_options)),
-    )
-    .service(
-        actix_web::web::resource("/attestation/result")
-            .route(actix_web::web::post().to(mock_attestation_result)),
-    )
-    .service(
-        actix_web::web::resource("/assertion/options")
-            .route(actix_web::web::post().to(mock_assertion_options)),
-    )
-    .service(
-        actix_web::web::resource("/assertion/result")
-            .route(actix_web::web::post().to(mock_assertion_result)),
-    )
+    test::init_service(
+        App::new().service(
+            actix_web::web::resource("/attestation/options")
+                .route(actix_web::web::post().to(mock_attestation_options)),
+        )
+        .service(
+            actix_web::web::resource("/attestation/result")
+                .route(actix_web::web::post().to(mock_attestation_result)),
+        )
+        .service(
+            actix_web::web::resource("/assertion/options")
+                .route(actix_web::web::post().to(mock_assertion_options)),
+        )
+        .service(
+            actix_web::web::resource("/assertion/result")
+                .route(actix_web::web::post().to(mock_assertion_result)),
+        )
+    ).await
 }
 
 /// Mock handler for attestation options
