@@ -2,9 +2,6 @@
 
 use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
 use serde_json::{json, Value};
-use std::collections::HashMap;
-use uuid::Uuid;
-use chrono::{DateTime, Utc};
 
 /// Valid attestation options request fixture
 pub fn valid_attestation_options_request() -> Value {
