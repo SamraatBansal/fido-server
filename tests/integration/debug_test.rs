@@ -34,14 +34,15 @@ mod tests {
             .to_request();
 
         let resp = test::call_service(&app, req).await;
+        let status = resp.status();
         
-        println!("Status: {}", resp.status());
+        println!("Status: {}", status);
         
         let body_bytes = test::read_body(resp).await;
         let body_str = String::from_utf8_lossy(&body_bytes);
         println!("Response body: {}", body_str);
         
         // Just check it's not a server error
-        assert!(resp.status() != 500);
+        assert!(status != 500);
     }
 }
