@@ -2,8 +2,6 @@
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     #[actix_web::test]
     async fn test_attestation_options_endpoint() {
         // Placeholder test - will be implemented
