@@ -6,34 +6,6 @@ use serde_json::{json, Value};
 use std::time::Duration;
 use uuid::Uuid;
 
-/// Create a test app instance
-pub async fn create_test_app() -> impl actix_web::dev::Service<
-    actix_web::dev::ServiceRequest,
-    Response = ServiceResponse,
-    Error = actix_web::Error,
-> {
-    let app = test::init_service(
-        App::new().service(
-            actix_web::web::resource("/attestation/options")
-                .route(actix_web::web::post().to(mock_attestation_options)),
-        )
-        .service(
-            actix_web::web::resource("/attestation/result")
-                .route(actix_web::web::post().to(mock_attestation_result)),
-        )
-        .service(
-            actix_web::web::resource("/assertion/options")
-                .route(actix_web::web::post().to(mock_assertion_options)),
-        )
-        .service(
-            actix_web::web::resource("/assertion/result")
-                .route(actix_web::web::post().to(mock_assertion_result)),
-        )
-    ).await;
-    
-    app
-}
-
 /// Mock handler for attestation options
 async fn mock_attestation_options(
     req: actix_web::web::Json<Value>,
@@ -126,44 +98,6 @@ async fn mock_assertion_result(
     });
     
     Ok(actix_web::web::Json(response))
-}
-
-/// Send a POST request with JSON payload
-pub async fn post_json(
-    app: &impl actix_web::dev::Service<
-        actix_web::dev::ServiceRequest,
-        Response = ServiceResponse,
-        Error = actix_web::Error,
-    >,
-    path: &str,
-    payload: Value,
-) -> ServiceResponse {
-    let req = test::TestRequest::post()
-        .uri(path)
-        .set_json(&payload)
-        .to_request();
-    
-    test::call_service(app, req).await
-}
-
-/// Send a POST request with raw body
-pub async fn post_raw(
-    app: &impl actix_web::dev::Service<
-        actix_web::dev::ServiceRequest,
-        Response = ServiceResponse,
-        Error = actix_web::Error,
-    >,
-    path: &str,
-    body: Vec<u8>,
-    content_type: &str,
-) -> ServiceResponse {
-    let req = test::TestRequest::post()
-        .uri(path)
-        .insert_header(("content-type", content_type))
-        .set_payload(body)
-        .to_request();
-    
-    test::call_service(app, req).await
 }
 
 /// Generate a secure random challenge
@@ -260,33 +194,8 @@ where
     (result, duration)
 }
 
-/// Assert response status and extract JSON
-pub async fn assert_response_json(response: ServiceResponse, expected_status: u16) -> Value {
-    assert_eq!(response.status().as_u16(), expected_status);
-    
-    let body = test::read_body(response).await;
-    let json: Value = serde_json::from_slice(&body).expect("Failed to parse JSON response");
-    json
-}
-
-/// Assert error response
-pub async fn assert_error_response(response: ServiceResponse, expected_status: u16, expected_message: &str) {
-    assert_eq!(response.status().as_u16(), expected_status);
-    
-    let body = test::read_body(response).await;
-    let json: Value = serde_json::from_slice(&body).expect("Failed to parse JSON response");
-    
-    if let Some(error) = json.get("error") {
-        assert_eq!(error.as_str().unwrap_or(""), expected_message);
-    } else if let Some(message) = json.get("message") {
-        assert_eq!(message.as_str().unwrap_or(""), expected_message);
-    }
-}
-
 #[cfg(test)]
 mod tests {
-    
-
     #[tokio::test]
     async fn test_generate_secure_challenge() {
         let challenge1 = generate_secure_challenge();
