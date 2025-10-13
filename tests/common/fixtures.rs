@@ -165,7 +165,8 @@ pub mod invalid {
 
 /// Security test fixtures
 pub mod security {
-    
+    use super::*;
+    use serde_json::{json, Value};
 
     /// Request with replayed challenge
     pub fn replayed_challenge(old_challenge: &str) -> Value {
