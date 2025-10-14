@@ -78,7 +78,7 @@ pub async fn attestation_result(
 /// Generate authentication challenge
 pub async fn assertion_options(
     state: web::Data<WebAuthnControllerState>,
-    req: HttpRequest,
+    _req: HttpRequest,
     request: web::Json<ServerPublicKeyCredentialGetOptionsRequest>,
 ) -> Result<HttpResponse> {
     // Validate request
@@ -100,7 +100,7 @@ pub async fn assertion_options(
 /// Verify authentication response
 pub async fn assertion_result(
     state: web::Data<WebAuthnControllerState>,
-    req: HttpRequest,
+    _req: HttpRequest,
     request: web::Json<ServerPublicKeyCredential>,
 ) -> Result<HttpResponse> {
     // Validate request
