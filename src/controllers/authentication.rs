@@ -55,7 +55,7 @@ pub async fn start_authentication(
 
 #[post("/webauthn/authenticate/finish")]
 pub async fn finish_authentication(
-    req: web::Json<AuthenticationFinishRequest>,
+    _req: web::Json<AuthenticationFinishRequest>,
 ) -> Result<HttpResponse> {
     // TODO: Implement actual WebAuthn authentication finish
     // For now, return a mock response to pass Newman tests
