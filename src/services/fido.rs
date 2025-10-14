@@ -128,7 +128,7 @@ impl FidoService {
 
         // Generate challenge using webauthn-rs
         let user_unique_id = Uuid::new_v4();
-        let (ccr, reg_state) = self.webauthn
+        let (ccr, _reg_state) = self.webauthn
             .start_passkey_registration(
                 user_unique_id,
                 &request.username,
