@@ -1,6 +1,8 @@
 //! WebAuthn authentication controller
 
-use actix_web::{post, web, HttpResponse, Result};
+#![allow(missing_docs)]
+
+use actix_web::{web, HttpResponse, Result};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize)]
