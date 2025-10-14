@@ -6,6 +6,7 @@ use base64::{Engine as _, engine::general_purpose};
 use std::collections::HashMap;
 use uuid::Uuid;
 use webauthn_rs::prelude::*;
+use url::Url;
 
 /// WebAuthn service configuration
 #[derive(Debug, Clone)]
@@ -41,11 +42,14 @@ enum ChallengeType {
 impl WebAuthnService {
     /// Create a new WebAuthn service
     pub fn new(config: WebAuthnConfig) -> Result<Self> {
-        let webauthn = Webauthn::new(
-            &config.rp_name,
-            &config.rp_id,
-            &config.rp_origin,
-        );
+        let rp_origin = Url::parse(&config.rp_origin)
+            .map_err(|e| AppError::bad_request(format!("Invalid origin URL: {}", e)))?;
+        
+        let webauthn = WebauthnBuilder::new(&config.rp_id, &rp_origin)
+            .map_err(|e| AppError::bad_request(format!("Invalid WebAuthn config: {}", e)))?
+            .rp_name(&config.rp_name)
+            .build()
+            .map_err(|e| AppError::bad_request(format!("Failed to build WebAuthn: {}", e)))?;
 
         Ok(Self {
             webauthn,
