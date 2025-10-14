@@ -168,32 +168,30 @@ pub async fn assertion_result(
         .unwrap_or("");
 
     // Validate challenge
-    unsafe {
-        let challenge_store = super::registration::get_challenge_store();
-        if let Some((challenge_type, expires_at)) = challenge_store.get(challenge) {
-            if *challenge_type != "authentication" {
-                return HttpResponse::BadRequest().json(json!({
-                    "status": "failed",
-                    "errorMessage": "Invalid challenge type!"
-                }));
-            }
-
-            if chrono::Utc::now() > *expires_at {
-                challenge_store.remove(challenge);
-                return HttpResponse::BadRequest().json(json!({
-                    "status": "failed",
-                    "errorMessage": "Challenge has expired!"
-                }));
-            }
-
-            // Remove used challenge
-            challenge_store.remove(challenge);
-        } else {
+    let challenge_store = super::registration::get_challenge_store();
+    if let Some((challenge_type, expires_at)) = challenge_store.get(challenge) {
+        if *challenge_type != "authentication" {
             return HttpResponse::BadRequest().json(json!({
                 "status": "failed",
-                "errorMessage": "Invalid or expired challenge!"
+                "errorMessage": "Invalid challenge type!"
             }));
         }
+
+        if chrono::Utc::now() > *expires_at {
+            challenge_store.remove(challenge);
+            return HttpResponse::BadRequest().json(json!({
+                "status": "failed",
+                "errorMessage": "Challenge has expired!"
+            }));
+        }
+
+        // Remove used challenge
+        challenge_store.remove(challenge);
+    } else {
+        return HttpResponse::BadRequest().json(json!({
+            "status": "failed",
+            "errorMessage": "Invalid or expired challenge!"
+        }));
     }
 
     // Basic signature validation (in a real implementation, this would be cryptographic verification)
