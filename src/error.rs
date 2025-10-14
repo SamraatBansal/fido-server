@@ -2,6 +2,9 @@ use thiserror::Error;
 use actix_web::{HttpResponse, ResponseError};
 use serde_json::json;
 
+/// Result type alias for WebAuthn operations
+pub type Result<T> = std::result::Result<T, WebAuthnError>;
+
 #[derive(Error, Debug)]
 pub enum WebAuthnError {
     #[error("Invalid username: {0}")]
