@@ -118,7 +118,8 @@ pub async fn assertion_options(
     }
 
     // Get user's credentials
-    let user_credentials = user_store.get(&req.username).unwrap_or(&vec![]);
+    let empty_vec = vec![];
+    let user_credentials = user_store.get(&req.username).unwrap_or(&empty_vec);
     let allow_credentials: Vec<ServerPublicKeyCredentialDescriptor> = user_credentials
         .iter()
         .map(|cred_id| ServerPublicKeyCredentialDescriptor {
