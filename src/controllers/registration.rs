@@ -3,9 +3,8 @@
 use actix_web::{web, HttpResponse, Result};
 use crate::db::models::{
     RegistrationChallengeRequest, RegistrationChallengeResponse, 
-    RegistrationVerificationRequest, ServerResponse,
-    RelyingParty, UserEntity, PubKeyCredParam, CredentialDescriptor,
-    AuthenticatorSelection
+    RegistrationVerificationRequest,
+    RelyingParty, UserEntity, PubKeyCredParam
 };
 use crate::error::AppError;
 use base64::{Engine as _, engine::general_purpose::URL_SAFE_NO_PAD};
