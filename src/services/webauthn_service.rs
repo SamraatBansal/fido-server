@@ -6,7 +6,6 @@ use base64::{Engine as _, engine::general_purpose};
 use std::collections::HashMap;
 use uuid::Uuid;
 use webauthn_rs::prelude::*;
-use webauthn_rs_proto::RelyingParty;
 
 /// WebAuthn service configuration
 #[derive(Debug, Clone)]
@@ -42,17 +41,10 @@ enum ChallengeType {
 impl WebAuthnService {
     /// Create a new WebAuthn service
     pub fn new(config: WebAuthnConfig) -> Result<Self> {
-        let rp = RelyingParty {
-            name: config.rp_name.clone(),
-            id: config.rp_id.clone(),
-            ..Default::default()
-        };
-
         let webauthn = Webauthn::new(
-            &rp,
-            &config.rp_origin
-                .parse()
-                .map_err(|e| AppError::bad_request(format!("Invalid origin URL: {}", e)))?,
+            &config.rp_name,
+            &config.rp_id,
+            &config.rp_origin,
         );
 
         Ok(Self {
@@ -82,7 +74,7 @@ impl WebAuthnService {
             .map_err(|e| AppError::WebAuthn(e))?;
 
         // Convert to our response format
-        let challenge_b64 = general_purpose::URL_SAFE_NO_PAD.encode(creation_challenge_response.public_key.challenge.0);
+        let challenge_b64 = general_purpose::URL_SAFE_NO_PAD.encode(creation_challenge_response.public_key.challenge.as_ref());
 
         let mut response = ServerPublicKeyCredentialCreationOptionsResponse {
             status: "ok".to_string(),
