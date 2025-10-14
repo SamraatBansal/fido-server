@@ -160,7 +160,7 @@ impl FidoService {
             .encode(user_unique_id.as_bytes());
 
         let challenge_b64 = base64::engine::general_purpose::URL_SAFE_NO_PAD
-            .encode(&ccr.public_key.challenge.0);
+            .encode(ccr.public_key.challenge.as_ref());
 
         let response = ServerPublicKeyCredentialCreationOptionsResponse {
             base: ServerResponse::ok(),
