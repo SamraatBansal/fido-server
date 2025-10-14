@@ -44,6 +44,8 @@ base64 = "0.22"
 uuid = { version = "1.10", features = ["v4", "serde"] }
 rand = "0.8"
 sha2 = "0.10"
+# Add missing dependencies for tests
+rand_chacha = "0.3"
 
 # Configuration
 config = "0.14"
