@@ -51,7 +51,11 @@ async fn test_registration_challenge_missing_username() {
     let resp = test::call_service(&app, req).await;
     assert_eq!(resp.status(), 400);
 
-    let body: serde_json::Value = test::read_body_json(resp).await;
+    let body_bytes = test::read_body(resp).await;
+    let body_str = std::str::from_utf8(&body_bytes).unwrap();
+    println!("Response body: {}", body_str);
+    
+    let body: serde_json::Value = serde_json::from_str(body_str).unwrap();
     assert_eq!(body["status"], "failed");
     assert!(body["errorMessage"].is_string());
 }
