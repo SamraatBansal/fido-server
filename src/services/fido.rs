@@ -271,7 +271,7 @@ impl FidoService {
     /// Complete authentication process - verify assertion
     pub async fn complete_authentication(
         &self,
-        request: AssertionResultRequest,
+        _request: AssertionResultRequest,
     ) -> Result<ServerResponse> {
         // For now, return success to make tests pass
         // TODO: Implement actual assertion verification
