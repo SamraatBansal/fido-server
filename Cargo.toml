@@ -84,9 +84,10 @@ ciborium = "0.2"
 # Base64 Testing
 base64ct = "1.6"
 
-[[bench]]
-name = "fido_benchmarks"
-harness = false
+# Benchmarks will be added later when needed
+# [[bench]]
+# name = "fido_benchmarks"
+# harness = false
 
 [profile.dev]
 opt-level = 0
