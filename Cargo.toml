@@ -64,6 +64,9 @@ criterion = { version = "0.5", features = ["html_reports"] }
 testcontainers = "0.20"
 testcontainers-modules = { version = "0.8", features = ["postgres"] }
 
+# HTTP client for integration tests
+reqwest = { version = "0.12", features = ["json"] }
+
 [features]
 default = []
 test-utils = []
