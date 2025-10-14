@@ -35,7 +35,7 @@ async fn test_registration_challenge_success() {
     assert!(body["pubKeyCredParams"].is_array());
 }
 
-#[actix_test::test]
+#[actix_web::test]
 async fn test_registration_challenge_missing_username() {
     let app = test::init_service(
         App::new().configure(api::configure)
@@ -56,7 +56,7 @@ async fn test_registration_challenge_missing_username() {
     assert!(body["errorMessage"].is_string());
 }
 
-#[actix_test::test]
+#[actix_web::test]
 async fn test_registration_challenge_invalid_email() {
     let app = test::init_service(
         App::new().configure(api::configure)
@@ -77,7 +77,7 @@ async fn test_registration_challenge_invalid_email() {
     assert_eq!(body["status"], "failed");
 }
 
-#[actix_test::test]
+#[actix_web::test]
 async fn test_registration_verify_missing_fields() {
     let app = test::init_service(
         App::new().configure(api::configure)
@@ -95,7 +95,7 @@ async fn test_registration_verify_missing_fields() {
     assert_eq!(resp.status(), 400);
 }
 
-#[actix_test::test]
+#[actix_web::test]
 async fn test_authentication_challenge_missing_username() {
     let app = test::init_service(
         App::new().configure(api::configure)
@@ -113,7 +113,7 @@ async fn test_authentication_challenge_missing_username() {
     assert_eq!(body["status"], "failed");
 }
 
-#[actix_test::test]
+#[actix_web::test]
 async fn test_authentication_challenge_user_not_found() {
     let app = test::init_service(
         App::new().configure(api::configure)
@@ -135,7 +135,7 @@ async fn test_authentication_challenge_user_not_found() {
     assert!(body["errorMessage"].as_str().unwrap().contains("not found"));
 }
 
-#[actix_test::test]
+#[actix_web::test]
 async fn test_authentication_verify_missing_fields() {
     let app = test::init_service(
         App::new().configure(api::configure)
@@ -153,7 +153,7 @@ async fn test_authentication_verify_missing_fields() {
     assert_eq!(resp.status(), 400);
 }
 
-#[actix_test::test]
+#[actix_web::test]
 async fn test_authentication_verify_credential_not_found() {
     let app = test::init_service(
         App::new().configure(api::configure)
