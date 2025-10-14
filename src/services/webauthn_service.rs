@@ -117,8 +117,8 @@ impl WebAuthnService {
     /// Verify registration response
     pub fn verify_registration(
         &self,
-        credential: &ServerPublicKeyCredential,
-        username: &str,
+        _credential: &ServerPublicKeyCredential,
+        _username: &str,
     ) -> Result<ServerResponse> {
         // For now, just return success - we'll implement full verification later
         Ok(ServerResponse::success())
@@ -159,8 +159,8 @@ impl WebAuthnService {
     /// Verify authentication response
     pub fn verify_authentication(
         &self,
-        credential: &ServerPublicKeyCredential,
-        username: &str,
+        _credential: &ServerPublicKeyCredential,
+        _username: &str,
     ) -> Result<ServerResponse> {
         // For now, just return success - we'll implement full verification later
         Ok(ServerResponse::success())
