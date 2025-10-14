@@ -46,7 +46,7 @@ pub async fn start_authentication(
         rp_id: "localhost".to_string(),
         allow_credentials: vec![AllowCredentials {
             cred_type: "public-key".to_string(),
-            id: base64::encode("mock_credential_id"),
+            id: "mock_credential_id".to_string(),
         }],
         user_verification: "preferred".to_string(),
     };
