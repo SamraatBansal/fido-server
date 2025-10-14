@@ -3,10 +3,10 @@
 use crate::error::{AppError, Result};
 use crate::models::*;
 use base64::{Engine as _, engine::general_purpose};
-use serde_json::json;
 use std::collections::HashMap;
 use uuid::Uuid;
 use webauthn_rs::prelude::*;
+use webauthn_rs_proto::{RelyingParty, User};
 
 /// WebAuthn service configuration
 #[derive(Debug, Clone)]
