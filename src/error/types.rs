@@ -2,7 +2,7 @@
 
 use actix_web::{http::StatusCode, HttpResponse, ResponseError};
 use serde_json::json;
-use std::fmt;
+
 use thiserror::Error;
 
 /// Application error type
@@ -27,7 +27,7 @@ pub enum AppError {
     InternalServerError(String),
     
     #[error("WebAuthn error: {0}")]
-    WebAuthn(#[from] webauthn_rs::error::WebauthnError),
+    WebAuthn(#[from] webauthn_rs::WebauthnError),
     
     #[error("Database error: {0}")]
     Database(#[from] diesel::result::Error),
