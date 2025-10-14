@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 /// Standard server response format for FIDO2 conformance tests
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ServerResponse {
     pub status: String,
     #[serde(rename = "errorMessage")]
@@ -28,7 +28,7 @@ impl ServerResponse {
 }
 
 /// Authenticator selection criteria
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct AuthenticatorSelectionCriteria {
     #[serde(rename = "requireResidentKey", skip_serializing_if = "Option::is_none")]
     pub require_resident_key: Option<bool>,
@@ -44,7 +44,7 @@ pub struct AuthenticatorSelectionCriteria {
 }
 
 /// Public key credential parameters
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct PublicKeyCredentialParameters {
     #[serde(rename = "type")]
     pub credential_type: String,
@@ -61,7 +61,7 @@ impl Default for PublicKeyCredentialParameters {
 }
 
 /// Relying Party entity
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct PublicKeyCredentialRpEntity {
     pub name: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -69,7 +69,7 @@ pub struct PublicKeyCredentialRpEntity {
 }
 
 /// User entity for server responses
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ServerPublicKeyCredentialUserEntity {
     pub id: String,
     pub name: String,
@@ -78,7 +78,7 @@ pub struct ServerPublicKeyCredentialUserEntity {
 }
 
 /// Credential descriptor
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ServerPublicKeyCredentialDescriptor {
     #[serde(rename = "type")]
     pub credential_type: String,
