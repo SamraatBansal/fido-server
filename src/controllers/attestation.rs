@@ -1,32 +1,40 @@
 //! Attestation (Registration) controller for FIDO2/WebAuthn
 
 use actix_web::{web, HttpResponse, Result};
+use std::sync::Arc;
 use crate::dto::{
     ServerPublicKeyCredentialCreationOptionsRequest,
     AttestationResultRequest,
     ServerResponse,
 };
+use crate::services::fido::FidoService;
 
 /// Handle /attestation/options endpoint
 /// Generates credential creation options for registration
 pub async fn attestation_options(
-    _request: web::Json<ServerPublicKeyCredentialCreationOptionsRequest>,
+    request: web::Json<ServerPublicKeyCredentialCreationOptionsRequest>,
+    fido_service: web::Data<Arc<FidoService>>,
 ) -> Result<HttpResponse> {
-    // TODO: Implement actual WebAuthn logic
-    // For now, return a placeholder response to make tests pass
-    
-    let response = ServerResponse::failed("Not implemented yet");
-    Ok(HttpResponse::InternalServerError().json(response))
+    match fido_service.start_registration(request.into_inner()).await {
+        Ok(response) => Ok(HttpResponse::Ok().json(response)),
+        Err(e) => {
+            log::error!("Registration start error: {:?}", e);
+            Ok(e.error_response())
+        }
+    }
 }
 
 /// Handle /attestation/result endpoint  
 /// Verifies attestation response and completes registration
 pub async fn attestation_result(
-    _request: web::Json<AttestationResultRequest>,
+    request: web::Json<AttestationResultRequest>,
+    fido_service: web::Data<Arc<FidoService>>,
 ) -> Result<HttpResponse> {
-    // TODO: Implement actual WebAuthn logic
-    // For now, return a placeholder response to make tests pass
-    
-    let response = ServerResponse::failed("Not implemented yet");
-    Ok(HttpResponse::InternalServerError().json(response))
+    match fido_service.complete_registration(request.into_inner()).await {
+        Ok(response) => Ok(HttpResponse::Ok().json(response)),
+        Err(e) => {
+            log::error!("Registration completion error: {:?}", e);
+            Ok(e.error_response())
+        }
+    }
 }
