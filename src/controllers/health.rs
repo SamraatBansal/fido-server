@@ -1,5 +1,7 @@
 //! Health check controller
 
+#![allow(missing_docs)]
+
 use actix_web::{HttpResponse, Result};
 
 pub async fn health_check() -> Result<HttpResponse> {
