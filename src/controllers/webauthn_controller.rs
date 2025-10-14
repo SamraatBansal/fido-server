@@ -4,6 +4,7 @@ use actix_web::{web, HttpRequest, HttpResponse};
 use crate::error::{AppError, Result};
 use crate::models::*;
 use crate::services::{WebAuthnService, UserService, CredentialService};
+use crate::services::webauthn_service::WebAuthnConfig;
 use std::sync::Arc;
 
 /// WebAuthn controller state
