@@ -1,11 +1,10 @@
 //! Integration tests for FIDO2 server
 
-use actix_test;
-use actix_web::{test, web, App};
+use actix_web::{test, App};
 use fido_server::routes::api;
 use serde_json::json;
 
-#[actix_test::test]
+#[actix_web::test]
 async fn test_registration_challenge_success() {
     let app = test::init_service(
         App::new().configure(api::configure)
