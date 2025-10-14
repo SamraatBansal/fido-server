@@ -50,7 +50,7 @@ impl WebAuthnService {
             ..Default::default()
         };
 
-        let webauthn = Webauthn::new(rp);
+        let webauthn = Webauthn::new(&rp);
 
         Ok(Self {
             webauthn,
