@@ -27,7 +27,7 @@ pub enum AppError {
     InternalServerError(String),
     
     #[error("WebAuthn error: {0}")]
-    WebAuthn(#[from] webauthn_rs_core::error::WebauthnError),
+    WebAuthn(#[from] webauthn_rs::error::WebauthnError),
     
     #[error("Database error: {0}")]
     Database(#[from] diesel::result::Error),
