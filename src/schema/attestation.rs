@@ -6,11 +6,15 @@ use super::common::*;
 /// Request for creating attestation options
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ServerPublicKeyCredentialCreationOptionsRequest {
+    /// Username for the credential
     pub username: String,
+    /// Human-friendly display name for the user
     #[serde(rename = "displayName")]
     pub display_name: String,
+    /// Authenticator selection criteria
     #[serde(rename = "authenticatorSelection", skip_serializing_if = "Option::is_none")]
     pub authenticator_selection: Option<AuthenticatorSelectionCriteria>,
+    /// Attestation conveyance preference ("none", "indirect", or "direct")
     #[serde(skip_serializing_if = "Option::is_none")]
     pub attestation: Option<String>, // "none" | "indirect" | "direct"
 }
@@ -18,21 +22,31 @@ pub struct ServerPublicKeyCredentialCreationOptionsRequest {
 /// Response for attestation options
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ServerPublicKeyCredentialCreationOptionsResponse {
+    /// Base response with status and error message
     #[serde(flatten)]
     pub base: ServerResponse,
+    /// Relying party information
     pub rp: PublicKeyCredentialRpEntity,
+    /// User information
     pub user: ServerPublicKeyCredentialUserEntity,
+    /// Base64url encoded challenge
     pub challenge: String, // base64url encoded
+    /// Supported public key credential parameters
     #[serde(rename = "pubKeyCredParams")]
     pub pub_key_cred_params: Vec<PublicKeyCredentialParameters>,
+    /// Timeout for the operation in milliseconds
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timeout: Option<u32>,
+    /// Credentials to exclude from creation
     #[serde(rename = "excludeCredentials", skip_serializing_if = "Option::is_none")]
     pub exclude_credentials: Option<Vec<ServerPublicKeyCredentialDescriptor>>,
+    /// Authenticator selection criteria
     #[serde(rename = "authenticatorSelection", skip_serializing_if = "Option::is_none")]
     pub authenticator_selection: Option<AuthenticatorSelectionCriteria>,
+    /// Attestation conveyance preference
     #[serde(skip_serializing_if = "Option::is_none")]
     pub attestation: Option<String>,
+    /// Client extension inputs
     #[serde(skip_serializing_if = "Option::is_none")]
     pub extensions: Option<AuthenticationExtensionsClientInputs>,
 }
@@ -40,8 +54,10 @@ pub struct ServerPublicKeyCredentialCreationOptionsResponse {
 /// Authenticator attestation response
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ServerAuthenticatorAttestationResponse {
+    /// Base authenticator response with client data
     #[serde(flatten)]
     pub base: ServerAuthenticatorResponse,
+    /// Base64url encoded attestation object
     #[serde(rename = "attestationObject")]
     pub attestation_object: String, // base64url encoded
 }
@@ -49,12 +65,17 @@ pub struct ServerAuthenticatorAttestationResponse {
 /// Public key credential for attestation result
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct AttestationPublicKeyCredential {
+    /// Base64url encoded credential identifier
     pub id: String, // base64url encoded credential ID
+    /// Base64url encoded raw credential ID
     #[serde(rename = "rawId", skip_serializing_if = "Option::is_none")]
     pub raw_id: Option<String>, // base64url encoded
+    /// Attestation response from the authenticator
     pub response: ServerAuthenticatorAttestationResponse,
+    /// Credential type (always "public-key")
     #[serde(rename = "type")]
     pub type_: String, // "public-key"
+    /// Client extension results
     #[serde(rename = "getClientExtensionResults", skip_serializing_if = "Option::is_none")]
     pub get_client_extension_results: Option<AuthenticationExtensionsClientOutputs>,
 }
