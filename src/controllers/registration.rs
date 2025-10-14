@@ -106,7 +106,7 @@ pub struct ServerResponse {
 // In-memory challenge store for testing (in production, use Redis or database)
 static mut CHALLENGE_STORE: Option<HashMap<String, (String, chrono::DateTime<chrono::Utc>)>> = None;
 
-fn get_challenge_store() -> &'static mut HashMap<String, (String, chrono::DateTime<chrono::Utc>)> {
+pub fn get_challenge_store() -> &'static mut HashMap<String, (String, chrono::DateTime<chrono::Utc>)> {
     unsafe {
         if CHALLENGE_STORE.is_none() {
             CHALLENGE_STORE = Some(HashMap::new());
