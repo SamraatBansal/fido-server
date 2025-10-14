@@ -112,10 +112,8 @@ pub async fn assertion_options(
     
     // Store challenge with expiration (5 minutes)
     let expires_at = chrono::Utc::now() + chrono::Duration::minutes(5);
-    unsafe {
-        let challenge_store = super::registration::get_challenge_store();
-        challenge_store.insert(challenge.clone(), ("authentication".to_string(), expires_at));
-    }
+    let challenge_store = super::registration::get_challenge_store();
+    challenge_store.insert(challenge.clone(), ("authentication".to_string(), expires_at));
 
     // Get user's credentials
     let empty_vec = vec![];
