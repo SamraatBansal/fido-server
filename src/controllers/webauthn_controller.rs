@@ -31,7 +31,7 @@ impl WebAuthnControllerState {
 /// Generate registration challenge
 pub async fn attestation_options(
     state: web::Data<WebAuthnControllerState>,
-    req: HttpRequest,
+    _req: HttpRequest,
     request: web::Json<ServerPublicKeyCredentialCreationOptionsRequest>,
 ) -> Result<HttpResponse> {
     // Validate request
@@ -57,7 +57,7 @@ pub async fn attestation_options(
 /// Verify registration response
 pub async fn attestation_result(
     state: web::Data<WebAuthnControllerState>,
-    req: HttpRequest,
+    _req: HttpRequest,
     request: web::Json<ServerPublicKeyCredential>,
 ) -> Result<HttpResponse> {
     // Validate request
