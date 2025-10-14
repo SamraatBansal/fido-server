@@ -1,7 +1,7 @@
 //! WebAuthn routes
 
-use actix_web::{web, Scope};
-use crate::controllers::{attestation_options, attestation_result, assertion_options, assertion_result, WebAuthnControllerState};
+use actix_web::web;
+use crate::controllers::{attestation_options, attestation_result, assertion_options, assertion_result};
 
 /// Configure WebAuthn routes
 pub fn configure_webauthn_routes(cfg: &mut web::ServiceConfig) {
