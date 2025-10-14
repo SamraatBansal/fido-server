@@ -1,3 +1,5 @@
 //! Routes module
 
-pub mod api;
+pub mod webauthn_routes;
+
+pub use webauthn_routes::*;
