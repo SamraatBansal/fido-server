@@ -55,7 +55,7 @@ pub struct RegistrationChallengeRequest {
     pub attestation: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AuthenticatorSelection {
     #[serde(rename = "requireResidentKey")]
     pub require_resident_key: Option<bool>,
