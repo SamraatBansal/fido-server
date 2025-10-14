@@ -6,7 +6,9 @@ use super::common::*;
 /// Request for creating assertion options
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ServerPublicKeyCredentialGetOptionsRequest {
+    /// Username for authentication
     pub username: String,
+    /// User verification requirement ("required", "preferred", or "discouraged")
     #[serde(rename = "userVerification", skip_serializing_if = "Option::is_none")]
     pub user_verification: Option<String>, // "required" | "preferred" | "discouraged"
 }
@@ -14,17 +16,24 @@ pub struct ServerPublicKeyCredentialGetOptionsRequest {
 /// Response for assertion options
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ServerPublicKeyCredentialGetOptionsResponse {
+    /// Base response with status and error message
     #[serde(flatten)]
     pub base: ServerResponse,
+    /// Base64url encoded challenge
     pub challenge: String, // base64url encoded
+    /// Relying party identifier
     #[serde(rename = "rpId")]
     pub rp_id: String,
+    /// Allowed credentials for authentication
     #[serde(rename = "allowCredentials", skip_serializing_if = "Option::is_none")]
     pub allow_credentials: Option<Vec<ServerPublicKeyCredentialDescriptor>>,
+    /// Timeout for the operation in milliseconds
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timeout: Option<u32>,
+    /// User verification requirement
     #[serde(rename = "userVerification", skip_serializing_if = "Option::is_none")]
     pub user_verification: Option<String>,
+    /// Client extension inputs
     #[serde(skip_serializing_if = "Option::is_none")]
     pub extensions: Option<AuthenticationExtensionsClientInputs>,
 }
@@ -32,11 +41,15 @@ pub struct ServerPublicKeyCredentialGetOptionsResponse {
 /// Authenticator assertion response
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ServerAuthenticatorAssertionResponse {
+    /// Base authenticator response with client data
     #[serde(flatten)]
     pub base: ServerAuthenticatorResponse,
+    /// Base64url encoded authenticator data
     #[serde(rename = "authenticatorData")]
     pub authenticator_data: String, // base64url encoded
+    /// Base64url encoded assertion signature
     pub signature: String,          // base64url encoded
+    /// Base64url encoded user handle
     #[serde(rename = "userHandle", skip_serializing_if = "Option::is_none")]
     pub user_handle: Option<String>, // base64url encoded
 }
@@ -44,12 +57,17 @@ pub struct ServerAuthenticatorAssertionResponse {
 /// Public key credential for assertion result
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct AssertionPublicKeyCredential {
+    /// Base64url encoded credential identifier
     pub id: String, // base64url encoded credential ID
+    /// Base64url encoded raw credential ID
     #[serde(rename = "rawId", skip_serializing_if = "Option::is_none")]
     pub raw_id: Option<String>, // base64url encoded
+    /// Assertion response from the authenticator
     pub response: ServerAuthenticatorAssertionResponse,
+    /// Credential type (always "public-key")
     #[serde(rename = "type")]
     pub type_: String, // "public-key"
+    /// Client extension results
     #[serde(rename = "getClientExtensionResults", skip_serializing_if = "Option::is_none")]
     pub get_client_extension_results: Option<AuthenticationExtensionsClientOutputs>,
 }
