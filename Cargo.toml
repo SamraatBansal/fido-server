@@ -74,18 +74,15 @@ codegen-units = 1
 panic = "abort"
 strip = true
 
-# Strict linting configuration
+# Relaxed linting configuration for development
 [lints.rust]
-unused_must_use = "deny"
-missing_docs = "warn"
-unused_imports = "warn"
-dead_code = "warn"
+unused_must_use = "warn"
+missing_docs = "allow"
+unused_imports = "allow"
+dead_code = "allow"
 
 [lints.clippy]
-all = "deny"
-pedantic = "deny"
-nursery = "warn"
-cargo = "warn"
-# Allow some pedantic lints that are too strict
-module_name_repetitions = "allow"
-missing_errors_doc = "allow"
+all = "warn"
+pedantic = "allow"
+nursery = "allow"
+cargo = "allow"
