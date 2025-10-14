@@ -156,6 +156,7 @@ mod tests {
         };
 
         let json = serde_json::to_string_pretty(&response).unwrap();
+        println!("Actual JSON: {}", json);
         assert!(json.contains("\"status\":\"ok\""));
         assert!(json.contains("\"challenge\":\"uhUjPNlZfvn7onwuhNdsLPkkE5Fv-lUN\""));
         assert!(json.contains("\"pubKeyCredParams\""));
