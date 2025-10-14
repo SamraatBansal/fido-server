@@ -82,7 +82,7 @@ impl WebAuthnService {
             .map_err(|e| AppError::WebAuthn(e))?;
 
         // Convert to our response format
-        let challenge_b64 = general_purpose::URL_SAFE_NO_PAD.encode(creation_challenge_response.challenge.0);
+        let challenge_b64 = general_purpose::URL_SAFE_NO_PAD.encode(creation_challenge_response.public_key.challenge.0);
 
         let mut response = ServerPublicKeyCredentialCreationOptionsResponse {
             status: "ok".to_string(),
