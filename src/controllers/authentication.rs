@@ -41,12 +41,9 @@ pub async fn authentication_verification(
         return Err(AppError::BadRequest("Invalid credential type".to_string()));
     }
 
-    // Check if credential exists (for now, always return not found)
-    return Err(AppError::NotFound("Credential not found".to_string()));
-
     // TODO: Implement signature verification
-    // For now, return error for invalid signature
-    Err(AppError::WebAuthnError("Can not validate response signature!".to_string()))
+    // Check if credential exists (for now, always return not found)
+    Err(AppError::NotFound("Credential not found".to_string()))
 }
 
 #[cfg(test)]
