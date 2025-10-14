@@ -30,7 +30,7 @@ async fn main() -> io::Result<()> {
         App::new()
             .wrap(Logger::default())
             .wrap(cors)
-            .configure(fido_server::routes::api::configure)
+            .configure(webauthn_rp_server::routes::api::configure)
     })
     .bind((host, port))?
     .run()
