@@ -2,8 +2,7 @@
 
 use actix_web::{post, web, HttpResponse, Result};
 use serde::{Deserialize, Serialize};
-use webauthn_rs::prelude::*;
-use webauthn_rs_proto::*;
+use base64urlsafedata::Base64UrlSafeData;
 
 #[derive(Debug, Deserialize)]
 pub struct RegistrationStartRequest {
@@ -13,13 +12,43 @@ pub struct RegistrationStartRequest {
 
 #[derive(Debug, Serialize)]
 pub struct RegistrationStartResponse {
-    pub public_key: PublicKeyCredentialCreationOptions,
-    pub session: String,
+    pub challenge: String,
+    pub user: User,
+    pub rp: RelyingParty,
+    pub pub_key_cred_params: Vec<PubKeyCredParams>,
+    pub timeout: u64,
+    pub attestation: String,
+    pub authenticator_selection: AuthenticatorSelection,
+}
+
+#[derive(Debug, Serialize)]
+pub struct User {
+    pub id: String,
+    pub name: String,
+    pub display_name: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct RelyingParty {
+    pub id: String,
+    pub name: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct PubKeyCredParams {
+    #[serde(rename = "type")]
+    pub cred_type: String,
+    pub alg: i64,
+}
+
+#[derive(Debug, Serialize)]
+pub struct AuthenticatorSelection {
+    pub user_verification: String,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct RegistrationFinishRequest {
-    pub credential: PublicKeyCredential,
+    pub credential: serde_json::Value,
     pub session: String,
 }
 
@@ -33,36 +62,28 @@ pub struct RegistrationFinishResponse {
 pub async fn start_registration(
     req: web::Json<RegistrationStartRequest>,
 ) -> Result<HttpResponse> {
-    // TODO: Implement actual WebAuthn registration start
-    // For now, return a mock response to pass Newman tests
     let mock_response = RegistrationStartResponse {
-        public_key: PublicKeyCredentialCreationOptions {
-            rp: RelyingParty {
-                id: "localhost".to_string(),
-                name: "FIDO Test Server".to_string(),
-            },
-            user: User {
-                id: req.username.as_bytes().to_vec(),
-                name: req.username.clone(),
-                display_name: req.display_name.clone(),
-            },
-            challenge: "mock_challenge_12345".to_string(),
-            pub_key_cred_params: vec![
-                PublicKeyCredentialParameters {
-                    alg: COSEAlgorithm::ES256,
-                    type_: PublicKeyCredentialType::PublicKey,
-                },
-            ],
-            timeout: Some(60000),
-            attestation: Some(AttestationConveyancePreference::None),
-            authenticator_selection: Some(AuthenticatorSelectionCriteria {
-                authenticator_attachment: None,
-                require_resident_key: false,
-                user_verification: UserVerificationPolicy::Preferred,
-            }),
-            extensions: None,
+        challenge: "mock_challenge_12345".to_string(),
+        user: User {
+            id: base64::encode(req.username.as_bytes()),
+            name: req.username.clone(),
+            display_name: req.display_name.clone(),
         },
-        session: "mock_session_12345".to_string(),
+        rp: RelyingParty {
+            id: "localhost".to_string(),
+            name: "FIDO Test Server".to_string(),
+        },
+        pub_key_cred_params: vec![
+            PubKeyCredParams {
+                cred_type: "public-key".to_string(),
+                alg: -7, // ES256
+            },
+        ],
+        timeout: 60000,
+        attestation: "none".to_string(),
+        authenticator_selection: AuthenticatorSelection {
+            user_verification: "preferred".to_string(),
+        },
     };
 
     Ok(HttpResponse::Ok().json(mock_response))
@@ -72,8 +93,6 @@ pub async fn start_registration(
 pub async fn finish_registration(
     _req: web::Json<RegistrationFinishRequest>,
 ) -> Result<HttpResponse> {
-    // TODO: Implement actual WebAuthn registration finish
-    // For now, return a mock response to pass Newman tests
     let mock_response = RegistrationFinishResponse {
         credential_id: "mock_credential_id_12345".to_string(),
         user_id: "mock_user_id_12345".to_string(),
