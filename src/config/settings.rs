@@ -1,70 +1,114 @@
-//! Application settings and configuration
+//! Application settings
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
-/// Application settings
-#[derive(Debug, Deserialize, Clone)]
+/// Application configuration
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Settings {
     /// Server configuration
-    pub server: ServerSettings,
-    /// Database configuration
-    pub database: DatabaseSettings,
+    pub server: ServerConfig,
     /// WebAuthn configuration
-    pub webauthn: WebAuthnSettings,
+    pub webauthn: WebAuthnConfig,
+    /// Database configuration
+    pub database: DatabaseConfig,
 }
 
-/// Server settings
-#[derive(Debug, Deserialize, Clone)]
-pub struct ServerSettings {
-    /// Host address
+/// Server configuration
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ServerConfig {
+    /// Host to bind to
     pub host: String,
-    /// Port number
+    /// Port to bind to
     pub port: u16,
 }
 
-/// Database settings
-#[derive(Debug, Deserialize, Clone)]
-pub struct DatabaseSettings {
+/// WebAuthn configuration
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WebAuthnConfig {
+    /// Relying Party ID
+    pub rp_id: String,
+    /// Relying Party origin
+    pub rp_origin: String,
+    /// Relying Party name
+    pub rp_name: String,
+}
+
+/// Database configuration
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DatabaseConfig {
     /// Database URL
     pub url: String,
-    /// Maximum pool size
-    pub max_pool_size: u32,
 }
 
-/// WebAuthn settings
-#[derive(Debug, Deserialize, Clone)]
-pub struct WebAuthnSettings {
-    /// Relying party ID
-    pub rp_id: String,
-    /// Relying party name
-    pub rp_name: String,
-    /// Origin URL
-    pub origin: String,
-}
-
-impl Settings {
-    /// Load settings from environment variables and config files
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if configuration cannot be loaded
-    pub fn new() -> Result<Self, config::ConfigError> {
-        // TODO: Implement proper configuration loading
-        // This is a placeholder implementation
-        Ok(Self {
-            server: ServerSettings {
+impl Default for Settings {
+    fn default() -> Self {
+        Self {
+            server: ServerConfig {
                 host: "127.0.0.1".to_string(),
                 port: 8080,
             },
-            database: DatabaseSettings {
-                url: "postgres://localhost/fido_server".to_string(),
-                max_pool_size: 10,
-            },
-            webauthn: WebAuthnSettings {
+            webauthn: WebAuthnConfig {
                 rp_id: "localhost".to_string(),
+                rp_origin: "http://localhost:8080".to_string(),
                 rp_name: "FIDO Server".to_string(),
-                origin: "http://localhost:8080".to_string(),
             },
-        })
+            database: DatabaseConfig {
+                url: "postgres://localhost/fido_server_test".to_string(),
+            },
+        }
+    }
+}
+
+impl Settings {
+    /// Load settings from environment and config files
+    pub fn load() -> Result<Self, config::ConfigError> {
+        let settings = config::Config::builder()
+            .add_source(config::Environment::with_prefix("FIDO"))
+            .build()?;
+
+        let mut result: Settings = settings.try_deserialize().unwrap_or_default();
+        
+        // Override with environment variables if present
+        if let Ok(host) = std::env::var("FIDO_SERVER_HOST") {
+            result.server.host = host;
+        }
+        if let Ok(port) = std::env::var("FIDO_SERVER_PORT") {
+            if let Ok(port) = port.parse() {
+                result.server.port = port;
+            }
+        }
+        if let Ok(rp_id) = std::env::var("FIDO_WEBAUTHN_RP_ID") {
+            result.webauthn.rp_id = rp_id;
+        }
+        if let Ok(rp_origin) = std::env::var("FIDO_WEBAUTHN_RP_ORIGIN") {
+            result.webauthn.rp_origin = rp_origin;
+        }
+        if let Ok(rp_name) = std::env::var("FIDO_WEBAUTHN_RP_NAME") {
+            result.webauthn.rp_name = rp_name;
+        }
+        if let Ok(db_url) = std::env::var("FIDO_DATABASE_URL") {
+            result.database.url = db_url;
+        }
+
+        Ok(result)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_default_settings() {
+        let settings = Settings::default();
+        assert_eq!(settings.server.host, "127.0.0.1");
+        assert_eq!(settings.server.port, 8080);
+        assert_eq!(settings.webauthn.rp_id, "localhost");
+    }
+
+    #[test]
+    fn test_load_settings() {
+        let settings = Settings::load();
+        assert!(settings.is_ok());
     }
 }
