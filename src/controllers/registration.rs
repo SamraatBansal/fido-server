@@ -87,7 +87,6 @@ pub async fn start_registration(
     Ok(HttpResponse::Ok().json(mock_response))
 }
 
-#[post("/webauthn/register/finish")]
 pub async fn finish_registration(
     _req: web::Json<RegistrationFinishRequest>,
 ) -> Result<HttpResponse> {
