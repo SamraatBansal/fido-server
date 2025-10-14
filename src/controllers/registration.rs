@@ -2,7 +2,6 @@
 
 use actix_web::{post, web, HttpResponse, Result};
 use serde::{Deserialize, Serialize};
-use base64urlsafedata::Base64UrlSafeData;
 
 #[derive(Debug, Deserialize)]
 pub struct RegistrationStartRequest {
