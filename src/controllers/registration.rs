@@ -64,7 +64,7 @@ pub async fn start_registration(
     let mock_response = RegistrationStartResponse {
         challenge: "mock_challenge_12345".to_string(),
         user: User {
-            id: base64::encode(req.username.as_bytes()),
+            id: req.username.clone(),
             name: req.username.clone(),
             display_name: req.display_name.clone(),
         },
