@@ -76,7 +76,12 @@ impl WebAuthnService {
 
         let (creation_challenge_response, state) = self
             .webauthn
-            .start_registration(&user, None)
+            .start_passkey_registration(
+                user_uuid,
+                &request.username,
+                &request.displayName,
+                None, // exclude_credentials
+            )
             .map_err(|e| AppError::WebAuthn(e))?;
 
         // Store challenge state
