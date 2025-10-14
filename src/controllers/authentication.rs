@@ -53,7 +53,6 @@ pub async fn start_authentication(
     Ok(HttpResponse::Ok().json(mock_response))
 }
 
-#[post("/webauthn/authenticate/finish")]
 pub async fn finish_authentication(
     _req: web::Json<AuthenticationFinishRequest>,
 ) -> Result<HttpResponse> {
