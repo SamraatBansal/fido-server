@@ -70,7 +70,7 @@ pub async fn start_registration(
 
 #[post("/webauthn/register/finish")]
 pub async fn finish_registration(
-    req: web::Json<RegistrationFinishRequest>,
+    _req: web::Json<RegistrationFinishRequest>,
 ) -> Result<HttpResponse> {
     // TODO: Implement actual WebAuthn registration finish
     // For now, return a mock response to pass Newman tests
