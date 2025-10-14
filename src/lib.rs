@@ -1,9 +1,12 @@
 pub mod dto;
 pub mod error;
-pub mod handlers;
+pub mod controllers;
 pub mod services;
-pub mod models;
+pub mod db;
 pub mod utils;
+pub mod config;
+pub mod routes;
+pub mod middleware;
 
 #[cfg(test)]
 pub mod test_utils;
