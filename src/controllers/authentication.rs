@@ -100,7 +100,7 @@ pub async fn assertion_result(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use actix_web::test;
+
     use crate::schema::ServerAuthenticatorAssertionResponse;
 
     #[actix_web::test]
