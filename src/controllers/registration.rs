@@ -93,7 +93,6 @@ pub async fn registration_verification(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use actix_web::test;
 
     #[actix_web::test]
     async fn test_registration_challenge_valid_request() {
