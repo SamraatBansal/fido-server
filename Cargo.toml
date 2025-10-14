@@ -60,8 +60,33 @@ anyhow = "1.0"
 chrono = { version = "0.4", features = ["serde"] }
 
 [dev-dependencies]
+# Testing Framework
 actix-test = "0.1"
 mockall = "0.13"
+tokio-test = "0.4"
+criterion = { version = "0.5", features = ["html_reports"] }
+
+# HTTP Testing
+reqwest = { version = "0.12", features = ["json"] }
+wiremock = "0.6"
+
+# Test Data Generation
+fake = { version = "2.9", features = ["derive", "chrono", "uuid"] }
+proptest = "1.4"
+
+# Assertion Libraries
+assert_matches = "1.5"
+pretty_assertions = "1.4"
+
+# CBOR Testing
+ciborium = "0.2"
+
+# Base64 Testing
+base64ct = "1.6"
+
+[[bench]]
+name = "fido_benchmarks"
+harness = false
 
 [profile.dev]
 opt-level = 0
