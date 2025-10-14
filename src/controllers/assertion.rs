@@ -1,11 +1,10 @@
 //! Assertion (Authentication) controller for FIDO2/WebAuthn
 
-use actix_web::{web, HttpResponse, Result};
+use actix_web::{web, HttpResponse, Result, ResponseError};
 use std::sync::Arc;
 use crate::dto::{
     ServerPublicKeyCredentialGetOptionsRequest,
     AssertionResultRequest,
-    ServerResponse,
 };
 use crate::services::fido::FidoService;
 
