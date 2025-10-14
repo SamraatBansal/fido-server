@@ -1,8 +1,7 @@
 //! Test server utilities for integration testing
 
-use actix_web::{web, App, HttpServer};
+use actix_web::App;
 use actix_test::TestServer;
-use std::sync::Arc;
 
 /// Create a test server instance for integration testing
 pub async fn create_test_server() -> TestServer {
