@@ -36,7 +36,6 @@ pub struct AuthenticationFinishResponse {
     pub credential_id: String,
 }
 
-#[post("/webauthn/authenticate/start")]
 pub async fn start_authentication(
     _req: web::Json<AuthenticationStartRequest>,
 ) -> Result<HttpResponse> {
