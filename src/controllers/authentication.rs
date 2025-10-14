@@ -49,7 +49,6 @@ pub async fn authentication_verification(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use actix_web::test;
 
     #[actix_web::test]
     async fn test_authentication_challenge_missing_username() {
