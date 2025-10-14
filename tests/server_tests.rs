@@ -32,8 +32,8 @@ async fn test_cors_headers() {
         App::new().configure(api::configure)
     ).await;
 
-    let req = test::TestRequest::options()
-        .uri("/attestation/options")
+    let req = test::TestRequest::with_uri("/attestation/options")
+        .method(actix_web::http::Method::OPTIONS)
         .insert_header(("Origin", "http://localhost:3000"))
         .insert_header(("Access-Control-Request-Method", "POST"))
         .to_request();
