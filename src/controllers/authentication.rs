@@ -23,28 +23,9 @@ pub async fn authentication_challenge(
         return Err(AppError::BadRequest("Username must be a valid email address".to_string()));
     }
 
-    // For now, return user not found since we haven't implemented user lookup
-    // This will be implemented when we add database integration
-    return Err(AppError::NotFound("User not found".to_string()));
-
     // TODO: Implement user lookup and credential retrieval
-    // Generate cryptographically random challenge
-    let mut challenge_bytes = [0u8; 32];
-    rand::thread_rng().fill_bytes(&mut challenge_bytes);
-    let challenge = URL_SAFE_NO_PAD.encode(challenge_bytes);
-
-    // Create response (this code will be reached after user lookup is implemented)
-    let response = AuthenticationChallengeResponse {
-        status: "ok".to_string(),
-        error_message: "".to_string(),
-        challenge,
-        allow_credentials: vec![], // TODO: Load user's credentials
-        user_verification: req.user_verification.clone().unwrap_or_else(|| "preferred".to_string()),
-        timeout: 60000,
-        rp_id: "localhost".to_string(),
-    };
-
-    Ok(HttpResponse::Ok().json(response))
+    // For now, return user not found since we haven't implemented user lookup
+    Err(AppError::NotFound("User not found".to_string()))
 }
 
 /// Handle authentication verification request
