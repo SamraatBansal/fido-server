@@ -117,12 +117,11 @@ mod tests {
         };
 
         let json = serde_json::to_string_pretty(&response).unwrap();
-        println!("Actual JSON: {}", json);
         assert!(json.contains("\"status\": \"ok\""));
-        assert!(json.contains("\"challenge\":\"6283u0svT-YIF3pSolzkQHStwkJCaLKx\""));
-        assert!(json.contains("\"rpId\":\"example.com\""));
+        assert!(json.contains("\"challenge\": \"6283u0svT-YIF3pSolzkQHStwkJCaLKx\""));
+        assert!(json.contains("\"rpId\": \"example.com\""));
         assert!(json.contains("\"allowCredentials\""));
-        assert!(json.contains("\"userVerification\":\"required\""));
+        assert!(json.contains("\"userVerification\": \"required\""));
     }
 
     #[test]
