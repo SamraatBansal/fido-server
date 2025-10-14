@@ -1,21 +1,25 @@
-//! Database connection management
+use crate::config::DatabaseConfig;
+use crate::error::{AppError, Result};
+use diesel::pg::PgConnection;
+use diesel::r2d2::{ConnectionManager, Pool, PooledConnection};
+use std::time::Duration;
 
-use diesel::r2d2::{self, ConnectionManager};
-use diesel::PgConnection;
+pub type DbPool = Pool<ConnectionManager<PgConnection>>;
+pub type DbConnection = PooledConnection<ConnectionManager<PgConnection>>;
 
-/// Type alias for database connection pool
-pub type DbPool = r2d2::Pool<ConnectionManager<PgConnection>>;
+pub fn establish_connection(config: &DatabaseConfig) -> Result<DbPool> {
+    let manager = ConnectionManager::<PgConnection>::new(&config.url);
+    
+    Pool::builder()
+        .max_size(config.max_connections)
+        .min_idle(Some(config.min_connections))
+        .connection_timeout(Duration::from_secs(30))
+        .idle_timeout(Some(Duration::from_secs(600)))
+        .build(manager)
+        .map_err(|e| AppError::Internal(format!("Failed to create connection pool: {}", e)))
+}
 
-/// Establish database connection pool
-///
-/// # Arguments
-///
-/// * `database_url` - PostgreSQL database URL
-///
-/// # Errors
-///
-/// Returns an error if the connection pool cannot be established
-pub fn establish_connection(database_url: &str) -> Result<DbPool, r2d2::PoolError> {
-    let manager = ConnectionManager::<PgConnection>::new(database_url);
-    r2d2::Pool::builder().build(manager)
+pub fn get_connection(pool: &DbPool) -> Result<DbConnection> {
+    pool.get()
+        .map_err(|e| AppError::Internal(format!("Failed to get database connection: {}", e)))
 }
