@@ -1,11 +1,20 @@
 //! API routes configuration
 
-use actix_web::web;
+use actix_web::{web, middleware::ErrorHandlers, http::StatusCode};
 use crate::controllers::{registration, authentication};
 
 /// Configure all API routes
 pub fn configure(cfg: &mut web::ServiceConfig) {
-    cfg.service(
+    cfg.app_data(web::JsonConfig::default().error_handler(|err, _req| {
+        actix_web::error::InternalError::from_response(
+            err,
+            actix_web::HttpResponse::BadRequest().json(serde_json::json!({
+                "status": "failed",
+                "errorMessage": format!("Invalid JSON: {}", err)
+            }))
+        ).into()
+    }))
+    .service(
         web::scope("")
             // Registration endpoints
             .route("/attestation/options", web::post().to(registration::registration_challenge))
