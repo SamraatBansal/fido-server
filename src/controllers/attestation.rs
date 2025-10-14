@@ -3,16 +3,14 @@
 use actix_web::{web, HttpResponse, Result};
 use crate::dto::{
     ServerPublicKeyCredentialCreationOptionsRequest,
-    ServerPublicKeyCredentialCreationOptionsResponse,
     AttestationResultRequest,
-    AttestationResultResponse,
     ServerResponse,
 };
 
 /// Handle /attestation/options endpoint
 /// Generates credential creation options for registration
 pub async fn attestation_options(
-    request: web::Json<ServerPublicKeyCredentialCreationOptionsRequest>,
+    _request: web::Json<ServerPublicKeyCredentialCreationOptionsRequest>,
 ) -> Result<HttpResponse> {
     // TODO: Implement actual WebAuthn logic
     // For now, return a placeholder response to make tests pass
@@ -24,7 +22,7 @@ pub async fn attestation_options(
 /// Handle /attestation/result endpoint  
 /// Verifies attestation response and completes registration
 pub async fn attestation_result(
-    request: web::Json<AttestationResultRequest>,
+    _request: web::Json<AttestationResultRequest>,
 ) -> Result<HttpResponse> {
     // TODO: Implement actual WebAuthn logic
     // For now, return a placeholder response to make tests pass
