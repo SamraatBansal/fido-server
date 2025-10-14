@@ -105,7 +105,7 @@ pub async fn attestation_result(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use actix_web::test;
+
     use crate::schema::{AuthenticatorSelectionCriteria, ServerAuthenticatorAttestationResponse};
 
     #[actix_web::test]
