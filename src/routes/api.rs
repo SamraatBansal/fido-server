@@ -1,7 +1,11 @@
 //! API routes configuration
 
 use actix_web::web;
-use crate::controllers::{health_check, start_registration, finish_registration, start_authentication, finish_authentication};
+use crate::controllers::{
+    health::health_check,
+    registration::{start_registration, finish_registration},
+    authentication::{start_authentication, finish_authentication}
+};
 
 /// Configure all API routes
 pub fn configure(cfg: &mut web::ServiceConfig) {
