@@ -13,7 +13,6 @@ use base64::Engine;
 use webauthn_rp_server::dto::{
     attestation::*,
     assertion::*,
-    common::*,
 };
 
 pub mod test_server;
