@@ -68,13 +68,7 @@ impl WebAuthnService {
         let user_id = user_uuid.as_bytes().to_vec();
         let user_id_b64 = general_purpose::URL_SAFE_NO_PAD.encode(&user_id);
 
-        let user = User {
-            id: user_id,
-            name: request.username.clone(),
-            display_name: request.displayName.clone(),
-        };
-
-        let (creation_challenge_response, state) = self
+        let (creation_challenge_response, _state) = self
             .webauthn
             .start_passkey_registration(
                 user_uuid,
@@ -83,15 +77,6 @@ impl WebAuthnService {
                 None, // exclude_credentials
             )
             .map_err(|e| AppError::WebAuthn(e))?;
-
-        // Store challenge state
-        let challenge_id = Uuid::new_v4().to_string();
-        let state_json = serde_json::to_string(&state).map_err(AppError::Serialization)?;
-        
-        {
-            let mut challenges = self.challenges.lock().unwrap();
-            challenges.insert(challenge_id.clone(), (ChallengeType::Registration, state_json));
-        }
 
         // Convert to our response format
         let challenge_b64 = general_purpose::URL_SAFE_NO_PAD.encode(creation_challenge_response.challenge.0);
