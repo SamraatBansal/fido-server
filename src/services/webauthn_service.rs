@@ -45,12 +45,15 @@ impl WebAuthnService {
         let rp = RelyingParty {
             name: config.rp_name.clone(),
             id: config.rp_id.clone(),
-            origin: Url::parse(&config.rp_origin)
-                .map_err(|e| AppError::bad_request(format!("Invalid origin URL: {}", e)))?,
             ..Default::default()
         };
 
-        let webauthn = Webauthn::new(&rp);
+        let webauthn = Webauthn::new(
+            &rp,
+            &config.rp_origin
+                .parse()
+                .map_err(|e| AppError::bad_request(format!("Invalid origin URL: {}", e)))?,
+        );
 
         Ok(Self {
             webauthn,
