@@ -13,7 +13,10 @@ async fn main() -> io::Result<()> {
 
     // TODO: Load configuration from config file
     let host = "127.0.0.1";
-    let port = 8080;
+    let port = std::env::var("PORT")
+        .unwrap_or_else(|_| "3000".to_string())
+        .parse::<u16>()
+        .unwrap_or(3000);
 
     // TODO: Initialize database connection pool
 
