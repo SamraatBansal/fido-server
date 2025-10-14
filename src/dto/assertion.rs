@@ -117,7 +117,8 @@ mod tests {
         };
 
         let json = serde_json::to_string_pretty(&response).unwrap();
-        assert!(json.contains("\"status\":\"ok\""));
+        println!("Actual JSON: {}", json);
+        assert!(json.contains("\"status\": \"ok\""));
         assert!(json.contains("\"challenge\":\"6283u0svT-YIF3pSolzkQHStwkJCaLKx\""));
         assert!(json.contains("\"rpId\":\"example.com\""));
         assert!(json.contains("\"allowCredentials\""));
