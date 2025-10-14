@@ -4,6 +4,7 @@ use actix_web::{http::StatusCode, HttpResponse, ResponseError};
 use serde_json::json;
 
 use thiserror::Error;
+use webauthn_rs_core::error::WebauthnError;
 
 /// Application error type
 #[derive(Error, Debug)]
@@ -27,7 +28,7 @@ pub enum AppError {
     InternalServerError(String),
     
     #[error("WebAuthn error: {0}")]
-    WebAuthn(#[from] webauthn_rs::error::WebauthnError),
+    WebAuthn(#[from] WebauthnError),
     
     #[error("Database error: {0}")]
     Database(#[from] diesel::result::Error),
