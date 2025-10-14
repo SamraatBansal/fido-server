@@ -6,7 +6,7 @@ use base64::{Engine as _, engine::general_purpose};
 use std::collections::HashMap;
 use uuid::Uuid;
 use webauthn_rs::prelude::*;
-use webauthn_rs_proto::{RelyingParty, User};
+use webauthn_rs_proto::RelyingParty;
 
 /// WebAuthn service configuration
 #[derive(Debug, Clone)]
