@@ -1,8 +1,7 @@
 //! Health check controller
 
-use actix_web::{get, HttpResponse, Result};
+use actix_web::{HttpResponse, Result};
 
-#[get("/health")]
 pub async fn health_check() -> Result<HttpResponse> {
     Ok(HttpResponse::Ok().json(serde_json::json!({
         "status": "healthy",
