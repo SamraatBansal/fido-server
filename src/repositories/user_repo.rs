@@ -6,6 +6,7 @@ use crate::repositories::UserRepository;
 use async_trait::async_trait;
 use diesel::prelude::*;
 use diesel::r2d2::{ConnectionManager, Pool};
+use diesel::pg::PgConnection;
 use std::sync::Arc;
 use uuid::Uuid;
 
