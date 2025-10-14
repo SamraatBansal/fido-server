@@ -174,9 +174,12 @@ async fn test_authentication_verify_credential_not_found() {
         .to_request();
 
     let resp = test::call_service(&app, req).await;
-    assert_eq!(resp.status(), 404);
-
+    
     let body: serde_json::Value = test::read_body_json(resp).await;
     assert_eq!(body["status"], "failed");
+    
+    // The response should be 404 for credential not found, but currently returns 404
+    // Let's verify it's the expected error
+    assert_eq!(resp.status(), 404);
     assert!(body["errorMessage"].as_str().unwrap().contains("not found"));
 }
