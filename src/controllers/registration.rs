@@ -3,6 +3,7 @@
 use actix_web::{post, web, HttpResponse, Result};
 use serde::{Deserialize, Serialize};
 use webauthn_rs::prelude::*;
+use webauthn_rs_proto::*;
 
 #[derive(Debug, Deserialize)]
 pub struct RegistrationStartRequest {
