@@ -6,9 +6,7 @@
 //! - Test data factories and fixtures
 //! - Database test utilities
 
-use actix_web::{test, web, App, HttpServer};
-use actix_test::TestServer;
-use serde_json::{json, Value};
+use serde_json::Value;
 use std::sync::Once;
 use uuid::Uuid;
 use base64::Engine;
