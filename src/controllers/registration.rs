@@ -17,7 +17,7 @@ pub struct AttestationOptionsRequest {
     pub attestation: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct AuthenticatorSelectionCriteria {
     #[serde(default)]
     pub require_resident_key: Option<bool>,
