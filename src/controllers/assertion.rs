@@ -3,16 +3,14 @@
 use actix_web::{web, HttpResponse, Result};
 use crate::dto::{
     ServerPublicKeyCredentialGetOptionsRequest,
-    ServerPublicKeyCredentialGetOptionsResponse,
     AssertionResultRequest,
-    AssertionResultResponse,
     ServerResponse,
 };
 
 /// Handle /assertion/options endpoint
 /// Generates credential request options for authentication
 pub async fn assertion_options(
-    request: web::Json<ServerPublicKeyCredentialGetOptionsRequest>,
+    _request: web::Json<ServerPublicKeyCredentialGetOptionsRequest>,
 ) -> Result<HttpResponse> {
     // TODO: Implement actual WebAuthn logic
     // For now, return a placeholder response to make tests pass
@@ -24,7 +22,7 @@ pub async fn assertion_options(
 /// Handle /assertion/result endpoint
 /// Verifies assertion response and completes authentication
 pub async fn assertion_result(
-    request: web::Json<AssertionResultRequest>,
+    _request: web::Json<AssertionResultRequest>,
 ) -> Result<HttpResponse> {
     // TODO: Implement actual WebAuthn logic
     // For now, return a placeholder response to make tests pass
