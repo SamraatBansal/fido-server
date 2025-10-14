@@ -195,6 +195,12 @@ pub struct AuthenticationExtensionsClientOutputs {
     pub extensions: HashMap<String, serde_json::Value>,
 }
 
+impl AuthenticationExtensionsClientOutputs {
+    pub fn is_empty(&self) -> bool {
+        self.extensions.is_empty()
+    }
+}
+
 impl Default for AuthenticationExtensionsClientInputs {
     fn default() -> Self {
         Self {
