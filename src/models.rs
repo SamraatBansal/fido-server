@@ -106,7 +106,7 @@ pub struct ServerPublicKeyCredentialGetOptionsResponse {
 pub struct ServerPublicKeyCredential {
     pub id: String,
     pub response: ServerAuthenticatorResponse,
-    #[serde(skip_serializing_if = "HashMap::is_empty", default)]
+    #[serde(skip_serializing_if = "AuthenticationExtensionsClientOutputs::is_empty", default)]
     pub getClientExtensionResults: AuthenticationExtensionsClientOutputs,
     #[serde(rename = "type")]
     pub credential_type: String,
