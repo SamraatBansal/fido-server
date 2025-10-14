@@ -1,62 +1,104 @@
-//! Custom error types for the FIDO server
+//! Error types for the FIDO server
 
-use actix_web::{error::ResponseError, http::StatusCode, HttpResponse};
+use actix_web::{http::StatusCode, HttpResponse, ResponseError};
+use serde_json::json;
 use std::fmt;
+use thiserror::Error;
 
-/// Application result type
-pub type Result<T> = std::result::Result<T, AppError>;
-
-/// Application error types
-#[derive(Debug)]
+/// Application error type
+#[derive(Error, Debug)]
 pub enum AppError {
-    /// Database error
-    DatabaseError(String),
-    /// WebAuthn error
-    WebAuthnError(String),
-    /// Validation error
-    ValidationError(String),
-    /// Not found error
-    NotFound(String),
-    /// Internal server error
-    InternalError(String),
-    /// Bad request error
+    #[error("Invalid request: {0}")]
     BadRequest(String),
+    
+    #[error("Unauthorized: {0}")]
+    Unauthorized(String),
+    
+    #[error("Forbidden: {0}")]
+    Forbidden(String),
+    
+    #[error("Not found: {0}")]
+    NotFound(String),
+    
+    #[error("Conflict: {0}")]
+    Conflict(String),
+    
+    #[error("Internal server error: {0}")]
+    InternalServerError(String),
+    
+    #[error("WebAuthn error: {0}")]
+    WebAuthn(#[from] webauthn_rs::error::WebauthnError),
+    
+    #[error("Database error: {0}")]
+    Database(#[from] diesel::result::Error),
+    
+    #[error("Database connection error: {0}")]
+    DatabaseConnection(#[from] diesel::result::ConnectionError),
+    
+    #[error("Serialization error: {0}")]
+    Serialization(#[from] serde_json::Error),
+    
+    #[error("Base64 decoding error: {0}")]
+    Base64Decode(#[from] base64::DecodeError),
+    
+    #[error("UTF-8 error: {0}")]
+    Utf8(#[from] std::string::FromUtf8Error),
 }
 
-impl fmt::Display for AppError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::DatabaseError(msg) => write!(f, "Database error: {msg}"),
-            Self::WebAuthnError(msg) => write!(f, "WebAuthn error: {msg}"),
-            Self::ValidationError(msg) => write!(f, "Validation error: {msg}"),
-            Self::NotFound(msg) => write!(f, "Not found: {msg}"),
-            Self::InternalError(msg) => write!(f, "Internal error: {msg}"),
-            Self::BadRequest(msg) => write!(f, "Bad request: {msg}"),
-        }
+impl AppError {
+    pub fn bad_request<T: Into<String>>(msg: T) -> Self {
+        Self::BadRequest(msg.into())
+    }
+    
+    pub fn unauthorized<T: Into<String>>(msg: T) -> Self {
+        Self::Unauthorized(msg.into())
+    }
+    
+    pub fn forbidden<T: Into<String>>(msg: T) -> Self {
+        Self::Forbidden(msg.into())
+    }
+    
+    pub fn not_found<T: Into<String>>(msg: T) -> Self {
+        Self::NotFound(msg.into())
+    }
+    
+    pub fn conflict<T: Into<String>>(msg: T) -> Self {
+        Self::Conflict(msg.into())
+    }
+    
+    pub fn internal_server_error<T: Into<String>>(msg: T) -> Self {
+        Self::InternalServerError(msg.into())
     }
 }
 
 impl ResponseError for AppError {
     fn error_response(&self) -> HttpResponse {
-        let status_code = self.status_code();
-        let error_message = self.to_string();
-
-        HttpResponse::build(status_code).json(serde_json::json!({
-            "error": error_message,
-            "status": status_code.as_u16()
+        let status = self.status_code();
+        let message = self.to_string();
+        
+        HttpResponse::build(status).json(json!({
+            "status": "failed",
+            "errorMessage": message
         }))
     }
-
+    
     fn status_code(&self) -> StatusCode {
         match self {
-            Self::DatabaseError(_) | Self::InternalError(_) => {
-                StatusCode::INTERNAL_SERVER_ERROR
-            }
-            Self::WebAuthnError(_) => StatusCode::BAD_REQUEST,
-            Self::ValidationError(_) | Self::BadRequest(_) => StatusCode::BAD_REQUEST,
+            Self::BadRequest(_) => StatusCode::BAD_REQUEST,
+            Self::Unauthorized(_) => StatusCode::UNAUTHORIZED,
+            Self::Forbidden(_) => StatusCode::FORBIDDEN,
             Self::NotFound(_) => StatusCode::NOT_FOUND,
+            Self::Conflict(_) => StatusCode::CONFLICT,
+            Self::InternalServerError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            Self::WebAuthn(_) => StatusCode::BAD_REQUEST,
+            Self::Database(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            Self::DatabaseConnection(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            Self::Serialization(_) => StatusCode::BAD_REQUEST,
+            Self::Base64Decode(_) => StatusCode::BAD_REQUEST,
+            Self::Utf8(_) => StatusCode::BAD_REQUEST,
         }
     }
 }
 
-impl std::error::Error for AppError {}
+/// Result type alias
+pub type Result<T> = std::result::Result<T, AppError>;
