@@ -57,7 +57,6 @@ pub struct RegistrationFinishResponse {
     pub user_id: String,
 }
 
-#[post("/webauthn/register/start")]
 pub async fn start_registration(
     req: web::Json<RegistrationStartRequest>,
 ) -> Result<HttpResponse> {
