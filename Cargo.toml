@@ -1,91 +1,69 @@
 [package]
-name = "fido-server"
+name = "fido-server3"
 version = "0.1.0"
 edition = "2021"
 authors = ["FIDO Server Team"]
+description = "FIDO2/WebAuthn Relying Party Server implementation in Rust"
 license = "MIT"
-repository = "https://github.com/yourorg/fido-server"
-readme = "README.md"
-
-[lib]
-name = "fido_server"
-path = "src/lib.rs"
-
-[[bin]]
-name = "fido-server"
-path = "src/main.rs"
 
 [dependencies]
-# Web Framework
-actix-web = "4.9"
-actix-cors = "0.7"
-actix-rt = "2.10"
+# WebAuthn core library
+webauthn-rs = { version = "0.5", features = ["danger-allow-state-serialisation"] }
 
-# FIDO/WebAuthn
-webauthn-rs = "0.5"
-webauthn-rs-proto = "0.5"
+# Async runtime and web framework
+tokio = { version = "1.0", features = ["full"] }
+axum = { version = "0.7", features = ["json", "headers", "tower-log"] }
+
+# Database and ORM
+sqlx = { version = "0.7", features = [
+    "postgres", 
+    "runtime-tokio-rustls", 
+    "uuid", 
+    "chrono",
+    "migrate"
+] }
 
 # Serialization
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 
-# Database
-diesel = { version = "2.1", features = ["postgres", "r2d2", "chrono", "uuid"] }
-diesel_migrations = "2.1"
-r2d2 = "0.8"
+# Utilities
+uuid = { version = "1.0", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+base64 = "0.21"
+url = "2.4"
 
-# Async
-tokio = { version = "1.40", features = ["full"] }
-futures = "0.3"
+# Logging and tracing
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
-# Cryptography
-base64 = "0.22"
-uuid = { version = "1.10", features = ["v4", "serde"] }
+# HTTP middleware and utilities
+tower = "0.4"
+tower-http = { version = "0.5", features = ["cors", "trace", "timeout", "limit"] }
+hyper = "1.0"
+
+# Security
+ring = "0.17"
 rand = "0.8"
-sha2 = "0.10"
 
 # Configuration
 config = "0.14"
-dotenv = "0.15"
+dotenvy = "0.15"
 
-# Logging
-log = "0.4"
-env_logger = "0.11"
-
-# Error Handling
-thiserror = "1.0"
+# Error handling
 anyhow = "1.0"
-
-# Time
-chrono = { version = "0.4", features = ["serde"] }
+thiserror = "1.0"
 
 [dev-dependencies]
-actix-test = "0.1"
-mockall = "0.13"
+tokio-test = "0.4"
+reqwest = { version = "0.11", features = ["json"] }
+tempfile = "3.8"
 
-[profile.dev]
-opt-level = 0
-debug = true
+[features]
+default = ["postgres"]
+postgres = []
+memory-only = []
 
-[profile.release]
-opt-level = 3
-lto = true
-codegen-units = 1
-panic = "abort"
-strip = true
-
-# Strict linting configuration
-[lints.rust]
-unused_must_use = "deny"
-missing_docs = "warn"
-unused_imports = "warn"
-dead_code = "warn"
-
-[lints.clippy]
-all = "deny"
-pedantic = "deny"
-nursery = "warn"
-cargo = "warn"
-# Allow some pedantic lints that are too strict
-module_name_repetitions = "allow"
-missing_errors_doc = "allow"
+[[bin]]
+name = "fido-server3"
+path = "src/main.rs"
