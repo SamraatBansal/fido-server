@@ -1,9 +1,7 @@
 [package]
-name = "fido2-webauthn-rp-server"
+name = "webauthn-rp-server"
 version = "0.1.0"
 edition = "2021"
-authors = ["FIDO2 Test Team"]
-description = "FIDO2/WebAuthn Relying Party Server with comprehensive test coverage"
 
 [dependencies]
 # Core WebAuthn
@@ -26,7 +24,6 @@ serde_json = "1.0"
 uuid = { version = "1.10", features = ["v4", "serde"] }
 chrono = { version = "0.4", features = ["serde"] }
 base64 = "0.22"
-base64urlsafedata = "0.1"
 rand = "0.8"
 thiserror = "1.0"
 anyhow = "1.0"
@@ -42,9 +39,6 @@ tracing-subscriber = "0.3"
 # Security
 argon2 = "0.5"
 aes-gcm = "0.10"
-
-# HTTP client for testing
-reqwest = { version = "0.12", features = ["json"] }
 
 [dev-dependencies]
 # Testing framework
@@ -65,10 +59,6 @@ criterion = { version = "0.5", features = ["html_reports"] }
 testcontainers = "0.20"
 testcontainers-modules = { version = "0.8", features = ["postgres"] }
 
-# Additional test utilities
-fake = { version = "2.9", features = ["derive", "chrono", "uuid"] }
-rstest = "0.21"
-
 [features]
 default = []
 test-utils = []
@@ -76,15 +66,9 @@ test-utils = []
 [[bench]]
 name = "registration_bench"
 harness = false
+path = "benches/registration_bench.rs"
 
 [[bench]]
 name = "authentication_bench"
 harness = false
-
-[lib]
-name = "fido2_webauthn_rp_server"
-path = "src/lib.rs"
-
-[[bin]]
-name = "server"
-path = "src/main.rs"
+path = "benches/authentication_bench.rs"
