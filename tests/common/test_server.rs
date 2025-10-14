@@ -29,7 +29,7 @@ impl Default for TestServerConfig {
 }
 
 /// Create a configured test server
-pub async fn create_configured_test_server(config: TestServerConfig) -> TestServer {
+pub async fn create_configured_test_server(_config: TestServerConfig) -> TestServer {
     actix_test::start(move || {
         let mut app = App::new();
         
