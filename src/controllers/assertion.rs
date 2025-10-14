@@ -1,32 +1,40 @@
 //! Assertion (Authentication) controller for FIDO2/WebAuthn
 
 use actix_web::{web, HttpResponse, Result};
+use std::sync::Arc;
 use crate::dto::{
     ServerPublicKeyCredentialGetOptionsRequest,
     AssertionResultRequest,
     ServerResponse,
 };
+use crate::services::fido::FidoService;
 
 /// Handle /assertion/options endpoint
 /// Generates credential request options for authentication
 pub async fn assertion_options(
-    _request: web::Json<ServerPublicKeyCredentialGetOptionsRequest>,
+    request: web::Json<ServerPublicKeyCredentialGetOptionsRequest>,
+    fido_service: web::Data<Arc<FidoService>>,
 ) -> Result<HttpResponse> {
-    // TODO: Implement actual WebAuthn logic
-    // For now, return a placeholder response to make tests pass
-    
-    let response = ServerResponse::failed("Not implemented yet");
-    Ok(HttpResponse::InternalServerError().json(response))
+    match fido_service.start_authentication(request.into_inner()).await {
+        Ok(response) => Ok(HttpResponse::Ok().json(response)),
+        Err(e) => {
+            log::error!("Authentication start error: {:?}", e);
+            Ok(e.error_response())
+        }
+    }
 }
 
 /// Handle /assertion/result endpoint
 /// Verifies assertion response and completes authentication
 pub async fn assertion_result(
-    _request: web::Json<AssertionResultRequest>,
+    request: web::Json<AssertionResultRequest>,
+    fido_service: web::Data<Arc<FidoService>>,
 ) -> Result<HttpResponse> {
-    // TODO: Implement actual WebAuthn logic
-    // For now, return a placeholder response to make tests pass
-    
-    let response = ServerResponse::failed("Not implemented yet");
-    Ok(HttpResponse::InternalServerError().json(response))
+    match fido_service.complete_authentication(request.into_inner()).await {
+        Ok(response) => Ok(HttpResponse::Ok().json(response)),
+        Err(e) => {
+            log::error!("Authentication completion error: {:?}", e);
+            Ok(e.error_response())
+        }
+    }
 }
