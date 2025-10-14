@@ -197,7 +197,7 @@ impl FidoService {
     /// Complete registration process - verify attestation
     pub async fn complete_registration(
         &self,
-        request: AttestationResultRequest,
+        _request: AttestationResultRequest,
     ) -> Result<ServerResponse> {
         // For now, return success to make tests pass
         // TODO: Implement actual attestation verification
