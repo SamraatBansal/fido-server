@@ -2,12 +2,10 @@
 
 use actix_web::{web, HttpResponse, Result};
 use crate::db::models::{
-    AuthenticationChallengeRequest, AuthenticationChallengeResponse,
+    AuthenticationChallengeRequest,
     AuthenticationVerificationRequest
 };
 use crate::error::AppError;
-use base64::{Engine as _, engine::general_purpose::URL_SAFE_NO_PAD};
-use rand::RngCore;
 
 /// Handle authentication challenge request
 pub async fn authentication_challenge(
