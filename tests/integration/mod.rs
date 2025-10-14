@@ -1,0 +1,2 @@
+mod registration_tests;
+mod authentication_tests;
