@@ -24,6 +24,7 @@ actix-rt = "2.10"
 # FIDO/WebAuthn
 webauthn-rs = "0.5"
 webauthn-rs-proto = "0.5"
+webauthn-rs-core = "0.5"
 
 # Serialization
 serde = { version = "1.0", features = ["derive"] }
