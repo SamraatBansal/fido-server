@@ -1,62 +1,108 @@
-//! Custom error types for the FIDO server
-
-use actix_web::{error::ResponseError, http::StatusCode, HttpResponse};
+use actix_web::{HttpResponse, ResponseError};
+use serde::{Deserialize, Serialize};
 use std::fmt;
+use thiserror::Error;
 
-/// Application result type
 pub type Result<T> = std::result::Result<T, AppError>;
 
-/// Application error types
-#[derive(Debug)]
+#[derive(Error, Debug)]
 pub enum AppError {
-    /// Database error
-    DatabaseError(String),
-    /// WebAuthn error
-    WebAuthnError(String),
-    /// Validation error
-    ValidationError(String),
-    /// Not found error
-    NotFound(String),
-    /// Internal server error
-    InternalError(String),
-    /// Bad request error
+    #[error("Database error: {0}")]
+    Database(#[from] diesel::result::Error),
+    
+    #[error("WebAuthn error: {0}")]
+    WebAuthn(#[from] webauthn_rs::error::WebauthnError),
+    
+    #[error("Validation error: {0}")]
+    Validation(String),
+    
+    #[error("Authentication error: {0}")]
+    Authentication(String),
+    
+    #[error("User not found")]
+    UserNotFound,
+    
+    #[error("Credential not found")]
+    CredentialNotFound,
+    
+    #[error("Challenge expired or invalid")]
+    InvalidChallenge,
+    
+    #[error("Invalid request: {0}")]
     BadRequest(String),
+    
+    #[error("Internal server error: {0}")]
+    Internal(String),
+    
+    #[error("Configuration error: {0}")]
+    Config(String),
+    
+    #[error("Serialization error: {0}")]
+    Serialization(#[from] serde_json::Error),
+    
+    #[error("Base64 decode error: {0}")]
+    Base64Decode(#[from] base64::DecodeError),
+    
+    #[error("UUID error: {0}")]
+    Uuid(#[from] uuid::Error),
 }
 
-impl fmt::Display for AppError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::DatabaseError(msg) => write!(f, "Database error: {msg}"),
-            Self::WebAuthnError(msg) => write!(f, "WebAuthn error: {msg}"),
-            Self::ValidationError(msg) => write!(f, "Validation error: {msg}"),
-            Self::NotFound(msg) => write!(f, "Not found: {msg}"),
-            Self::InternalError(msg) => write!(f, "Internal error: {msg}"),
-            Self::BadRequest(msg) => write!(f, "Bad request: {msg}"),
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ErrorResponse {
+    pub status: String,
+    #[serde(rename = "errorMessage")]
+    pub error_message: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub details: Option<serde_json::Value>,
+}
+
+impl ErrorResponse {
+    pub fn new(message: impl Into<String>) -> Self {
+        Self {
+            status: "failed".to_string(),
+            error_message: message.into(),
+            details: None,
+        }
+    }
+
+    pub fn with_details(message: impl Into<String>, details: serde_json::Value) -> Self {
+        Self {
+            status: "failed".to_string(),
+            error_message: message.into(),
+            details: Some(details),
         }
     }
 }
 
 impl ResponseError for AppError {
     fn error_response(&self) -> HttpResponse {
-        let status_code = self.status_code();
-        let error_message = self.to_string();
-
-        HttpResponse::build(status_code).json(serde_json::json!({
-            "error": error_message,
-            "status": status_code.as_u16()
-        }))
-    }
-
-    fn status_code(&self) -> StatusCode {
+        let error_response = ErrorResponse::new(self.to_string());
+        
         match self {
-            Self::DatabaseError(_) | Self::InternalError(_) => {
-                StatusCode::INTERNAL_SERVER_ERROR
+            AppError::UserNotFound => HttpResponse::NotFound().json(error_response),
+            AppError::CredentialNotFound => HttpResponse::NotFound().json(error_response),
+            AppError::Validation(_) => HttpResponse::BadRequest().json(error_response),
+            AppError::BadRequest(_) => HttpResponse::BadRequest().json(error_response),
+            AppError::InvalidChallenge => HttpResponse::BadRequest().json(error_response),
+            AppError::Authentication(_) => HttpResponse::Unauthorized().json(error_response),
+            AppError::WebAuthn(webauthn_err) => {
+                log::error!("WebAuthn error: {:?}", webauthn_err);
+                HttpResponse::BadRequest().json(ErrorResponse::new("WebAuthn validation failed"))
             }
-            Self::WebAuthnError(_) => StatusCode::BAD_REQUEST,
-            Self::ValidationError(_) | Self::BadRequest(_) => StatusCode::BAD_REQUEST,
-            Self::NotFound(_) => StatusCode::NOT_FOUND,
+            AppError::Database(db_err) => {
+                log::error!("Database error: {:?}", db_err);
+                HttpResponse::InternalServerError().json(ErrorResponse::new("Internal server error"))
+            }
+            _ => {
+                log::error!("Internal error: {:?}", self);
+                HttpResponse::InternalServerError().json(ErrorResponse::new("Internal server error"))
+            }
         }
     }
 }
 
-impl std::error::Error for AppError {}
+impl fmt::Display for ErrorResponse {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}: {}", self.status, self.error_message)
+    }
+}
