@@ -1,7 +1,6 @@
 //! Test data factories and fixtures
 
 use webauthn_rp_server::dto::*;
-use super::*;
 
 /// Create a valid attestation options request for testing
 pub fn create_test_attestation_options_request() -> ServerPublicKeyCredentialCreationOptionsRequest {
