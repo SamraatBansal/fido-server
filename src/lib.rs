@@ -25,5 +25,5 @@ pub mod test_utils;
 
 // Re-exports for convenience
 pub use config::AppConfig;
-pub use error::{AppError, AppResult};
+pub use error::{AppError, Result as AppResult};
 pub use models::*;
