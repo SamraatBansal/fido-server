@@ -102,8 +102,6 @@ pub async fn attestation_result(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use actix_web::test;
-    use serde_json::json;
 
     #[actix_web::test]
     async fn test_attestation_options_valid_request() {
