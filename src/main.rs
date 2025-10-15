@@ -1,38 +1,37 @@
-//! FIDO Server Main Entry Point
-
+use actix_web::{web, App, HttpServer, middleware::Logger};
 use actix_cors::Cors;
-use actix_web::{middleware::Logger, App, HttpServer};
-use std::io;
+use fido2_webauthn_server::{handlers::*, services::WebAuthnService, config::AppConfig};
 
 #[actix_web::main]
-async fn main() -> io::Result<()> {
-    // Initialize logger
-    env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
-
-    log::info!("Starting FIDO Server...");
-
-    // TODO: Load configuration from config file
-    let host = "127.0.0.1";
-    let port = 8080;
-
-    // TODO: Initialize database connection pool
-
-    log::info!("Server running at http://{}:{}", host, port);
-
+async fn main() -> std::io::Result<()> {
+    env_logger::init();
+    
+    let config = AppConfig::from_env();
+    let webauthn_service = web::Data::new(WebAuthnService::new());
+    
+    println!("Starting FIDO2 WebAuthn server on {}:{}", config.server.host, config.server.port);
+    
     HttpServer::new(move || {
-        // Configure CORS
         let cors = Cors::default()
-            .allow_any_origin()
-            .allow_any_method()
-            .allow_any_header()
+            .allowed_origin_fn(|origin, _req_head| {
+                config.server.cors_origins.iter().any(|allowed| {
+                    origin.as_bytes() == allowed.as_bytes()
+                })
+            })
+            .allowed_methods(vec!["GET", "POST", "OPTIONS"])
+            .allowed_headers(vec!["Content-Type", "Authorization"])
             .max_age(3600);
 
         App::new()
-            .wrap(Logger::default())
+            .app_data(webauthn_service.clone())
             .wrap(cors)
-            .configure(fido_server::routes::api::configure)
+            .wrap(Logger::default())
+            .route("/attestation/options", web::post().to(attestation_options))
+            .route("/attestation/result", web::post().to(attestation_result))
+            .route("/assertion/options", web::post().to(assertion_options))
+            .route("/assertion/result", web::post().to(assertion_result))
     })
-    .bind((host, port))?
+    .bind(format!("{}:{}", config.server.host, config.server.port))?
     .run()
     .await
 }
