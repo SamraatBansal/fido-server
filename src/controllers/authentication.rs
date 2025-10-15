@@ -24,13 +24,7 @@ pub async fn assertion_options(
     // Validate user verification policy if provided
     let user_verification = req.user_verification.unwrap_or(UserVerificationPolicy::Preferred);
     
-    // Validate user verification value
-    match user_verification {
-        UserVerificationPolicy::Required | 
-        UserVerificationPolicy::Preferred | 
-        UserVerificationPolicy::Discouraged => {},
-        // If we get here, it means an invalid value was provided
-    }
+    // User verification policy is already validated by serde deserialization
 
     // For now, return an error for non-existent users since we haven't implemented
     // user storage yet
