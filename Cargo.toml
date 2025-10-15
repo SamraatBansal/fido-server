@@ -17,7 +17,7 @@ webauthn-rs = { version = "0.5", features = ["danger-allow-state-serialisation"]
 webauthn-rs-proto = "0.5"
 
 # Database
-diesel = { version = "2.1", features = ["postgres", "uuid", "chrono"] }
+diesel = { version = "2.1", features = ["postgres", "uuid", "chrono", "r2d2"] }
 diesel_migrations = "2.1"
 
 # Utilities
@@ -29,6 +29,7 @@ anyhow = "1.0"
 thiserror = "1.0"
 tracing = "0.1"
 tracing-subscriber = "0.3"
+config = "0.14"
 
 # Crypto
 rand = "0.8"
@@ -68,6 +69,3 @@ default = []
 test-utils = []
 integration-tests = []
 property-tests = []
-
-# Remove the problematic bench configuration that was causing the build error
-# We'll create the benchmark files properly
