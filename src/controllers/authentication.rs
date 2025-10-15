@@ -6,7 +6,6 @@ use crate::models::{
     ServerPublicKeyCredentialGetOptionsRequest,
     ServerPublicKeyCredentialGetOptionsResponse,
     ServerPublicKeyCredential,
-    ServerResponse,
     ServerPublicKeyCredentialDescriptor,
 };
 use webauthn_rs_proto::UserVerificationPolicy;
