@@ -1,29 +1,17 @@
 [package]
-name = "fido-server"
+name = "fido2-conformance-tests"
 version = "0.1.0"
 edition = "2021"
-authors = ["FIDO Server Team"]
-license = "MIT"
-repository = "https://github.com/yourorg/fido-server"
-readme = "README.md"
-
-[lib]
-name = "fido_server"
-path = "src/lib.rs"
-
-[[bin]]
-name = "fido-server"
-path = "src/main.rs"
 
 [dependencies]
-# Web Framework
+# Core WebAuthn functionality
+webauthn-rs = "0.5"
+webauthn-rs-proto = "0.5"
+
+# Web framework
 actix-web = "4.9"
 actix-cors = "0.7"
 actix-rt = "2.10"
-
-# FIDO/WebAuthn
-webauthn-rs = "0.5"
-webauthn-rs-proto = "0.5"
 
 # Serialization
 serde = { version = "1.0", features = ["derive"] }
@@ -31,61 +19,54 @@ serde_json = "1.0"
 
 # Database
 diesel = { version = "2.1", features = ["postgres", "r2d2", "chrono", "uuid"] }
-diesel_migrations = "2.1"
 r2d2 = "0.8"
 
-# Async
-tokio = { version = "1.40", features = ["full"] }
+# Security and crypto
+base64 = "0.22"
+sha2 = "0.10"
+rand = "0.8"
+uuid = { version = "1.0", features = ["v4", "serde"] }
+
+# Async runtime
+tokio = { version = "1.0", features = ["full"] }
 futures = "0.3"
 
-# Cryptography
-base64 = "0.22"
-uuid = { version = "1.10", features = ["v4", "serde"] }
-rand = "0.8"
-sha2 = "0.10"
+# Error handling
+anyhow = "1.0"
+thiserror = "1.0"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = "0.3"
 
 # Configuration
 config = "0.14"
-dotenv = "0.15"
-
-# Logging
-log = "0.4"
-env_logger = "0.11"
-
-# Error Handling
-thiserror = "1.0"
-anyhow = "1.0"
-
-# Time
-chrono = { version = "0.4", features = ["serde"] }
 
 [dev-dependencies]
+# Testing framework
 actix-test = "0.1"
 mockall = "0.13"
+tokio-test = "0.4"
+wiremock = "0.6"
+testcontainers = "0.20"
+proptest = "1.4"
+criterion = "0.5"
+fake = "2.9"
+rstest = "0.21"
+serial_test = "3.1"
+tempfile = "3.8"
 
-[profile.dev]
-opt-level = 0
-debug = true
+# HTTP client for testing
+reqwest = { version = "0.12", features = ["json"] }
 
-[profile.release]
-opt-level = 3
-lto = true
-codegen-units = 1
-panic = "abort"
-strip = true
+# Additional test utilities
+pretty_assertions = "1.4"
+test-case = "3.3"
 
-# Strict linting configuration
-[lints.rust]
-unused_must_use = "deny"
-missing_docs = "warn"
-unused_imports = "warn"
-dead_code = "warn"
+[[bin]]
+name = "fido2-server"
+path = "src/main.rs"
 
-[lints.clippy]
-all = "deny"
-pedantic = "deny"
-nursery = "warn"
-cargo = "warn"
-# Allow some pedantic lints that are too strict
-module_name_repetitions = "allow"
-missing_errors_doc = "allow"
+[lib]
+name = "fido2_conformance_tests"
+path = "src/lib.rs"
