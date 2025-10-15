@@ -1,25 +1,26 @@
 use actix_web::{HttpResponse, ResponseError};
-use serde_json::json;
+use serde::{Deserialize, Serialize};
 use std::fmt;
-
-pub type Result<T> = std::result::Result<T, AppError>;
 
 #[derive(Debug, thiserror::Error)]
 pub enum AppError {
+    #[error("WebAuthn error: {0}")]
+    WebAuthn(#[from] webauthn_rs::error::WebauthnError),
+    
+    #[error("Serialization error: {0}")]
+    Serialization(#[from] serde_json::Error),
+    
     #[error("Invalid request: {0}")]
     InvalidRequest(String),
     
     #[error("User not found: {0}")]
     UserNotFound(String),
     
-    #[error("Invalid username format")]
-    InvalidUsername,
+    #[error("Credential not found")]
+    CredentialNotFound,
     
-    #[error("Invalid credential ID")]
-    InvalidCredentialId,
-    
-    #[error("Invalid challenge")]
-    InvalidChallenge,
+    #[error("Challenge not found or expired")]
+    ChallengeNotFound,
     
     #[error("Invalid attestation")]
     InvalidAttestation,
@@ -27,59 +28,37 @@ pub enum AppError {
     #[error("Invalid assertion")]
     InvalidAssertion,
     
-    #[error("Replay attack detected")]
-    ReplayAttack,
-    
-    #[error("Origin mismatch")]
-    OriginMismatch,
-    
     #[error("Database error: {0}")]
     Database(String),
-    
-    #[error("WebAuthn error: {0}")]
-    WebAuthn(String),
-    
-    #[error("Serialization error: {0}")]
-    Serialization(String),
     
     #[error("Internal server error: {0}")]
     Internal(String),
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ErrorResponse {
+    pub status: String,
+    #[serde(rename = "errorMessage")]
+    pub error_message: String,
+}
+
 impl ResponseError for AppError {
     fn error_response(&self) -> HttpResponse {
-        let (status_code, error_message) = match self {
-            AppError::InvalidRequest(msg) => (actix_web::http::StatusCode::BAD_REQUEST, msg.clone()),
-            AppError::UserNotFound(msg) => (actix_web::http::StatusCode::NOT_FOUND, msg.clone()),
-            AppError::InvalidUsername => (actix_web::http::StatusCode::BAD_REQUEST, "Invalid username format".to_string()),
-            AppError::InvalidCredentialId => (actix_web::http::StatusCode::BAD_REQUEST, "Invalid credential ID".to_string()),
-            AppError::InvalidChallenge => (actix_web::http::StatusCode::BAD_REQUEST, "Invalid challenge".to_string()),
-            AppError::InvalidAttestation => (actix_web::http::StatusCode::BAD_REQUEST, "Can not validate response signature!".to_string()),
-            AppError::InvalidAssertion => (actix_web::http::StatusCode::BAD_REQUEST, "Can not validate response signature!".to_string()),
-            AppError::ReplayAttack => (actix_web::http::StatusCode::BAD_REQUEST, "Replay attack detected".to_string()),
-            AppError::OriginMismatch => (actix_web::http::StatusCode::BAD_REQUEST, "Origin mismatch".to_string()),
-            AppError::Database(msg) => (actix_web::http::StatusCode::INTERNAL_SERVER_ERROR, format!("Database error: {}", msg)),
-            AppError::WebAuthn(msg) => (actix_web::http::StatusCode::BAD_REQUEST, msg.clone()),
-            AppError::Serialization(msg) => (actix_web::http::StatusCode::BAD_REQUEST, format!("Serialization error: {}", msg)),
-            AppError::Internal(msg) => (actix_web::http::StatusCode::INTERNAL_SERVER_ERROR, msg.clone()),
+        let error_response = ErrorResponse {
+            status: "failed".to_string(),
+            error_message: self.to_string(),
         };
 
-        HttpResponse::build(status_code).json(json!({
-            "status": "failed",
-            "errorMessage": error_message
-        }))
+        match self {
+            AppError::InvalidRequest(_) => HttpResponse::BadRequest().json(error_response),
+            AppError::UserNotFound(_) => HttpResponse::NotFound().json(error_response),
+            AppError::CredentialNotFound => HttpResponse::NotFound().json(error_response),
+            AppError::ChallengeNotFound => HttpResponse::BadRequest().json(error_response),
+            AppError::InvalidAttestation => HttpResponse::BadRequest().json(error_response),
+            AppError::InvalidAssertion => HttpResponse::BadRequest().json(error_response),
+            _ => HttpResponse::InternalServerError().json(error_response),
+        }
     }
 }
 
-// Conversion implementations for common error types
-impl From<serde_json::Error> for AppError {
-    fn from(err: serde_json::Error) -> Self {
-        AppError::Serialization(err.to_string())
-    }
-}
-
-impl From<base64::DecodeError> for AppError {
-    fn from(err: base64::DecodeError) -> Self {
-        AppError::InvalidRequest(format!("Base64 decode error: {}", err))
-    }
-}
+pub type AppResult<T> = Result<T, AppError>;
