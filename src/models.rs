@@ -26,7 +26,7 @@ pub struct ServerPublicKeyCredentialCreationOptionsRequest {
 }
 
 /// Authenticator selection criteria
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AuthenticatorSelectionCriteria {
     #[serde(rename = "requireResidentKey")]
     pub require_resident_key: Option<bool>,
