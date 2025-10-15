@@ -1,38 +1,22 @@
-//! FIDO Server Main Entry Point
-
-use actix_cors::Cors;
-use actix_web::{middleware::Logger, App, HttpServer};
-use std::io;
+use actix_web::{web, App, HttpServer, middleware::Logger};
+use fido2_conformance_tests::{config::Settings, routes};
+use tracing_subscriber;
 
 #[actix_web::main]
-async fn main() -> io::Result<()> {
-    // Initialize logger
-    env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
+async fn main() -> std::io::Result<()> {
+    // Initialize logging
+    tracing_subscriber::init();
 
-    log::info!("Starting FIDO Server...");
+    // Load configuration
+    let settings = Settings::new().expect("Failed to load configuration");
 
-    // TODO: Load configuration from config file
-    let host = "127.0.0.1";
-    let port = 8080;
-
-    // TODO: Initialize database connection pool
-
-    log::info!("Server running at http://{}:{}", host, port);
-
+    // Start HTTP server
     HttpServer::new(move || {
-        // Configure CORS
-        let cors = Cors::default()
-            .allow_any_origin()
-            .allow_any_method()
-            .allow_any_header()
-            .max_age(3600);
-
         App::new()
             .wrap(Logger::default())
-            .wrap(cors)
-            .configure(fido_server::routes::api::configure)
+            .configure(routes::configure)
     })
-    .bind((host, port))?
+    .bind(format!("{}:{}", settings.server.host, settings.server.port))?
     .run()
     .await
 }
