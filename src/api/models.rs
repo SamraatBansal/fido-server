@@ -238,3 +238,219 @@ impl AssertionOptionsRequest {
         self
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json;
+
+    #[test]
+    fn test_server_response_ok() {
+        let response = ServerResponse::ok();
+        assert_eq!(response.status, "ok");
+        assert_eq!(response.error_message, "");
+    }
+
+    #[test]
+    fn test_server_response_error() {
+        let response = ServerResponse::error("Test error");
+        assert_eq!(response.status, "failed");
+        assert_eq!(response.error_message, "Test error");
+    }
+
+    #[test]
+    fn test_attestation_options_request_serialization() {
+        let request = AttestationOptionsRequest::new("test@example.com", "Test User")
+            .with_attestation("direct")
+            .with_authenticator_selection(
+                AuthenticatorSelectionCriteria::new()
+                    .with_user_verification("required")
+                    .with_authenticator_attachment("cross-platform")
+            );
+
+        let json = serde_json::to_string(&request).expect("Failed to serialize");
+        let deserialized: AttestationOptionsRequest = 
+            serde_json::from_str(&json).expect("Failed to deserialize");
+
+        assert_eq!(request.username, deserialized.username);
+        assert_eq!(request.display_name, deserialized.display_name);
+        assert_eq!(request.attestation, deserialized.attestation);
+    }
+
+    #[test]
+    fn test_attestation_options_request_default_attestation() {
+        let request = AttestationOptionsRequest::new("test@example.com", "Test User");
+        assert_eq!(request.attestation, "none");
+    }
+
+    #[test]
+    fn test_assertion_options_request_serialization() {
+        let request = AssertionOptionsRequest::new("test@example.com")
+            .with_user_verification("preferred");
+
+        let json = serde_json::to_string(&request).expect("Failed to serialize");
+        let deserialized: AssertionOptionsRequest = 
+            serde_json::from_str(&json).expect("Failed to deserialize");
+
+        assert_eq!(request.username, deserialized.username);
+        assert_eq!(request.user_verification, deserialized.user_verification);
+    }
+
+    #[test]
+    fn test_attestation_result_request_deserialization() {
+        let json = r#"{
+            "id": "test-credential-id",
+            "response": {
+                "clientDataJSON": "test-client-data",
+                "attestationObject": "test-attestation-object"
+            },
+            "type": "public-key"
+        }"#;
+
+        let request: AttestationResultRequest = 
+            serde_json::from_str(json).expect("Failed to deserialize");
+
+        assert_eq!(request.id, "test-credential-id");
+        assert_eq!(request.response.client_data_json, "test-client-data");
+        assert_eq!(request.response.attestation_object, "test-attestation-object");
+        assert_eq!(request.cred_type, "public-key");
+    }
+
+    #[test]
+    fn test_assertion_result_request_deserialization() {
+        let json = r#"{
+            "id": "test-credential-id",
+            "response": {
+                "authenticatorData": "test-auth-data",
+                "clientDataJSON": "test-client-data",
+                "signature": "test-signature"
+            },
+            "type": "public-key"
+        }"#;
+
+        let request: AssertionResultRequest = 
+            serde_json::from_str(json).expect("Failed to deserialize");
+
+        assert_eq!(request.id, "test-credential-id");
+        assert_eq!(request.response.authenticator_data, "test-auth-data");
+        assert_eq!(request.response.client_data_json, "test-client-data");
+        assert_eq!(request.response.signature, "test-signature");
+        assert_eq!(request.cred_type, "public-key");
+    }
+
+    #[test]
+    fn test_attestation_options_response_serialization() {
+        let response = AttestationOptionsResponse {
+            base: ServerResponse::ok(),
+            rp: Some(RelyingParty {
+                name: "Test RP".to_string(),
+                id: Some("example.com".to_string()),
+            }),
+            user: Some(UserEntity {
+                id: "test-user-id".to_string(),
+                name: "test@example.com".to_string(),
+                display_name: "Test User".to_string(),
+            }),
+            challenge: Some("test-challenge".to_string()),
+            pub_key_cred_params: Some(vec![
+                PubKeyCredParam {
+                    cred_type: "public-key".to_string(),
+                    alg: -7,
+                }
+            ]),
+            timeout: Some(60000),
+            exclude_credentials: None,
+            authenticator_selection: None,
+            attestation: Some("none".to_string()),
+            extensions: None,
+        };
+
+        let json = serde_json::to_string(&response).expect("Failed to serialize");
+        let parsed: serde_json::Value = serde_json::from_str(&json).expect("Failed to parse JSON");
+
+        assert_eq!(parsed["status"], "ok");
+        assert_eq!(parsed["rp"]["name"], "Test RP");
+        assert_eq!(parsed["user"]["name"], "test@example.com");
+        assert_eq!(parsed["challenge"], "test-challenge");
+    }
+
+    #[test]
+    fn test_assertion_options_response_serialization() {
+        let response = AssertionOptionsResponse {
+            base: ServerResponse::ok(),
+            challenge: Some("test-challenge".to_string()),
+            timeout: Some(60000),
+            rp_id: Some("example.com".to_string()),
+            allow_credentials: Some(vec![
+                CredentialDescriptor {
+                    cred_type: "public-key".to_string(),
+                    id: "test-cred-id".to_string(),
+                    transports: Some(vec!["usb".to_string(), "nfc".to_string()]),
+                }
+            ]),
+            user_verification: Some("required".to_string()),
+            extensions: None,
+        };
+
+        let json = serde_json::to_string(&response).expect("Failed to serialize");
+        let parsed: serde_json::Value = serde_json::from_str(&json).expect("Failed to parse JSON");
+
+        assert_eq!(parsed["status"], "ok");
+        assert_eq!(parsed["challenge"], "test-challenge");
+        assert_eq!(parsed["rpId"], "example.com");
+        assert_eq!(parsed["userVerification"], "required");
+    }
+
+    #[test]
+    fn test_invalid_json_deserialization() {
+        let invalid_json = r#"{"invalid": "json"}"#;
+        
+        let result: Result<AttestationOptionsRequest, _> = serde_json::from_str(invalid_json);
+        assert!(result.is_err());
+
+        let result: Result<AssertionOptionsRequest, _> = serde_json::from_str(invalid_json);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_missing_required_fields() {
+        // Test missing username in attestation options
+        let json = r#"{"displayName": "Test User"}"#;
+        let result: Result<AttestationOptionsRequest, _> = serde_json::from_str(json);
+        assert!(result.is_err());
+
+        // Test missing displayName in attestation options
+        let json = r#"{"username": "test@example.com"}"#;
+        let result: Result<AttestationOptionsRequest, _> = serde_json::from_str(json);
+        assert!(result.is_err());
+
+        // Test missing username in assertion options
+        let json = r#"{"userVerification": "required"}"#;
+        let result: Result<AssertionOptionsRequest, _> = serde_json::from_str(json);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_optional_fields_handling() {
+        // Test attestation options with minimal fields
+        let json = r#"{
+            "username": "test@example.com",
+            "displayName": "Test User"
+        }"#;
+        let request: AttestationOptionsRequest = 
+            serde_json::from_str(json).expect("Failed to deserialize");
+        
+        assert_eq!(request.username, "test@example.com");
+        assert_eq!(request.display_name, "Test User");
+        assert_eq!(request.attestation, "none"); // Default value
+        assert!(request.authenticator_selection.is_none());
+
+        // Test assertion options with minimal fields
+        let json = r#"{"username": "test@example.com"}"#;
+        let request: AssertionOptionsRequest = 
+            serde_json::from_str(json).expect("Failed to deserialize");
+        
+        assert_eq!(request.username, "test@example.com");
+        assert!(request.user_verification.is_none());
+    }
+}
