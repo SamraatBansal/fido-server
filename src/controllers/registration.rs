@@ -6,12 +6,9 @@ use crate::models::{
     ServerPublicKeyCredentialCreationOptionsRequest,
     ServerPublicKeyCredentialCreationOptionsResponse,
     ServerPublicKeyCredential,
-    ServerResponse,
     PublicKeyCredentialRpEntity,
     ServerPublicKeyCredentialUserEntity,
     PublicKeyCredentialParameters,
-    ServerPublicKeyCredentialDescriptor,
-    AuthenticatorSelectionCriteria,
 };
 use webauthn_rs_proto::AttestationConveyancePreference;
 use base64::Engine;
