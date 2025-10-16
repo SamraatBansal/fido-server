@@ -91,7 +91,8 @@ pub struct PublicKeyCredentialRpEntity {
 pub struct ServerPublicKeyCredentialUserEntity {
     pub id: String,
     pub name: String,
-    pub displayName: String,
+    #[serde(rename = "displayName")]
+    pub display_name: String,
 }
 
 /// Public key credential parameters
