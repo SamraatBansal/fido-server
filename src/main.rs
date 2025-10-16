@@ -1,8 +1,10 @@
 //! FIDO Server Main Entry Point
 
 use actix_cors::Cors;
-use actix_web::{middleware::Logger, App, HttpServer};
+use actix_web::{middleware::Logger, web, App, HttpServer};
 use std::io;
+
+use fido_server::services::WebAuthnService;
 
 #[actix_web::main]
 async fn main() -> io::Result<()> {
@@ -11,9 +13,13 @@ async fn main() -> io::Result<()> {
 
     log::info!("Starting FIDO Server...");
 
+    // Initialize WebAuthn service
+    let webauthn_service = WebAuthnService::new()
+        .expect("Failed to initialize WebAuthn service");
+
     // TODO: Load configuration from config file
     let host = "127.0.0.1";
-    let port = 8080;
+    let port = 3000; // Use port 3000 for FIDO conformance testing
 
     // TODO: Initialize database connection pool
 
@@ -30,6 +36,7 @@ async fn main() -> io::Result<()> {
         App::new()
             .wrap(Logger::default())
             .wrap(cors)
+            .app_data(web::Data::new(webauthn_service.clone()))
             .configure(fido_server::routes::api::configure)
     })
     .bind((host, port))?
