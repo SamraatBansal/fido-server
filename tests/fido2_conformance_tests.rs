@@ -10,13 +10,13 @@ use fido_server::{
     controllers::webauthn,
 };
 
-/// Create test app with WebAuthn service
-async fn create_test_app() {
+#[actix_web::test]
+async fn test_attestation_options_success() {
     let webauthn_config = WebAuthnConfig::default();
     let webauthn_service = WebAuthnServiceImpl::new(webauthn_config)
         .expect("Failed to create WebAuthn service");
 
-    test::init_service(
+    let app = test::init_service(
         App::new()
             .app_data(web::Data::new(webauthn_service))
             .service(
@@ -26,12 +26,7 @@ async fn create_test_app() {
                     .route("/assertion/options", web::post().to(webauthn::assertion_options))
                     .route("/assertion/result", web::post().to(webauthn::assertion_result))
             )
-    ).await
-}
-
-#[actix_web::test]
-async fn test_attestation_options_success() {
-    let app = create_test_app().await;
+    ).await;
     
     let request_body = json!({
         "username": "johndoe@example.com",
@@ -89,7 +84,21 @@ async fn test_attestation_options_success() {
 
 #[actix_web::test]
 async fn test_attestation_options_missing_username() {
-    let app = create_test_app().await;
+    let webauthn_config = WebAuthnConfig::default();
+    let webauthn_service = WebAuthnServiceImpl::new(webauthn_config)
+        .expect("Failed to create WebAuthn service");
+
+    let app = test::init_service(
+        App::new()
+            .app_data(web::Data::new(webauthn_service))
+            .service(
+                web::scope("/api")
+                    .route("/attestation/options", web::post().to(webauthn::attestation_options))
+                    .route("/attestation/result", web::post().to(webauthn::attestation_result))
+                    .route("/assertion/options", web::post().to(webauthn::assertion_options))
+                    .route("/assertion/result", web::post().to(webauthn::assertion_result))
+            )
+    ).await;
     
     let request_body = json!({
         "displayName": "John Doe",
@@ -112,7 +121,21 @@ async fn test_attestation_options_missing_username() {
 
 #[actix_web::test]
 async fn test_attestation_result_success() {
-    let app = create_test_app().await;
+    let webauthn_config = WebAuthnConfig::default();
+    let webauthn_service = WebAuthnServiceImpl::new(webauthn_config)
+        .expect("Failed to create WebAuthn service");
+
+    let app = test::init_service(
+        App::new()
+            .app_data(web::Data::new(webauthn_service))
+            .service(
+                web::scope("/api")
+                    .route("/attestation/options", web::post().to(webauthn::attestation_options))
+                    .route("/attestation/result", web::post().to(webauthn::attestation_result))
+                    .route("/assertion/options", web::post().to(webauthn::assertion_options))
+                    .route("/assertion/result", web::post().to(webauthn::assertion_result))
+            )
+    ).await;
     
     let request_body = json!({
         "id": "LFdoCFJTyB82ZzSJUHc-c72yraRc_1mPvGX8ToE8su39xX26Jcqd31LUkKOS36FIAWgWl6itMKqmDvruha6ywA",
@@ -140,7 +163,21 @@ async fn test_attestation_result_success() {
 
 #[actix_web::test]
 async fn test_assertion_options_success() {
-    let app = create_test_app().await;
+    let webauthn_config = WebAuthnConfig::default();
+    let webauthn_service = WebAuthnServiceImpl::new(webauthn_config)
+        .expect("Failed to create WebAuthn service");
+
+    let app = test::init_service(
+        App::new()
+            .app_data(web::Data::new(webauthn_service))
+            .service(
+                web::scope("/api")
+                    .route("/attestation/options", web::post().to(webauthn::attestation_options))
+                    .route("/attestation/result", web::post().to(webauthn::attestation_result))
+                    .route("/assertion/options", web::post().to(webauthn::assertion_options))
+                    .route("/assertion/result", web::post().to(webauthn::assertion_result))
+            )
+    ).await;
     
     let request_body = json!({
         "username": "johndoe@example.com",
@@ -180,7 +217,21 @@ async fn test_assertion_options_success() {
 
 #[actix_web::test]
 async fn test_assertion_result_success() {
-    let app = create_test_app().await;
+    let webauthn_config = WebAuthnConfig::default();
+    let webauthn_service = WebAuthnServiceImpl::new(webauthn_config)
+        .expect("Failed to create WebAuthn service");
+
+    let app = test::init_service(
+        App::new()
+            .app_data(web::Data::new(webauthn_service))
+            .service(
+                web::scope("/api")
+                    .route("/attestation/options", web::post().to(webauthn::attestation_options))
+                    .route("/attestation/result", web::post().to(webauthn::attestation_result))
+                    .route("/assertion/options", web::post().to(webauthn::assertion_options))
+                    .route("/assertion/result", web::post().to(webauthn::assertion_result))
+            )
+    ).await;
     
     let request_body = json!({
         "id": "LFdoCFJTyB82ZzSJUHc-c72yraRc_1mPvGX8ToE8su39xX26Jcqd31LUkKOS36FIAWgWl6itMKqmDvruha6ywA",
