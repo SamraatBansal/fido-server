@@ -168,6 +168,7 @@ pub struct ServerPublicKeyCredentialGetOptionsResponse {
     /// Response status
     pub status: String,
     /// Error message
+    #[serde(rename = "errorMessage")]
     pub error_message: String,
     /// Generated challenge
     pub challenge: String,
