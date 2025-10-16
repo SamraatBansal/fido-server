@@ -87,7 +87,7 @@ pub async fn assertion_options(
 /// Handle assertion result request (credential get verification)
 pub async fn assertion_result(
     request: web::Json<ServerPublicKeyCredential>,
-    webauthn_service: web::Data<dyn WebAuthnService>,
+    webauthn_service: web::Data<WebAuthnServiceImpl>,
 ) -> ActixResult<HttpResponse> {
     // Validate request
     if let Err(validation_errors) = request.validate() {
