@@ -5,6 +5,7 @@
 pub mod config;
 pub mod controllers;
 pub mod db;
+pub mod domain;
 pub mod error;
 pub mod middleware;
 pub mod routes;
