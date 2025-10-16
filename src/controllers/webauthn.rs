@@ -5,7 +5,7 @@ use validator::Validate;
 use crate::error::AppError;
 use crate::models::{
     requests::{ServerPublicKeyCredentialCreationOptionsRequest, ServerPublicKeyCredentialGetOptionsRequest, ServerPublicKeyCredential},
-    responses::{ServerPublicKeyCredentialCreationOptionsResponse, ServerPublicKeyCredentialGetOptionsResponse, ServerResponse},
+    responses::ServerResponse,
 };
 use crate::services::WebAuthnService;
 
