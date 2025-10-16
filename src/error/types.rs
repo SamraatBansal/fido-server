@@ -55,8 +55,7 @@ impl ResponseError for AppError {
             Self::DatabaseError(_) | Self::InternalError(_) => {
                 StatusCode::INTERNAL_SERVER_ERROR
             }
-            Self::WebAuthnError(_) => StatusCode::BAD_REQUEST,
-            Self::ValidationError(_) | Self::BadRequest(_) => StatusCode::BAD_REQUEST,
+            Self::WebAuthnError(_) | Self::ValidationError(_) | Self::InvalidRequest(_) | Self::BadRequest(_) => StatusCode::BAD_REQUEST,
             Self::NotFound(_) => StatusCode::NOT_FOUND,
         }
     }
