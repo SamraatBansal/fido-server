@@ -124,9 +124,12 @@ async fn test_attestation_result_success() {
 
     let resp = test::call_service(&app, req).await;
     
-    assert_eq!(resp.status(), StatusCode::OK);
-    
+    // For debugging, let's see what we actually get
+    println!("Response status: {}", resp.status());
     let body: serde_json::Value = test::read_body_json(resp).await;
+    println!("Response body: {}", serde_json::to_string_pretty(&body).unwrap());
+    
+    assert_eq!(resp.status(), StatusCode::OK);
     
     assert_eq!(body["status"], "ok");
     assert_eq!(body["errorMessage"], "");
@@ -194,9 +197,12 @@ async fn test_assertion_options_success() {
 
     let resp = test::call_service(&app, req).await;
     
-    assert_eq!(resp.status(), StatusCode::OK);
-    
+    // For debugging, let's see what we actually get
+    println!("Response status: {}", resp.status());
     let body: serde_json::Value = test::read_body_json(resp).await;
+    println!("Response body: {}", serde_json::to_string_pretty(&body).unwrap());
+    
+    assert_eq!(resp.status(), StatusCode::OK);
     
     assert_eq!(body["status"], "ok");
     assert_eq!(body["errorMessage"], "");
@@ -236,9 +242,12 @@ async fn test_assertion_result_success() {
 
     let resp = test::call_service(&app, req).await;
     
-    assert_eq!(resp.status(), StatusCode::OK);
-    
+    // For debugging, let's see what we actually get
+    println!("Response status: {}", resp.status());
     let body: serde_json::Value = test::read_body_json(resp).await;
+    println!("Response body: {}", serde_json::to_string_pretty(&body).unwrap());
+    
+    assert_eq!(resp.status(), StatusCode::OK);
     
     assert_eq!(body["status"], "ok");
     assert_eq!(body["errorMessage"], "");
