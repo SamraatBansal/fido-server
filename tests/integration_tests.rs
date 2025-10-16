@@ -36,13 +36,15 @@ async fn test_attestation_options_success() {
         }))
         .to_request();
 
-    let resp = test::call_service(&app, req).await;
+    let mut resp = test::call_service(&app, req).await;
     let status = resp.status();
     
     println!("Response status: {}", status);
     if status != StatusCode::OK {
         let body = test::read_body(resp).await;
         println!("Response body: {:?}", String::from_utf8_lossy(&body));
+        // Need to make a new request since we consumed the response
+        resp = test::call_service(&app, req).await;
     }
     
     assert_eq!(status, StatusCode::OK);
