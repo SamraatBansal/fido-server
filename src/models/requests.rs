@@ -41,14 +41,14 @@ fn default_user_verification() -> String {
 /// Authenticator selection criteria
 #[derive(Debug, Deserialize, Serialize)]
 pub struct AuthenticatorSelectionCriteria {
-    #[serde(default)]
-    pub requireResidentKey: bool,
+    #[serde(default, rename = "requireResidentKey")]
+    pub require_resident_key: bool,
     
-    #[serde(default)]
-    pub authenticatorAttachment: String,
+    #[serde(default, rename = "authenticatorAttachment")]
+    pub authenticator_attachment: String,
     
-    #[serde(default = "default_user_verification")]
-    pub userVerification: String,
+    #[serde(default = "default_user_verification", rename = "userVerification")]
+    pub user_verification: String,
 }
 
 /// Server public key credential for attestation and assertion results
