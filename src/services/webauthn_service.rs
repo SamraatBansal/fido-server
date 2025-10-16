@@ -182,11 +182,11 @@ impl WebAuthnService {
             .decode(&credential.response.client_data_json)
             .map_err(|e| AppError::InvalidRequest(format!("Invalid clientDataJSON: {}", e)))?;
 
-        let _authenticator_data = general_purpose::URL_SAFE_NO_PAD
+        let authenticator_data = general_purpose::URL_SAFE_NO_PAD
             .decode(&credential.response.authenticator_data)
             .map_err(|e| AppError::InvalidRequest(format!("Invalid authenticatorData: {}", e)))?;
 
-        let _signature = general_purpose::URL_SAFE_NO_PAD
+        let signature = general_purpose::URL_SAFE_NO_PAD
             .decode(&credential.response.signature)
             .map_err(|e| AppError::InvalidRequest(format!("Invalid signature: {}", e)))?;
 
@@ -194,13 +194,37 @@ impl WebAuthnService {
         let client_data: Value = serde_json::from_slice(&client_data_json)
             .map_err(|e| AppError::InvalidRequest(format!("Invalid clientDataJSON format: {}", e)))?;
 
-        // TODO: Verify assertion with webauthn-rs
-        // For now, just validate basic structure
+        // Validate challenge exists and is not empty
+        let challenge = client_data.get("challenge")
+            .and_then(|v| v.as_str())
+            .ok_or_else(|| AppError::InvalidRequest("Missing challenge field".to_string()))?;
+        
+        if challenge.is_empty() {
+            return Err(AppError::InvalidRequest("Empty challenge field".to_string()));
+        }
+
+        // Validate origin
+        let _origin = client_data.get("origin")
+            .and_then(|v| v.as_str())
+            .ok_or_else(|| AppError::InvalidRequest("Missing origin field".to_string()))?;
+
+        // Validate type
         let client_type = client_data.get("type").and_then(|v| v.as_str()).unwrap_or("");
         if client_type != "webauthn.get" {
             return Err(AppError::InvalidRequest("Invalid client data type".to_string()));
         }
 
+        // Basic validation of authenticator data format
+        if authenticator_data.len() < 37 {
+            return Err(AppError::InvalidRequest("Invalid authenticator data format".to_string()));
+        }
+
+        // Basic validation of signature format
+        if signature.len() < 32 {
+            return Err(AppError::InvalidRequest("Invalid signature format".to_string()));
+        }
+
+        // TODO: Verify assertion with webauthn-rs
         // TODO: Verify signature and authenticator data
         // TODO: Update credential counter
         // TODO: Update last used timestamp
