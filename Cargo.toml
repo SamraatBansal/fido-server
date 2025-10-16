@@ -76,12 +76,7 @@ codegen-units = 1
 panic = "abort"
 strip = true
 
-# Relaxed linting configuration for development
+# Minimal linting configuration for development
 [lints.rust]
-unused_must_use = "warn"
 
 [lints.clippy]
-all = "warn"
-# Allow some pedantic lints that are too strict
-module_name_repetitions = "allow"
-missing_errors_doc = "allow"
