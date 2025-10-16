@@ -1,6 +1,7 @@
 //! Utility functions
 
 use chrono::{DateTime, Utc, Duration};
+use base64::Engine;
 
 /// Generate a random challenge string
 pub fn generate_challenge() -> String {
