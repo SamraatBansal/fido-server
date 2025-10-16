@@ -95,18 +95,18 @@ impl WebAuthnService for WebAuthnServiceImpl {
             user: crate::models::responses::ServerPublicKeyCredentialUserEntity {
                 id: user_id,
                 name: request.username,
-                displayName: request.displayName,
+                display_name: request.display_name,
             },
             challenge,
-            pubKeyCredParams: vec![
+            pub_key_cred_params: vec![
                 crate::models::responses::PublicKeyCredentialParameters {
                     credential_type: "public-key".to_string(),
                     alg: -7, // ES256
                 },
             ],
             timeout: Some(10000), // 10 seconds as per spec
-            excludeCredentials: vec![], // TODO: Get existing credentials for user
-            authenticatorSelection: request.authenticatorSelection,
+            exclude_credentials: vec![], // TODO: Get existing credentials for user
+            authenticator_selection: request.authenticator_selection,
             attestation: Some(request.attestation),
             extensions: None,
         };
