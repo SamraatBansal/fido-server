@@ -4,11 +4,10 @@ use crate::domain::dto::*;
 use crate::domain::models::*;
 use crate::error::{AppError, Result};
 use base64::{engine::general_purpose, Engine as _};
-use serde_json::json;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use webauthn_rs::prelude::*;
+use validator::Validate;
 
 /// WebAuthn service configuration
 #[derive(Debug, Clone)]
@@ -33,7 +32,6 @@ impl Default for WebAuthnConfig {
 /// WebAuthn service
 pub struct WebAuthnService {
     config: WebAuthnConfig,
-    webauthn: Webauthn,
     // In-memory storage for challenges (in production, use database)
     challenges: Arc<RwLock<HashMap<String, Challenge>>>,
     // In-memory storage for users (in production, use database)
@@ -44,18 +42,8 @@ pub struct WebAuthnService {
 
 impl WebAuthnService {
     pub fn new(config: WebAuthnConfig) -> Result<Self> {
-        let rp = RelyingParty {
-            name: config.rp_name.clone(),
-            id: config.rp_id.clone(),
-            origin: Url::parse(&config.rp_origin)
-                .map_err(|e| AppError::WebAuthnError(format!("Invalid origin URL: {}", e)))?,
-        };
-
-        let webauthn = Webauthn::new(rp);
-
         Ok(Self {
             config,
-            webauthn,
             challenges: Arc::new(RwLock::new(HashMap::new())),
             users: Arc::new(RwLock::new(HashMap::new())),
             credentials: Arc::new(RwLock::new(HashMap::new())),
@@ -73,28 +61,18 @@ impl WebAuthnService {
         // Find or create user
         let user = self.find_or_create_user(&request.username, &request.displayName).await?;
 
-        // Generate WebAuthn challenge
-        let user_unique_id = user.id.as_bytes().to_vec();
-        let user_entity = webauthn_rs::prelude::User {
-            id: user_unique_id,
-            name: user.username.clone(),
-            display_name: user.display_name.clone(),
-        };
+        // Generate challenge
+        let challenge = general_purpose::URL_SAFE_NO_PAD.encode(&rand::random::<[u8; 32]>());
 
-        let (creation_challenge_response, state) = self
-            .webauthn
-            .start_registration(&user_entity, self.config.timeout)
-            .map_err(|e| AppError::WebAuthnError(format!("Failed to generate registration challenge: {}", e)))?;
-
-        // Store challenge state
-        let challenge = Challenge::new(
+        // Store challenge
+        let challenge_record = Challenge::new(
             Some(user.id.clone()),
-            creation_challenge_response.challenge.clone(),
+            challenge.clone(),
             ChallengeType::Registration,
         );
 
         let mut challenges = self.challenges.write().await;
-        challenges.insert(challenge.id.clone(), challenge);
+        challenges.insert(challenge_record.id.clone(), challenge_record);
 
         // Get existing credentials for exclusion
         let user_credentials = self.get_user_credentials(&user.id).await?;
@@ -119,7 +97,7 @@ impl WebAuthnService {
                 name: user.username,
                 displayName: user.display_name,
             },
-            challenge: creation_challenge_response.challenge,
+            challenge,
             pubKeyCredParams: vec![PublicKeyCredentialParameters {
                 credential_type: "public-key".to_string(),
                 alg: -7, // ES256
@@ -179,31 +157,9 @@ impl WebAuthnService {
         })?;
         let user = self.get_user(&user_id).await?;
 
-        // Decode attestation object
-        let attestation_object = general_purpose::URL_SAFE_NO_PAD
-            .decode(&response.attestationObject)
-            .map_err(|_| AppError::BadRequest("Invalid attestationObject encoding".to_string()))?;
-
-        // Create registration object for verification
-        let registration = webauthn_rs::prelude::Registration {
-            credential: webauthn_rs::prelude::PublicKeyCredential {
-                id: credential.id.clone(),
-                raw_id: general_purpose::URL_SAFE_NO_PAD
-                    .decode(&credential.id)
-                    .map_err(|_| AppError::BadRequest("Invalid credential ID encoding".to_string()))?,
-                response: webauthn_rs::prelude::AuthenticatorAttestationResponseRaw {
-                    attestation_object: attestation_object.into(),
-                    client_data_json: client_data_json.into(),
-                },
-                type_: "public-key".to_string(),
-                extensions: None,
-            },
-            user_unique_id: user.id.as_bytes().to_vec(),
-        };
-
-        // Verify registration (simplified - in production, you'd need to reconstruct the state)
-        // For now, we'll simulate successful verification
-        self.store_credential(&user_id, &credential.id, &registration).await?;
+        // For now, simulate successful verification
+        // In production, you'd verify the attestation object and signature
+        self.store_credential(&user_id, &credential.id).await?;
 
         Ok(ServerResponse::success())
     }
@@ -230,10 +186,7 @@ impl WebAuthnService {
         }
 
         // Generate challenge
-        let challenge = base64::encode_config(
-            &rand::random::<[u8; 32]>(),
-            base64::URL_SAFE_NO_PAD,
-        );
+        let challenge = general_purpose::URL_SAFE_NO_PAD.encode(&rand::random::<[u8; 32]>());
 
         // Store challenge
         let challenge_record = Challenge::new(
@@ -351,12 +304,7 @@ impl WebAuthnService {
         Ok(credentials.get(user_id).cloned().unwrap_or_default())
     }
 
-    async fn store_credential(
-        &self,
-        user_id: &str,
-        credential_id: &str,
-        _registration: &webauthn_rs::prelude::Registration,
-    ) -> Result<()> {
+    async fn store_credential(&self, user_id: &str, credential_id: &str) -> Result<()> {
         let credential_id_bytes = general_purpose::URL_SAFE_NO_PAD
             .decode(credential_id)
             .map_err(|_| AppError::BadRequest("Invalid credential ID encoding".to_string()))?;
