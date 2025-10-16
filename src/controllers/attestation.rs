@@ -50,7 +50,7 @@ pub async fn begin_attestation(
             },
         ],
         timeout: Some(10000),
-        exclude_credentials: Some(vec![]), // TODO: Get existing credentials for user
+        exclude_credentials: vec![], // TODO: Get existing credentials for user
         authenticator_selection: req.authenticator_selection.clone(),
         attestation: req.attestation.clone().or_else(|| Some("none".to_string())),
         extensions: Some(HashMap::new()),
