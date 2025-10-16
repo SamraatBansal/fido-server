@@ -184,11 +184,11 @@ impl WebAuthnService {
 
         let authenticator_data = general_purpose::URL_SAFE_NO_PAD
             .decode(&credential.response.authenticator_data)
-            .map_err(|e| AppError::InvalidRequest(format!("Invalid authenticatorData: {}", e)))?;
+            .map_err(|_| AppError::InvalidRequest("Invalid authenticatorData encoding".to_string()))?;
 
         let signature = general_purpose::URL_SAFE_NO_PAD
             .decode(&credential.response.signature)
-            .map_err(|e| AppError::InvalidRequest(format!("Invalid signature: {}", e)))?;
+            .map_err(|_| AppError::InvalidRequest("Invalid signature encoding".to_string()))?;
 
         // Parse client data
         let client_data: Value = serde_json::from_slice(&client_data_json)
