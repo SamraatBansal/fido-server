@@ -100,6 +100,7 @@ pub struct ServerPublicKeyCredentialUserEntity {
     /// User's username
     pub name: String,
     /// User's display name
+    #[serde(rename = "displayName")]
     pub display_name: String,
 }
 
