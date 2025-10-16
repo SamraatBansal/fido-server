@@ -44,16 +44,16 @@ async fn test_attestation_options_success() {
         "attestation": "direct"
     });
 
-    let req = actix_test::TestRequest::post()
+    let req = test::TestRequest::post()
         .uri("/api/attestation/options")
         .set_json(&request_body)
         .to_request();
 
-    let resp = app.send_request(req).await;
+    let resp = test::call_service(&app, req).await;
     
     assert_eq!(resp.status(), http::StatusCode::OK);
     
-    let body: serde_json::Value = actix_test::read_body_json(resp).await;
+    let body: serde_json::Value = test::read_body_json(resp).await;
     
     // Verify response structure matches FIDO2 conformance requirements
     assert_eq!(body["status"], "ok");
