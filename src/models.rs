@@ -22,6 +22,7 @@ impl ServerResponse {
         Self {
             status: "ok".to_string(),
             error_message: "".to_string(),
+            session_id: generate_session_id(),
         }
     }
 
@@ -30,8 +31,19 @@ impl ServerResponse {
         Self {
             status: "failed".to_string(),
             error_message: message.into(),
+            session_id: generate_session_id(),
         }
     }
+}
+
+/// Generate a session ID
+fn generate_session_id() -> String {
+    use rand::{distributions::Alphanumeric, Rng};
+    rand::thread_rng()
+        .sample_iter(&Alphanumeric)
+        .take(32)
+        .map(char::from)
+        .collect()
 }
 
 /// Registration request options
