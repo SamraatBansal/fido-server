@@ -20,7 +20,7 @@ async fn main() -> std::io::Result<()> {
     let config = AppConfig::from_env().expect("Failed to load configuration");
 
     // Create WebAuthn service
-    let webauthn_service = Arc::new(MockWebAuthnService::new());
+    let webauthn_service: Arc<dyn WebAuthnService> = Arc::new(MockWebAuthnService::new());
 
     // Configure CORS
     let cors = Cors::default()
