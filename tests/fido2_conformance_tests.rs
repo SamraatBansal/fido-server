@@ -201,7 +201,10 @@ async fn test_assertion_options_success() {
     
     assert_eq!(resp.status(), http::StatusCode::OK);
     
-    let body: serde_json::Value = test::read_body_json(resp).await;
+    let body_bytes = test::read_body(resp).await;
+    let body_str = String::from_utf8(body_bytes.to_vec()).unwrap();
+    println!("Response body: {}", body_str);
+    let body: serde_json::Value = serde_json::from_str(&body_str).unwrap();
     
     // Verify response structure matches FIDO2 conformance requirements
     assert_eq!(body["status"], "ok");
