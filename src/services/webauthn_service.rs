@@ -9,7 +9,6 @@ use crate::models::{
     PublicKeyCredentialRpEntity,
     ServerPublicKeyCredentialUserEntity,
     PublicKeyCredentialParameters,
-    ServerPublicKeyCredentialDescriptor,
     AuthenticatorSelectionCriteria,
 };
 use base64::{Engine as _, engine::general_purpose};
