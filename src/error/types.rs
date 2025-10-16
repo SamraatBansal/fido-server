@@ -15,6 +15,8 @@ pub enum AppError {
     WebAuthnError(String),
     /// Validation error
     ValidationError(String),
+    /// Invalid request error
+    InvalidRequest(String),
     /// Not found error
     NotFound(String),
     /// Internal server error
