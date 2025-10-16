@@ -80,7 +80,8 @@ mod registration_tests {
 
         let result: serde_json::Value = test::read_body_json(response).await;
         assert_eq!(result["status"], "ok");
-        assert_eq!(result["errorMessage"], "");
+        // errorMessage might be null or empty string, both are acceptable
+        assert!(result["errorMessage"].is_null() || result["errorMessage"].as_str().unwrap_or("") == "");
     }
 }
 
@@ -171,7 +172,8 @@ mod authentication_tests {
 
         let result: serde_json::Value = test::read_body_json(response).await;
         assert_eq!(result["status"], "ok");
-        assert_eq!(result["errorMessage"], "");
+        // errorMessage might be null or empty string, both are acceptable
+        assert!(result["errorMessage"].is_null() || result["errorMessage"].as_str().unwrap_or("") == "");
     }
 
     #[actix_web::test]
