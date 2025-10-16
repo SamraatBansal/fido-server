@@ -9,7 +9,7 @@ use crate::controllers::dto::{
     PublicKeyCredentialParameters,
     PublicKeyCredentialRpEntity, RegistrationVerificationRequest,
     ServerPublicKeyCredentialCreationOptionsRequest,
-    ServerPublicKeyCredentialCreationOptionsResponse, ServerPublicKeyCredentialDescriptor,
+    ServerPublicKeyCredentialCreationOptionsResponse,
     ServerPublicKeyCredentialUserEntity, ServerResponse,
 };
 use crate::error::AppError;
@@ -20,7 +20,7 @@ pub async fn attestation_options(
     webauthn_service: web::Data<WebAuthnService>,
     req: HttpRequest,
     payload: web::Json<ServerPublicKeyCredentialCreationOptionsRequest>,
-) -> Result<HttpResponse> {
+) -> Result<HttpResponse, actix_web::Error> {
     // Extract origin from request
     let origin = extract_origin(&req)?;
     
@@ -57,13 +57,13 @@ pub async fn attestation_options(
                 excludeCredentials: vec![], // TODO: Get existing credentials for user
                 authenticatorSelection: payload.authenticator_selection.clone(),
                 attestation: Some(payload.attestation.clone()),
-                extensions: None,
+                extensions: webauthn_rs::proto::extensions::AuthenticationExtensionsClientOutputs::new(),
             };
 
             Ok(HttpResponse::Ok().json(response))
         }
         Err(e) => {
-            tracing::error!("Failed to generate registration challenge: {:?}", e);
+            error!("Failed to generate registration challenge: {:?}", e);
             let response = ServerResponse::error("Failed to generate challenge");
             Ok(HttpResponse::BadRequest().json(response))
         }
@@ -75,23 +75,23 @@ pub async fn attestation_result(
     webauthn_service: web::Data<WebAuthnService>,
     req: HttpRequest,
     payload: web::Json<RegistrationVerificationRequest>,
-) -> Result<HttpResponse> {
+) -> Result<HttpResponse, actix_web::Error> {
     // Extract origin from request
     let origin = extract_origin(&req)?;
     
     // Decode base64url fields
-    let client_data_json = base64::decode_config(&payload.response.client_data_json, URL_SAFE_NO_PAD)
+    let client_data_json = URL_SAFE_NO_PAD.decode(&payload.response.client_data_json)
         .map_err(|_| AppError::InvalidRequest("Invalid clientDataJSON encoding".to_string()))?;
     
-    let attestation_object = base64::decode_config(&payload.response.attestation_object, URL_SAFE_NO_PAD)
+    let attestation_object = URL_SAFE_NO_PAD.decode(&payload.response.attestation_object)
         .map_err(|_| AppError::InvalidRequest("Invalid attestationObject encoding".to_string()))?;
 
     // Create webauthn credential
     let credential = PublicKeyCredential {
         id: payload.id.clone(),
-        raw_id: base64::decode_config(&payload.rawId, URL_SAFE_NO_PAD)
+        raw_id: URL_SAFE_NO_PAD.decode(&payload.rawId)
             .map_err(|_| AppError::InvalidRequest("Invalid rawId encoding".to_string()))?,
-        response: AuthenticatorAttestationResponse {
+        response: webauthn_rs::proto::AuthenticatorAttestationResponse {
             client_data_json,
             attestation_object,
         },
@@ -106,7 +106,7 @@ pub async fn attestation_result(
             Ok(HttpResponse::Ok().json(response))
         }
         Err(e) => {
-            tracing::error!("Failed to verify registration: {:?}", e);
+            error!("Failed to verify registration: {:?}", e);
             let response = ServerResponse::error("Can not validate response signature!");
             Ok(HttpResponse::BadRequest().json(response))
         }
