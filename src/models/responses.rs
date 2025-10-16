@@ -7,8 +7,8 @@ use serde_json::Value;
 #[derive(Debug, Serialize)]
 pub struct ServerResponse {
     pub status: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub errorMessage: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none", rename = "errorMessage")]
+    pub error_message: Option<String>,
 }
 
 impl ServerResponse {
