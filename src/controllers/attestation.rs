@@ -59,7 +59,7 @@ pub async fn finish_attestation(
     }
 
     // Try to decode clientDataJSON to validate it's proper base64url
-    if let Err(_) = base64::engine::general_purpose::URL_SAFE_NO_PAD.decode(&req.response.client_data_json) {
+    if base64::engine::general_purpose::URL_SAFE_NO_PAD.decode(&req.response.client_data_json).is_err() {
         return Ok(HttpResponse::BadRequest().json(ServerResponse::error("Invalid clientDataJSON encoding")));
     }
 
@@ -69,7 +69,7 @@ pub async fn finish_attestation(
     }
 
     // Try to decode attestationObject to validate it's proper base64url
-    if let Err(_) = base64::engine::general_purpose::URL_SAFE_NO_PAD.decode(&req.response.attestation_object) {
+    if base64::engine::general_purpose::URL_SAFE_NO_PAD.decode(&req.response.attestation_object).is_err() {
         return Ok(HttpResponse::BadRequest().json(ServerResponse::error("Invalid attestationObject encoding")));
     }
 
