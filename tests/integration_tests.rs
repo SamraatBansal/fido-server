@@ -38,6 +38,12 @@ async fn test_attestation_options_success() {
 
     let resp = test::call_service(&app, req).await;
     
+    println!("Response status: {}", resp.status());
+    if resp.status() != StatusCode::OK {
+        let body = test::read_body(resp).await;
+        println!("Response body: {:?}", String::from_utf8_lossy(&body));
+    }
+    
     assert_eq!(resp.status(), StatusCode::OK);
     
     let response: ServerPublicKeyCredentialCreationOptionsResponse = test::read_body_json(resp).await;
@@ -74,6 +80,12 @@ async fn test_attestation_result_success() {
 
     let resp = test::call_service(&app, req).await;
     
+    println!("Response status: {}", resp.status());
+    if resp.status() != StatusCode::OK {
+        let body = test::read_body(resp).await;
+        println!("Response body: {:?}", String::from_utf8_lossy(&body));
+    }
+    
     assert_eq!(resp.status(), StatusCode::OK);
     
     let response: ServerResponse = test::read_body_json(resp).await;
@@ -97,6 +109,12 @@ async fn test_assertion_options_success() {
         .to_request();
 
     let resp = test::call_service(&app, req).await;
+    
+    println!("Response status: {}", resp.status());
+    if resp.status() != StatusCode::OK {
+        let body = test::read_body(resp).await;
+        println!("Response body: {:?}", String::from_utf8_lossy(&body));
+    }
     
     assert_eq!(resp.status(), StatusCode::OK);
     
@@ -132,6 +150,12 @@ async fn test_assertion_result_success() {
         .to_request();
 
     let resp = test::call_service(&app, req).await;
+    
+    println!("Response status: {}", resp.status());
+    if resp.status() != StatusCode::OK {
+        let body = test::read_body(resp).await;
+        println!("Response body: {:?}", String::from_utf8_lossy(&body));
+    }
     
     assert_eq!(resp.status(), StatusCode::OK);
     
