@@ -37,7 +37,7 @@ pub async fn attestation_options(
 /// Handle attestation result request (credential creation verification)
 pub async fn attestation_result(
     request: web::Json<ServerPublicKeyCredential>,
-    webauthn_service: web::Data<dyn WebAuthnService>,
+    webauthn_service: web::Data<WebAuthnServiceImpl>,
 ) -> ActixResult<HttpResponse> {
     // Validate request
     if let Err(validation_errors) = request.validate() {
