@@ -38,6 +38,9 @@ async fn test_fido2_conformance_registration_options() {
     assert_eq!(resp.status(), 200);
 
     let body: serde_json::Value = test::read_body_json(resp).await;
+    
+    // Debug: print the actual response
+    println!("Actual response: {}", serde_json::to_string_pretty(&body).unwrap());
 
     // Verify exact response structure from specification
     assert_eq!(body["status"], "ok");
