@@ -2,15 +2,7 @@
 
 use actix_web::{test, App};
 use fido_server::routes::api::configure;
-use fido_server::models::{
-    ServerPublicKeyCredentialCreationOptionsRequest,
-    ServerPublicKeyCredential,
-    ServerAuthenticatorAttestationResponse,
-    ServerPublicKeyCredentialGetOptionsRequest,
-    ServerPublicKeyCredentialAssertion,
-    ServerAuthenticatorAssertionResponse,
-    AuthenticatorSelectionCriteria,
-};
+use fido_server::models::ServerPublicKeyCredentialCreationOptionsRequest;
 
 #[actix_web::test]
 async fn test_fido2_conformance_registration_options() {
