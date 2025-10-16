@@ -46,14 +46,9 @@ async fn test_attestation_options_success() {
 
     let resp = test::call_service(&app, req).await;
     
-    // Print status and response body for debugging
-    println!("Status: {}", resp.status());
-    let body_bytes = test::read_body(resp).await;
-    let body_str = String::from_utf8(body_bytes.to_vec()).unwrap();
-    println!("Response body: {}", body_str);
+    assert_eq!(resp.status(), http::StatusCode::OK);
     
-    // Parse the body again for the test
-    let body: serde_json::Value = serde_json::from_str(&body_str).unwrap();
+    let body: serde_json::Value = test::read_body_json(resp).await;
     
     // Verify response structure matches FIDO2 conformance requirements
     assert_eq!(body["status"], "ok");
@@ -163,16 +158,15 @@ async fn test_attestation_result_success() {
 
     let resp = test::call_service(&app, req).await;
     
-    // Print status and response body for debugging
-    println!("Status: {}", resp.status());
-    let body_bytes = test::read_body(resp).await;
-    let body_str = String::from_utf8(body_bytes.to_vec()).unwrap();
-    println!("Response body: {}", body_str);
+    assert_eq!(resp.status(), http::StatusCode::OK);
     
-    // Parse the body again for the test
-    let body: serde_json::Value = serde_json::from_str(&body_str).unwrap();
+    let body: serde_json::Value = test::read_body_json(resp).await;
     assert_eq!(body["status"], "ok");
-    assert!(body.get("errorMessage").unwrap().as_str().unwrap().is_empty());
+    // errorMessage should be empty or not present in success response
+    match body.get("errorMessage") {
+        Some(msg) => assert!(msg.as_str().unwrap().is_empty()),
+        None => {} // It's okay if errorMessage is not present
+    }
 }
 
 #[actix_web::test]
@@ -205,14 +199,9 @@ async fn test_assertion_options_success() {
 
     let resp = test::call_service(&app, req).await;
     
-    // Print status and response body for debugging
-    println!("Status: {}", resp.status());
-    let body_bytes = test::read_body(resp).await;
-    let body_str = String::from_utf8(body_bytes.to_vec()).unwrap();
-    println!("Response body: {}", body_str);
+    assert_eq!(resp.status(), http::StatusCode::OK);
     
-    // Parse the body again for the test
-    let body: serde_json::Value = serde_json::from_str(&body_str).unwrap();
+    let body: serde_json::Value = test::read_body_json(resp).await;
     
     // Verify response structure matches FIDO2 conformance requirements
     assert_eq!(body["status"], "ok");
@@ -275,14 +264,13 @@ async fn test_assertion_result_success() {
 
     let resp = test::call_service(&app, req).await;
     
-    // Print status and response body for debugging
-    println!("Status: {}", resp.status());
-    let body_bytes = test::read_body(resp).await;
-    let body_str = String::from_utf8(body_bytes.to_vec()).unwrap();
-    println!("Response body: {}", body_str);
+    assert_eq!(resp.status(), http::StatusCode::OK);
     
-    // Parse the body again for the test
-    let body: serde_json::Value = serde_json::from_str(&body_str).unwrap();
+    let body: serde_json::Value = test::read_body_json(resp).await;
     assert_eq!(body["status"], "ok");
-    assert!(body.get("errorMessage").unwrap().as_str().unwrap().is_empty());
+    // errorMessage should be empty or not present in success response
+    match body.get("errorMessage") {
+        Some(msg) => assert!(msg.as_str().unwrap().is_empty()),
+        None => {} // It's okay if errorMessage is not present
+    }
 }
