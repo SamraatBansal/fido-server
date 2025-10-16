@@ -5,28 +5,19 @@ use fido_server::routes::api::configure;
 use fido_server::models::ServerPublicKeyCredentialCreationOptionsRequest;
 use fido_server::services::{WebAuthnService, WebAuthnConfig};
 use std::sync::Arc;
-use rand;
 
-async fn create_test_app() -> impl actix_web::dev::Service<
-    actix_web::dev::ServiceRequest,
-    Response = actix_web::dev::ServiceResponse,
-    Error = actix_web::Error,
-> {
+#[actix_web::test]
+async fn test_fido2_conformance_registration_options() {
     let webauthn_service = Arc::new(
         WebAuthnService::new(WebAuthnConfig::default())
             .expect("Failed to create WebAuthn service")
     );
     
-    test::init_service(
+    let app = test::init_service(
         App::new()
             .app_data(Data::new(webauthn_service))
             .configure(configure)
-    ).await
-}
-
-#[actix_web::test]
-async fn test_fido2_conformance_registration_options() {
-    let app = create_test_app();
+    ).await;
 
     // Exact request from FIDO2 specification
     let req = test::TestRequest::post()
@@ -74,7 +65,16 @@ async fn test_fido2_conformance_registration_options() {
 
 #[actix_web::test]
 async fn test_fido2_conformance_registration_result() {
-    let app = create_test_app();
+    let webauthn_service = Arc::new(
+        WebAuthnService::new(WebAuthnConfig::default())
+            .expect("Failed to create WebAuthn service")
+    );
+    
+    let app = test::init_service(
+        App::new()
+            .app_data(Data::new(webauthn_service))
+            .configure(configure)
+    ).await;
 
     // Exact request from FIDO2 specification
     let req = test::TestRequest::post()
@@ -100,7 +100,16 @@ async fn test_fido2_conformance_registration_result() {
 
 #[actix_web::test]
 async fn test_fido2_conformance_authentication_options() {
-    let app = create_test_app();
+    let webauthn_service = Arc::new(
+        WebAuthnService::new(WebAuthnConfig::default())
+            .expect("Failed to create WebAuthn service")
+    );
+    
+    let app = test::init_service(
+        App::new()
+            .app_data(Data::new(webauthn_service))
+            .configure(configure)
+    ).await;
 
     // Exact request from FIDO2 specification
     let req = test::TestRequest::post()
@@ -132,7 +141,16 @@ async fn test_fido2_conformance_authentication_options() {
 
 #[actix_web::test]
 async fn test_fido2_conformance_authentication_result() {
-    let app = create_test_app();
+    let webauthn_service = Arc::new(
+        WebAuthnService::new(WebAuthnConfig::default())
+            .expect("Failed to create WebAuthn service")
+    );
+    
+    let app = test::init_service(
+        App::new()
+            .app_data(Data::new(webauthn_service))
+            .configure(configure)
+    ).await;
 
     // Exact request from FIDO2 specification
     let req = test::TestRequest::post()
@@ -160,7 +178,16 @@ async fn test_fido2_conformance_authentication_result() {
 
 #[actix_web::test]
 async fn test_fido2_conformance_error_response_format() {
-    let app = create_test_app();
+    let webauthn_service = Arc::new(
+        WebAuthnService::new(WebAuthnConfig::default())
+            .expect("Failed to create WebAuthn service")
+    );
+    
+    let app = test::init_service(
+        App::new()
+            .app_data(Data::new(webauthn_service))
+            .configure(configure)
+    ).await;
 
     // Test error response format matches specification
     let req = test::TestRequest::post()
@@ -185,16 +212,25 @@ async fn test_fido2_conformance_error_response_format() {
 
 #[actix_web::test]
 async fn test_fido2_security_challenge_requirements() {
-    let app = create_test_app();
+    let webauthn_service = Arc::new(
+        WebAuthnService::new(WebAuthnConfig::default())
+            .expect("Failed to create WebAuthn service")
+    );
+    
+    let app = test::init_service(
+        App::new()
+            .app_data(Data::new(webauthn_service))
+            .configure(configure)
+    ).await;
 
     // Test that challenges are cryptographically random and proper length
     let mut challenges = Vec::new();
     
-    for _ in 0..10 {
+    for i in 0..10 {
         let req = test::TestRequest::post()
             .uri("/attestation/options")
             .set_json(&ServerPublicKeyCredentialCreationOptionsRequest {
-                username: format!("test{}@example.com", rand::random::<u32>()),
+                username: format!("test{}@example.com", i),
                 display_name: "Test User".to_string(),
                 authenticator_selection: None,
                 attestation: None,
