@@ -13,3 +13,6 @@ pub mod services;
 pub mod utils;
 
 pub use error::{AppError, Result};
+
+#[cfg(test)]
+mod integration_tests;
