@@ -94,7 +94,7 @@ impl WebAuthnService {
         // In a real implementation, this should be stored securely
         let mut credentials = self.credentials.write().await;
         credentials.insert(
-            base64::encode_config(&user.id, base64::URL_SAFE_NO_PAD),
+            URL_SAFE_NO_PAD.encode(&user.id),
             CredentialData {
                 credential_id: Vec::new(), // Will be set after registration
                 public_key: Vec::new(),    // Will be set after registration
@@ -119,7 +119,7 @@ impl WebAuthnService {
         // 3. Store the credential
 
         // Store the credential
-        let credential_id = base64::encode_config(&credential.raw_id, base64::URL_SAFE_NO_PAD);
+        let credential_id = URL_SAFE_NO_PAD.encode(&credential.raw_id);
         let mut credentials = self.credentials.write().await;
         
         // Find the user credential (this is a simplified approach)
@@ -185,7 +185,7 @@ impl WebAuthnService {
         // 3. Update the sign count
 
         // Update sign count (simplified)
-        let credential_id = base64::encode_config(&credential.raw_id, base64::URL_SAFE_NO_PAD);
+        let credential_id = URL_SAFE_NO_PAD.encode(&credential.raw_id);
         let mut credentials = self.credentials.write().await;
         
         for cred_data in credentials.values_mut() {
