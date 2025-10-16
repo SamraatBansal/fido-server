@@ -5,7 +5,6 @@ use std::sync::Arc;
 
 use crate::schema::*;
 use crate::services::WebAuthnService;
-use crate::error::Result;
 
 /// Handles attestation options request
 pub async fn attestation_options(
