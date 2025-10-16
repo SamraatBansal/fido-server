@@ -35,10 +35,18 @@ pub async fn begin_attestation(
     let user_id = general_purpose::URL_SAFE_NO_PAD
         .encode(username.as_bytes());
 
+    // Generate session ID
+    let session_id: String = rand::thread_rng()
+        .sample_iter(&Alphanumeric)
+        .take(32)
+        .map(char::from)
+        .collect();
+
     // Build response
     let response = ServerPublicKeyCredentialCreationOptionsResponse {
         status: "ok".to_string(),
         error_message: "".to_string(),
+        session_id,
         rp: PublicKeyCredentialRpEntity {
             name: "Example Corporation".to_string(),
         },
