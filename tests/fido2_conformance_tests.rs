@@ -3,8 +3,7 @@
 //! These tests validate that the server meets the FIDO2 conformance requirements
 //! and matches the expected request/response format from the conformance tool.
 
-use actix_test::{self, TestServer};
-use actix_web::{App, web, http};
+use actix_web::{test, App, web, http};
 use serde_json::json;
 use fido_server::{
     services::{WebAuthnServiceImpl, WebAuthnConfig},
@@ -12,14 +11,14 @@ use fido_server::{
 };
 
 /// Create test app with WebAuthn service
-async fn create_test_app() -> TestServer {
+async fn create_test_app() {
     let webauthn_config = WebAuthnConfig::default();
     let webauthn_service = WebAuthnServiceImpl::new(webauthn_config)
         .expect("Failed to create WebAuthn service");
 
-    actix_test::start(move || {
+    test::init_service(
         App::new()
-            .app_data(web::Data::new(webauthn_service.clone()))
+            .app_data(web::Data::new(webauthn_service))
             .service(
                 web::scope("/api")
                     .route("/attestation/options", web::post().to(webauthn::attestation_options))
@@ -27,7 +26,7 @@ async fn create_test_app() -> TestServer {
                     .route("/assertion/options", web::post().to(webauthn::assertion_options))
                     .route("/assertion/result", web::post().to(webauthn::assertion_result))
             )
-    })
+    ).await
 }
 
 #[actix_web::test]
