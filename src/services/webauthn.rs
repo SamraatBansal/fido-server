@@ -30,7 +30,7 @@ impl Default for WebAuthnConfig {
 
 /// WebAuthn service trait
 #[async_trait::async_trait]
-pub trait WebAuthnService: Send + Sync {
+pub trait WebAuthnService: Send + Sync + Clone {
     async fn generate_registration_challenge(
         &self,
         request: ServerPublicKeyCredentialCreationOptionsRequest,
