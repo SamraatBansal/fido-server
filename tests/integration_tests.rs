@@ -14,7 +14,7 @@ use fido_server::models::{
 use fido_server::services::{WebAuthnService, WebAuthnConfig};
 use std::sync::Arc;
 
-fn create_test_app() -> impl actix_web::dev::Service<
+async fn create_test_app() -> impl actix_web::dev::Service<
     actix_web::dev::ServiceRequest,
     Response = actix_web::dev::ServiceResponse,
     Error = actix_web::Error,
