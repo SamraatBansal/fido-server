@@ -10,9 +10,11 @@ pub struct ServerPublicKeyCredentialCreationOptionsRequest {
     pub username: String,
     
     #[validate(length(min = 1, max = 255))]
-    pub displayName: String,
+    #[serde(rename = "displayName")]
+    pub display_name: String,
     
-    pub authenticatorSelection: Option<AuthenticatorSelectionCriteria>,
+    #[serde(rename = "authenticatorSelection")]
+    pub authenticator_selection: Option<AuthenticatorSelectionCriteria>,
     
     #[serde(default = "default_attestation")]
     pub attestation: String,
