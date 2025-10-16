@@ -68,7 +68,7 @@ pub async fn begin_attestation(
         response_json["authenticatorSelection"] = auth_sel;
     }
 
-    Ok(HttpResponse::Ok().json(response))
+    Ok(HttpResponse::Ok().json(response_json))
 }
 
 /// Complete attestation (registration) process
