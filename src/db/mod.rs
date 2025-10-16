@@ -2,5 +2,4 @@
 
 pub mod connection;
 pub mod models;
-
-pub use connection::{establish_connection, DbPool};
+pub mod repositories;
