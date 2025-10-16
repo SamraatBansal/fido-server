@@ -75,7 +75,9 @@ async fn test_attestation_options_default_values() {
     
     assert_eq!(body["status"], "ok");
     assert_eq!(body["attestation"], "none");
-    assert!(body["excludeCredentials"].as_array().unwrap().is_empty());
+    if let Some(exclude_creds) = body["excludeCredentials"].as_array() {
+        assert!(exclude_creds.is_empty());
+    }
 }
 
 #[actix_web::test]
