@@ -1,18 +1,19 @@
 //! Registration controller for FIDO2/WebAuthn attestation
 
-use actix_web::{web, HttpRequest, HttpResponse, Result};
-use serde_json::json;
+use base64::engine::general_purpose::URL_SAFE_NO_PAD;
+use base64::Engine;
+use log::error;
 use webauthn_rs::prelude::*;
 
 use crate::controllers::dto::{
-    AuthenticatorSelectionCriteria, PublicKeyCredentialParameters,
+    PublicKeyCredentialParameters,
     PublicKeyCredentialRpEntity, RegistrationVerificationRequest,
-    ServerAuthenticatorAttestationResponse, ServerPublicKeyCredentialCreationOptionsRequest,
+    ServerPublicKeyCredentialCreationOptionsRequest,
     ServerPublicKeyCredentialCreationOptionsResponse, ServerPublicKeyCredentialDescriptor,
     ServerPublicKeyCredentialUserEntity, ServerResponse,
 };
 use crate::error::AppError;
-use crate::services::WebAuthnService;
+use crate::services::webauthn::WebAuthnService;
 
 /// Generate registration challenge (attestation options)
 pub async fn attestation_options(
@@ -25,7 +26,7 @@ pub async fn attestation_options(
     
     // Generate challenge
     let challenge_result = webauthn_service
-        .generate_registration_challenge(&payload.username, &payload.display_name, origin)
+        .generate_registration_challenge(&payload.username, &payload.displayName, origin)
         .await;
 
     match challenge_result {
@@ -39,7 +40,7 @@ pub async fn attestation_options(
                 user: ServerPublicKeyCredentialUserEntity {
                     id: base64::encode_config(user_id.as_bytes(), base64::URL_SAFE_NO_PAD),
                     name: payload.username.clone(),
-                    display_name: payload.display_name.clone(),
+                    display_name: payload.displayName.clone(),
                 },
                 challenge: base64::encode_config(&challenge, base64::URL_SAFE_NO_PAD),
                 pubKeyCredParams: vec![
