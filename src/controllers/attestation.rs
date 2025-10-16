@@ -17,7 +17,7 @@ use std::collections::HashMap;
 
 /// Begin attestation (registration) process
 pub async fn begin_attestation(
-    req: web::Json<ServerPublicKeyCredentialCreationOptionsRequest>,
+    req: web::Json<serde_json::Value>,
 ) -> Result<HttpResponse, AppError> {
     // Generate a random challenge (16-64 bytes, base64url encoded)
     let challenge: String = rand::thread_rng()
