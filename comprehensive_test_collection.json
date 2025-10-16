@@ -1,0 +1,311 @@
+{
+  "info": {
+    "name": "FIDO Server Comprehensive Test",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Attestation Options - Valid Request",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"username\": \"johndoe@example.com\", \"displayName\": \"John Doe\", \"authenticatorSelection\": {\"requireResidentKey\": false, \"authenticatorAttachment\": \"cross-platform\", \"userVerification\": \"preferred\"}, \"attestation\": \"direct\"}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/attestation/options",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["attestation", "options"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Response has expected fields\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('sessionId');",
+              "    pm.expect(jsonData).to.have.property('status');",
+              "    pm.expect(jsonData).to.have.property('errorMessage');",
+              "    pm.expect(jsonData).to.have.property('challenge');",
+              "    pm.expect(jsonData).to.have.property('rp');",
+              "    pm.expect(jsonData).to.have.property('user');",
+              "    pm.expect(jsonData).to.have.property('pubKeyCredParams');",
+              "});",
+              "",
+              "pm.test(\"Response fields have correct types\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.sessionId).to.be.a('string');",
+              "    pm.expect(jsonData.status).to.be.a('string');",
+              "    pm.expect(jsonData.errorMessage).to.be.a('string');",
+              "    pm.expect(jsonData.challenge).to.be.a('string');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Attestation Result - Missing Credential ID",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"id\": \"\", \"type\": \"public-key\", \"response\": {\"clientDataJSON\": \"eyJ0ZXN0IjoidmFsdWUifQ==\", \"attestationObject\": \"o2NmbXRkbm9uZWdhdHRTdG10oGhhdXRoRGF0YVjESZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2MBAAAAAA\"}}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/attestation/result",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["attestation", "result"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 400\", function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "",
+              "pm.test(\"Response has expected fields\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('status');",
+              "    pm.expect(jsonData).to.have.property('errorMessage');",
+              "    pm.expect(jsonData).to.have.property('sessionId');",
+              "});",
+              "",
+              "pm.test(\"Response fields have correct types\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.status).to.be.a('string');",
+              "    pm.expect(jsonData.errorMessage).to.be.a('string');",
+              "    pm.expect(jsonData.sessionId).to.be.a('string');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Attestation Result - Invalid Base64",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"id\": \"test\", \"type\": \"public-key\", \"response\": {\"clientDataJSON\": \"invalid_base64!\", \"attestationObject\": \"invalid_base64!\"}}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/attestation/result",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["attestation", "result"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 400\", function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "",
+              "pm.test(\"Response has expected fields\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('status');",
+              "    pm.expect(jsonData).to.have.property('errorMessage');",
+              "    pm.expect(jsonData).to.have.property('sessionId');",
+              "});",
+              "",
+              "pm.test(\"Response fields have correct types\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.status).to.be.a('string');",
+              "    pm.expect(jsonData.errorMessage).to.be.a('string');",
+              "    pm.expect(jsonData.sessionId).to.be.a('string');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Attestation Result - Invalid Credential Type",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"id\": \"test\", \"type\": \"invalid_type\", \"response\": {\"clientDataJSON\": \"eyJ0ZXN0IjoidmFsdWUifQ==\", \"attestationObject\": \"o2NmbXRkbm9uZWdhdHRTdG10oGhhdXRoRGF0YVjESZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2MBAAAAAA\"}}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/attestation/result",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["attestation", "result"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 400\", function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "",
+              "pm.test(\"Response has expected fields\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('status');",
+              "    pm.expect(jsonData).to.have.property('errorMessage');",
+              "    pm.expect(jsonData).to.have.property('sessionId');",
+              "});",
+              "",
+              "pm.test(\"Response fields have correct types\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.status).to.be.a('string');",
+              "    pm.expect(jsonData.errorMessage).to.be.a('string');",
+              "    pm.expect(jsonData.sessionId).to.be.a('string');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Assertion Options - Valid Request",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"username\": \"johndoe@example.com\", \"userVerification\": \"required\"}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/assertion/options",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["assertion", "options"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Response has expected fields\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('sessionId');",
+              "    pm.expect(jsonData).to.have.property('status');",
+              "    pm.expect(jsonData).to.have.property('errorMessage');",
+              "    pm.expect(jsonData).to.have.property('challenge');",
+              "    pm.expect(jsonData).to.have.property('rpId');",
+              "    pm.expect(jsonData).to.have.property('allowCredentials');",
+              "});",
+              "",
+              "pm.test(\"Response fields have correct types\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.sessionId).to.be.a('string');",
+              "    pm.expect(jsonData.status).to.be.a('string');",
+              "    pm.expect(jsonData.errorMessage).to.be.a('string');",
+              "    pm.expect(jsonData.challenge).to.be.a('string');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Assertion Result - Missing Credential ID",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"id\": \"\", \"type\": \"public-key\", \"response\": {\"clientDataJSON\": \"eyJ0ZXN0IjoidmFsdWUifQ==\", \"authenticatorData\": \"SZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2MBAAAAAA\", \"signature\": \"MEYCIQCv7EqsBRtf2E4o_BjzZfBwNpP8fLjd5y6TUOLWt5l9DQIhANiYig9newAJZYTzG1i5lwP-YQk9uXFnnDaHnr2yCKXL\", \"userHandle\": \"\"}}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/assertion/result",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["assertion", "result"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 400\", function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "",
+              "pm.test(\"Response has expected fields\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('status');",
+              "    pm.expect(jsonData).to.have.property('errorMessage');",
+              "    pm.expect(jsonData).to.have.property('sessionId');",
+              "});",
+              "",
+              "pm.test(\"Response fields have correct types\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.status).to.be.a('string');",
+              "    pm.expect(jsonData.errorMessage).to.be.a('string');",
+              "    pm.expect(jsonData.sessionId).to.be.a('string');",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
