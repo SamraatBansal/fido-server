@@ -128,7 +128,7 @@ impl WebAuthnService {
     /// Begin authentication (assertion) process
     pub async fn begin_authentication(
         &self,
-        username: &str,
+        _username: &str,
         user_verification: Option<String>,
     ) -> Result<ServerPublicKeyCredentialGetOptionsResponse> {
         // TODO: Get user's existing credentials from database
