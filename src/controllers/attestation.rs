@@ -2,7 +2,6 @@
 
 use actix_web::{web, HttpResponse, Result};
 use crate::models::{
-    ServerPublicKeyCredentialCreationOptionsRequest,
     ServerPublicKeyCredentialCreationOptionsResponse,
     ServerPublicKeyCredential,
     ServerResponse,
