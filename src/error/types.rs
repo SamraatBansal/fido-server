@@ -95,6 +95,14 @@ impl ResponseError for AppError {
                 log::error!("Configuration error: {}", msg);
                 (actix_web::http::StatusCode::INTERNAL_SERVER_ERROR, "Configuration error")
             }
+            AppError::TaskJoin(_) => {
+                log::error!("Task join error");
+                (actix_web::http::StatusCode::INTERNAL_SERVER_ERROR, "Internal server error")
+            }
+            AppError::DatabaseConnection(_) => {
+                log::error!("Database connection error");
+                (actix_web::http::StatusCode::INTERNAL_SERVER_ERROR, "Database connection error")
+            }
         };
 
         let response = ServerResponse::error(message);
