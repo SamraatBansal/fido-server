@@ -3,9 +3,9 @@
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::schema::*;
-    use crate::services::{WebAuthnService, MockWebAuthnService};
-    use tokio_test;
+    use fido_server::schema::*;
+    use fido_server::services::{WebAuthnService};
+    use async_trait::async_trait;
 
     #[tokio::test]
     async fn test_generate_registration_challenge_success() {
