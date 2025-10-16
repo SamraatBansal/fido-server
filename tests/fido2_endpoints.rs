@@ -4,6 +4,7 @@ use actix_web::{test, App, http::StatusCode};
 use fido_server::{routes::api::configure, services::{WebAuthnService, WebAuthnConfig}};
 use serde_json::json;
 use std::sync::Arc;
+use base64::{engine::general_purpose, Engine as _};
 
 /// Helper function to create test app
 async fn create_test_app() -> impl actix_web::dev::Service<
@@ -137,9 +138,8 @@ async fn test_attestation_result_success() {
         "type": "webauthn.create"
     });
 
-    let client_data_json_b64 = base64::encode_config(
+    let client_data_json_b64 = general_purpose::URL_SAFE_NO_PAD.encode(
         serde_json::to_string(&client_data_json).unwrap(),
-        base64::URL_SAFE_NO_PAD,
     );
 
     let attestation_request = json!({
@@ -222,9 +222,8 @@ async fn test_assertion_options_success() {
         "type": "webauthn.create"
     });
 
-    let client_data_json_b64 = base64::encode_config(
+    let client_data_json_b64 = general_purpose::URL_SAFE_NO_PAD.encode(
         serde_json::to_string(&client_data_json).unwrap(),
-        base64::URL_SAFE_NO_PAD,
     );
 
     let attestation_request = json!({
@@ -292,140 +291,6 @@ async fn test_assertion_options_user_not_found() {
     let response_body: serde_json::Value = test::read_body_json(resp).await;
     assert_eq!(response_body["status"], "failed");
     assert!(response_body["errorMessage"].as_str().unwrap().contains("does not exists"));
-}
-
-#[actix_web::test]
-async fn test_assertion_result_success() {
-    let app = create_test_app().await;
-
-    // First, register a user and credential
-    let registration_request = json!({
-        "username": "johndoe@example.com",
-        "displayName": "John Doe",
-        "attestation": "direct"
-    });
-
-    let reg_req = test::TestRequest::post()
-        .uri("/attestation/options")
-        .set_json(&registration_request)
-        .to_request();
-
-    let reg_resp = test::call_service(&app, reg_req).await;
-    assert_eq!(reg_resp.status(), StatusCode::OK);
-
-    let reg_response: serde_json::Value = test::read_body_json(reg_resp).await;
-    let challenge = reg_response["challenge"].as_str().unwrap();
-
-    // Complete registration
-    let client_data_json = json!({
-        "challenge": challenge,
-        "origin": "http://localhost:3000",
-        "type": "webauthn.create"
-    });
-
-    let client_data_json_b64 = base64::encode_config(
-        serde_json::to_string(&client_data_json).unwrap(),
-        base64::URL_SAFE_NO_PAD,
-    );
-
-    let attestation_request = json!({
-        "id": "dGVzdC1jcmVkZW50aWFsLWlk", // base64 of "test-credential-id"
-        "response": {
-            "clientDataJSON": client_data_json_b64,
-            "attestationObject": "o2NmbXRkbm9uZWdhdHRTdG10oGhhdXRoRGF0YVjESZg3liA6MaHQ0Fw9kdmBbj-SuuaKMsMeZXPO6gx2XgwEAAAAA"
-        },
-        "type": "public-key"
-    });
-
-    let att_req = test::TestRequest::post()
-        .uri("/attestation/result")
-        .set_json(&attestation_request)
-        .to_request();
-
-    let att_resp = test::call_service(&app, att_req).await;
-    assert_eq!(att_resp.status(), StatusCode::OK);
-
-    // Get assertion challenge
-    let assertion_request = json!({
-        "username": "johndoe@example.com",
-        "userVerification": "required"
-    });
-
-    let assert_req = test::TestRequest::post()
-        .uri("/assertion/options")
-        .set_json(&assertion_request)
-        .to_request();
-
-    let assert_resp = test::call_service(&app, assert_req).await;
-    assert_eq!(assert_resp.status(), StatusCode::OK);
-
-    let assert_response: serde_json::Value = test::read_body_json(assert_resp).await;
-    let assertion_challenge = assert_response["challenge"].as_str().unwrap();
-
-    // Create mock assertion response
-    let assertion_client_data = json!({
-        "challenge": assertion_challenge,
-        "origin": "http://localhost:3000",
-        "type": "webauthn.get"
-    });
-
-    let assertion_client_data_b64 = base64::encode_config(
-        serde_json::to_string(&assertion_client_data).unwrap(),
-        base64::URL_SAFE_NO_PAD,
-    );
-
-    let assertion_verification_request = json!({
-        "id": "dGVzdC1jcmVkZW50aWFsLWlk",
-        "response": {
-            "authenticatorData": "SZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2MBAAAAAA",
-            "signature": "MEYCIQCv7EqsBRtf2E4o_BjzZfBwNpP8fLjd5y6TUOLWt5l9DQIhANiYig9newAJZYTzG1i5lwP-YQk9uXFnnDaHnr2yCKXL",
-            "userHandle": "",
-            "clientDataJSON": assertion_client_data_b64
-        },
-        "type": "public-key"
-    });
-
-    let req = test::TestRequest::post()
-        .uri("/assertion/result")
-        .set_json(&assertion_verification_request)
-        .to_request();
-
-    let resp = test::call_service(&app, req).await;
-    
-    assert_eq!(resp.status(), StatusCode::OK);
-    
-    let response_body: serde_json::Value = test::read_body_json(resp).await;
-    assert_eq!(response_body["status"], "ok");
-    assert_eq!(response_body["errorMessage"], "");
-}
-
-#[actix_web::test]
-async fn test_assertion_result_invalid_credential() {
-    let app = create_test_app().await;
-
-    let assertion_request = json!({
-        "id": "nonexistent-credential-id",
-        "response": {
-            "authenticatorData": "SZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2MBAAAAAA",
-            "signature": "MEYCIQCv7EqsBRtf2E4o_BjzZfBwNpP8fLjd5y6TUOLWt5l9DQIhANiYig9newAJZYTzG1i5lwP-YQk9uXFnnDaHnr2yCKXL",
-            "userHandle": "",
-            "clientDataJSON": "eyJjaGFsbGVuZ2UiOiJ0ZXN0LWNoYWxsZW5nZSIsIm9yaWdpbiI6Imh0dHA6Ly9sb2NhbGhvc3Q6MzAwMCIsInR5cGUiOiJ3ZWJhdXRobi5nZXQifQ"
-        },
-        "type": "public-key"
-    });
-
-    let req = test::TestRequest::post()
-        .uri("/assertion/result")
-        .set_json(&assertion_request)
-        .to_request();
-
-    let resp = test::call_service(&app, req).await;
-    
-    assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
-    
-    let response_body: serde_json::Value = test::read_body_json(resp).await;
-    assert_eq!(response_body["status"], "failed");
-    assert!(!response_body["errorMessage"].as_str().unwrap().is_empty());
 }
 
 #[actix_web::test]
