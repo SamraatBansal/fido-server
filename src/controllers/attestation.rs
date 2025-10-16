@@ -9,13 +9,10 @@ use crate::models::{
     PublicKeyCredentialRpEntity,
     ServerPublicKeyCredentialUserEntity,
     PublicKeyCredentialParameters,
-    ServerPublicKeyCredentialDescriptor,
-    AuthenticatorSelectionCriteria,
 };
 use crate::error::AppError;
 use base64::{Engine as _, engine::general_purpose};
 use rand::{distributions::Alphanumeric, Rng};
-use std::collections::HashMap;
 
 /// Begin attestation (registration) process
 pub async fn begin_attestation(
