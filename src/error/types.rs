@@ -31,6 +31,7 @@ impl fmt::Display for AppError {
             Self::DatabaseError(msg) => write!(f, "Database error: {msg}"),
             Self::WebAuthnError(msg) => write!(f, "WebAuthn error: {msg}"),
             Self::ValidationError(msg) => write!(f, "Validation error: {msg}"),
+            Self::InvalidRequest(msg) => write!(f, "Invalid request: {msg}"),
             Self::NotFound(msg) => write!(f, "Not found: {msg}"),
             Self::InternalError(msg) => write!(f, "Internal error: {msg}"),
             Self::BadRequest(msg) => write!(f, "Bad request: {msg}"),
