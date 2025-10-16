@@ -29,7 +29,7 @@ fn create_test_app() -> App<
 
 #[actix_web::test]
 async fn test_fido2_conformance_registration_options() {
-    let app = create_test_app().await;
+    let app = create_test_app();
 
     // Exact request from FIDO2 specification
     let req = test::TestRequest::post()
@@ -77,7 +77,7 @@ async fn test_fido2_conformance_registration_options() {
 
 #[actix_web::test]
 async fn test_fido2_conformance_registration_result() {
-    let app = create_test_app().await;
+    let app = create_test_app();
 
     // Exact request from FIDO2 specification
     let req = test::TestRequest::post()
@@ -103,7 +103,7 @@ async fn test_fido2_conformance_registration_result() {
 
 #[actix_web::test]
 async fn test_fido2_conformance_authentication_options() {
-    let app = create_test_app().await;
+    let app = create_test_app();
 
     // Exact request from FIDO2 specification
     let req = test::TestRequest::post()
@@ -135,7 +135,7 @@ async fn test_fido2_conformance_authentication_options() {
 
 #[actix_web::test]
 async fn test_fido2_conformance_authentication_result() {
-    let app = create_test_app().await;
+    let app = create_test_app();
 
     // Exact request from FIDO2 specification
     let req = test::TestRequest::post()
@@ -163,7 +163,7 @@ async fn test_fido2_conformance_authentication_result() {
 
 #[actix_web::test]
 async fn test_fido2_conformance_error_response_format() {
-    let app = create_test_app().await;
+    let app = create_test_app();
 
     // Test error response format matches specification
     let req = test::TestRequest::post()
@@ -188,7 +188,7 @@ async fn test_fido2_conformance_error_response_format() {
 
 #[actix_web::test]
 async fn test_fido2_security_challenge_requirements() {
-    let app = create_test_app().await;
+    let app = create_test_app();
 
     // Test that challenges are cryptographically random and proper length
     let mut challenges = Vec::new();
