@@ -155,7 +155,7 @@ impl WebAuthnService {
         let user_id = challenge_record.user_id.ok_or_else(|| {
             AppError::BadRequest("Challenge not associated with user".to_string())
         })?;
-        let user = self.get_user(&user_id).await?;
+        let _user = self.get_user(&user_id).await?;
 
         // For now, simulate successful verification
         // In production, you'd verify the attestation object and signature
