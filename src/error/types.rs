@@ -33,11 +33,14 @@ impl fmt::Display for AppError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::DatabaseError(msg) => write!(f, "Database error: {msg}"),
-            Self::WebAuthnError(msg) => write!(f, "WebAuthn error: {msg}"),
+            Self::WebAuthn(msg) => write!(f, "WebAuthn error: {msg}"),
             Self::ValidationError(msg) => write!(f, "Validation error: {msg}"),
             Self::NotFound(msg) => write!(f, "Not found: {msg}"),
             Self::InternalError(msg) => write!(f, "Internal error: {msg}"),
             Self::BadRequest(msg) => write!(f, "Bad request: {msg}"),
+            Self::Configuration(msg) => write!(f, "Configuration error: {msg}"),
+            Self::InvalidRequest(msg) => write!(f, "Invalid request: {msg}"),
+            Self::UserNotFound(msg) => write!(f, "User not found: {msg}"),
         }
     }
 }
