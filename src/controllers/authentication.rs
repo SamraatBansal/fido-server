@@ -3,6 +3,7 @@
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use base64::Engine;
 use actix_web::{web, HttpRequest, HttpResponse, Result};
+use log::error;
 use webauthn_rs::prelude::*;
 
 use crate::controllers::dto::{
@@ -18,7 +19,7 @@ pub async fn assertion_options(
     webauthn_service: web::Data<WebAuthnService>,
     req: HttpRequest,
     payload: web::Json<ServerPublicKeyCredentialGetOptionsRequest>,
-) -> Result<HttpResponse> {
+) -> Result<HttpResponse, actix_web::Error> {
     // Extract origin from request
     let origin = extract_origin(&req)?;
     
@@ -45,13 +46,13 @@ pub async fn assertion_options(
                 rp_id: "localhost".to_string(),
                 allowCredentials: allow_credentials,
                 user_verification: payload.user_verification.clone(),
-                extensions: None,
+                extensions: webauthn_rs::proto::extensions::AuthenticationExtensionsClientOutputs::new(),
             };
 
             Ok(HttpResponse::Ok().json(response))
         }
         Err(e) => {
-            tracing::error!("Failed to generate authentication challenge: {:?}", e);
+            error!("Failed to generate authentication challenge: {:?}", e);
             let response = ServerResponse::error("User does not exists!");
             Ok(HttpResponse::BadRequest().json(response))
         }
@@ -63,23 +64,23 @@ pub async fn assertion_result(
     webauthn_service: web::Data<WebAuthnService>,
     req: HttpRequest,
     payload: web::Json<AuthenticationVerificationRequest>,
-) -> Result<HttpResponse> {
+) -> Result<HttpResponse, actix_web::Error> {
     // Extract origin from request
     let origin = extract_origin(&req)?;
     
     // Decode base64url fields
-    let client_data_json = base64::decode_config(&payload.response.client_data_json, URL_SAFE_NO_PAD)
+    let client_data_json = URL_SAFE_NO_PAD.decode(&payload.response.client_data_json)
         .map_err(|_| AppError::InvalidRequest("Invalid clientDataJSON encoding".to_string()))?;
     
-    let authenticator_data = base64::decode_config(&payload.response.authenticator_data, URL_SAFE_NO_PAD)
+    let authenticator_data = URL_SAFE_NO_PAD.decode(&payload.response.authenticator_data)
         .map_err(|_| AppError::InvalidRequest("Invalid authenticatorData encoding".to_string()))?;
 
-    let signature = base64::decode_config(&payload.response.signature, URL_SAFE_NO_PAD)
+    let signature = URL_SAFE_NO_PAD.decode(&payload.response.signature)
         .map_err(|_| AppError::InvalidRequest("Invalid signature encoding".to_string()))?;
 
     let user_handle = if !payload.response.user_handle.is_empty() {
         Some(
-            base64::decode_config(&payload.response.user_handle, URL_SAFE_NO_PAD)
+            URL_SAFE_NO_PAD.decode(&payload.response.user_handle)
                 .map_err(|_| AppError::InvalidRequest("Invalid userHandle encoding".to_string()))?,
         )
     } else {
@@ -89,9 +90,9 @@ pub async fn assertion_result(
     // Create webauthn credential
     let credential = PublicKeyCredential {
         id: payload.id.clone(),
-        raw_id: base64::decode_config(&payload.rawId, URL_SAFE_NO_PAD)
+        raw_id: URL_SAFE_NO_PAD.decode(&payload.rawId)
             .map_err(|_| AppError::InvalidRequest("Invalid rawId encoding".to_string()))?,
-        response: AuthenticatorAssertionResponse {
+        response: webauthn_rs::proto::AuthenticatorAssertionResponse {
             authenticator_data,
             client_data_json,
             signature,
@@ -108,7 +109,7 @@ pub async fn assertion_result(
             Ok(HttpResponse::Ok().json(response))
         }
         Err(e) => {
-            tracing::error!("Failed to verify authentication: {:?}", e);
+            error!("Failed to verify authentication: {:?}", e);
             let response = ServerResponse::error("Can not validate response signature!");
             Ok(HttpResponse::BadRequest().json(response))
         }
