@@ -1,15 +1,17 @@
 //! Authentication controller for FIDO2/WebAuthn assertion
 
+use base64::engine::general_purpose::URL_SAFE_NO_PAD;
+use base64::Engine;
 use actix_web::{web, HttpRequest, HttpResponse, Result};
 use webauthn_rs::prelude::*;
 
 use crate::controllers::dto::{
-    AuthenticationVerificationRequest, ServerAuthenticatorAssertionResponse,
+    AuthenticationVerificationRequest,
     ServerPublicKeyCredentialDescriptor, ServerPublicKeyCredentialGetOptionsRequest,
     ServerPublicKeyCredentialGetOptionsResponse, ServerResponse,
 };
 use crate::error::AppError;
-use crate::services::WebAuthnService;
+use crate::services::webauthn::WebAuthnService;
 
 /// Generate authentication challenge (assertion options)
 pub async fn assertion_options(
