@@ -132,7 +132,7 @@ impl WebAuthnService for WebAuthnServiceImpl {
 
     async fn verify_registration(
         &self,
-        credential: ServerPublicKeyCredential,
+        _credential: ServerPublicKeyCredential,
     ) -> Result<ServerResponse> {
         // For now, just return success - we'll implement full verification later
         Ok(ServerResponse::success())
@@ -187,7 +187,7 @@ impl WebAuthnService for WebAuthnServiceImpl {
 
     async fn verify_authentication(
         &self,
-        credential: ServerPublicKeyCredential,
+        _credential: ServerPublicKeyCredential,
     ) -> Result<ServerResponse> {
         // For now, just return success - we'll implement full verification later
         Ok(ServerResponse::success())
