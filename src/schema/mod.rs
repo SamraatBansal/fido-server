@@ -1,4 +1,4 @@
-table! {
+diesel::table! {
     use diesel::sql_types::*;
     use uuid::Uuid;
 
@@ -12,7 +12,7 @@ table! {
     }
 }
 
-table! {
+diesel::table! {
     use diesel::sql_types::*;
     use uuid::Uuid;
 
@@ -30,7 +30,7 @@ table! {
     }
 }
 
-table! {
+diesel::table! {
     use diesel::sql_types::*;
     use uuid::Uuid;
 
