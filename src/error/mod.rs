@@ -33,7 +33,7 @@ impl ResponseError for AppError {
             AppError::NotFound(msg) => {
                 (actix_web::http::StatusCode::NOT_FOUND, msg.as_str())
             }
-            AppError::Internal(msg) => {
+            AppError::Internal(_msg) => {
                 (actix_web::http::StatusCode::INTERNAL_SERVER_ERROR, "Internal server error")
             }
         };
