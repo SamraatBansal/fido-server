@@ -223,8 +223,11 @@ async fn test_assertion_options_success() {
     // Verify rpId
     assert_eq!(body["rpId"], "localhost");
     
-    // Verify allowCredentials (empty for now)
-    assert!(body["allowCredentials"].as_array().unwrap().is_empty());
+    // Verify allowCredentials (empty for now, so it might not be present)
+    match body.get("allowCredentials") {
+        Some(creds) => assert!(creds.as_array().unwrap().is_empty()),
+        None => {} // It's okay if allowCredentials is not present when empty
+    }
     
     // Verify userVerification
     assert_eq!(body["userVerification"], "required");
