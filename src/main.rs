@@ -22,15 +22,14 @@ async fn main() -> std::io::Result<()> {
     // Create WebAuthn service
     let webauthn_service: Arc<dyn WebAuthnService> = Arc::new(MockWebAuthnService::new());
 
-    // Configure CORS
-    let cors = Cors::default()
-        .allow_any_origin()
-        .allow_any_method()
-        .allow_any_header()
-        .max_age(3600);
-
     // Create HTTP server
     let server = HttpServer::new(move || {
+        let cors = Cors::default()
+            .allow_any_origin()
+            .allow_any_method()
+            .allow_any_header()
+            .max_age(3600);
+            
         App::new()
             .wrap(cors)
             .wrap(Logger::default())
