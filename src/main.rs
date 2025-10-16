@@ -3,7 +3,7 @@
 use actix_cors::Cors;
 use actix_web::{middleware::Logger, web, App, HttpServer};
 use std::io;
-use fido_server::services::{WebAuthnService, WebAuthnServiceImpl, WebAuthnConfig};
+use fido_server::services::{WebAuthnServiceImpl, WebAuthnConfig};
 
 #[actix_web::main]
 async fn main() -> io::Result<()> {
