@@ -1,6 +1,6 @@
 //! Integration tests for FIDO2/WebAuthn server
 
-use actix_web::{test, App, web::Data};
+use actix_web::{test, App, web, http::StatusCode};
 use fido_server::routes::api::configure;
 use fido_server::models::{
     ServerPublicKeyCredentialCreationOptionsRequest,
@@ -14,26 +14,18 @@ use fido_server::models::{
 use fido_server::services::{WebAuthnService, WebAuthnConfig};
 use std::sync::Arc;
 
-async fn create_test_app() -> impl actix_web::dev::Service<
-    actix_web::dev::ServiceRequest,
-    Response = actix_web::dev::ServiceResponse,
-    Error = actix_web::Error,
-> {
+#[actix_web::test]
+async fn test_attestation_options_success() {
     let webauthn_service = Arc::new(
         WebAuthnService::new(WebAuthnConfig::default())
             .expect("Failed to create WebAuthn service")
     );
     
-    test::init_service(
+    let app = test::init_service(
         App::new()
-            .app_data(Data::new(webauthn_service))
+            .app_data(web::Data::new(webauthn_service))
             .configure(configure)
-    ).await
-}
-
-#[actix_web::test]
-async fn test_attestation_options_success() {
-    let app = create_test_app().await;
+    ).await;
 
     let req = test::TestRequest::post()
         .uri("/attestation/options")
@@ -51,7 +43,7 @@ async fn test_attestation_options_success() {
 
     let resp = test::call_service(&app, req).await;
     
-    assert_eq!(resp.status(), 200);
+    assert_eq!(resp.status(), StatusCode::OK);
     
     let body: serde_json::Value = test::read_body_json(resp).await;
     
@@ -70,7 +62,16 @@ async fn test_attestation_options_success() {
 
 #[actix_web::test]
 async fn test_attestation_options_default_values() {
-    let app = create_test_app().await;
+    let webauthn_service = Arc::new(
+        WebAuthnService::new(WebAuthnConfig::default())
+            .expect("Failed to create WebAuthn service")
+    );
+    
+    let app = test::init_service(
+        App::new()
+            .app_data(web::Data::new(webauthn_service))
+            .configure(configure)
+    ).await;
 
     let req = test::TestRequest::post()
         .uri("/attestation/options")
@@ -84,7 +85,7 @@ async fn test_attestation_options_default_values() {
 
     let resp = test::call_service(&app, req).await;
     
-    assert_eq!(resp.status(), 200);
+    assert_eq!(resp.status(), StatusCode::OK);
     
     let body: serde_json::Value = test::read_body_json(resp).await;
     
@@ -97,7 +98,16 @@ async fn test_attestation_options_default_values() {
 
 #[actix_web::test]
 async fn test_attestation_result_success() {
-    let app = create_test_app().await;
+    let webauthn_service = Arc::new(
+        WebAuthnService::new(WebAuthnConfig::default())
+            .expect("Failed to create WebAuthn service")
+    );
+    
+    let app = test::init_service(
+        App::new()
+            .app_data(web::Data::new(webauthn_service))
+            .configure(configure)
+    ).await;
 
     let req = test::TestRequest::post()
         .uri("/attestation/result")
@@ -114,7 +124,7 @@ async fn test_attestation_result_success() {
 
     let resp = test::call_service(&app, req).await;
     
-    assert_eq!(resp.status(), 200);
+    assert_eq!(resp.status(), StatusCode::OK);
     
     let body: serde_json::Value = test::read_body_json(resp).await;
     
@@ -124,7 +134,16 @@ async fn test_attestation_result_success() {
 
 #[actix_web::test]
 async fn test_attestation_result_missing_credential_id() {
-    let app = create_test_app().await;
+    let webauthn_service = Arc::new(
+        WebAuthnService::new(WebAuthnConfig::default())
+            .expect("Failed to create WebAuthn service")
+    );
+    
+    let app = test::init_service(
+        App::new()
+            .app_data(web::Data::new(webauthn_service))
+            .configure(configure)
+    ).await;
 
     let credential = ServerPublicKeyCredential {
         id: "".to_string(), // Empty ID should cause error
@@ -143,7 +162,7 @@ async fn test_attestation_result_missing_credential_id() {
 
     let resp = test::call_service(&app, req).await;
     
-    assert_eq!(resp.status(), 400);
+    assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
     
     let body: serde_json::Value = test::read_body_json(resp).await;
     
@@ -154,7 +173,16 @@ async fn test_attestation_result_missing_credential_id() {
 
 #[actix_web::test]
 async fn test_assertion_options_success() {
-    let app = create_test_app().await;
+    let webauthn_service = Arc::new(
+        WebAuthnService::new(WebAuthnConfig::default())
+            .expect("Failed to create WebAuthn service")
+    );
+    
+    let app = test::init_service(
+        App::new()
+            .app_data(web::Data::new(webauthn_service))
+            .configure(configure)
+    ).await;
 
     let req = test::TestRequest::post()
         .uri("/assertion/options")
@@ -166,7 +194,7 @@ async fn test_assertion_options_success() {
 
     let resp = test::call_service(&app, req).await;
     
-    assert_eq!(resp.status(), 200);
+    assert_eq!(resp.status(), StatusCode::OK);
     
     let body: serde_json::Value = test::read_body_json(resp).await;
     
@@ -180,7 +208,16 @@ async fn test_assertion_options_success() {
 
 #[actix_web::test]
 async fn test_assertion_result_success() {
-    let app = create_test_app().await;
+    let webauthn_service = Arc::new(
+        WebAuthnService::new(WebAuthnConfig::default())
+            .expect("Failed to create WebAuthn service")
+    );
+    
+    let app = test::init_service(
+        App::new()
+            .app_data(web::Data::new(webauthn_service))
+            .configure(configure)
+    ).await;
 
     let req = test::TestRequest::post()
         .uri("/assertion/result")
@@ -199,7 +236,7 @@ async fn test_assertion_result_success() {
 
     let resp = test::call_service(&app, req).await;
     
-    assert_eq!(resp.status(), 200);
+    assert_eq!(resp.status(), StatusCode::OK);
     
     let body: serde_json::Value = test::read_body_json(resp).await;
     
@@ -209,7 +246,16 @@ async fn test_assertion_result_success() {
 
 #[actix_web::test]
 async fn test_assertion_result_missing_credential_id() {
-    let app = create_test_app().await;
+    let webauthn_service = Arc::new(
+        WebAuthnService::new(WebAuthnConfig::default())
+            .expect("Failed to create WebAuthn service")
+    );
+    
+    let app = test::init_service(
+        App::new()
+            .app_data(web::Data::new(webauthn_service))
+            .configure(configure)
+    ).await;
 
     let assertion = ServerPublicKeyCredentialAssertion {
         id: "".to_string(), // Empty ID should cause error
@@ -230,7 +276,7 @@ async fn test_assertion_result_missing_credential_id() {
 
     let resp = test::call_service(&app, req).await;
     
-    assert_eq!(resp.status(), 400);
+    assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
     
     let body: serde_json::Value = test::read_body_json(resp).await;
     
