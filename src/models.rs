@@ -82,6 +82,9 @@ pub struct ServerPublicKeyCredentialCreationOptionsResponse {
     /// Error message
     #[serde(rename = "errorMessage")]
     pub error_message: String,
+    /// Session identifier for tracking
+    #[serde(rename = "sessionId")]
+    pub session_id: String,
     /// Relying party information
     pub rp: PublicKeyCredentialRpEntity,
     /// User information
