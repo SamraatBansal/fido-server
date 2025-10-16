@@ -1,1 +1,3 @@
-//! Request/Response schema module
+//! Database schema
+
+// Placeholder for database schema
