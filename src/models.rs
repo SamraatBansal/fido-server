@@ -37,6 +37,7 @@ pub struct ServerPublicKeyCredentialCreationOptionsRequest {
     /// User's unique identifier (email or username)
     pub username: String,
     /// Human-readable display name for the user
+    #[serde(rename = "displayName")]
     pub display_name: String,
     /// Authenticator selection criteria
     pub authenticator_selection: Option<AuthenticatorSelectionCriteria>,
