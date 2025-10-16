@@ -104,7 +104,7 @@ impl WebAuthnService {
         // Decode base64url fields
         let client_data_json = general_purpose::URL_SAFE_NO_PAD
             .decode(&credential.response.client_data_json)
-            .map_err(|e| AppError::InvalidRequest(format!("Invalid clientDataJSON: {}", e)))?;
+            .map_err(|_| AppError::InvalidRequest("Invalid clientDataJSON encoding".to_string()))?;
 
         let attestation_object = general_purpose::URL_SAFE_NO_PAD
             .decode(&credential.response.attestation_object)
@@ -180,7 +180,7 @@ impl WebAuthnService {
         // Decode base64url fields
         let client_data_json = general_purpose::URL_SAFE_NO_PAD
             .decode(&credential.response.client_data_json)
-            .map_err(|e| AppError::InvalidRequest(format!("Invalid clientDataJSON: {}", e)))?;
+            .map_err(|_| AppError::InvalidRequest("Invalid clientDataJSON encoding".to_string()))?;
 
         let authenticator_data = general_purpose::URL_SAFE_NO_PAD
             .decode(&credential.response.authenticator_data)
