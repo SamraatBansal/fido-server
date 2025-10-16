@@ -9,6 +9,7 @@ pub struct ServerResponse {
     /// Response status ("ok" or "failed")
     pub status: String,
     /// Error message (empty if status is "ok")
+    #[serde(rename = "errorMessage")]
     pub error_message: String,
 }
 
