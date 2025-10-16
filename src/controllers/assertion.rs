@@ -3,12 +3,11 @@
 use actix_web::{web, HttpResponse, Result};
 use crate::models::{
     ServerPublicKeyCredentialGetOptionsRequest,
-    ServerPublicKeyCredentialGetOptionsResponse,
     ServerPublicKeyCredentialAssertion,
     ServerResponse,
 };
 use crate::error::AppError;
-use crate::services::{WebAuthnService, WebAuthnConfig};
+use crate::services::WebAuthnService;
 use std::sync::Arc;
 
 /// Begin assertion (authentication) process
