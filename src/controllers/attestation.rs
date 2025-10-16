@@ -52,7 +52,7 @@ pub async fn begin_attestation(
         exclude_credentials: Some(vec![]), // TODO: Get existing credentials for user
         authenticator_selection: req.authenticator_selection.clone(),
         attestation: req.attestation.clone().or_else(|| Some("none".to_string())),
-        extensions: None,
+        extensions: Some(std::collections::HashMap::new()),
     };
 
     Ok(HttpResponse::Ok().json(response))
