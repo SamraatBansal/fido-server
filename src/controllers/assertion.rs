@@ -9,6 +9,7 @@ use crate::models::{
 };
 use crate::error::AppError;
 use rand::{distributions::Alphanumeric, Rng};
+use std::collections::HashMap;
 
 /// Begin assertion (authentication) process
 pub async fn begin_assertion(
