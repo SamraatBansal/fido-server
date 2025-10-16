@@ -137,7 +137,8 @@ async fn test_attestation_result_missing_credential_id() {
     let body: serde_json::Value = test::read_body_json(resp).await;
     
     assert_eq!(body["status"], "failed");
-    assert!(body["errorMessage"].as_str().unwrap().contains("Missing credential ID"));
+    let error_msg = body["errorMessage"].as_str().unwrap_or("");
+    assert!(error_msg.contains("Missing credential ID"));
 }
 
 #[actix_web::test]
@@ -231,5 +232,6 @@ async fn test_assertion_result_missing_credential_id() {
     let body: serde_json::Value = test::read_body_json(resp).await;
     
     assert_eq!(body["status"], "failed");
-    assert!(body["errorMessage"].as_str().unwrap().contains("Missing credential ID"));
+    let error_msg = body["errorMessage"].as_str().unwrap_or("");
+    assert!(error_msg.contains("Missing credential ID"));
 }
