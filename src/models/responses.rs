@@ -1,6 +1,6 @@
 //! Response models for FIDO2/WebAuthn endpoints
 
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use serde_json::Value;
 
 /// Base server response
