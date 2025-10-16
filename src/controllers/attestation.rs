@@ -74,12 +74,20 @@ pub async fn finish_attestation(
     }
 
     // Parse and validate client data JSON
-    let client_data_bytes = base64::engine::general_purpose::URL_SAFE_NO_PAD
-        .decode(&req.response.client_data_json)
-        .map_err(|_| AppError::InvalidRequest("Invalid clientDataJSON encoding".to_string()))?;
+    let client_data_bytes = match base64::engine::general_purpose::URL_SAFE_NO_PAD
+        .decode(&req.response.client_data_json) {
+        Ok(data) => data,
+        Err(_) => {
+            return Ok(HttpResponse::BadRequest().json(ServerResponse::error("Invalid clientDataJSON encoding")));
+        }
+    };
     
-    let client_data: serde_json::Value = serde_json::from_slice(&client_data_bytes)
-        .map_err(|_| AppError::InvalidRequest("Invalid clientDataJSON format".to_string()))?;
+    let client_data: serde_json::Value = match serde_json::from_slice(&client_data_bytes) {
+        Ok(data) => data,
+        Err(_) => {
+            return Ok(HttpResponse::BadRequest().json(ServerResponse::error("Invalid clientDataJSON format")));
+        }
+    };
 
     // Validate required fields in client data
     if !client_data.get("challenge").is_some() {
