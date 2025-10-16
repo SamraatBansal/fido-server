@@ -61,6 +61,7 @@ pub struct ServerPublicKeyCredentialCreationOptionsResponse {
     /// Response status
     pub status: String,
     /// Error message
+    #[serde(rename = "errorMessage")]
     pub error_message: String,
     /// Relying party information
     pub rp: PublicKeyCredentialRpEntity,
@@ -69,10 +70,12 @@ pub struct ServerPublicKeyCredentialCreationOptionsResponse {
     /// Generated challenge
     pub challenge: String,
     /// Supported public key algorithms
+    #[serde(rename = "pubKeyCredParams")]
     pub pub_key_cred_params: Vec<PublicKeyCredentialParameters>,
     /// Request timeout in milliseconds
     pub timeout: Option<u64>,
     /// Credentials to exclude from registration
+    #[serde(rename = "excludeCredentials")]
     pub exclude_credentials: Option<Vec<ServerPublicKeyCredentialDescriptor>>,
     /// Authenticator selection criteria
     pub authenticator_selection: Option<AuthenticatorSelectionCriteria>,
