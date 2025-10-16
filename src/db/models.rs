@@ -6,9 +6,8 @@ use uuid::Uuid;
 use chrono::{DateTime, Utc};
 
 /// User model
-#[derive(Debug, Clone, Queryable, Selectable, Serialize, Deserialize)]
+#[derive(Debug, Clone, Queryable, Serialize, Deserialize)]
 #[diesel(table_name = crate::schema::users)]
-#[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct User {
     pub id: Uuid,
     pub username: String,
