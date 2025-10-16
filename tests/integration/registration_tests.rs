@@ -20,11 +20,11 @@ async fn test_attestation_options_success() {
         .set_json(&ServerPublicKeyCredentialCreationOptionsRequest {
             username: "johndoe@example.com".to_string(),
             display_name: "John Doe".to_string(),
-            authenticator_selection: Some(serde_json::json!({
-                "requireResidentKey": false,
-                "authenticatorAttachment": "cross-platform",
-                "userVerification": "preferred"
-            }).try_into().unwrap()),
+            authenticator_selection: Some(AuthenticatorSelectionCriteria {
+                require_resident_key: Some(false),
+                authenticator_attachment: Some("cross-platform".to_string()),
+                user_verification: Some("preferred".to_string()),
+            }),
             attestation: Some("direct".to_string()),
         })
         .to_request();
