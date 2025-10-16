@@ -1,5 +1,7 @@
 //! WebAuthn HTTP controllers
 
+#![allow(dead_code)]
+
 use actix_web::{web, HttpResponse};
 use crate::domain::dto::*;
 use crate::error::Result;
