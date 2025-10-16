@@ -1,8 +1,7 @@
 //! WebAuthn HTTP controllers
 
-use actix_web::{web, HttpRequest, HttpResponse, Result};
+use actix_web::{web, HttpResponse};
 use crate::domain::dto::*;
-use crate::error::{AppError, Result};
 use crate::services::WebAuthnService;
 use std::sync::Arc;
 
