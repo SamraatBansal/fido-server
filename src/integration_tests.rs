@@ -11,7 +11,7 @@ mod registration_tests {
     async fn test_attestation_options_success() {
         let webauthn_service = WebAuthnService::new().expect("Failed to create WebAuthn service");
         
-        let app = TestServer::new(move || {
+        let app = TestServer::init(move || {
             App::new()
                 .app_data(actix_web::web::Data::new(webauthn_service.clone()))
                 .configure(api::configure)
@@ -50,7 +50,7 @@ mod registration_tests {
     async fn test_attestation_result_success() {
         let webauthn_service = WebAuthnService::new().expect("Failed to create WebAuthn service");
         
-        let app = TestServer::new(move || {
+        let app = TestServer::init(move || {
             App::new()
                 .app_data(actix_web::web::Data::new(webauthn_service.clone()))
                 .configure(api::configure)
@@ -92,7 +92,7 @@ mod authentication_tests {
     async fn test_assertion_options_success() {
         let webauthn_service = WebAuthnService::new().expect("Failed to create WebAuthn service");
         
-        let app = TestServer::new(move || {
+        let app = TestServer::init(move || {
             App::new()
                 .app_data(actix_web::web::Data::new(webauthn_service.clone()))
                 .configure(api::configure)
@@ -134,7 +134,7 @@ mod authentication_tests {
     async fn test_assertion_result_success() {
         let webauthn_service = WebAuthnService::new().expect("Failed to create WebAuthn service");
         
-        let app = TestServer::new(move || {
+        let app = TestServer::init(move || {
             App::new()
                 .app_data(actix_web::web::Data::new(webauthn_service.clone()))
                 .configure(api::configure)
@@ -170,7 +170,7 @@ mod authentication_tests {
     async fn test_health_check() {
         let webauthn_service = WebAuthnService::new().expect("Failed to create WebAuthn service");
         
-        let app = TestServer::new(move || {
+        let app = TestServer::init(move || {
             App::new()
                 .app_data(actix_web::web::Data::new(webauthn_service.clone()))
                 .configure(api::configure)
