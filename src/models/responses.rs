@@ -67,13 +67,14 @@ pub struct ServerPublicKeyCredentialGetOptionsResponse {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timeout: Option<u64>,
     
-    pub rpId: String,
+    #[serde(rename = "rpId")]
+    pub rp_id: String,
     
-    #[serde(skip_serializing_if = "Vec::is_empty")]
+    #[serde(skip_serializing_if = "Vec::is_empty", rename = "allowCredentials")]
     pub allow_credentials: Vec<ServerPublicKeyCredentialDescriptor>,
     
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub userVerification: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none", rename = "userVerification")]
+    pub user_verification: Option<String>,
     
     #[serde(skip_serializing_if = "Option::is_none")]
     pub extensions: Option<Value>,
