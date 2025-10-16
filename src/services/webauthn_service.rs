@@ -106,7 +106,7 @@ impl WebAuthnService {
             .decode(&credential.response.client_data_json)
             .map_err(|e| AppError::InvalidRequest(format!("Invalid clientDataJSON: {}", e)))?;
 
-        let _attestation_object = general_purpose::URL_SAFE_NO_PAD
+        let attestation_object = general_purpose::URL_SAFE_NO_PAD
             .decode(&credential.response.attestation_object)
             .map_err(|e| AppError::InvalidRequest(format!("Invalid attestationObject: {}", e)))?;
 
@@ -114,13 +114,32 @@ impl WebAuthnService {
         let client_data: Value = serde_json::from_slice(&client_data_json)
             .map_err(|e| AppError::InvalidRequest(format!("Invalid clientDataJSON format: {}", e)))?;
 
-        // TODO: Verify attestation with webauthn-rs
-        // For now, just validate basic structure
+        // Validate challenge exists and is not empty
+        let challenge = client_data.get("challenge")
+            .and_then(|v| v.as_str())
+            .ok_or_else(|| AppError::InvalidRequest("Missing challenge field".to_string()))?;
+        
+        if challenge.is_empty() {
+            return Err(AppError::InvalidRequest("Empty challenge field".to_string()));
+        }
+
+        // Validate origin
+        let _origin = client_data.get("origin")
+            .and_then(|v| v.as_str())
+            .ok_or_else(|| AppError::InvalidRequest("Missing origin field".to_string()))?;
+
+        // Validate type
         let client_type = client_data.get("type").and_then(|v| v.as_str()).unwrap_or("");
         if client_type != "webauthn.create" {
             return Err(AppError::InvalidRequest("Invalid client data type".to_string()));
         }
 
+        // Basic validation of attestation object format
+        if attestation_object.len() < 50 {
+            return Err(AppError::InvalidRequest("Invalid attestation object format".to_string()));
+        }
+
+        // TODO: Verify attestation with webauthn-rs
         // TODO: Store credential in database
         Ok(())
     }
