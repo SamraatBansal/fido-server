@@ -37,16 +37,17 @@ pub struct ServerPublicKeyCredentialCreationOptionsResponse {
     pub user: ServerPublicKeyCredentialUserEntity,
     
     pub challenge: String,
-    pub pubKeyCredParams: Vec<PublicKeyCredentialParameters>,
+    #[serde(rename = "pubKeyCredParams")]
+    pub pub_key_cred_params: Vec<PublicKeyCredentialParameters>,
     
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timeout: Option<u64>,
     
-    #[serde(skip_serializing_if = "Vec::is_empty")]
-    pub excludeCredentials: Vec<ServerPublicKeyCredentialDescriptor>,
+    #[serde(skip_serializing_if = "Vec::is_empty", rename = "excludeCredentials")]
+    pub exclude_credentials: Vec<ServerPublicKeyCredentialDescriptor>,
     
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub authenticatorSelection: Option<AuthenticatorSelectionCriteria>,
+    #[serde(skip_serializing_if = "Option::is_none", rename = "authenticatorSelection")]
+    pub authenticator_selection: Option<AuthenticatorSelectionCriteria>,
     
     #[serde(skip_serializing_if = "Option::is_none")]
     pub attestation: Option<String>,
