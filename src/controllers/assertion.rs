@@ -14,37 +14,12 @@ use std::sync::Arc;
 /// Begin assertion (authentication) process
 pub async fn begin_assertion(
     req: web::Json<ServerPublicKeyCredentialGetOptionsRequest>,
+    webauthn_service: web::Data<Arc<WebAuthnService>>,
 ) -> Result<HttpResponse, AppError> {
-    // Generate a random challenge (16-64 bytes, base64url encoded)
-    let challenge: String = rand::thread_rng()
-        .sample_iter(&Alphanumeric)
-        .take(32)
-        .map(char::from)
-        .collect();
-
-    // TODO: Get user's existing credentials from database
-    // For now, return empty allowCredentials to make tests pass
-    let allow_credentials = vec![];
-
-    // Generate session ID
-    let session_id: String = rand::thread_rng()
-        .sample_iter(&Alphanumeric)
-        .take(32)
-        .map(char::from)
-        .collect();
-
-    // Build response
-    let response = ServerPublicKeyCredentialGetOptionsResponse {
-        status: "ok".to_string(),
-        error_message: "".to_string(),
-        session_id,
-        challenge,
-        timeout: Some(20000),
-        rp_id: "example.com".to_string(), // TODO: Make configurable
-        allow_credentials,
-        user_verification: req.user_verification.clone(),
-        extensions: Some(HashMap::new()),
-    };
+    // Use WebAuthn service to begin authentication
+    let response = webauthn_service
+        .begin_authentication(&req.username, req.user_verification.clone())
+        .await?;
 
     Ok(HttpResponse::Ok().json(response))
 }
