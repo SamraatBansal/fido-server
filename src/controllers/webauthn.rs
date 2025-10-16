@@ -7,6 +7,7 @@ use crate::models::{
     requests::{ServerPublicKeyCredentialCreationOptionsRequest, ServerPublicKeyCredentialGetOptionsRequest, ServerPublicKeyCredential},
     responses::ServerResponse,
 };
+use crate::services::WebAuthnServiceImpl;
 use crate::services::WebAuthnService;
 
 /// Handle attestation options request (credential creation)
