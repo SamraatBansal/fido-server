@@ -37,7 +37,7 @@ impl ServerResponse {
 }
 
 /// Generate a session ID
-fn generate_session_id() -> String {
+pub fn generate_session_id() -> String {
     use rand::{distributions::Alphanumeric, Rng};
     rand::thread_rng()
         .sample_iter(&Alphanumeric)
