@@ -3,7 +3,6 @@
 use async_trait::async_trait;
 use base64::{Engine as _, engine::general_purpose};
 use std::sync::Arc;
-use uuid::Uuid;
 use webauthn_rs::prelude::*;
 use chrono::{DateTime, Utc, Duration};
 
