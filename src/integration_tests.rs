@@ -2,8 +2,7 @@
 
 #[cfg(test)]
 mod registration_tests {
-    use actix_test::{self, TestServer};
-    use actix_web::{App, http};
+    use actix_web::{App, http, test};
     use serde_json::json;
     use crate::{routes::api, services::webauthn::WebAuthnService};
 
@@ -11,11 +10,11 @@ mod registration_tests {
     async fn test_attestation_options_success() {
         let webauthn_service = WebAuthnService::new().expect("Failed to create WebAuthn service");
         
-        let app = actix_test::init_service(
+        let app = test::init_service(
             App::new()
-                .app_data(actix_web::web::Data::new(webauthn_service.clone()))
+                .app_data(actix_web::web::Data::new(webauthn_service))
                 .configure(api::configure)
-        });
+        ).await;
 
         let request_body = json!({
             "username": "johndoe@example.com",
@@ -28,14 +27,16 @@ mod registration_tests {
             "attestation": "direct"
         });
 
-        let response = app
-            .post("/api/attestation/options")
-            .send_json(&request_body)
-            .await;
+        let req = test::TestRequest::post()
+            .uri("/api/attestation/options")
+            .set_json(&request_body)
+            .to_request();
+
+        let response = test::call_service(&app, req).await;
 
         assert_eq!(response.status(), http::StatusCode::OK);
 
-        let result: serde_json::Value = response.json().await;
+        let result: serde_json::Value = test::read_body_json(response).await;
         assert_eq!(result["status"], "ok");
         assert!(result["challenge"].as_str().is_some());
         assert_eq!(result["rp"]["name"], "Example Corporation");
@@ -50,11 +51,11 @@ mod registration_tests {
     async fn test_attestation_result_success() {
         let webauthn_service = WebAuthnService::new().expect("Failed to create WebAuthn service");
         
-        let app = actix_test::init_service(
+        let app = test::init_service(
             App::new()
-                .app_data(actix_web::web::Data::new(webauthn_service.clone()))
+                .app_data(actix_web::web::Data::new(webauthn_service))
                 .configure(api::configure)
-        });
+        ).await;
 
         // Mock attestation response (simplified for testing)
         let request_body = json!({
@@ -68,14 +69,16 @@ mod registration_tests {
             "type": "public-key"
         });
 
-        let response = app
-            .post("/api/attestation/result")
-            .send_json(&request_body)
-            .await;
+        let req = test::TestRequest::post()
+            .uri("/api/attestation/result")
+            .set_json(&request_body)
+            .to_request();
+
+        let response = test::call_service(&app, req).await;
 
         assert_eq!(response.status(), http::StatusCode::OK);
 
-        let result: serde_json::Value = response.json().await;
+        let result: serde_json::Value = test::read_body_json(response).await;
         assert_eq!(result["status"], "ok");
         assert_eq!(result["errorMessage"], "");
     }
@@ -83,8 +86,7 @@ mod registration_tests {
 
 #[cfg(test)]
 mod authentication_tests {
-    use actix_test::{self, TestServer};
-    use actix_web::{App, http};
+    use actix_web::{App, http, test};
     use serde_json::json;
     use crate::{routes::api, services::webauthn::WebAuthnService};
 
@@ -92,11 +94,11 @@ mod authentication_tests {
     async fn test_assertion_options_success() {
         let webauthn_service = WebAuthnService::new().expect("Failed to create WebAuthn service");
         
-        let app = actix_test::init_service(
+        let app = test::init_service(
             App::new()
-                .app_data(actix_web::web::Data::new(webauthn_service.clone()))
+                .app_data(actix_web::web::Data::new(webauthn_service))
                 .configure(api::configure)
-        });
+        ).await;
 
         // First, register a user to have credentials
         let registration_request = json!({
@@ -104,10 +106,12 @@ mod authentication_tests {
             "displayName": "John Doe"
         });
 
-        let _reg_response = app
-            .post("/api/attestation/options")
-            .send_json(&registration_request)
-            .await;
+        let reg_req = test::TestRequest::post()
+            .uri("/api/attestation/options")
+            .set_json(&registration_request)
+            .to_request();
+
+        let _reg_response = test::call_service(&app, reg_req).await;
 
         // Now test assertion options
         let request_body = json!({
@@ -115,14 +119,16 @@ mod authentication_tests {
             "userVerification": "required"
         });
 
-        let response = app
-            .post("/api/assertion/options")
-            .send_json(&request_body)
-            .await;
+        let req = test::TestRequest::post()
+            .uri("/api/assertion/options")
+            .set_json(&request_body)
+            .to_request();
+
+        let response = test::call_service(&app, req).await;
 
         assert_eq!(response.status(), http::StatusCode::OK);
 
-        let result: serde_json::Value = response.json().await;
+        let result: serde_json::Value = test::read_body_json(response).await;
         assert_eq!(result["status"], "ok");
         assert!(result["challenge"].as_str().is_some());
         assert_eq!(result["rpId"], "localhost");
@@ -134,11 +140,11 @@ mod authentication_tests {
     async fn test_assertion_result_success() {
         let webauthn_service = WebAuthnService::new().expect("Failed to create WebAuthn service");
         
-        let app = actix_test::init_service(
+        let app = test::init_service(
             App::new()
-                .app_data(actix_web::web::Data::new(webauthn_service.clone()))
+                .app_data(actix_web::web::Data::new(webauthn_service))
                 .configure(api::configure)
-        });
+        ).await;
 
         // Mock assertion response (simplified for testing)
         let request_body = json!({
@@ -154,14 +160,16 @@ mod authentication_tests {
             "type": "public-key"
         });
 
-        let response = app
-            .post("/api/assertion/result")
-            .send_json(&request_body)
-            .await;
+        let req = test::TestRequest::post()
+            .uri("/api/assertion/result")
+            .set_json(&request_body)
+            .to_request();
+
+        let response = test::call_service(&app, req).await;
 
         assert_eq!(response.status(), http::StatusCode::OK);
 
-        let result: serde_json::Value = response.json().await;
+        let result: serde_json::Value = test::read_body_json(response).await;
         assert_eq!(result["status"], "ok");
         assert_eq!(result["errorMessage"], "");
     }
@@ -170,17 +178,21 @@ mod authentication_tests {
     async fn test_health_check() {
         let webauthn_service = WebAuthnService::new().expect("Failed to create WebAuthn service");
         
-        let app = actix_test::init_service(
+        let app = test::init_service(
             App::new()
-                .app_data(actix_web::web::Data::new(webauthn_service.clone()))
+                .app_data(actix_web::web::Data::new(webauthn_service))
                 .configure(api::configure)
-        });
+        ).await;
 
-        let response = app.get("/api/health").await;
+        let req = test::TestRequest::get()
+            .uri("/api/health")
+            .to_request();
+
+        let response = test::call_service(&app, req).await;
 
         assert_eq!(response.status(), http::StatusCode::OK);
 
-        let result: serde_json::Value = response.json().await;
+        let result: serde_json::Value = test::read_body_json(response).await;
         assert_eq!(result["status"], "healthy");
         assert!(result["timestamp"].as_str().is_some());
     }
