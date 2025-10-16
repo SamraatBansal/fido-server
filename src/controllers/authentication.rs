@@ -89,7 +89,7 @@ pub async fn assertion_result(
     // Create webauthn credential
     let credential = PublicKeyCredential {
         id: payload.id.clone(),
-        raw_id: base64::decode_config(&payload.rawId, base64::URL_SAFE_NO_PAD)
+        raw_id: base64::decode_config(&payload.rawId, URL_SAFE_NO_PAD)
             .map_err(|_| AppError::InvalidRequest("Invalid rawId encoding".to_string()))?,
         response: AuthenticatorAssertionResponse {
             authenticator_data,
@@ -98,6 +98,7 @@ pub async fn assertion_result(
             user_handle,
         },
         type_: "public-key".to_string(),
+        extensions: None,
     };
 
     // Verify assertion
