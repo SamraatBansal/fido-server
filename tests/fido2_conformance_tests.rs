@@ -6,7 +6,7 @@ use fido_server::models::ServerPublicKeyCredentialCreationOptionsRequest;
 use fido_server::services::{WebAuthnService, WebAuthnConfig};
 use std::sync::Arc;
 
-fn create_test_app() -> App<
+async fn create_test_app() -> App<
     impl actix_web::dev::ServiceFactory<
         actix_web::dev::ServiceRequest,
         Config = (),
@@ -24,7 +24,7 @@ fn create_test_app() -> App<
         App::new()
             .app_data(Data::new(webauthn_service))
             .configure(configure)
-    )
+    ).await
 }
 
 #[actix_web::test]
