@@ -5,6 +5,8 @@ use std::sync::Arc;
 use tokio::sync::RwLock;
 use uuid::Uuid;
 use webauthn_rs::prelude::*;
+use base64::engine::general_purpose::URL_SAFE_NO_PAD;
+use base64::Engine;
 
 use crate::error::AppError;
 
@@ -15,7 +17,7 @@ type CredentialStore = Arc<RwLock<HashMap<String, CredentialData>>>;
 
 #[derive(Debug, Clone)]
 struct ChallengeData {
-    challenge: Challenge,
+    challenge: Vec<u8>,
     username: String,
     expires_at: chrono::DateTime<chrono::Utc>,
 }
@@ -48,7 +50,7 @@ impl WebAuthnService {
         })?)
         .map_err(|e| AppError::Configuration(format!("Failed to create WebAuthn: {}", e)))?;
 
-        let webauthn = Arc::new(builder.build());
+        let webauthn = builder.build();
 
         Ok(Self {
             webauthn,
@@ -63,20 +65,19 @@ impl WebAuthnService {
         username: &str,
         display_name: &str,
         origin: String,
-    ) -> Result<(Challenge, Uuid), AppError> {
+    ) -> Result<(Vec<u8>, Uuid), AppError> {
         // Create user
         let user_id = Uuid::new_v4();
-        let user = User {
+        let user = webauthn_rs::proto::User {
             id: user_id.as_bytes().to_vec(),
             name: username.to_string(),
             display_name: display_name.to_string(),
         };
 
         // Generate challenge
-        let (challenge, state) = self
+        let challenge = self
             .webauthn
-            .generate_challenge_register_options(&user, Some(&origin))
-            .map_err(|e| AppError::WebAuthn(format!("Failed to generate challenge: {}", e)))?;
+            .generate_challenge();
 
         // Store challenge
         let challenge_id = Uuid::new_v4().to_string();
@@ -124,7 +125,7 @@ impl WebAuthnService {
         // Find the user credential (this is a simplified approach)
         for (_, cred_data) in credentials.iter_mut() {
             if cred_data.credential_id.is_empty() {
-                cred_data.credential_id = credential.raw_id.clone();
+                cred_data.credential_id = credential.raw_id.to_vec();
                 // Extract public key from attestation (simplified)
                 cred_data.public_key = vec![1, 2, 3, 4]; // Placeholder
                 break;
@@ -139,7 +140,7 @@ impl WebAuthnService {
         &self,
         username: &str,
         origin: String,
-    ) -> Result<(Challenge, Vec<Vec<u8>>), AppError> {
+    ) -> Result<(Vec<u8>, Vec<Vec<u8>>), AppError> {
         // Get user credentials
         let credentials = self.credentials.read().await;
         let user_credentials: Vec<Vec<u8>> = credentials
@@ -155,8 +156,7 @@ impl WebAuthnService {
         // Generate challenge
         let challenge = self
             .webauthn
-            .generate_challenge_authenticate_options()
-            .map_err(|e| AppError::WebAuthn(format!("Failed to generate challenge: {}", e)))?;
+            .generate_challenge();
 
         // Store challenge
         let challenge_id = Uuid::new_v4().to_string();
