@@ -33,14 +33,14 @@ pub async fn assertion_options(
                 .into_iter()
                 .map(|cred_id| ServerPublicKeyCredentialDescriptor {
                     credential_type: "public-key".to_string(),
-                    id: base64::encode_config(&cred_id, base64::URL_SAFE_NO_PAD),
+                    id: URL_SAFE_NO_PAD.encode(&cred_id),
                     transports: None,
                 })
                 .collect();
 
             let response = ServerPublicKeyCredentialGetOptionsResponse {
                 base: ServerResponse::success(),
-                challenge: base64::encode_config(&challenge, base64::URL_SAFE_NO_PAD),
+                challenge: URL_SAFE_NO_PAD.encode(&challenge),
                 timeout: Some(60000),
                 rp_id: "localhost".to_string(),
                 allowCredentials: allow_credentials,
@@ -68,18 +68,18 @@ pub async fn assertion_result(
     let origin = extract_origin(&req)?;
     
     // Decode base64url fields
-    let client_data_json = base64::decode_config(&payload.response.client_data_json, base64::URL_SAFE_NO_PAD)
+    let client_data_json = base64::decode_config(&payload.response.client_data_json, URL_SAFE_NO_PAD)
         .map_err(|_| AppError::InvalidRequest("Invalid clientDataJSON encoding".to_string()))?;
     
-    let authenticator_data = base64::decode_config(&payload.response.authenticator_data, base64::URL_SAFE_NO_PAD)
+    let authenticator_data = base64::decode_config(&payload.response.authenticator_data, URL_SAFE_NO_PAD)
         .map_err(|_| AppError::InvalidRequest("Invalid authenticatorData encoding".to_string()))?;
 
-    let signature = base64::decode_config(&payload.response.signature, base64::URL_SAFE_NO_PAD)
+    let signature = base64::decode_config(&payload.response.signature, URL_SAFE_NO_PAD)
         .map_err(|_| AppError::InvalidRequest("Invalid signature encoding".to_string()))?;
 
     let user_handle = if !payload.response.user_handle.is_empty() {
         Some(
-            base64::decode_config(&payload.response.user_handle, base64::URL_SAFE_NO_PAD)
+            base64::decode_config(&payload.response.user_handle, URL_SAFE_NO_PAD)
                 .map_err(|_| AppError::InvalidRequest("Invalid userHandle encoding".to_string()))?,
         )
     } else {
