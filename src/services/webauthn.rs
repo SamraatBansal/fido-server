@@ -47,7 +47,7 @@ impl WebAuthnService {
     pub async fn generate_registration_challenge(
         &self,
         username: &str,
-        display_name: &str,
+        _display_name: &str,
         _origin: String,
     ) -> Result<(Vec<u8>, Uuid), AppError> {
         // Create user ID
