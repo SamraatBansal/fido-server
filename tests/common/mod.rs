@@ -1,7 +1,7 @@
 //! Test utilities and common fixtures
 
 use serde_json::json;
-use crate::schema::*;
+use fido_server::schema::*;
 
 /// Create a test registration request
 pub fn create_test_registration_request() -> ServerPublicKeyCredentialCreationOptionsRequest {
