@@ -38,11 +38,11 @@ pub async fn attestation_options(
                     id: Some("localhost".to_string()),
                 },
                 user: ServerPublicKeyCredentialUserEntity {
-                    id: base64::encode_config(user_id.as_bytes(), base64::URL_SAFE_NO_PAD),
+                    id: URL_SAFE_NO_PAD.encode(user_id.as_bytes()),
                     name: payload.username.clone(),
                     display_name: payload.displayName.clone(),
                 },
-                challenge: base64::encode_config(&challenge, base64::URL_SAFE_NO_PAD),
+                challenge: URL_SAFE_NO_PAD.encode(&challenge),
                 pubKeyCredParams: vec![
                     PublicKeyCredentialParameters {
                         credential_type: "public-key".to_string(),
@@ -80,10 +80,10 @@ pub async fn attestation_result(
     let origin = extract_origin(&req)?;
     
     // Decode base64url fields
-    let client_data_json = base64::decode_config(&payload.response.client_data_json, base64::URL_SAFE_NO_PAD)
+    let client_data_json = base64::decode_config(&payload.response.client_data_json, URL_SAFE_NO_PAD)
         .map_err(|_| AppError::InvalidRequest("Invalid clientDataJSON encoding".to_string()))?;
     
-    let attestation_object = base64::decode_config(&payload.response.attestation_object, base64::URL_SAFE_NO_PAD)
+    let attestation_object = base64::decode_config(&payload.response.attestation_object, URL_SAFE_NO_PAD)
         .map_err(|_| AppError::InvalidRequest("Invalid attestationObject encoding".to_string()))?;
 
     // Create webauthn credential
