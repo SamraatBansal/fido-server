@@ -2,13 +2,12 @@
 
 use actix_web::{web, HttpResponse, Result};
 use crate::models::{
-    ServerPublicKeyCredentialCreationOptionsResponse,
     ServerPublicKeyCredential,
     ServerResponse,
     AuthenticatorSelectionCriteria,
 };
 use crate::error::AppError;
-use crate::services::{WebAuthnService, WebAuthnConfig};
+use crate::services::WebAuthnService;
 use std::sync::Arc;
 
 /// Begin attestation (registration) process
