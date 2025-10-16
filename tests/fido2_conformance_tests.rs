@@ -118,7 +118,10 @@ async fn test_attestation_options_missing_username() {
     
     assert_eq!(resp.status(), http::StatusCode::BAD_REQUEST);
     
-    let body: serde_json::Value = test::read_body_json(resp).await;
+    let body_bytes = test::read_body(resp).await;
+    let body_str = String::from_utf8(body_bytes.to_vec()).unwrap();
+    println!("Response body: {}", body_str);
+    let body: serde_json::Value = serde_json::from_str(&body_str).unwrap();
     assert_eq!(body["status"], "failed");
     assert!(!body.get("errorMessage").unwrap().as_str().unwrap().is_empty());
 }
