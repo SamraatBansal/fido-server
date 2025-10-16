@@ -1,1 +1,3 @@
-//! Utilities module
+//! Utility functions
+
+// Placeholder for utility functions
