@@ -1,5 +1,7 @@
 //! Data Transfer Objects for FIDO2/WebAuthn API
 
+#![allow(non_snake_case)]
+
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 
