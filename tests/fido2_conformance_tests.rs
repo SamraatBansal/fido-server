@@ -11,11 +11,7 @@ use fido_server::{
 };
 
 /// Create test app with WebAuthn service
-async fn create_test_app() -> impl actix_web::dev::Service<
-    actix_http::request::Request,
-    Response = actix_web::dev::ServiceResponse,
-    Error = actix_web::Error,
-> {
+async fn create_test_app() {
     let webauthn_config = WebAuthnConfig::default();
     let webauthn_service = WebAuthnServiceImpl::new(webauthn_config)
         .expect("Failed to create WebAuthn service");
