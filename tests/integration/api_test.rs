@@ -4,10 +4,11 @@ use actix_web::{test, App, http::StatusCode};
 use serde_json::json;
 use uuid::Uuid;
 use std::sync::Arc;
+use async_trait::async_trait;
 
 use fido_server::{
     config::AppConfig,
-    services::{WebAuthnServiceImpl, PgUserRepository, PgCredentialRepository, PgChallengeRepository},
+    services::{WebAuthnServiceImpl, PgUserRepository, PgCredentialRepository, PgChallengeRepository, WebAuthnService},
     routes::configure_routes,
     schema::*,
 };
