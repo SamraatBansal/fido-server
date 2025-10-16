@@ -53,6 +53,7 @@ pub trait WebAuthnService: Send + Sync + Clone {
 }
 
 /// WebAuthn service implementation
+#[derive(Clone)]
 pub struct WebAuthnServiceImpl {
     config: WebAuthnConfig,
 }
