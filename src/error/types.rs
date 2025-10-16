@@ -42,6 +42,12 @@ pub enum AppError {
 
     #[error("Configuration error: {0}")]
     Config(String),
+
+    #[error("Task join error: {0}")]
+    TaskJoin(#[from] tokio::task::JoinError),
+
+    #[error("Database connection error: {0}")]
+    DatabaseConnection(#[from] diesel::r2d2::PoolError),
 }
 
 impl ResponseError for AppError {
