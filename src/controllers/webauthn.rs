@@ -2,7 +2,7 @@
 
 use actix_web::{web, HttpResponse, Result as ActixResult};
 use validator::Validate;
-use crate::error::{AppError, Result};
+use crate::error::AppError;
 use crate::models::{
     requests::{ServerPublicKeyCredentialCreationOptionsRequest, ServerPublicKeyCredentialGetOptionsRequest, ServerPublicKeyCredential},
     responses::{ServerPublicKeyCredentialCreationOptionsResponse, ServerPublicKeyCredentialGetOptionsResponse, ServerResponse},
