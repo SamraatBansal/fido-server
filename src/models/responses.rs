@@ -69,7 +69,7 @@ pub struct ServerPublicKeyCredentialGetOptionsResponse {
     pub rpId: String,
     
     #[serde(skip_serializing_if = "Vec::is_empty")]
-    pub allowCredentials: Vec<ServerPublicKeyCredentialDescriptor>,
+    pub allow_credentials: Vec<ServerPublicKeyCredentialDescriptor>,
     
     #[serde(skip_serializing_if = "Option::is_none")]
     pub userVerification: Option<String>,
