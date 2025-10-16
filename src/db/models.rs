@@ -56,9 +56,8 @@ pub struct NewCredential {
 }
 
 /// Challenge model for storing registration/authentication challenges
-#[derive(Debug, Clone, Queryable, Selectable, Serialize, Deserialize)]
+#[derive(Debug, Clone, Queryable, Serialize, Deserialize)]
 #[diesel(table_name = crate::schema::challenges)]
-#[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Challenge {
     pub id: Uuid,
     pub user_id: Option<Uuid>,
