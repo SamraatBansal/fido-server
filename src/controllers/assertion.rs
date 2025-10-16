@@ -26,10 +26,18 @@ pub async fn begin_assertion(
     // For now, return empty allowCredentials to make tests pass
     let allow_credentials = vec![];
 
+    // Generate session ID
+    let session_id: String = rand::thread_rng()
+        .sample_iter(&Alphanumeric)
+        .take(32)
+        .map(char::from)
+        .collect();
+
     // Build response
     let response = ServerPublicKeyCredentialGetOptionsResponse {
         status: "ok".to_string(),
         error_message: "".to_string(),
+        session_id,
         challenge,
         timeout: Some(20000),
         rp_id: "example.com".to_string(), // TODO: Make configurable
