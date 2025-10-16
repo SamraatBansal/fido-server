@@ -8,7 +8,16 @@ use std::sync::Arc;
 
 #[actix_web::test]
 async fn test_fido2_conformance_registration_options() {
-    let app = test::init_service(App::new().configure(configure)).await;
+    let webauthn_service = Arc::new(
+        WebAuthnService::new(WebAuthnConfig::default())
+            .expect("Failed to create WebAuthn service")
+    );
+    
+    let app = test::init_service(
+        App::new()
+            .app_data(Data::new(webauthn_service))
+            .configure(configure)
+    ).await;
 
     // Exact request from FIDO2 specification
     let req = test::TestRequest::post()
