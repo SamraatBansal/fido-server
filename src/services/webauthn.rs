@@ -50,7 +50,7 @@ impl WebAuthnService {
         })?)
         .map_err(|e| AppError::Configuration(format!("Failed to create WebAuthn: {}", e)))?;
 
-        let webauthn = builder.build();
+        let webauthn = Arc::new(builder.build());
 
         Ok(Self {
             webauthn,
