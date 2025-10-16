@@ -1,8 +1,10 @@
 //! FIDO2 Conformance Tests - Exact examples from specification
 
-use actix_web::{test, App};
+use actix_web::{test, App, web::Data};
 use fido_server::routes::api::configure;
 use fido_server::models::ServerPublicKeyCredentialCreationOptionsRequest;
+use fido_server::services::{WebAuthnService, WebAuthnConfig};
+use std::sync::Arc;
 
 #[actix_web::test]
 async fn test_fido2_conformance_registration_options() {
