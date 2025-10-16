@@ -8,7 +8,7 @@ pub type DbPool = Pool<ConnectionManager<PgConnection>>;
 pub type DbConn = PooledConnection<ConnectionManager<PgConnection>>;
 
 /// Establish database connection pool
-pub fn establish_connection() -> Result<DbPool, diesel::result::ConnectionError> {
+pub fn establish_connection() -> Result<DbPool, diesel::r2d2::PoolError> {
     let database_url = env::var("DATABASE_URL")
         .expect("DATABASE_URL must be set");
     
