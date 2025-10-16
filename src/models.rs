@@ -11,6 +11,9 @@ pub struct ServerResponse {
     /// Error message (empty if status is "ok")
     #[serde(rename = "errorMessage")]
     pub error_message: String,
+    /// Session identifier for tracking
+    #[serde(rename = "sessionId")]
+    pub session_id: String,
 }
 
 impl ServerResponse {
