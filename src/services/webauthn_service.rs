@@ -108,7 +108,7 @@ impl WebAuthnService {
 
         let attestation_object = general_purpose::URL_SAFE_NO_PAD
             .decode(&credential.response.attestation_object)
-            .map_err(|e| AppError::InvalidRequest(format!("Invalid attestationObject: {}", e)))?;
+            .map_err(|_| AppError::InvalidRequest("Invalid attestationObject encoding".to_string()))?;
 
         // Parse client data
         let client_data: Value = serde_json::from_slice(&client_data_json)
