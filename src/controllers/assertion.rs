@@ -28,27 +28,77 @@ pub async fn finish_assertion(
     req: web::Json<ServerPublicKeyCredentialAssertion>,
     webauthn_service: web::Data<Arc<WebAuthnService>>,
 ) -> Result<HttpResponse, AppError> {
+    // Validate credential type
+    if req.cred_type != "public-key" {
+        return Ok(HttpResponse::BadRequest().json(ServerResponse::error("Invalid credential type")));
+    }
+
     // Validate basic structure
     if req.id.is_empty() {
         return Ok(HttpResponse::BadRequest().json(ServerResponse::error("Missing credential ID")));
     }
 
+    // Validate clientDataJSON - must be valid base64url
     if req.response.client_data_json.is_empty() {
         return Ok(HttpResponse::BadRequest().json(ServerResponse::error("Missing clientDataJSON")));
     }
 
+    // Try to decode clientDataJSON to validate it's proper base64url
+    if let Err(_) = base64::engine::general_purpose::URL_SAFE_NO_PAD.decode(&req.response.client_data_json) {
+        return Ok(HttpResponse::BadRequest().json(ServerResponse::error("Invalid clientDataJSON encoding")));
+    }
+
+    // Validate authenticatorData - must be valid base64url
     if req.response.authenticator_data.is_empty() {
         return Ok(HttpResponse::BadRequest().json(ServerResponse::error("Missing authenticatorData")));
     }
 
+    // Try to decode authenticatorData to validate it's proper base64url
+    if let Err(_) = base64::engine::general_purpose::URL_SAFE_NO_PAD.decode(&req.response.authenticator_data) {
+        return Ok(HttpResponse::BadRequest().json(ServerResponse::error("Invalid authenticatorData encoding")));
+    }
+
+    // Validate signature - must be valid base64url
     if req.response.signature.is_empty() {
         return Ok(HttpResponse::BadRequest().json(ServerResponse::error("Missing signature")));
     }
 
-    // Use WebAuthn service to complete authentication
-    webauthn_service
-        .finish_authentication(req.into_inner())
-        .await?;
+    // Try to decode signature to validate it's proper base64url
+    if let Err(_) = base64::engine::general_purpose::URL_SAFE_NO_PAD.decode(&req.response.signature) {
+        return Ok(HttpResponse::BadRequest().json(ServerResponse::error("Invalid signature encoding")));
+    }
+
+    // Parse and validate client data JSON
+    let client_data_bytes = base64::engine::general_purpose::URL_SAFE_NO_PAD
+        .decode(&req.response.client_data_json)
+        .map_err(|_| AppError::InvalidRequest("Invalid clientDataJSON encoding".to_string()))?;
     
-    Ok(HttpResponse::Ok().json(ServerResponse::success()))
+    let client_data: serde_json::Value = serde_json::from_slice(&client_data_bytes)
+        .map_err(|_| AppError::InvalidRequest("Invalid clientDataJSON format".to_string()))?;
+
+    // Validate required fields in client data
+    if !client_data.get("challenge").is_some() {
+        return Ok(HttpResponse::BadRequest().json(ServerResponse::error("Missing challenge field!")));
+    }
+
+    if !client_data.get("origin").is_some() {
+        return Ok(HttpResponse::BadRequest().json(ServerResponse::error("Missing origin field!")));
+    }
+
+    if client_data.get("type").and_then(|v| v.as_str()) != Some("webauthn.get") {
+        return Ok(HttpResponse::BadRequest().json(ServerResponse::error("Invalid client data type")));
+    }
+
+    // Use WebAuthn service to complete authentication
+    match webauthn_service.finish_authentication(req.into_inner()).await {
+        Ok(()) => Ok(HttpResponse::Ok().json(ServerResponse::success())),
+        Err(e) => {
+            match e {
+                AppError::InvalidRequest(msg) => {
+                    Ok(HttpResponse::BadRequest().json(ServerResponse::error(format!("Can not validate response signature: {}", msg))))
+                }
+                _ => Ok(HttpResponse::BadRequest().json(ServerResponse::error("Can not validate response signature!")))
+            }
+        }
+    }
 }
