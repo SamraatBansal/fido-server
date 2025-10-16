@@ -6,11 +6,9 @@ use crate::models::{
     ServerPublicKeyCredentialGetOptionsResponse,
     ServerPublicKeyCredentialAssertion,
     ServerResponse,
-    ServerPublicKeyCredentialDescriptor,
 };
 use crate::error::AppError;
 use rand::{distributions::Alphanumeric, Rng};
-use std::collections::HashMap;
 
 /// Begin assertion (authentication) process
 pub async fn begin_assertion(
