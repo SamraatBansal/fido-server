@@ -19,6 +19,12 @@ use std::collections::HashMap;
 pub async fn begin_attestation(
     req: web::Json<serde_json::Value>,
 ) -> Result<HttpResponse, AppError> {
+    // Extract fields from JSON request
+    let username = req["username"].as_str().unwrap_or("").to_string();
+    let display_name = req["displayName"].as_str().unwrap_or(&username).to_string();
+    let authenticator_selection = req.get("authenticatorSelection").cloned();
+    let attestation = req["attestation"].as_str().and_then(|s| Some(s.to_string()));
+
     // Generate a random challenge (16-64 bytes, base64url encoded)
     let challenge: String = rand::thread_rng()
         .sample_iter(&Alphanumeric)
@@ -28,7 +34,7 @@ pub async fn begin_attestation(
 
     // Generate user ID (base64url encoded)
     let user_id = general_purpose::URL_SAFE_NO_PAD
-        .encode(req.username.as_bytes());
+        .encode(username.as_bytes());
 
     // Build response
     let response = ServerPublicKeyCredentialCreationOptionsResponse {
@@ -39,8 +45,8 @@ pub async fn begin_attestation(
         },
         user: ServerPublicKeyCredentialUserEntity {
             id: user_id,
-            name: req.username.clone(),
-            display_name: req.display_name.clone(),
+            name: username.clone(),
+            display_name,
         },
         challenge,
         pub_key_cred_params: vec![
@@ -51,10 +57,16 @@ pub async fn begin_attestation(
         ],
         timeout: Some(10000),
         exclude_credentials: vec![], // TODO: Get existing credentials for user
-        authenticator_selection: req.authenticator_selection.clone(),
-        attestation: req.attestation.clone().or_else(|| Some("none".to_string())),
+        authenticator_selection: None, // We'll handle this differently
+        attestation: attestation.or_else(|| Some("none".to_string())),
         extensions: Some(HashMap::new()),
     };
+
+    // If authenticatorSelection was provided, include it in the response
+    let mut response_json = serde_json::to_value(&response).unwrap();
+    if let Some(auth_sel) = authenticator_selection {
+        response_json["authenticatorSelection"] = auth_sel;
+    }
 
     Ok(HttpResponse::Ok().json(response))
 }
