@@ -163,11 +163,11 @@ impl WebAuthnService {
             .decode(&credential.response.client_data_json)
             .map_err(|e| AppError::InvalidRequest(format!("Invalid clientDataJSON: {}", e)))?;
 
-        let authenticator_data = general_purpose::URL_SAFE_NO_PAD
+        let _authenticator_data = general_purpose::URL_SAFE_NO_PAD
             .decode(&credential.response.authenticator_data)
             .map_err(|e| AppError::InvalidRequest(format!("Invalid authenticatorData: {}", e)))?;
 
-        let signature = general_purpose::URL_SAFE_NO_PAD
+        let _signature = general_purpose::URL_SAFE_NO_PAD
             .decode(&credential.response.signature)
             .map_err(|e| AppError::InvalidRequest(format!("Invalid signature: {}", e)))?;
 
