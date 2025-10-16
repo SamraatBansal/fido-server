@@ -112,7 +112,7 @@ impl WebAuthnService {
 
         // Parse client data
         let client_data: Value = serde_json::from_slice(&client_data_json)
-            .map_err(|e| AppError::InvalidRequest(format!("Invalid clientDataJSON format: {}", e)))?;
+            .map_err(|_| AppError::InvalidRequest("Invalid clientDataJSON format".to_string()))?;
 
         // Validate challenge exists and is not empty
         let challenge = client_data.get("challenge")
@@ -192,7 +192,7 @@ impl WebAuthnService {
 
         // Parse client data
         let client_data: Value = serde_json::from_slice(&client_data_json)
-            .map_err(|e| AppError::InvalidRequest(format!("Invalid clientDataJSON format: {}", e)))?;
+            .map_err(|_| AppError::InvalidRequest("Invalid clientDataJSON format".to_string()))?;
 
         // Validate challenge exists and is not empty
         let challenge = client_data.get("challenge")
