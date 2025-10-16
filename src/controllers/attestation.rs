@@ -14,65 +14,28 @@ use std::sync::Arc;
 /// Begin attestation (registration) process
 pub async fn begin_attestation(
     req: web::Json<serde_json::Value>,
+    webauthn_service: web::Data<Arc<WebAuthnService>>,
 ) -> Result<HttpResponse, AppError> {
     // Extract fields from JSON request
-    let username = req["username"].as_str().unwrap_or("").to_string();
-    let display_name = req["displayName"].as_str().unwrap_or(&username).to_string();
-    let authenticator_selection = req.get("authenticatorSelection").cloned();
-    let attestation = req["attestation"].as_str().and_then(|s| Some(s.to_string()));
-
-    // Generate a random challenge (16-64 bytes, base64url encoded)
-    let challenge: String = rand::thread_rng()
-        .sample_iter(&Alphanumeric)
-        .take(32)
-        .map(char::from)
-        .collect();
-
-    // Generate user ID (base64url encoded)
-    let user_id = general_purpose::URL_SAFE_NO_PAD
-        .encode(username.as_bytes());
-
-    // Generate session ID
-    let session_id: String = rand::thread_rng()
-        .sample_iter(&Alphanumeric)
-        .take(32)
-        .map(char::from)
-        .collect();
-
-    // Build response
-    let response = ServerPublicKeyCredentialCreationOptionsResponse {
-        status: "ok".to_string(),
-        error_message: "".to_string(),
-        session_id,
-        rp: PublicKeyCredentialRpEntity {
-            name: "Example Corporation".to_string(),
-        },
-        user: ServerPublicKeyCredentialUserEntity {
-            id: user_id,
-            name: username.clone(),
-            display_name,
-        },
-        challenge,
-        pub_key_cred_params: vec![
-            PublicKeyCredentialParameters {
-                cred_type: "public-key".to_string(),
-                alg: -7, // ES256
-            },
-        ],
-        timeout: Some(10000),
-        exclude_credentials: vec![], // TODO: Get existing credentials for user
-        authenticator_selection: None, // We'll handle this differently
-        attestation: attestation.or_else(|| Some("none".to_string())),
-        extensions: Some(HashMap::new()),
+    let username = req["username"].as_str().ok_or_else(|| AppError::InvalidRequest("Missing username".to_string()))?;
+    let display_name = req["displayName"].as_str().unwrap_or(username);
+    
+    // Parse authenticator selection
+    let authenticator_selection = if let Some(auth_sel) = req.get("authenticatorSelection") {
+        Some(serde_json::from_value::<AuthenticatorSelectionCriteria>(auth_sel.clone())
+            .map_err(|e| AppError::InvalidRequest(format!("Invalid authenticatorSelection: {}", e)))?)
+    } else {
+        None
     };
+    
+    let attestation = req["attestation"].as_str().map(|s| s.to_string());
 
-    // If authenticatorSelection was provided, include it in the response
-    let mut response_json = serde_json::to_value(&response).unwrap();
-    if let Some(auth_sel) = authenticator_selection {
-        response_json["authenticatorSelection"] = auth_sel;
-    }
+    // Use WebAuthn service to begin registration
+    let response = webauthn_service
+        .begin_registration(username, display_name, authenticator_selection, attestation)
+        .await?;
 
-    Ok(HttpResponse::Ok().json(response_json))
+    Ok(HttpResponse::Ok().json(response))
 }
 
 /// Complete attestation (registration) process
