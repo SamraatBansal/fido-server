@@ -30,8 +30,8 @@ pub struct ServerPublicKeyCredentialGetOptionsRequest {
     #[validate(length(min = 1, max = 255))]
     pub username: String,
     
-    #[serde(default = "default_user_verification")]
-    pub userVerification: String,
+    #[serde(default = "default_user_verification", rename = "userVerification")]
+    pub user_verification: String,
 }
 
 fn default_user_verification() -> String {
