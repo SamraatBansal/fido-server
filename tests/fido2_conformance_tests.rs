@@ -46,9 +46,6 @@ async fn test_fido2_conformance_registration_options() {
     assert_eq!(body["timeout"], 10000);
     assert_eq!(body["attestation"], "direct");
     
-    // Debug print
-    println!("authenticatorSelection: {}", serde_json::to_string_pretty(&body["authenticatorSelection"]).unwrap());
-    
     // Verify authenticatorSelection is echoed back
     assert_eq!(body["authenticatorSelection"]["requireResidentKey"], false);
     assert_eq!(body["authenticatorSelection"]["authenticatorAttachment"], "cross-platform");
