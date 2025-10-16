@@ -36,18 +36,9 @@ async fn test_attestation_options_success() {
         }))
         .to_request();
 
-    let mut resp = test::call_service(&app, req).await;
-    let status = resp.status();
+    let resp = test::call_service(&app, req).await;
     
-    println!("Response status: {}", status);
-    if status != StatusCode::OK {
-        let body = test::read_body(resp).await;
-        println!("Response body: {:?}", String::from_utf8_lossy(&body));
-        // Need to make a new request since we consumed the response
-        resp = test::call_service(&app, req).await;
-    }
-    
-    assert_eq!(status, StatusCode::OK);
+    assert_eq!(resp.status(), StatusCode::OK);
     
     let response: ServerPublicKeyCredentialCreationOptionsResponse = test::read_body_json(resp).await;
     assert_eq!(response.status, "ok");
@@ -82,15 +73,8 @@ async fn test_attestation_result_success() {
         .to_request();
 
     let resp = test::call_service(&app, req).await;
-    let status = resp.status();
     
-    println!("Response status: {}", status);
-    if status != StatusCode::OK {
-        let body = test::read_body(resp).await;
-        println!("Response body: {:?}", String::from_utf8_lossy(&body));
-    }
-    
-    assert_eq!(status, StatusCode::OK);
+    assert_eq!(resp.status(), StatusCode::OK);
     
     let response: ServerResponse = test::read_body_json(resp).await;
     assert_eq!(response.status, "ok");
@@ -113,15 +97,8 @@ async fn test_assertion_options_success() {
         .to_request();
 
     let resp = test::call_service(&app, req).await;
-    let status = resp.status();
     
-    println!("Response status: {}", status);
-    if status != StatusCode::OK {
-        let body = test::read_body(resp).await;
-        println!("Response body: {:?}", String::from_utf8_lossy(&body));
-    }
-    
-    assert_eq!(status, StatusCode::OK);
+    assert_eq!(resp.status(), StatusCode::OK);
     
     let response: ServerPublicKeyCredentialGetOptionsResponse = test::read_body_json(resp).await;
     assert_eq!(response.status, "ok");
@@ -155,15 +132,8 @@ async fn test_assertion_result_success() {
         .to_request();
 
     let resp = test::call_service(&app, req).await;
-    let status = resp.status();
     
-    println!("Response status: {}", status);
-    if status != StatusCode::OK {
-        let body = test::read_body(resp).await;
-        println!("Response body: {:?}", String::from_utf8_lossy(&body));
-    }
-    
-    assert_eq!(status, StatusCode::OK);
+    assert_eq!(resp.status(), StatusCode::OK);
     
     let response: ServerResponse = test::read_body_json(resp).await;
     assert_eq!(response.status, "ok");
