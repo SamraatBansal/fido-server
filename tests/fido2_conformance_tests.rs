@@ -96,16 +96,16 @@ async fn test_attestation_options_missing_username() {
         "attestation": "direct"
     });
 
-    let req = actix_test::TestRequest::post()
+    let req = test::TestRequest::post()
         .uri("/api/attestation/options")
         .set_json(&request_body)
         .to_request();
 
-    let resp = app.send_request(req).await;
+    let resp = test::call_service(&app, req).await;
     
     assert_eq!(resp.status(), http::StatusCode::BAD_REQUEST);
     
-    let body: serde_json::Value = actix_test::read_body_json(resp).await;
+    let body: serde_json::Value = test::read_body_json(resp).await;
     assert_eq!(body["status"], "failed");
     assert!(!body.get("errorMessage").unwrap().as_str().unwrap().is_empty());
 }
@@ -124,16 +124,16 @@ async fn test_attestation_result_success() {
         "type": "public-key"
     });
 
-    let req = actix_test::TestRequest::post()
+    let req = test::TestRequest::post()
         .uri("/api/attestation/result")
         .set_json(&request_body)
         .to_request();
 
-    let resp = app.send_request(req).await;
+    let resp = test::call_service(&app, req).await;
     
     assert_eq!(resp.status(), http::StatusCode::OK);
     
-    let body: serde_json::Value = actix_test::read_body_json(resp).await;
+    let body: serde_json::Value = test::read_body_json(resp).await;
     assert_eq!(body["status"], "ok");
     assert!(body.get("errorMessage").unwrap().as_str().unwrap().is_empty());
 }
@@ -147,16 +147,16 @@ async fn test_assertion_options_success() {
         "userVerification": "required"
     });
 
-    let req = actix_test::TestRequest::post()
+    let req = test::TestRequest::post()
         .uri("/api/assertion/options")
         .set_json(&request_body)
         .to_request();
 
-    let resp = app.send_request(req).await;
+    let resp = test::call_service(&app, req).await;
     
     assert_eq!(resp.status(), http::StatusCode::OK);
     
-    let body: serde_json::Value = actix_test::read_body_json(resp).await;
+    let body: serde_json::Value = test::read_body_json(resp).await;
     
     // Verify response structure matches FIDO2 conformance requirements
     assert_eq!(body["status"], "ok");
@@ -194,16 +194,16 @@ async fn test_assertion_result_success() {
         "type": "public-key"
     });
 
-    let req = actix_test::TestRequest::post()
+    let req = test::TestRequest::post()
         .uri("/api/assertion/result")
         .set_json(&request_body)
         .to_request();
 
-    let resp = app.send_request(req).await;
+    let resp = test::call_service(&app, req).await;
     
     assert_eq!(resp.status(), http::StatusCode::OK);
     
-    let body: serde_json::Value = actix_test::read_body_json(resp).await;
+    let body: serde_json::Value = test::read_body_json(resp).await;
     assert_eq!(body["status"], "ok");
     assert!(body.get("errorMessage").unwrap().as_str().unwrap().is_empty());
 }
