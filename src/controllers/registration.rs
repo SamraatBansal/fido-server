@@ -2,8 +2,13 @@
 
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use base64::Engine;
+use actix_web::{web, HttpRequest, HttpResponse, Result};
 use log::error;
 use webauthn_rs::prelude::*;
+use webauthn_rs_proto::{
+    AuthenticatorAttestationResponse, AuthenticatorAssertionResponse,
+    AuthenticationExtensionsClientOutputs, User
+};
 
 use crate::controllers::dto::{
     PublicKeyCredentialParameters,
@@ -57,7 +62,7 @@ pub async fn attestation_options(
                 excludeCredentials: vec![], // TODO: Get existing credentials for user
                 authenticatorSelection: payload.authenticator_selection.clone(),
                 attestation: Some(payload.attestation.clone()),
-                extensions: webauthn_rs::proto::extensions::AuthenticationExtensionsClientOutputs::new(),
+                extensions: AuthenticationExtensionsClientOutputs::new(),
             };
 
             Ok(HttpResponse::Ok().json(response))
@@ -90,8 +95,8 @@ pub async fn attestation_result(
     let credential = PublicKeyCredential {
         id: payload.id.clone(),
         raw_id: URL_SAFE_NO_PAD.decode(&payload.rawId)
-            .map_err(|_| AppError::InvalidRequest("Invalid rawId encoding".to_string()))?,
-        response: webauthn_rs::proto::AuthenticatorAttestationResponse {
+            .map_err(|_| AppError::InvalidRequest("Invalid rawId encoding".to_string()))?.into(),
+        response: AuthenticatorAttestationResponse {
             client_data_json,
             attestation_object,
         },
