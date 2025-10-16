@@ -4,12 +4,9 @@ use crate::error::AppError;
 use crate::models::{
     requests::{ServerPublicKeyCredentialCreationOptionsRequest, ServerPublicKeyCredentialGetOptionsRequest, ServerPublicKeyCredential},
     responses::{ServerPublicKeyCredentialCreationOptionsResponse, ServerPublicKeyCredentialGetOptionsResponse, ServerResponse},
-    User, Credential, Challenge,
 };
 use base64::{Engine as _, engine::general_purpose};
 use rand::{distributions::Alphanumeric, Rng};
-use std::time::{SystemTime, UNIX_EPOCH};
-use webauthn_rs::prelude::*;
 
 /// WebAuthn configuration
 #[derive(Debug, Clone)]
@@ -32,6 +29,7 @@ impl Default for WebAuthnConfig {
 }
 
 /// WebAuthn service trait
+#[async_trait::async_trait]
 pub trait WebAuthnService: Send + Sync {
     async fn generate_registration_challenge(
         &self,
@@ -57,21 +55,11 @@ pub trait WebAuthnService: Send + Sync {
 /// WebAuthn service implementation
 pub struct WebAuthnServiceImpl {
     config: WebAuthnConfig,
-    webauthn: Webauthn,
 }
 
 impl WebAuthnServiceImpl {
     pub fn new(config: WebAuthnConfig) -> Result<Self, AppError> {
-        let rp = RelyingParty {
-            id: config.rp_id.clone(),
-            name: config.rp_name.clone(),
-            origin: Url::parse(&config.rp_origin)
-                .map_err(|e| AppError::WebAuthnError(e.to_string()))?,
-        };
-        
-        let webauthn = Webauthn::new(rp);
-        
-        Ok(Self { config, webauthn })
+        Ok(Self { config })
     }
     
     fn generate_challenge(&self) -> String {
@@ -97,23 +85,6 @@ impl WebAuthnService for WebAuthnServiceImpl {
         let challenge = self.generate_challenge();
         let user_id = self.base64_encode_user_id(&request.username)?;
         
-        // Create user entity
-        let user = User {
-            id: user_id,
-            name: request.username.clone(),
-            display_name: request.displayName.clone(),
-        };
-        
-        // Create credential creation options
-        let creation_options = self.webauthn.generate_challenge_register_options(
-            &user,
-            UserVerificationPolicy::Preferred,
-            Some(self.config.timeout),
-            None,
-            None,
-            None,
-        ).map_err(|e| AppError::WebAuthnError(e.to_string()))?;
-        
         // Convert to our response format
         let response = ServerPublicKeyCredentialCreationOptionsResponse {
             base: ServerResponse::success(),
@@ -125,18 +96,14 @@ impl WebAuthnService for WebAuthnServiceImpl {
                 name: request.username,
                 displayName: request.displayName,
             },
-            challenge: creation_options.challenge,
+            challenge,
             pubKeyCredParams: vec![
                 crate::models::responses::PublicKeyCredentialParameters {
                     credential_type: "public-key".to_string(),
                     alg: -7, // ES256
                 },
-                crate::models::responses::PublicKeyCredentialParameters {
-                    credential_type: "public-key".to_string(),
-                    alg: -257, // RS256
-                },
             ],
-            timeout: Some(self.config.timeout),
+            timeout: Some(10000), // 10 seconds as per spec
             excludeCredentials: vec![], // TODO: Get existing credentials for user
             authenticatorSelection: request.authenticatorSelection,
             attestation: Some(request.attestation),
@@ -167,7 +134,7 @@ impl WebAuthnService for WebAuthnServiceImpl {
         let response = ServerPublicKeyCredentialGetOptionsResponse {
             base: ServerResponse::success(),
             challenge,
-            timeout: Some(self.config.timeout),
+            timeout: Some(20000), // 20 seconds as per spec
             rpId: self.config.rp_id.clone(),
             allowCredentials,
             userVerification: Some(request.userVerification),
