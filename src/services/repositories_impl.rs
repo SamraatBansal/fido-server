@@ -10,7 +10,7 @@ use crate::db::connection::DbPool;
 use crate::db::models::{User, Credential, Challenge, NewUser, NewCredential, NewChallenge};
 use crate::schema::{users, credentials, challenges};
 use crate::services::repositories::{UserRepository, CredentialRepository, ChallengeRepository};
-use crate::error::{Result, AppError};
+use crate::error::Result;
 
 /// PostgreSQL user repository
 pub struct PgUserRepository {
