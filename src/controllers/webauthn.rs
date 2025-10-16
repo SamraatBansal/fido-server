@@ -2,6 +2,7 @@
 
 use actix_web::{web, HttpResponse};
 use crate::domain::dto::*;
+use crate::error::Result;
 use crate::services::WebAuthnService;
 use std::sync::Arc;
 
