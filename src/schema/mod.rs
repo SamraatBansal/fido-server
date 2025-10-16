@@ -44,7 +44,7 @@ diesel::table! {
     }
 }
 
-allow_tables_to_appear_in_same_query!(
+diesel::allow_tables_to_appear_in_same_query!(
     users,
     credentials,
     challenges,
