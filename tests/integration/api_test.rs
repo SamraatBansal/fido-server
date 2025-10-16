@@ -242,7 +242,7 @@ async fn test_assertion_options_user_not_found() {
         }))
         .to_request();
 
-    let resp = test::call_service(&app, await;
+    let resp = test::call_service(&app, req).await;
     
     // This should return an error since the user doesn't exist
     assert!(resp.status().is_client_error() || resp.status().is_server_error());
