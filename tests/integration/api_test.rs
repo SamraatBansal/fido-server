@@ -14,73 +14,7 @@ use fido_server::{
 
 /// Create test app state
 async fn create_test_app() -> Arc<dyn WebAuthnService> {
-    // For testing, we'll use in-memory repositories or mock implementations
-    // For now, let's create a simple mock service
     Arc::new(MockWebAuthnService::new())
-}
-
-/// Mock WebAuthn service for testing
-struct MockWebAuthnService;
-
-impl MockWebAuthnService {
-    fn new() -> Self {
-        Self
-    }
-}
-
-#[async_trait::async_trait]
-impl fido_server::services::WebAuthnService for MockWebAuthnService {
-    async fn generate_registration_challenge(
-        &self,
-        request: ServerPublicKeyCredentialCreationOptionsRequest,
-    ) -> fido_server::error::Result<ServerPublicKeyCredentialCreationOptionsResponse> {
-        let mut response = ServerPublicKeyCredentialCreationOptionsResponse::default();
-        response.user = ServerPublicKeyCredentialUserEntity {
-            id: "S3932ee31vKEC0JtJMIQ".to_string(),
-            name: request.username.clone(),
-            display_name: request.display_name.clone(),
-        };
-        response.challenge = "uhUjPNlZfvn7onwuhNdsLPkkE5Fv-lUN".to_string();
-        response.exclude_credentials = Some(vec![ServerPublicKeyCredentialDescriptor {
-            credential_type: "public-key".to_string(),
-            id: "opQf1WmYAa5aupUKJIQp".to_string(),
-            transports: None,
-        }]);
-        response.authenticator_selection = request.authenticator_selection;
-        response.attestation = request.attestation;
-        
-        Ok(response)
-    }
-
-    async fn verify_registration(
-        &self,
-        _credential: ServerPublicKeyCredential,
-    ) -> fido_server::error::Result<ServerResponse> {
-        Ok(ServerResponse::success())
-    }
-
-    async fn generate_authentication_challenge(
-        &self,
-        request: ServerPublicKeyCredentialGetOptionsRequest,
-    ) -> fido_server::error::Result<ServerPublicKeyCredentialGetOptionsResponse> {
-        let mut response = ServerPublicKeyCredentialGetOptionsResponse::default();
-        response.challenge = "6283u0svT-YIF3pSolzkQHStwkJCaLKx".to_string();
-        response.allow_credentials = vec![ServerPublicKeyCredentialDescriptor {
-            credential_type: "public-key".to_string(),
-            id: "m7xl_TkTcCe0WcXI2M-4ro9vJAuwcj4m".to_string(),
-            transports: None,
-        }];
-        response.user_verification = request.user_verification;
-        
-        Ok(response)
-    }
-
-    async fn verify_authentication(
-        &self,
-        _credential: ServerPublicKeyCredential,
-    ) -> fido_server::error::Result<ServerResponse> {
-        Ok(ServerResponse::success())
-    }
 }
 
 #[actix_web::test]
