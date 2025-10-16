@@ -38,9 +38,6 @@ async fn test_attestation_options_success() {
     
     let body: serde_json::Value = test::read_body_json(resp).await;
     
-    // Debug: print the actual response
-    println!("Response body: {}", serde_json::to_string_pretty(&body).unwrap());
-    
     // Verify response structure
     assert_eq!(body["status"], "ok");
     assert_eq!(body["errorMessage"], "");
