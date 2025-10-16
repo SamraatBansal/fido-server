@@ -63,8 +63,8 @@ pub struct ServerPublicKeyCredential {
     
     pub response: ServerAuthenticatorResponse,
     
-    #[serde(default)]
-    pub getClientExtensionResults: serde_json::Value,
+    #[serde(default, rename = "getClientExtensionResults")]
+    pub get_client_extension_results: serde_json::Value,
 }
 
 /// Server authenticator response (base for both attestation and assertion)
