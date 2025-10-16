@@ -22,7 +22,7 @@ impl ServerResponse {
     pub fn error(message: impl Into<String>) -> Self {
         Self {
             status: "failed".to_string(),
-            errorMessage: Some(message.into()),
+            error_message: Some(message.into()),
         }
     }
 }
