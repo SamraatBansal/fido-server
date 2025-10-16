@@ -27,10 +27,8 @@ pub async fn begin_assertion(
 /// Complete assertion (authentication) process
 pub async fn finish_assertion(
     req: web::Json<ServerPublicKeyCredentialAssertion>,
+    webauthn_service: web::Data<Arc<WebAuthnService>>,
 ) -> Result<HttpResponse, AppError> {
-    // TODO: Implement actual assertion verification
-    // For now, just return success to make tests pass
-    
     // Validate basic structure
     if req.id.is_empty() {
         return Ok(HttpResponse::BadRequest().json(ServerResponse::error("Missing credential ID")));
@@ -48,9 +46,10 @@ pub async fn finish_assertion(
         return Ok(HttpResponse::BadRequest().json(ServerResponse::error("Missing signature")));
     }
 
-    // TODO: Verify assertion signature and authenticator data
-    // TODO: Check credential counter
-    // TODO: Update last used timestamp
+    // Use WebAuthn service to complete authentication
+    webauthn_service
+        .finish_authentication(req.into_inner())
+        .await?;
     
     Ok(HttpResponse::Ok().json(ServerResponse::success()))
 }
