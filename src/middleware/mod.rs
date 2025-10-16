@@ -1,6 +1,6 @@
 //! Security middleware
 
-use actix_web::{dev::ServiceRequest, Error, HttpMessage};
+use actix_web::{dev::ServiceRequest, Error};
 use actix_web::dev::{forward_ready, Service, ServiceResponse, Transform};
 use futures::future::{ready, Ready};
 use std::future::Future;
