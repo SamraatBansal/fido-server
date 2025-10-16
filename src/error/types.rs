@@ -44,10 +44,14 @@ impl ResponseError for AppError {
         let status_code = self.status_code();
         let error_message = self.to_string();
 
-        HttpResponse::build(status_code).json(serde_json::json!({
-            "error": error_message,
-            "status": status_code.as_u16()
-        }))
+        // Use ServerResponse format for consistency
+        let server_response = crate::models::ServerResponse {
+            status: if status_code.is_success() { "ok".to_string() } else { "failed".to_string() },
+            error_message: if status_code.is_success() { "".to_string() } else { error_message },
+            session_id: crate::models::generate_session_id(),
+        };
+
+        HttpResponse::build(status_code).json(server_response)
     }
 
     fn status_code(&self) -> StatusCode {
