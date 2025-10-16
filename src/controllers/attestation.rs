@@ -9,6 +9,7 @@ use crate::models::{
 use crate::error::AppError;
 use crate::services::WebAuthnService;
 use std::sync::Arc;
+use base64::Engine;
 
 /// Begin attestation (registration) process
 pub async fn begin_attestation(
