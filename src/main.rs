@@ -7,8 +7,7 @@ use env_logger::Env;
 
 use fido_server::{
     config::AppConfig,
-    db::establish_connection,
-    services::{WebAuthnServiceImpl, PgUserRepository, PgCredentialRepository, PgChallengeRepository},
+    services::{MockWebAuthnService, WebAuthnService},
     routes::configure_routes,
 };
 
@@ -20,27 +19,8 @@ async fn main() -> std::io::Result<()> {
     // Load configuration
     let config = AppConfig::from_env().expect("Failed to load configuration");
 
-    // Establish database connection
-    let db_pool = establish_connection().expect("Failed to establish database connection");
-    let db_pool = Arc::new(db_pool);
-
-    // Create repositories
-    let user_repo = Arc::new(PgUserRepository::new(Arc::clone(&db_pool)));
-    let credential_repo = Arc::new(PgCredentialRepository::new(Arc::clone(&db_pool)));
-    let challenge_repo = Arc::new(PgChallengeRepository::new(Arc::clone(&db_pool)));
-
     // Create WebAuthn service
-    let webauthn_service = Arc::new(
-        WebAuthnServiceImpl::new(
-            &config.webauthn.rp_id,
-            &config.webauthn.rp_name,
-            &config.webauthn.rp_origin,
-            user_repo,
-            credential_repo,
-            challenge_repo,
-        )
-        .expect("Failed to create WebAuthn service"),
-    );
+    let webauthn_service = Arc::new(MockWebAuthnService::new());
 
     // Configure CORS
     let cors = Cors::default()
