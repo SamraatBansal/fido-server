@@ -34,7 +34,7 @@ pub async fn begin_assertion(
         rp_id: "example.com".to_string(), // TODO: Make configurable
         allow_credentials,
         user_verification: req.user_verification.clone(),
-        extensions: None,
+        extensions: Some(std::collections::HashMap::new()),
     };
 
     Ok(HttpResponse::Ok().json(response))
