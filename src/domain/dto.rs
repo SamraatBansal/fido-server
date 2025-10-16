@@ -123,7 +123,7 @@ pub struct ServerPublicKeyCredential {
     #[validate(length(min = 1))]
     pub id: String,
     
-    #[validate(custom = "validate_credential_type")]
+    #[validate(custom(function = "validate_credential_type"))]
     #[serde(rename = "type")]
     pub credential_type: String,
     
