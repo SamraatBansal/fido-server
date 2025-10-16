@@ -106,7 +106,7 @@ impl WebAuthnService {
             .decode(&credential.response.client_data_json)
             .map_err(|e| AppError::InvalidRequest(format!("Invalid clientDataJSON: {}", e)))?;
 
-        let attestation_object = general_purpose::URL_SAFE_NO_PAD
+        let _attestation_object = general_purpose::URL_SAFE_NO_PAD
             .decode(&credential.response.attestation_object)
             .map_err(|e| AppError::InvalidRequest(format!("Invalid attestationObject: {}", e)))?;
 
