@@ -22,7 +22,8 @@ actix-cors = "0.7"
 actix-rt = "2.10"
 
 # FIDO/WebAuthn
-webauthn-rs = "0.8"
+webauthn-rs = "0.5"
+webauthn-rs-proto = "0.5"
 url = "2.5"
 
 # Serialization
