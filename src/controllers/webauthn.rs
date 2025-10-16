@@ -12,7 +12,7 @@ use crate::services::WebAuthnService;
 /// Handle attestation options request (credential creation)
 pub async fn attestation_options(
     request: web::Json<ServerPublicKeyCredentialCreationOptionsRequest>,
-    webauthn_service: web::Data<dyn WebAuthnService>,
+    webauthn_service: web::Data<WebAuthnServiceImpl>,
 ) -> ActixResult<HttpResponse> {
     // Validate request
     if let Err(validation_errors) = request.validate() {
