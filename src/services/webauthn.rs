@@ -60,7 +60,7 @@ impl WebAuthnServiceImpl {
             ..Default::default()
         };
 
-        let webauthn = WebAuthn::new(config);
+        let webauthn = Webauthn::new(config);
 
         Ok(Self {
             webauthn,
