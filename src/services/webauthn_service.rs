@@ -17,7 +17,6 @@ use rand::{distributions::Alphanumeric, Rng};
 use serde_json::Value;
 use std::collections::HashMap;
 use uuid::Uuid;
-use webauthn_rs::prelude::*;
 
 /// WebAuthn service configuration
 #[derive(Debug, Clone)]
@@ -39,19 +38,13 @@ impl Default for WebAuthnConfig {
 
 /// WebAuthn service
 pub struct WebAuthnService {
-    webauthn: Webauthn,
     config: WebAuthnConfig,
 }
 
 impl WebAuthnService {
     /// Create a new WebAuthn service
     pub fn new(config: WebAuthnConfig) -> Result<Self> {
-        let webauthn = WebauthnBuilder::new(&config.rp_id, &config.rp_origin)
-            .rp_name(&config.rp_name)
-            .build()
-            .map_err(|e| AppError::WebAuthnError(e.to_string()))?;
-
-        Ok(Self { webauthn, config })
+        Ok(Self { config })
     }
 
     /// Begin registration (attestation) process
@@ -65,19 +58,8 @@ impl WebAuthnService {
         // Generate user ID
         let user_id = Uuid::new_v4();
 
-        // Create credential creation options
-        let (ccr, state) = self
-            .webauthn
-            .start_passkey_registration(
-                user_id,
-                username,
-                display_name,
-                None, // exclude_credentials
-            )
-            .map_err(|e| AppError::WebAuthnError(e.to_string()))?;
-
-        // TODO: Store state in session/database
-        let _ = state;
+        // Generate challenge
+        let challenge = self.generate_challenge();
 
         // Convert to our response format
         let session_id = self.generate_session_id();
@@ -94,7 +76,7 @@ impl WebAuthnService {
                 name: username.to_string(),
                 display_name: display_name.to_string(),
             },
-            challenge: general_purpose::URL_SAFE_NO_PAD.encode(ccr.challenge.as_bytes()),
+            challenge,
             pub_key_cred_params: vec![
                 PublicKeyCredentialParameters {
                     cred_type: "public-key".to_string(),
@@ -132,7 +114,8 @@ impl WebAuthnService {
 
         // TODO: Verify attestation with webauthn-rs
         // For now, just validate basic structure
-        if !client_data.get("type").and_then(|v| v.as_str()).unwrap_or("") == "webauthn.create" {
+        let client_type = client_data.get("type").and_then(|v| v.as_str()).unwrap_or("");
+        if client_type != "webauthn.create" {
             return Err(AppError::InvalidRequest("Invalid client data type".to_string()));
         }
 
@@ -149,32 +132,18 @@ impl WebAuthnService {
         // TODO: Get user's existing credentials from database
         let allow_credentials = vec![]; // Empty for now
 
-        // Create authentication options
-        let (acr, state) = self
-            .webauthn
-            .start_passkey_authentication(&allow_credentials)
-            .map_err(|e| AppError::WebAuthnError(e.to_string()))?;
-
-        // TODO: Store state in session/database
-        let _ = state;
-
+        // Generate challenge
+        let challenge = self.generate_challenge();
         let session_id = self.generate_session_id();
 
         Ok(ServerPublicKeyCredentialGetOptionsResponse {
             status: "ok".to_string(),
             error_message: "".to_string(),
             session_id,
-            challenge: general_purpose::URL_SAFE_NO_PAD.encode(acr.challenge.as_bytes()),
+            challenge,
             timeout: Some(60000),
             rp_id: self.config.rp_id.clone(),
-            allow_credentials: allow_credentials
-                .into_iter()
-                .map(|cred| ServerPublicKeyCredentialDescriptor {
-                    cred_type: "public-key".to_string(),
-                    id: general_purpose::URL_SAFE_NO_PAD.encode(cred.cred_id),
-                    transports: None,
-                })
-                .collect(),
+            allow_credentials,
             user_verification,
             extensions: Some(HashMap::new()),
         })
@@ -206,7 +175,8 @@ impl WebAuthnService {
 
         // TODO: Verify assertion with webauthn-rs
         // For now, just validate basic structure
-        if !client_data.get("type").and_then(|v| v.as_str()).unwrap_or("") == "webauthn.get" {
+        let client_type = client_data.get("type").and_then(|v| v.as_str()).unwrap_or("");
+        if client_type != "webauthn.get" {
             return Err(AppError::InvalidRequest("Invalid client data type".to_string()));
         }
 
@@ -215,6 +185,15 @@ impl WebAuthnService {
         // TODO: Update last used timestamp
 
         Ok(())
+    }
+
+    /// Generate a cryptographically random challenge
+    fn generate_challenge(&self) -> String {
+        rand::thread_rng()
+            .sample_iter(&Alphanumeric)
+            .take(32)
+            .map(char::from)
+            .collect()
     }
 
     /// Generate a session ID
