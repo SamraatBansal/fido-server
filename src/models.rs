@@ -192,6 +192,9 @@ pub struct ServerPublicKeyCredentialGetOptionsResponse {
     /// Error message
     #[serde(rename = "errorMessage")]
     pub error_message: String,
+    /// Session identifier for tracking
+    #[serde(rename = "sessionId")]
+    pub session_id: String,
     /// Generated challenge
     pub challenge: String,
     /// Request timeout in milliseconds
