@@ -6,7 +6,6 @@ use std::env;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AppConfig {
     pub server: ServerConfig,
-    pub database: DatabaseConfig,
     pub webauthn: WebAuthnConfig,
 }
 
@@ -14,12 +13,6 @@ pub struct AppConfig {
 pub struct ServerConfig {
     pub host: String,
     pub port: u16,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct DatabaseConfig {
-    pub url: String,
-    pub max_connections: u32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -36,13 +29,6 @@ impl AppConfig {
                 host: env::var("SERVER_HOST").unwrap_or_else(|_| "127.0.0.1".to_string()),
                 port: env::var("SERVER_PORT")
                     .unwrap_or_else(|_| "8080".to_string())
-                    .parse()?,
-            },
-            database: DatabaseConfig {
-                url: env::var("DATABASE_URL")
-                    .unwrap_or_else(|_| "postgres://localhost/fido2".to_string()),
-                max_connections: env::var("DB_MAX_CONNECTIONS")
-                    .unwrap_or_else(|_| "15".to_string())
                     .parse()?,
             },
             webauthn: WebAuthnConfig {
@@ -62,10 +48,6 @@ impl AppConfig {
             server: ServerConfig {
                 host: "127.0.0.1".to_string(),
                 port: 0,
-            },
-            database: DatabaseConfig {
-                url: "postgres://localhost/fido2_test".to_string(),
-                max_connections: 5,
             },
             webauthn: WebAuthnConfig {
                 rp_id: "localhost".to_string(),
