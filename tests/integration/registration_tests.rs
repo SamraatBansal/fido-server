@@ -6,6 +6,7 @@ use fido_server::models::{
     ServerPublicKeyCredentialCreationOptionsRequest,
     ServerPublicKeyCredential,
     ServerAuthenticatorAttestationResponse,
+    AuthenticatorSelectionCriteria,
 };
 
 #[actix_web::test]
