@@ -100,6 +100,7 @@ pub struct ServerPublicKeyCredentialCreationOptionsResponse {
     #[serde(rename = "excludeCredentials")]
     pub exclude_credentials: Vec<ServerPublicKeyCredentialDescriptor>,
     /// Authenticator selection criteria
+    #[serde(rename = "authenticatorSelection")]
     pub authenticator_selection: Option<AuthenticatorSelectionCriteria>,
     /// Attestation conveyance preference
     pub attestation: Option<String>,
