@@ -79,7 +79,7 @@ pub struct ServerPublicKeyCredentialCreationOptionsResponse {
     /// Request timeout in milliseconds
     pub timeout: Option<u64>,
     /// Credentials to exclude from registration
-    #[serde(rename = "excludeCredentials")]
+    #[serde(rename = "excludeCredentials", skip_serializing_if = "Option::is_none")]
     pub exclude_credentials: Option<Vec<ServerPublicKeyCredentialDescriptor>>,
     /// Authenticator selection criteria
     pub authenticator_selection: Option<AuthenticatorSelectionCriteria>,
