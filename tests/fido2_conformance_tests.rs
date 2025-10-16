@@ -5,6 +5,7 @@ use fido_server::routes::api::configure;
 use fido_server::models::ServerPublicKeyCredentialCreationOptionsRequest;
 use fido_server::services::{WebAuthnService, WebAuthnConfig};
 use std::sync::Arc;
+use rand;
 
 async fn create_test_app() -> impl actix_web::dev::Service<
     actix_web::dev::ServiceRequest,
