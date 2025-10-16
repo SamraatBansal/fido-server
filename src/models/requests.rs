@@ -88,15 +88,15 @@ pub struct ServerAuthenticatorAttestationResponse {
 /// Server authenticator assertion response
 #[derive(Debug, Deserialize, Validate)]
 pub struct ServerAuthenticatorAssertionResponse {
-    #[validate(length(min = 1))]
-    pub clientDataJSON: String,
+    #[validate(length(min = 1), rename = "clientDataJSON")]
+    pub client_data_json: String,
     
-    #[validate(length(min = 1))]
-    pub authenticatorData: String,
+    #[validate(length(min = 1), rename = "authenticatorData")]
+    pub authenticator_data: String,
     
     #[validate(length(min = 1))]
     pub signature: String,
     
-    #[serde(default)]
-    pub userHandle: String,
+    #[serde(default, rename = "userHandle")]
+    pub user_handle: String,
 }
