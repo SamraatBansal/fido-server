@@ -1,6 +1,6 @@
 //! Integration tests for FIDO2/WebAuthn server
 
-use actix_web::{test, App};
+use actix_web::{test, App, web::Data};
 use fido_server::routes::api::configure;
 use fido_server::models::{
     ServerPublicKeyCredentialCreationOptionsRequest,
@@ -11,6 +11,8 @@ use fido_server::models::{
     ServerAuthenticatorAssertionResponse,
     AuthenticatorSelectionCriteria,
 };
+use fido_server::services::{WebAuthnService, WebAuthnConfig};
+use std::sync::Arc;
 
 #[actix_web::test]
 async fn test_attestation_options_success() {
