@@ -46,11 +46,10 @@ pub struct WebAuthnService {
 impl WebAuthnService {
     /// Create a new WebAuthn service
     pub fn new(config: WebAuthnConfig) -> Result<Self> {
-        let webauthn = Webauthn::new(
-            &config.rp_id,
-            &config.rp_origin,
-            &config.rp_name,
-        );
+        let webauthn = WebauthnBuilder::new(&config.rp_id, &config.rp_origin)
+            .rp_name(&config.rp_name)
+            .build()
+            .map_err(|e| AppError::WebAuthnError(e.to_string()))?;
 
         Ok(Self { webauthn, config })
     }
@@ -64,19 +63,17 @@ impl WebAuthnService {
         attestation: Option<String>,
     ) -> Result<ServerPublicKeyCredentialCreationOptionsResponse> {
         // Generate user ID
-        let user_id = general_purpose::URL_SAFE_NO_PAD.encode(username.as_bytes());
-
-        // Create user entity
-        let user = User {
-            id: username.as_bytes().to_vec(),
-            name: username.to_string(),
-            display_name: display_name.to_string(),
-        };
+        let user_id = Uuid::new_v4();
 
         // Create credential creation options
         let (ccr, state) = self
             .webauthn
-            .start_registration(&user, Some(self.create_registration_options(authenticator_selection)?))
+            .start_passkey_registration(
+                user_id,
+                username,
+                display_name,
+                None, // exclude_credentials
+            )
             .map_err(|e| AppError::WebAuthnError(e.to_string()))?;
 
         // TODO: Store state in session/database
@@ -93,7 +90,7 @@ impl WebAuthnService {
                 name: self.config.rp_name.clone(),
             },
             user: ServerPublicKeyCredentialUserEntity {
-                id: user_id,
+                id: general_purpose::URL_SAFE_NO_PAD.encode(user_id.as_bytes()),
                 name: username.to_string(),
                 display_name: display_name.to_string(),
             },
@@ -155,7 +152,7 @@ impl WebAuthnService {
         // Create authentication options
         let (acr, state) = self
             .webauthn
-            .start_authentication(&allow_credentials)
+            .start_passkey_authentication(&allow_credentials)
             .map_err(|e| AppError::WebAuthnError(e.to_string()))?;
 
         // TODO: Store state in session/database
@@ -218,48 +215,6 @@ impl WebAuthnService {
         // TODO: Update last used timestamp
 
         Ok(())
-    }
-
-    /// Create registration options
-    fn create_registration_options(
-        &self,
-        authenticator_selection: Option<AuthenticatorSelectionCriteria>,
-    ) -> Result<RegistrationOptions> {
-        let mut options = RegistrationOptions {
-            attestation: AttestationConveyancePreference::None,
-            authenticator_attachment: None,
-            resident_key: ResidentKeyRequirement::Discouraged,
-            user_verification: UserVerificationPolicy::Preferred,
-        };
-
-        if let Some(auth_sel) = authenticator_selection {
-            if let Some(attachment) = auth_sel.authenticator_attachment {
-                options.authenticator_attachment = match attachment.as_str() {
-                    "platform" => Some(AuthenticatorAttachment::Platform),
-                    "cross-platform" => Some(AuthenticatorAttachment::CrossPlatform),
-                    _ => None,
-                };
-            }
-
-            if let Some(require_resident) = auth_sel.require_resident_key {
-                options.resident_key = if require_resident {
-                    ResidentKeyRequirement::Required
-                } else {
-                    ResidentKeyRequirement::Discouraged
-                };
-            }
-
-            if let Some(user_verification) = auth_sel.user_verification {
-                options.user_verification = match user_verification.as_str() {
-                    "required" => UserVerificationPolicy::Required,
-                    "preferred" => UserVerificationPolicy::Preferred,
-                    "discouraged" => UserVerificationPolicy::Discouraged,
-                    _ => UserVerificationPolicy::Preferred,
-                };
-            }
-        }
-
-        Ok(options)
     }
 
     /// Generate a session ID
