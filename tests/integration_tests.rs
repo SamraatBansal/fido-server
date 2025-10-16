@@ -16,8 +16,15 @@ use std::sync::Arc;
 
 #[actix_web::test]
 async fn test_attestation_options_success() {
+    let webauthn_service = Arc::new(
+        WebAuthnService::new(WebAuthnConfig::default())
+            .expect("Failed to create WebAuthn service")
+    );
+    
     let app = test::init_service(
-        App::new().configure(configure)
+        App::new()
+            .app_data(Data::new(webauthn_service))
+            .configure(configure)
     ).await;
 
     let req = test::TestRequest::post()
