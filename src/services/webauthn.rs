@@ -4,10 +4,6 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use uuid::Uuid;
-use webauthn_rs::prelude::*;
-use webauthn_rs_proto::User;
-use base64::engine::general_purpose::URL_SAFE_NO_PAD;
-use base64::Engine;
 
 use crate::error::AppError;
 
@@ -34,7 +30,6 @@ struct CredentialData {
 /// WebAuthn service
 #[derive(Debug, Clone)]
 pub struct WebAuthnService {
-    webauthn: Arc<Webauthn>,
     challenges: ChallengeStore,
     credentials: CredentialStore,
 }
@@ -42,19 +37,7 @@ pub struct WebAuthnService {
 impl WebAuthnService {
     /// Create a new WebAuthn service
     pub fn new() -> Result<Self, AppError> {
-        let rp_name = "Example Corporation";
-        let rp_id = "localhost";
-        let rp_origin = "http://localhost:3000";
-
-        let builder = WebauthnBuilder::new(rp_id, &Url::parse(rp_origin).map_err(|e| {
-            AppError::Configuration(format!("Invalid origin URL: {}", e))
-        })?)
-        .map_err(|e| AppError::Configuration(format!("Failed to create WebAuthn: {}", e)))?;
-
-        let webauthn = Arc::new(builder.build());
-
         Ok(Self {
-            webauthn,
             challenges: Arc::new(RwLock::new(HashMap::new())),
             credentials: Arc::new(RwLock::new(HashMap::new())),
         })
@@ -67,13 +50,8 @@ impl WebAuthnService {
         display_name: &str,
         _origin: String,
     ) -> Result<(Vec<u8>, Uuid), AppError> {
-        // Create user
+        // Create user ID
         let user_id = Uuid::new_v4();
-        let user = User {
-            id: user_id.as_bytes().to_vec(),
-            name: username.to_string(),
-            display_name: display_name.to_string(),
-        };
 
         // Generate challenge
         let challenge = vec![1, 2, 3, 4]; // Simple challenge for demo
@@ -89,11 +67,10 @@ impl WebAuthnService {
         let mut challenges = self.challenges.write().await;
         challenges.insert(challenge_id, challenge_data);
 
-        // Store state for verification
-        // In a real implementation, this should be stored securely
+        // Store user credential placeholder
         let mut credentials = self.credentials.write().await;
         credentials.insert(
-            URL_SAFE_NO_PAD.encode(&user.id),
+            username.to_string(),
             CredentialData {
                 credential_id: Vec::new(), // Will be set after registration
                 public_key: Vec::new(),    // Will be set after registration
@@ -108,24 +85,19 @@ impl WebAuthnService {
     /// Verify registration attestation
     pub async fn verify_registration(
         &self,
-        credential: &PublicKeyCredential,
+        credential_id: &str,
         _origin: String,
     ) -> Result<(), AppError> {
-        // For this demo, we'll skip the actual verification
-        // In a real implementation, you would:
-        // 1. Retrieve the stored challenge state
-        // 2. Verify the attestation
-        // 3. Store the credential
-
+        // For this demo, we'll just mark the registration as successful
+        // In a real implementation, you would verify the attestation
+        
         // Store the credential
-        let _credential_id = URL_SAFE_NO_PAD.encode(&credential.raw_id);
         let mut credentials = self.credentials.write().await;
         
-        // Find the user credential (this is a simplified approach)
+        // Find and update the user credential (this is a simplified approach)
         for (_, cred_data) in credentials.iter_mut() {
             if cred_data.credential_id.is_empty() {
-                cred_data.credential_id = credential.raw_id.to_vec();
-                // Extract public key from attestation (simplified)
+                cred_data.credential_id = credential_id.as_bytes().to_vec();
                 cred_data.public_key = vec![1, 2, 3, 4]; // Placeholder
                 break;
             }
@@ -172,21 +144,17 @@ impl WebAuthnService {
     /// Verify authentication assertion
     pub async fn verify_authentication(
         &self,
-        credential: &PublicKeyCredential,
+        credential_id: &str,
         _origin: String,
     ) -> Result<(), AppError> {
-        // For this demo, we'll skip the actual verification
-        // In a real implementation, you would:
-        // 1. Retrieve the stored challenge state
-        // 2. Verify the assertion
-        // 3. Update the sign count
+        // For this demo, we'll just mark the authentication as successful
+        // In a real implementation, you would verify the assertion
 
         // Update sign count (simplified)
-        let _credential_id = URL_SAFE_NO_PAD.encode(&credential.raw_id);
         let mut credentials = self.credentials.write().await;
         
         for cred_data in credentials.values_mut() {
-            if cred_data.credential_id == credential.raw_id {
+            if cred_data.credential_id == credential_id.as_bytes() {
                 cred_data.sign_count += 1;
                 break;
             }
