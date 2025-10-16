@@ -5,7 +5,7 @@ mod registration_tests {
     use actix_test::{self, TestServer};
     use actix_web::{App, http};
     use serde_json::json;
-    crate::{routes::api, services::webauthn::WebAuthnService};
+    use crate::{routes::api, services::webauthn::WebAuthnService};
 
     #[actix_web::test]
     async fn test_attestation_options_success() {
@@ -86,7 +86,7 @@ mod authentication_tests {
     use actix_test::{self, TestServer};
     use actix_web::{App, http};
     use serde_json::json;
-    crate::{routes::api, services::webauthn::WebAuthnService};
+    use crate::{routes::api, services::webauthn::WebAuthnService};
 
     #[actix_web::test]
     async fn test_assertion_options_success() {
