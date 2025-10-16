@@ -20,8 +20,11 @@ use uuid::Uuid;
 /// WebAuthn service configuration
 #[derive(Debug, Clone)]
 pub struct WebAuthnConfig {
+    /// Relying party ID
     pub rp_id: String,
+    /// Relying party name
     pub rp_name: String,
+    /// Relying party origin
     pub rp_origin: String,
 }
 
