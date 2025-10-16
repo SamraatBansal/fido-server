@@ -115,7 +115,7 @@ async fn test_attestation_result_success() {
             id: "test-credential-id".to_string(),
             cred_type: "public-key".to_string(),
             response: ServerAuthenticatorAttestationResponse {
-                client_data_json: "eyJ0ZXN0IjoidmFsdWUifQ==".to_string(),
+                client_data_json: "eyJ0ZXN0IjoidmFsdWUifQ".to_string(), // base64url without padding
                 attestation_object: "o2NmbXRkbm9uZWdhdHRTdG10oGhhdXRoRGF0YVjESZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2MBAAAAAA".to_string(),
             },
             get_client_extension_results: None,
