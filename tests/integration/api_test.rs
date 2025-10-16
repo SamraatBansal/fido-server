@@ -7,8 +7,7 @@ use std::sync::Arc;
 use async_trait::async_trait;
 
 use fido_server::{
-    config::AppConfig,
-    services::{WebAuthnServiceImpl, PgUserRepository, PgCredentialRepository, PgChallengeRepository, WebAuthnService},
+    services::{MockWebAuthnService, WebAuthnService},
     routes::configure_routes,
     schema::*,
 };
