@@ -15,7 +15,7 @@ impl ServerResponse {
     pub fn success() -> Self {
         Self {
             status: "ok".to_string(),
-            errorMessage: None,
+            error_message: None,
         }
     }
     
