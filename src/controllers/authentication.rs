@@ -5,6 +5,11 @@ use base64::Engine;
 use actix_web::{web, HttpRequest, HttpResponse, Result};
 use log::error;
 use webauthn_rs::prelude::*;
+use webauthn_rs_proto::{
+    AuthenticatorAttestationResponse, AuthenticatorAssertionResponse,
+    AuthenticationExtensionsClientOutputs, User
+};
+use webauthn_rs::prelude::*;
 
 use crate::controllers::dto::{
     AuthenticationVerificationRequest,
@@ -46,7 +51,7 @@ pub async fn assertion_options(
                 rp_id: "localhost".to_string(),
                 allowCredentials: allow_credentials,
                 user_verification: payload.user_verification.clone(),
-                extensions: webauthn_rs::proto::extensions::AuthenticationExtensionsClientOutputs::new(),
+                extensions: AuthenticationExtensionsClientOutputs::new(),
             };
 
             Ok(HttpResponse::Ok().json(response))
@@ -91,8 +96,8 @@ pub async fn assertion_result(
     let credential = PublicKeyCredential {
         id: payload.id.clone(),
         raw_id: URL_SAFE_NO_PAD.decode(&payload.rawId)
-            .map_err(|_| AppError::InvalidRequest("Invalid rawId encoding".to_string()))?,
-        response: webauthn_rs::proto::AuthenticatorAssertionResponse {
+            .map_err(|_| AppError::InvalidRequest("Invalid rawId encoding".to_string()))?.into(),
+        response: AuthenticatorAssertionResponse {
             authenticator_data,
             client_data_json,
             signature,
