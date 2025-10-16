@@ -78,11 +78,11 @@ pub enum ServerAuthenticatorResponse {
 /// Server authenticator attestation response
 #[derive(Debug, Deserialize, Validate)]
 pub struct ServerAuthenticatorAttestationResponse {
-    #[validate(length(min = 1))]
-    pub clientDataJSON: String,
+    #[validate(length(min = 1), rename = "clientDataJSON")]
+    pub client_data_json: String,
     
-    #[validate(length(min = 1))]
-    pub attestationObject: String,
+    #[validate(length(min = 1), rename = "attestationObject")]
+    pub attestation_object: String,
 }
 
 /// Server authenticator assertion response
