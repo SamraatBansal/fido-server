@@ -16,6 +16,27 @@ async fn create_test_app() -> Arc<dyn WebAuthnService> {
 }
 
 #[actix_web::test]
+async fn test_attestation_options_minimal() {
+    let webauthn_service = create_test_app().await;
+    let app = test::init_service(
+        App::new().service(configure_routes(webauthn_service))
+    ).await;
+
+    // Test with minimal JSON
+    let req = test::TestRequest::post()
+        .uri("/api/attestation/options")
+        .set_json(json!({
+            "username": "test@example.com",
+            "displayName": "Test User"
+        }))
+        .to_request();
+
+    let resp = test::call_service(&app, req).await;
+    
+    assert_eq!(resp.status(), StatusCode::OK);
+}
+
+#[actix_web::test]
 async fn test_attestation_options_success() {
     let webauthn_service = create_test_app().await;
     let app = test::init_service(
