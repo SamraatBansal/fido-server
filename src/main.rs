@@ -1,38 +1,64 @@
-//! FIDO Server Main Entry Point
+//! Main application entry point
 
+use actix_web::{App, HttpServer, middleware::Logger};
 use actix_cors::Cors;
-use actix_web::{middleware::Logger, App, HttpServer};
-use std::io;
+use std::sync::Arc;
+use env_logger::Env;
+
+use fido_server::{
+    config::AppConfig,
+    db::establish_connection,
+    services::{WebAuthnServiceImpl, PgUserRepository, PgCredentialRepository, PgChallengeRepository},
+    routes::configure_routes,
+};
 
 #[actix_web::main]
-async fn main() -> io::Result<()> {
+async fn main() -> std::io::Result<()> {
     // Initialize logger
-    env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
+    env_logger::init_from_env(Env::default().default_filter_or("info"));
 
-    log::info!("Starting FIDO Server...");
+    // Load configuration
+    let config = AppConfig::from_env().expect("Failed to load configuration");
 
-    // TODO: Load configuration from config file
-    let host = "127.0.0.1";
-    let port = 8080;
+    // Establish database connection
+    let db_pool = establish_connection().expect("Failed to establish database connection");
+    let db_pool = Arc::new(db_pool);
 
-    // TODO: Initialize database connection pool
+    // Create repositories
+    let user_repo = Arc::new(PgUserRepository::new(Arc::clone(&db_pool)));
+    let credential_repo = Arc::new(PgCredentialRepository::new(Arc::clone(&db_pool)));
+    let challenge_repo = Arc::new(PgChallengeRepository::new(Arc::clone(&db_pool)));
 
-    log::info!("Server running at http://{}:{}", host, port);
+    // Create WebAuthn service
+    let webauthn_service = Arc::new(
+        WebAuthnServiceImpl::new(
+            &config.webauthn.rp_id,
+            &config.webauthn.rp_name,
+            &config.webauthn.rp_origin,
+            user_repo,
+            credential_repo,
+            challenge_repo,
+        )
+        .expect("Failed to create WebAuthn service"),
+    );
 
-    HttpServer::new(move || {
-        // Configure CORS
-        let cors = Cors::default()
-            .allow_any_origin()
-            .allow_any_method()
-            .allow_any_header()
-            .max_age(3600);
+    // Configure CORS
+    let cors = Cors::default()
+        .allow_any_origin()
+        .allow_any_method()
+        .allow_any_header()
+        .max_age(3600);
 
+    // Create HTTP server
+    let server = HttpServer::new(move || {
         App::new()
-            .wrap(Logger::default())
             .wrap(cors)
-            .configure(fido_server::routes::api::configure)
+            .wrap(Logger::default())
+            .service(configure_routes(Arc::clone(&webauthn_service)))
     })
-    .bind((host, port))?
-    .run()
-    .await
+    .bind(format!("{}:{}", config.server.host, config.server.port))?;
+
+    log::info!("Starting FIDO2/WebAuthn server on {}:{}", config.server.host, config.server.port);
+
+    server.run().await
 }
