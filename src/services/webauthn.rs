@@ -5,6 +5,7 @@ use std::sync::Arc;
 use tokio::sync::RwLock;
 use uuid::Uuid;
 use webauthn_rs::prelude::*;
+use webauthn_rs_proto::User;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use base64::Engine;
 
@@ -68,7 +69,7 @@ impl WebAuthnService {
     ) -> Result<(Vec<u8>, Uuid), AppError> {
         // Create user
         let user_id = Uuid::new_v4();
-        let user = webauthn_rs::proto::User {
+        let user = User {
             id: user_id.as_bytes().to_vec(),
             name: username.to_string(),
             display_name: display_name.to_string(),
@@ -137,7 +138,7 @@ impl WebAuthnService {
     pub async fn generate_authentication_challenge(
         &self,
         username: &str,
-        origin: String,
+        _origin: String,
     ) -> Result<(Vec<u8>, Vec<Vec<u8>>), AppError> {
         // Get user credentials
         let credentials = self.credentials.read().await;
@@ -172,7 +173,7 @@ impl WebAuthnService {
     pub async fn verify_authentication(
         &self,
         credential: &PublicKeyCredential,
-        origin: String,
+        _origin: String,
     ) -> Result<(), AppError> {
         // For this demo, we'll skip the actual verification
         // In a real implementation, you would:
