@@ -49,7 +49,7 @@ async fn test_attestation_options_success() {
         })
         .to_request();
 
-    let resp = app.call(req).await.unwrap();
+    let resp = test::call_service(&app, req).await;
     
     assert_eq!(resp.status(), 200);
     
@@ -82,7 +82,7 @@ async fn test_attestation_options_default_values() {
         })
         .to_request();
 
-    let resp = app.call(req).await.unwrap();
+    let resp = test::call_service(&app, req).await;
     
     assert_eq!(resp.status(), 200);
     
@@ -112,7 +112,7 @@ async fn test_attestation_result_success() {
         })
         .to_request();
 
-    let resp = app.call(req).await.unwrap();
+    let resp = test::call_service(&app, req).await;
     
     assert_eq!(resp.status(), 200);
     
@@ -141,7 +141,7 @@ async fn test_attestation_result_missing_credential_id() {
         .set_json(&credential)
         .to_request();
 
-    let resp = app.call(req).await.unwrap();
+    let resp = test::call_service(&app, req).await;
     
     assert_eq!(resp.status(), 400);
     
@@ -164,7 +164,7 @@ async fn test_assertion_options_success() {
         })
         .to_request();
 
-    let resp = app.call(req).await.unwrap();
+    let resp = test::call_service(&app, req).await;
     
     assert_eq!(resp.status(), 200);
     
@@ -197,7 +197,7 @@ async fn test_assertion_result_success() {
         })
         .to_request();
 
-    let resp = app.call(req).await.unwrap();
+    let resp = test::call_service(&app, req).await;
     
     assert_eq!(resp.status(), 200);
     
@@ -228,7 +228,7 @@ async fn test_assertion_result_missing_credential_id() {
         .set_json(&assertion)
         .to_request();
 
-    let resp = app.call(req).await.unwrap();
+    let resp = test::call_service(&app, req).await;
     
     assert_eq!(resp.status(), 400);
     
