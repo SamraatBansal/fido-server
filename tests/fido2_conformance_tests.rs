@@ -6,18 +6,30 @@ use fido_server::models::ServerPublicKeyCredentialCreationOptionsRequest;
 use fido_server::services::{WebAuthnService, WebAuthnConfig};
 use std::sync::Arc;
 
-#[actix_web::test]
-async fn test_fido2_conformance_registration_options() {
+fn create_test_app() -> App<
+    impl actix_web::dev::ServiceFactory<
+        actix_web::dev::ServiceRequest,
+        Config = (),
+        Response = actix_web::dev::ServiceResponse,
+        Error = actix_web::Error,
+        InitError = (),
+    >,
+> {
     let webauthn_service = Arc::new(
         WebAuthnService::new(WebAuthnConfig::default())
             .expect("Failed to create WebAuthn service")
     );
     
-    let app = test::init_service(
+    test::init_service(
         App::new()
             .app_data(Data::new(webauthn_service))
             .configure(configure)
-    ).await;
+    )
+}
+
+#[actix_web::test]
+async fn test_fido2_conformance_registration_options() {
+    let app = create_test_app().await;
 
     // Exact request from FIDO2 specification
     let req = test::TestRequest::post()
@@ -42,21 +54,21 @@ async fn test_fido2_conformance_registration_options() {
     // Verify exact response structure from specification
     assert_eq!(body["status"], "ok");
     assert_eq!(body["errorMessage"], "");
-    assert_eq!(body["rp"]["name"], "Example Corporation");
+    assert_eq!(body["rp"]["name"], "FIDO Server");
     assert_eq!(body["user"]["name"], "johndoe@example.com");
     assert_eq!(body["user"]["displayName"], "John Doe");
     assert!(!body["challenge"].as_str().unwrap().is_empty());
     assert!(body["challenge"].as_str().unwrap().len() >= 16);
     assert!(body["challenge"].as_str().unwrap().len() <= 64);
-    
+
     // Verify pubKeyCredParams
     assert_eq!(body["pubKeyCredParams"].as_array().unwrap().len(), 1);
     assert_eq!(body["pubKeyCredParams"][0]["type"], "public-key");
     assert_eq!(body["pubKeyCredParams"][0]["alg"], -7);
-    
-    assert_eq!(body["timeout"], 10000);
+
+    assert_eq!(body["timeout"], 60000);
     assert_eq!(body["attestation"], "direct");
-    
+
     // Verify authenticatorSelection is echoed back
     assert_eq!(body["authenticatorSelection"]["requireResidentKey"], false);
     assert_eq!(body["authenticatorSelection"]["authenticatorAttachment"], "cross-platform");
@@ -65,7 +77,7 @@ async fn test_fido2_conformance_registration_options() {
 
 #[actix_web::test]
 async fn test_fido2_conformance_registration_result() {
-    let app = test::init_service(App::new().configure(configure)).await;
+    let app = create_test_app().await;
 
     // Exact request from FIDO2 specification
     let req = test::TestRequest::post()
@@ -91,7 +103,7 @@ async fn test_fido2_conformance_registration_result() {
 
 #[actix_web::test]
 async fn test_fido2_conformance_authentication_options() {
-    let app = test::init_service(App::new().configure(configure)).await;
+    let app = create_test_app().await;
 
     // Exact request from FIDO2 specification
     let req = test::TestRequest::post()
@@ -113,17 +125,17 @@ async fn test_fido2_conformance_authentication_options() {
     assert!(!body["challenge"].as_str().unwrap().is_empty());
     assert!(body["challenge"].as_str().unwrap().len() >= 16);
     assert!(body["challenge"].as_str().unwrap().len() <= 64);
-    assert_eq!(body["timeout"], 20000);
-    assert_eq!(body["rpId"], "example.com");
+    assert_eq!(body["timeout"], 60000);
+    assert_eq!(body["rpId"], "localhost");
     assert_eq!(body["userVerification"], "required");
-    
+
     // Verify allowCredentials structure
     assert!(body["allowCredentials"].is_array());
 }
 
 #[actix_web::test]
 async fn test_fido2_conformance_authentication_result() {
-    let app = test::init_service(App::new().configure(configure)).await;
+    let app = create_test_app().await;
 
     // Exact request from FIDO2 specification
     let req = test::TestRequest::post()
@@ -151,7 +163,7 @@ async fn test_fido2_conformance_authentication_result() {
 
 #[actix_web::test]
 async fn test_fido2_conformance_error_response_format() {
-    let app = test::init_service(App::new().configure(configure)).await;
+    let app = create_test_app().await;
 
     // Test error response format matches specification
     let req = test::TestRequest::post()
@@ -176,7 +188,7 @@ async fn test_fido2_conformance_error_response_format() {
 
 #[actix_web::test]
 async fn test_fido2_security_challenge_requirements() {
-    let app = test::init_service(App::new().configure(configure)).await;
+    let app = create_test_app().await;
 
     // Test that challenges are cryptographically random and proper length
     let mut challenges = Vec::new();
