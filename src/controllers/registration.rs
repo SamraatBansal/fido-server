@@ -1,7 +1,8 @@
 //! Registration controller for FIDO2/WebAuthn attestation
 
+use base64::engine::general_purpose::URL_SAFE_NO_PAD;
+use base64::Engine;
 use actix_web::{web, HttpRequest, HttpResponse, Result};
-use serde_json::json;
 use log::error;
 
 use crate::controllers::dto::{
@@ -12,7 +13,7 @@ use crate::controllers::dto::{
     ServerPublicKeyCredentialUserEntity, ServerResponse,
 };
 use crate::error::AppError;
-use crate::services::WebAuthnService;
+use crate::services::webauthn::WebAuthnService;
 
 /// Generate registration challenge (attestation options)
 pub async fn attestation_options(
@@ -37,11 +38,11 @@ pub async fn attestation_options(
                     id: Some("localhost".to_string()),
                 },
                 user: ServerPublicKeyCredentialUserEntity {
-                    id: base64::encode_config(user_id.as_bytes(), base64::URL_SAFE_NO_PAD),
+                    id: URL_SAFE_NO_PAD.encode(user_id.as_bytes()),
                     name: payload.username.clone(),
                     display_name: payload.displayName.clone(),
                 },
-                challenge: base64::encode_config(&challenge, base64::URL_SAFE_NO_PAD),
+                challenge: URL_SAFE_NO_PAD.encode(&challenge),
                 pubKeyCredParams: vec![
                     PublicKeyCredentialParameters {
                         credential_type: "public-key".to_string(),
