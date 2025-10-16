@@ -1,5 +1,9 @@
 //! Request and Response DTOs for FIDO2/WebAuthn conformance API
 
+#![allow(dead_code)]
+#![allow(non_snake_case)]
+#![allow(missing_docs)]
+
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
