@@ -41,10 +41,8 @@ pub async fn begin_attestation(
 /// Complete attestation (registration) process
 pub async fn finish_attestation(
     req: web::Json<ServerPublicKeyCredential>,
+    webauthn_service: web::Data<Arc<WebAuthnService>>,
 ) -> Result<HttpResponse, AppError> {
-    // TODO: Implement actual attestation verification
-    // For now, just return success to make tests pass
-    
     // Validate basic structure
     if req.id.is_empty() {
         return Ok(HttpResponse::BadRequest().json(ServerResponse::error("Missing credential ID")));
@@ -58,8 +56,10 @@ pub async fn finish_attestation(
         return Ok(HttpResponse::BadRequest().json(ServerResponse::error("Missing attestationObject")));
     }
 
-    // TODO: Verify attestation object and client data
-    // TODO: Store credential in database
+    // Use WebAuthn service to complete registration
+    webauthn_service
+        .finish_registration(req.into_inner())
+        .await?;
     
     Ok(HttpResponse::Ok().json(ServerResponse::success()))
 }
