@@ -12,7 +12,7 @@ pub enum AppError {
     /// Database error
     DatabaseError(String),
     /// WebAuthn error
-    WebAuthnError(String),
+    WebAuthn(String),
     /// Validation error
     ValidationError(String),
     /// Not found error
@@ -21,6 +21,12 @@ pub enum AppError {
     InternalError(String),
     /// Bad request error
     BadRequest(String),
+    /// Configuration error
+    Configuration(String),
+    /// Invalid request
+    InvalidRequest(String),
+    /// User not found
+    UserNotFound(String),
 }
 
 impl fmt::Display for AppError {
