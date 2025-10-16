@@ -1,5 +1,7 @@
 //! WebAuthn service for handling FIDO2 operations
 
+#![allow(dead_code)]
+
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
