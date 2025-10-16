@@ -1,5 +1,7 @@
 //! Authentication controller for FIDO2/WebAuthn assertion
 
+use base64::engine::general_purpose::URL_SAFE_NO_PAD;
+use base64::Engine;
 use actix_web::{web, HttpRequest, HttpResponse, Result};
 use log::error;
 
@@ -9,7 +11,7 @@ use crate::controllers::dto::{
     ServerPublicKeyCredentialGetOptionsResponse, ServerResponse,
 };
 use crate::error::AppError;
-use crate::services::WebAuthnService;
+use crate::services::webauthn::WebAuthnService;
 
 /// Generate authentication challenge (assertion options)
 pub async fn assertion_options(
@@ -31,14 +33,14 @@ pub async fn assertion_options(
                 .into_iter()
                 .map(|cred_id| ServerPublicKeyCredentialDescriptor {
                     credential_type: "public-key".to_string(),
-                    id: base64::encode_config(&cred_id, base64::URL_SAFE_NO_PAD),
+                    id: URL_SAFE_NO_PAD.encode(&cred_id),
                     transports: None,
                 })
                 .collect();
 
             let response = ServerPublicKeyCredentialGetOptionsResponse {
                 base: ServerResponse::success(),
-                challenge: base64::encode_config(&challenge, base64::URL_SAFE_NO_PAD),
+                challenge: URL_SAFE_NO_PAD.encode(&challenge),
                 timeout: Some(60000),
                 rp_id: "localhost".to_string(),
                 allowCredentials: allow_credentials,
