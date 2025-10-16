@@ -45,7 +45,7 @@ pub async fn finish_assertion(
     }
 
     // Try to decode clientDataJSON to validate it's proper base64url
-    if let Err(_) = base64::engine::general_purpose::URL_SAFE_NO_PAD.decode(&req.response.client_data_json) {
+    if base64::engine::general_purpose::URL_SAFE_NO_PAD.decode(&req.response.client_data_json).is_err() {
         return Ok(HttpResponse::BadRequest().json(ServerResponse::error("Invalid clientDataJSON encoding")));
     }
 
@@ -55,7 +55,7 @@ pub async fn finish_assertion(
     }
 
     // Try to decode authenticatorData to validate it's proper base64url
-    if let Err(_) = base64::engine::general_purpose::URL_SAFE_NO_PAD.decode(&req.response.authenticator_data) {
+    if base64::engine::general_purpose::URL_SAFE_NO_PAD.decode(&req.response.authenticator_data).is_err() {
         return Ok(HttpResponse::BadRequest().json(ServerResponse::error("Invalid authenticatorData encoding")));
     }
 
@@ -65,7 +65,7 @@ pub async fn finish_assertion(
     }
 
     // Try to decode signature to validate it's proper base64url
-    if let Err(_) = base64::engine::general_purpose::URL_SAFE_NO_PAD.decode(&req.response.signature) {
+    if base64::engine::general_purpose::URL_SAFE_NO_PAD.decode(&req.response.signature).is_err() {
         return Ok(HttpResponse::BadRequest().json(ServerResponse::error("Invalid signature encoding")));
     }
 
