@@ -137,7 +137,7 @@ impl WebAuthnService for WebAuthnServiceImpl {
             challenge,
             timeout: Some(20000), // 20 seconds as per spec
             rpId: self.config.rp_id.clone(),
-            allowCredentials,
+            allow_credentials,
             userVerification: Some(request.userVerification),
             extensions: None,
         };
