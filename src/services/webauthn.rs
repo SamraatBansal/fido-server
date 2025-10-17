@@ -4,7 +4,7 @@ use crate::error::{AppError, Result};
 use crate::types::*;
 use base64::{Engine as _, engine::general_purpose};
 use std::collections::HashMap;
-use webauthn_rs::prelude::*;
+use sha2::Digest;
 
 
 /// WebAuthn service for handling FIDO2 operations
