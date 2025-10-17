@@ -1,7 +1,7 @@
 //! Repository traits for data access
 
 use async_trait::async_trait;
-use crate::domain::models::*;
+
 use crate::error::Result;
 
 #[async_trait]
