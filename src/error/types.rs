@@ -38,6 +38,9 @@ impl fmt::Display for AppError {
             Self::NotFound(msg) => write!(f, "Not found: {msg}"),
             Self::InternalError(msg) => write!(f, "Internal error: {msg}"),
             Self::BadRequest(msg) => write!(f, "Bad request: {msg}"),
+            Self::UserNotFound(msg) => write!(f, "User not found: {msg}"),
+            Self::NoCredentialsForUser(msg) => write!(f, "No credentials for user: {msg}"),
+            Self::CryptoError(msg) => write!(f, "Crypto error: {msg}"),
         }
     }
 }
