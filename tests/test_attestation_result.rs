@@ -2,7 +2,6 @@
 
 use actix_web::{test, App};
 use fido_server::routes::api::configure;
-use fido_server::domain::models::*;
 use serde_json::json;
 
 #[actix_web::test]
@@ -27,10 +26,11 @@ async fn test_attestation_result_simple() {
         .to_request();
 
     let resp = test::call_service(&app, req).await;
-    println!("Response status: {}", resp.status());
+    let status = resp.status();
+    println!("Response status: {}", status);
     
     let body = test::read_body(resp).await;
     println!("Response body: {}", String::from_utf8_lossy(&body));
     
-    assert!(resp.status().is_success());
+    assert!(status.is_success());
 }
