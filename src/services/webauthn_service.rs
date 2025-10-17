@@ -78,13 +78,13 @@ impl WebAuthnService {
         
         // Basic validation
         if credential.id.is_empty() {
-            return Err(AppError::BadRequest("Missing credential ID"));
+            return Err(AppError::BadRequest("Missing credential ID".to_string()));
         }
 
         match credential.response {
             ServerAuthenticatorResponse::Attestation(attestation) => {
                 if attestation.client_data_json.is_empty() || attestation.attestation_object.is_empty() {
-                    return Err(AppError::BadRequest("Missing attestation data"));
+                    return Err(AppError::BadRequest("Missing attestation data".to_string()));
                 }
                 
                 // TODO: Verify client data JSON and attestation object
@@ -92,7 +92,7 @@ impl WebAuthnService {
                 
                 Ok(ServerResponse::success())
             }
-            _ => Err(AppError::BadRequest("Invalid response type for registration")),
+            _ => Err(AppError::BadRequest("Invalid response type for registration".to_string())),
         }
     }
 
@@ -131,7 +131,7 @@ impl WebAuthnService {
         
         // Basic validation
         if credential.id.is_empty() {
-            return Err(AppError::BadRequest("Missing credential ID"));
+            return Err(AppError::BadRequest("Missing credential ID".to_string()));
         }
 
         match credential.response {
@@ -139,7 +139,7 @@ impl WebAuthnService {
                 if assertion.client_data_json.is_empty() 
                     || assertion.authenticator_data.is_empty() 
                     || assertion.signature.is_empty() {
-                    return Err(AppError::BadRequest("Missing assertion data"));
+                    return Err(AppError::BadRequest("Missing assertion data".to_string()));
                 }
                 
                 // TODO: Verify assertion
@@ -147,7 +147,7 @@ impl WebAuthnService {
                 
                 Ok(ServerResponse::success())
             }
-            _ => Err(AppError::BadRequest("Invalid response type for authentication")),
+            _ => Err(AppError::BadRequest("Invalid response type for authentication".to_string())),
         }
     }
 }
