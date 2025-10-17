@@ -1,7 +1,7 @@
 //! FIDO Server Main Entry Point
 
 use actix_cors::Cors;
-use actix_web::{error::JsonPayloadError, middleware::Logger, App, HttpServer};
+use actix_web::{error::JsonPayloadError, middleware::Logger, web, App, HttpServer};
 use std::io;
 use fido_server::error::handle_json_payload_error;
 
