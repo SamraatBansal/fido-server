@@ -4,7 +4,7 @@ use actix_web::{error::JsonPayloadError, HttpResponse, Result};
 use crate::types::ServerResponse;
 
 /// Handle JSON payload errors and return proper JSON responses
-pub fn handle_json_payload_error(err: JsonPayloadError, _req: &actix_web::HttpRequest) -> Result<HttpResponse> {
+pub fn handle_json_payload_error(err: JsonPayloadError, _req: &actix_web::HttpRequest) -> actix_web::Error {
     let error_response = match err {
         JsonPayloadError::Deserialize(_) => {
             ServerResponse::error("Invalid JSON format")
@@ -20,5 +20,8 @@ pub fn handle_json_payload_error(err: JsonPayloadError, _req: &actix_web::HttpRe
         }
     };
     
-    Ok(HttpResponse::BadRequest().json(error_response))
+    actix_web::error::InternalError::from_response(
+        err,
+        HttpResponse::BadRequest().json(error_response),
+    ).into()
 }
