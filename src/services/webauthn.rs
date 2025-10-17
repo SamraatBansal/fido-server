@@ -42,55 +42,15 @@ impl WebAuthnService {
             user_verification: Some("preferred".to_string()),
         });
 
-        // Public key credential parameters (supporting multiple algorithms as expected by Newman tests)
+        // Public key credential parameters (essential algorithms for FIDO2 conformance)
         let pub_key_cred_params = vec![
-            PublicKeyCredentialParameters {
-                alg_type: "public-key".to_string(),
-                alg: -65535, // EdDSA
-            },
-            PublicKeyCredentialParameters {
-                alg_type: "public-key".to_string(),
-                alg: -257, // RS256
-            },
-            PublicKeyCredentialParameters {
-                alg_type: "public-key".to_string(),
-                alg: -258, // RSASSA-PSS
-            },
-            PublicKeyCredentialParameters {
-                alg_type: "public-key".to_string(),
-                alg: -259, // RSASSA-PSS
-            },
-            PublicKeyCredentialParameters {
-                alg_type: "public-key".to_string(),
-                alg: -37, // ECDSA P-256
-            },
-            PublicKeyCredentialParameters {
-                alg_type: "public-key".to_string(),
-                alg: -38, // ECDSA P-384
-            },
-            PublicKeyCredentialParameters {
-                alg_type: "public-key".to_string(),
-                alg: -39, // ECDSA P-521
-            },
             PublicKeyCredentialParameters {
                 alg_type: "public-key".to_string(),
                 alg: -7, // ES256
             },
             PublicKeyCredentialParameters {
                 alg_type: "public-key".to_string(),
-                alg: -35, // Ed448
-            },
-            PublicKeyCredentialParameters {
-                alg_type: "public-key".to_string(),
-                alg: -36, // Ed25519
-            },
-            PublicKeyCredentialParameters {
-                alg_type: "public-key".to_string(),
-                alg: -8, // EdDSA
-            },
-            PublicKeyCredentialParameters {
-                alg_type: "public-key".to_string(),
-                alg: -43, // ECDSA secp256r1
+                alg: -257, // RS256
             },
         ];
 
