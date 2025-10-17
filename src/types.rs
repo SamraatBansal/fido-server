@@ -137,6 +137,8 @@ pub struct ServerAuthenticatorAssertionResponse {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PublicKeyCredentialRpEntity {
     pub name: String,
+    pub icon: Option<String>,
+    pub id: String,
 }
 
 /// User entity for server response
