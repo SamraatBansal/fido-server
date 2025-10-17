@@ -36,8 +36,8 @@ test_api_response() {
         -H "Content-Type: application/json" \
         -d "$data")
     
-    http_code=$(echo "$response" | tail -n1)
-    body=$(echo "$response" | head -n -1 | tr -d '\n')
+    http_code=$(echo "$response" | grep -o '[0-9]*$' | tail -1)
+    body=$(echo "$response" | sed 's/[0-9]*$//' | tr -d '\n')
     
     if [ "$http_code" != "$expected_status" ]; then
         echo "❌ FAILED - Expected status $expected_status, got $http_code"
