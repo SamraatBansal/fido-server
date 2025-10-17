@@ -27,7 +27,7 @@ impl ServerResponse {
 }
 
 /// Request for attestation options
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct ServerPublicKeyCredentialCreationOptionsRequest {
     pub username: String,
     pub display_name: String,
