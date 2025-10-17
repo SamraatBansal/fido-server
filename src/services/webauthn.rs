@@ -120,9 +120,9 @@ impl WebAuthnService {
             base: ServerResponse::success(),
             challenge,
             timeout: Some(20000),
-            rpId: "example.com".to_string(), // This should be configurable
-            allowCredentials: allow_credentials,
-            userVerification: request.userVerification,
+            rp_id: "example.com".to_string(), // This should be configurable
+            allow_credentials,
+            user_verification: request.user_verification,
             extensions: None,
         };
 
