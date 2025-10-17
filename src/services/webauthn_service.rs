@@ -1,153 +1,207 @@
-//! WebAuthn service for handling FIDO2 operations
+//! Unit tests for WebAuthn service
 
-use crate::error::AppError;
-use crate::models::webauthn::*;
-use base64::{Engine as _, engine::general_purpose};
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::utils::testing::*;
 
-/// WebAuthn service implementation
-pub struct WebAuthnService {
-    rp_name: String,
-    rp_id: String,
-    #[allow(dead_code)]
-    rp_origin: String,
-}
+    #[tokio::test]
+    async fn test_generate_registration_challenge_success() {
+        let service = WebAuthnService::new(
+            "Test RP".to_string(),
+            "localhost".to_string(),
+            "http://localhost:8080".to_string(),
+        );
 
-impl WebAuthnService {
-    /// Create a new WebAuthn service instance
-    pub fn new(rp_name: String, rp_id: String, rp_origin: String) -> Self {
-        Self {
-            rp_name,
-            rp_id,
-            rp_origin,
-        }
+        let request = create_test_registration_request();
+        let result = service.generate_registration_challenge(request).await;
+
+        assert!(result.is_ok());
+        let response = result.unwrap();
+        assert_eq!(response.status, "ok");
+        assert_eq!(response.rp.name, "Test RP");
+        assert_eq!(response.user.name, "johndoe@example.com");
+        assert_eq!(response.user.display_name, "John Doe");
+        assert!(!response.challenge.is_empty());
+        assert!(!response.pub_key_cred_params.is_empty());
+        assert!(response.timeout.is_some());
+        assert_eq!(response.attestation, Some("direct".to_string()));
     }
 
-    /// Generate registration challenge options
-    pub async fn generate_registration_challenge(
-        &self,
-        request: ServerPublicKeyCredentialCreationOptionsRequest,
-    ) -> Result<ServerPublicKeyCredentialCreationOptionsResponse, AppError> {
-        // Generate a random challenge (16-64 bytes, base64url encoded)
-        let challenge_bytes = rand::random::<[u8; 32]>();
-        let challenge = general_purpose::URL_SAFE_NO_PAD.encode(challenge_bytes);
+    #[tokio::test]
+    async fn test_generate_registration_challenge_minimal() {
+        let service = WebAuthnService::new(
+            "Test RP".to_string(),
+            "localhost".to_string(),
+            "http://localhost:8080".to_string(),
+        );
 
-        // Create user ID (base64url encoded)
-        let user_id = general_purpose::URL_SAFE_NO_PAD.encode(request.username.as_bytes());
-
-        // Build response
-        let response = ServerPublicKeyCredentialCreationOptionsResponse {
-            status: "ok".to_string(),
-            error_message: "".to_string(),
-            rp: PublicKeyCredentialRpEntity {
-                name: self.rp_name.clone(),
-            },
-            user: ServerPublicKeyCredentialUserEntity {
-                id: user_id,
-                name: request.username.clone(),
-                display_name: request.display_name,
-            },
-            challenge,
-            pub_key_cred_params: vec![
-                PublicKeyCredentialParameters {
-                    type_field: "public-key".to_string(),
-                    alg: -7, // ES256
-                },
-                PublicKeyCredentialParameters {
-                    type_field: "public-key".to_string(),
-                    alg: -257, // RS256
-                },
-            ],
-            timeout: Some(60000), // 60 seconds
-            exclude_credentials: Some(vec![]), // TODO: Implement exclude credentials
-            authenticator_selection: request.authenticator_selection,
-            attestation: request.attestation.or_else(|| Some("none".to_string())),
-            extensions: None,
+        let request = ServerPublicKeyCredentialCreationOptionsRequest {
+            username: "test@example.com".to_string(),
+            display_name: "Test User".to_string(),
+            authenticator_selection: None,
+            attestation: None,
         };
 
-        Ok(response)
+        let result = service.generate_registration_challenge(request).await;
+
+        assert!(result.is_ok());
+        let response = result.unwrap();
+        assert_eq!(response.status, "ok");
+        assert_eq!(response.user.name, "test@example.com");
+        assert_eq!(response.user.display_name, "Test User");
+        assert_eq!(response.attestation, Some("none".to_string()));
     }
 
-    /// Verify registration attestation
-    pub async fn verify_registration_attestation(
-        &self,
-        credential: ServerPublicKeyCredential,
-    ) -> Result<ServerResponse, AppError> {
-        // For now, just return success - in a real implementation, this would
-        // verify the attestation object and client data JSON
-        // TODO: Implement proper attestation verification using webauthn-rs
-        
-        // Basic validation
-        if credential.id.is_empty() {
-            return Err(AppError::BadRequest("Missing credential ID".to_string()));
-        }
+    #[tokio::test]
+    async fn test_verify_registration_attestation_success() {
+        let service = WebAuthnService::new(
+            "Test RP".to_string(),
+            "localhost".to_string(),
+            "http://localhost:8080".to_string(),
+        );
 
-        match credential.response {
+        let credential = create_mock_attestation_credential();
+        let result = service.verify_registration_attestation(credential).await;
+
+        assert!(result.is_ok());
+        let response = result.unwrap();
+        assert_eq!(response.status, "ok");
+        assert_eq!(response.error_message, "");
+    }
+
+    #[tokio::test]
+    async fn test_verify_registration_attestation_missing_id() {
+        let service = WebAuthnService::new(
+            "Test RP".to_string(),
+            "localhost".to_string(),
+            "http://localhost:8080".to_string(),
+        );
+
+        let mut credential = create_mock_attestation_credential();
+        credential.id = "".to_string();
+
+        let result = service.verify_registration_attestation(credential).await;
+
+        assert!(result.is_err());
+        match result.unwrap_err() {
+            AppError::BadRequest(msg) => {
+                assert!(msg.contains("Missing credential ID"));
+            }
+            _ => panic!("Expected BadRequest error"),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_verify_registration_attestation_missing_data() {
+        let service = WebAuthnService::new(
+            "Test RP".to_string(),
+            "localhost".to_string(),
+            "http://localhost:8080".to_string(),
+        );
+
+        let mut credential = create_mock_attestation_credential();
+        match &mut credential.response {
             ServerAuthenticatorResponse::Attestation(attestation) => {
-                if attestation.client_data_json.is_empty() || attestation.attestation_object.is_empty() {
-                    return Err(AppError::BadRequest("Missing attestation data".to_string()));
-                }
-                
-                // TODO: Verify client data JSON and attestation object
-                // For conformance testing, we'll just accept valid-looking data
-                
-                Ok(ServerResponse::success())
+                attestation.client_data_json = "".to_string();
             }
-            _ => Err(AppError::BadRequest("Invalid response type for registration".to_string())),
+            _ => panic!("Expected attestation response"),
+        }
+
+        let result = service.verify_registration_attestation(credential).await;
+
+        assert!(result.is_err());
+        match result.unwrap_err() {
+            AppError::BadRequest(msg) => {
+                assert!(msg.contains("Missing attestation data"));
+            }
+            _ => panic!("Expected BadRequest error"),
         }
     }
 
-    /// Generate authentication challenge options
-    pub async fn generate_authentication_challenge(
-        &self,
-        request: ServerPublicKeyCredentialGetOptionsRequest,
-    ) -> Result<ServerPublicKeyCredentialGetOptionsResponse, AppError> {
-        // Generate a random challenge
-        let challenge_bytes = rand::random::<[u8; 32]>();
-        let challenge = general_purpose::URL_SAFE_NO_PAD.encode(challenge_bytes);
+    #[tokio::test]
+    async fn test_generate_authentication_challenge_success() {
+        let service = WebAuthnService::new(
+            "Test RP".to_string(),
+            "localhost".to_string(),
+            "http://localhost:8080".to_string(),
+        );
 
-        // TODO: Look up user's existing credentials
-        // For now, return empty allow_credentials
-        
-        let response = ServerPublicKeyCredentialGetOptionsResponse {
-            status: "ok".to_string(),
-            error_message: "".to_string(),
-            challenge,
-            timeout: Some(60000), // 60 seconds
-            rp_id: self.rp_id.clone(),
-            allow_credentials: Some(vec![]), // TODO: Implement user credential lookup
-            user_verification: request.user_verification,
-            extensions: None,
-        };
+        let request = create_test_authentication_request();
+        let result = service.generate_authentication_challenge(request).await;
 
-        Ok(response)
+        assert!(result.is_ok());
+        let response = result.unwrap();
+        assert_eq!(response.status, "ok");
+        assert_eq!(response.rp_id, "localhost");
+        assert!(!response.challenge.is_empty());
+        assert!(response.timeout.is_some());
+        assert_eq!(response.user_verification, Some("required".to_string()));
     }
 
-    /// Verify authentication assertion
-    pub async fn verify_authentication_assertion(
-        &self,
-        credential: ServerPublicKeyCredential,
-    ) -> Result<ServerResponse, AppError> {
-        // TODO: Implement proper assertion verification using webauthn-rs
-        
-        // Basic validation
-        if credential.id.is_empty() {
-            return Err(AppError::BadRequest("Missing credential ID".to_string()));
-        }
+    #[tokio::test]
+    async fn test_verify_authentication_assertion_success() {
+        let service = WebAuthnService::new(
+            "Test RP".to_string(),
+            "localhost".to_string(),
+            "http://localhost:8080".to_string(),
+        );
 
-        match credential.response {
+        let credential = create_mock_assertion_credential();
+        let result = service.verify_authentication_assertion(credential).await;
+
+        assert!(result.is_ok());
+        let response = result.unwrap();
+        assert_eq!(response.status, "ok");
+        assert_eq!(response.error_message, "");
+    }
+
+    #[tokio::test]
+    async fn test_verify_authentication_assertion_missing_id() {
+        let service = WebAuthnService::new(
+            "Test RP".to_string(),
+            "localhost".to_string(),
+            "http://localhost:8080".to_string(),
+        );
+
+        let mut credential = create_mock_assertion_credential();
+        credential.id = "".to_string();
+
+        let result = service.verify_authentication_assertion(credential).await;
+
+        assert!(result.is_err());
+        match result.unwrap_err() {
+            AppError::BadRequest(msg) => {
+                assert!(msg.contains("Missing credential ID"));
+            }
+            _ => panic!("Expected BadRequest error"),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_verify_authentication_assertion_missing_data() {
+        let service = WebAuthnService::new(
+            "Test RP".to_string(),
+            "localhost".to_string(),
+            "http://localhost:8080".to_string(),
+        );
+
+        let mut credential = create_mock_assertion_credential();
+        match &mut credential.response {
             ServerAuthenticatorResponse::Assertion(assertion) => {
-                if assertion.client_data_json.is_empty() 
-                    || assertion.authenticator_data.is_empty() 
-                    || assertion.signature.is_empty() {
-                    return Err(AppError::BadRequest("Missing assertion data".to_string()));
-                }
-                
-                // TODO: Verify assertion
-                // For conformance testing, we'll just accept valid-looking data
-                
-                Ok(ServerResponse::success())
+                assertion.authenticator_data = "".to_string();
             }
-            _ => Err(AppError::BadRequest("Invalid response type for authentication".to_string())),
+            _ => panic!("Expected assertion response"),
+        }
+
+        let result = service.verify_authentication_assertion(credential).await;
+
+        assert!(result.is_err());
+        match result.unwrap_err() {
+            AppError::BadRequest(msg) => {
+                assert!(msg.contains("Missing assertion data"));
+            }
+            _ => panic!("Expected BadRequest error"),
         }
     }
 }
