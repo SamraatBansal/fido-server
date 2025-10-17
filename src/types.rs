@@ -157,7 +157,7 @@ pub struct AuthenticatorSelectionCriteria {
 }
 
 // For handling the actual ServerPublicKeyCredential with response field
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct ServerPublicKeyCredentialWithResponse {
     pub id: String,
     #[serde(rename = "type")]
