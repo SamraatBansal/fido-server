@@ -8,12 +8,14 @@ use fido_server::utils::testing::*;
 use std::sync::Arc;
 
 /// Create test application with WebAuthn endpoints
-async fn create_test_app() -> impl actix_web::dev::ServiceFactory<
-    actix_web::dev::ServiceRequest,
-    Config = (),
-    Response = actix_web::dev::ServiceResponse,
-    Error = actix_web::Error,
-    InitError = (),
+async fn create_test_app() -> App<
+    impl actix_web::dev::ServiceFactory<
+        actix_web::dev::ServiceRequest,
+        Config = (),
+        Response = actix_web::dev::ServiceResponse,
+        Error = actix_web::Error,
+        InitError = (),
+    >,
 > {
     let webauthn_service = Arc::new(WebAuthnService::new(
         "Example Corporation".to_string(),
