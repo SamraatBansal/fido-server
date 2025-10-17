@@ -47,7 +47,7 @@ async fn test_attestation_options_success() {
 
 #[actix_web::test]
 async fn test_attestation_result_success() {
-    let app = TestServer::new(|| {
+    let app = TestServer::start(|| {
         App::new().configure(configure)
     });
 
