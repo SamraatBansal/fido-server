@@ -78,13 +78,13 @@ impl WebAuthnService {
         
         // Basic validation
         if credential.id.is_empty() {
-            return Ok(ServerResponse::error("Missing credential ID"));
+            return Err(AppError::BadRequest("Missing credential ID"));
         }
 
         match credential.response {
             ServerAuthenticatorResponse::Attestation(attestation) => {
                 if attestation.client_data_json.is_empty() || attestation.attestation_object.is_empty() {
-                    return Ok(ServerResponse::error("Missing attestation data"));
+                    return Err(AppError::BadRequest("Missing attestation data"));
                 }
                 
                 // TODO: Verify client data JSON and attestation object
@@ -92,7 +92,7 @@ impl WebAuthnService {
                 
                 Ok(ServerResponse::success())
             }
-            _ => Ok(ServerResponse::error("Invalid response type for registration")),
+            _ => Err(AppError::BadRequest("Invalid response type for registration")),
         }
     }
 
