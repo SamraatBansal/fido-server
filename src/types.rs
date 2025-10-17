@@ -47,7 +47,9 @@ pub struct ServerPublicKeyCredentialCreationOptionsResponse {
     pub pub_key_cred_params: Vec<PublicKeyCredentialParameters>,
     pub timeout: u32,
     #[serde(rename = "excludeCredentials")]
+    #[serde(rename = "excludeCredentials")]
     pub exclude_credentials: Vec<ServerPublicKeyCredentialDescriptor>,
+    #[serde(rename = "authenticatorSelection")]
     pub authenticator_selection: Option<AuthenticatorSelectionCriteria>,
     pub attestation: String,
     pub extensions: Option<HashMap<String, serde_json::Value>>,
