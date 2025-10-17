@@ -37,7 +37,7 @@ test_api_response() {
         -d "$data")
     
     http_code=$(echo "$response" | tail -n1)
-    body=$(echo "$response" | head -n -1)
+    body=$(echo "$response" | head -n -1 | tr -d '\n')
     
     if [ "$http_code" != "$expected_status" ]; then
         echo "❌ FAILED - Expected status $expected_status, got $http_code"
