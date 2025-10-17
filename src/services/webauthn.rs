@@ -13,6 +13,7 @@ pub struct WebAuthnService {
     rp_name: String,
     rp_id: String,
     origin: String,
+    webauthn: Webauthn,
 }
 
 impl WebAuthnService {
