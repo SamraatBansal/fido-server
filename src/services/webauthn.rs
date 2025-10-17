@@ -5,6 +5,8 @@ use crate::types::*;
 use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
 use rand::{distributions::Alphanumeric, Rng};
 
+/// WebAuthn service for handling FIDO2 operations
+#[allow(dead_code)]
 pub struct WebAuthnService {
     rp_name: String,
     rp_id: String,
@@ -12,6 +14,8 @@ pub struct WebAuthnService {
 }
 
 impl WebAuthnService {
+    /// Create a new WebAuthn service instance
+    #[allow(dead_code)]
     pub fn new(rp_name: &str, rp_id: &str, origin: &str) -> Result<Self> {
         Ok(Self {
             rp_name: rp_name.to_string(),
