@@ -4,7 +4,7 @@ use actix_web::{test, web, App};
 use fido_server::routes::api::configure;
 use fido_server::controllers::WebAuthnController;
 use fido_server::services::WebAuthnService;
-use fido_server::types::*;
+
 use serde_json::json;
 
 #[actix_web::test]
