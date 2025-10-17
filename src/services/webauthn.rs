@@ -102,19 +102,22 @@ impl WebAuthnService {
             session_id: uuid::Uuid::new_v4().to_string(),
             rp: PublicKeyCredentialRpEntity {
                 name: self.rp_name.clone(),
+                icon: None,
+                id: self.rp_id.clone(),
             },
             user: ServerPublicKeyCredentialUserEntity {
-                id: user_id,
                 name: request.username.clone(),
+                icon: None,
+                id: user_id,
                 display_name: request.display_name,
             },
             challenge,
             pub_key_cred_params,
-            timeout: 10000, // 10 seconds
+            timeout: 180000, // 180 seconds (as expected by Newman tests)
             exclude_credentials,
             authenticator_selection: Some(authenticator_selection),
             attestation,
-            extensions: None,
+            extensions: Some(serde_json::json!({"credProps": true}),
         })
     }
 
