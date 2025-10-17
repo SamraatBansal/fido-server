@@ -21,6 +21,12 @@ pub enum AppError {
     InternalError(String),
     /// Bad request error
     BadRequest(String),
+    /// User not found error
+    UserNotFound(String),
+    /// No credentials for user error
+    NoCredentialsForUser(String),
+    /// Crypto error
+    CryptoError(String),
 }
 
 impl fmt::Display for AppError {
