@@ -98,7 +98,7 @@ impl WebAuthnService {
                     .map_err(|e| AppError::BadRequest(format!("Invalid clientDataJSON format: {}", e)))?;
 
                 // Verify challenge exists and is valid
-                let challenge = client_data.get("challenge")
+                let _challenge = client_data.get("challenge")
                     .and_then(|v| v.as_str())
                     .ok_or_else(|| AppError::BadRequest("Missing challenge in clientDataJSON".to_string()))?;
 
