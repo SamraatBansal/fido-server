@@ -72,6 +72,14 @@ impl WebAuthnController {
         _req: HttpRequest,
         payload: web::Json<ServerPublicKeyCredentialWithResponse>,
     ) -> Result<HttpResponse> {
+        // Validate required fields
+        if payload.id.is_empty() {
+            return Err(AppError::BadRequest("Credential ID is required".to_string()));
+        }
+        if payload.credential_type != "public-key" {
+            return Err(AppError::BadRequest("Invalid credential type".to_string()));
+        }
+
         let response = self.service.verify_assertion_result(payload.into_inner()).await?;
         Ok(HttpResponse::Ok().json(response))
     }
