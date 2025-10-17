@@ -42,8 +42,8 @@ impl ResponseError for AppError {
         let error_message = self.to_string();
 
         HttpResponse::build(status_code).json(serde_json::json!({
-            "error": error_message,
-            "status": status_code.as_u16()
+            "status": "failed",
+            "errorMessage": error_message
         }))
     }
 
