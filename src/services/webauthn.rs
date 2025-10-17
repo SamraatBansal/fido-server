@@ -117,7 +117,7 @@ impl WebAuthnService {
             exclude_credentials,
             authenticator_selection: Some(authenticator_selection),
             attestation,
-            extensions: Some(serde_json::json!({"credProps": true}),
+            extensions: Some(serde_json::json!({"credProps": true})),
         })
     }
 
