@@ -49,7 +49,7 @@ impl WebAuthnService {
         let user = ServerPublicKeyCredentialUserEntity {
             id: user_id,
             name: request.username.clone(),
-            displayName: request.displayName,
+            display_name: request.display_name.clone(),
         };
 
         // Create RP entity
