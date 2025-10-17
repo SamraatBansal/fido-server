@@ -48,9 +48,9 @@ async fn test_attestation_options_success() {
 
 #[actix_web::test]
 async fn test_attestation_result_success() {
-    let app = TestServer::start(|| {
+    let app = test::init_service(
         App::new().configure(configure)
-    });
+    ).await;
 
     let request_body = json!({
         "id": "LFdoCFJTyB82ZzSJUHc-c72yraRc_1mPvGX8ToE8su39xX26Jcqd31LUkKOS36FIAWgWl6itMKqmDvruha6ywA",
@@ -62,14 +62,16 @@ async fn test_attestation_result_success() {
         "type": "public-key"
     });
 
-    let response = app
-        .post("/api/attestation/result")
-        .send_json(&request_body)
-        .await;
+    let req = test::TestRequest::post()
+        .uri("/api/attestation/result")
+        .set_json(&request_body)
+        .to_request();
+
+    let response = test::call_service(&app, req).await;
 
     assert_eq!(response.status(), StatusCode::OK);
 
-    let result: serde_json::Value = response.json().await;
+    let result: serde_json::Value = test::read_body_json(response).await;
     
     assert_eq!(result["status"], "ok");
     assert_eq!(result["errorMessage"], "");
