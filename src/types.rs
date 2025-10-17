@@ -75,6 +75,7 @@ pub struct ServerPublicKeyCredentialGetOptionsResponse {
     pub rp_id: String,
     #[serde(rename = "allowCredentials")]
     pub allow_credentials: Vec<ServerPublicKeyCredentialDescriptor>,
+    #[serde(rename = "userVerification")]
     pub user_verification: String,
     pub extensions: Option<HashMap<String, serde_json::Value>>,
 }
