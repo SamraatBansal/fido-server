@@ -102,7 +102,7 @@ pub struct ServerAuthenticatorAttestationResponse {
 }
 
 /// Server authenticator assertion response
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct ServerAuthenticatorAssertionResponse {
     #[serde(rename = "authenticatorData")]
     pub authenticator_data: String,
