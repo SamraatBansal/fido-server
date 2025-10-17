@@ -59,6 +59,7 @@ impl WebAuthnService {
         Ok(ServerPublicKeyCredentialCreationOptionsResponse {
             status: "ok".to_string(),
             error_message: "".to_string(),
+            session_id: uuid::Uuid::new_v4().to_string(),
             rp: PublicKeyCredentialRpEntity {
                 name: self.rp_name.clone(),
             },
