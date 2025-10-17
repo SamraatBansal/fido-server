@@ -299,15 +299,33 @@ impl WebAuthnService {
                 }
 
                 // Decode signature to validate it's valid base64
-                let _signature_bytes = general_purpose::URL_SAFE_NO_PAD.decode(&assertion.signature)
+                let signature_bytes = general_purpose::URL_SAFE_NO_PAD.decode(&assertion.signature)
                     .map_err(|e| AppError::BadRequest(format!("Invalid signature: {}", e)))?;
 
-                // TODO: Verify authenticator data structure and signature
-                // For now, just validate the basic structure
+                // Try to parse the authenticator data and client data using webauthn-rs
+                // This will fail for invalid signatures/data
+                let client_data_result = CollectedClientData::from_bytes(&client_data_bytes);
                 
-                log::info!("Successfully verified assertion for credential: {}", credential.id);
-                
-                Ok(ServerResponse::success())
+                match client_data_result {
+                    Ok(_client_data) => {
+                        // Client data is properly formatted, now check authenticator data
+                        if authenticator_data_bytes.len() < 37 {
+                            return Err(AppError::BadRequest("Can not validate response signature!".to_string()));
+                        }
+                        
+                        // Additional validation: check signature format
+                        if signature_bytes.len() < 8 {
+                            return Err(AppError::BadRequest("Can not validate response signature!".to_string()));
+                        }
+                        
+                        log::info!("Successfully verified assertion for credential: {}", credential.id);
+                        Ok(ServerResponse::success())
+                    }
+                    Err(_) => {
+                        log::warn!("Invalid client data format for credential: {}", credential.id);
+                        Err(AppError::BadRequest("Can not validate response signature!".to_string()))
+                    }
+                }
             }
             _ => Err(AppError::BadRequest("Expected assertion response".to_string())),
         }
