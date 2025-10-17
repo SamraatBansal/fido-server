@@ -7,6 +7,7 @@ use std::collections::HashMap;
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ServerResponse {
     pub status: String,
+    #[serde(rename = "errorMessage")]
     pub error_message: String,
 }
 
@@ -39,6 +40,7 @@ pub struct ServerPublicKeyCredentialCreationOptionsRequest {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ServerPublicKeyCredentialCreationOptionsResponse {
     pub status: String,
+    #[serde(rename = "errorMessage")]
     pub error_message: String,
     pub rp: PublicKeyCredentialRpEntity,
     pub user: ServerPublicKeyCredentialUserEntity,
@@ -66,6 +68,7 @@ pub struct ServerPublicKeyCredentialGetOptionsRequest {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ServerPublicKeyCredentialGetOptionsResponse {
     pub status: String,
+    #[serde(rename = "errorMessage")]
     pub error_message: String,
     pub challenge: String,
     pub timeout: u32,
