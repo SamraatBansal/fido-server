@@ -18,10 +18,20 @@ pub struct WebAuthnService {
 
 impl WebAuthnService {
     pub fn new(rp_name: String, rp_id: String, origin: String) -> Self {
+        let rp = RelyingParty {
+            name: rp_name.clone(),
+            id: rp_id.clone(),
+            origin: Url::parse(&origin).unwrap_or_else(|_| Url::parse("http://localhost:8080").unwrap()),
+            icon: None,
+        };
+        
+        let webauthn = Webauthn::new(rp);
+        
         Self {
             rp_name,
             rp_id,
             origin,
+            webauthn,
         }
     }
 
