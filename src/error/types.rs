@@ -43,7 +43,8 @@ impl ResponseError for AppError {
 
         HttpResponse::build(status_code).json(serde_json::json!({
             "status": "failed",
-            "errorMessage": error_message
+            "errorMessage": error_message,
+            "sessionId": uuid::Uuid::new_v4().to_string()
         }))
     }
 
