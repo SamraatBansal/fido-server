@@ -18,6 +18,7 @@ impl ServerResponse {
         Self {
             status: "ok".to_string(),
             error_message: "".to_string(),
+            session_id: uuid::Uuid::new_v4().to_string(),
         }
     }
 
@@ -25,6 +26,7 @@ impl ServerResponse {
         Self {
             status: "failed".to_string(),
             error_message: message.into(),
+            session_id: uuid::Uuid::new_v4().to_string(),
         }
     }
 }
