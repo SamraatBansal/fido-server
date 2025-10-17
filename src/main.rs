@@ -31,6 +31,7 @@ async fn main() -> io::Result<()> {
         App::new()
             .wrap(Logger::default())
             .wrap(cors)
+            .app_data(web::JsonConfig::default().error_handler(handle_json_payload_error))
             .configure(fido_server::routes::api::configure)
     })
     .bind((host, port))?
