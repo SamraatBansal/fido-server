@@ -129,7 +129,7 @@ pub struct ServerPublicKeyCredentialUserEntity {
 }
 
 /// Public key credential parameters
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct PublicKeyCredentialParameters {
     #[serde(rename = "type")]
     pub alg_type: String,
