@@ -163,11 +163,17 @@ async fn test_error_response_format() {
             .configure(configure)
     ).await;
 
-    // Test with malformed request
+    // Test with invalid base64 data to trigger error response
     let req = test::TestRequest::post()
-        .uri("/attestation/options")
+        .uri("/attestation/result")
         .set_json(&json!({
-            "invalid": "request"
+            "id": "test-id",
+            "response": {
+                "clientDataJSON": "invalid-base64",
+                "attestationObject": "invalid-base64"
+            },
+            "getClientExtensionResults": {},
+            "type": "public-key"
         }))
         .to_request();
 
