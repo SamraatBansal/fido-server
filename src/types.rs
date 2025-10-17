@@ -59,7 +59,7 @@ pub struct ServerPublicKeyCredentialGetOptionsRequest {
 }
 
 /// Response for assertion options
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct ServerPublicKeyCredentialGetOptionsResponse {
     pub status: String,
     pub error_message: String,
