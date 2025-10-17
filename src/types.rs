@@ -36,7 +36,7 @@ pub struct ServerPublicKeyCredentialCreationOptionsRequest {
 }
 
 /// Response for attestation options
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct ServerPublicKeyCredentialCreationOptionsResponse {
     pub status: String,
     pub error_message: String,
