@@ -144,8 +144,9 @@ pub struct PublicKeyCredentialRpEntity {
 /// User entity for server response
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ServerPublicKeyCredentialUserEntity {
-    pub id: String,
     pub name: String,
+    pub icon: Option<String>,
+    pub id: String,
     #[serde(rename = "displayName")]
     pub display_name: String,
 }
