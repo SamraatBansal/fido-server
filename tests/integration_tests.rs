@@ -79,23 +79,25 @@ async fn test_attestation_result_success() {
 
 #[actix_web::test]
 async fn test_assertion_options_success() {
-    let app = TestServer::start(|| {
+    let app = test::init_service(
         App::new().configure(configure)
-    });
+    ).await;
 
     let request_body = json!({
         "username": "johndoe@example.com",
         "userVerification": "required"
     });
 
-    let response = app
-        .post("/api/assertion/options")
-        .send_json(&request_body)
-        .await;
+    let req = test::TestRequest::post()
+        .uri("/api/assertion/options")
+        .set_json(&request_body)
+        .to_request();
+
+    let response = test::call_service(&app, req).await;
 
     assert_eq!(response.status(), StatusCode::OK);
 
-    let result: serde_json::Value = response.json().await;
+    let result: serde_json::Value = test::read_body_json(response).await;
     
     assert_eq!(result["status"], "ok");
     assert_eq!(result["errorMessage"], "");
