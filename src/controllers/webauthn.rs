@@ -1,7 +1,6 @@
 //! WebAuthn controllers
 
 use actix_web::{web, HttpResponse, Result};
-use serde_json;
 use crate::error::AppError;
 use crate::services::WebAuthnService;
 use crate::types::*;
