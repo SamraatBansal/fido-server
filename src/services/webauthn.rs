@@ -57,7 +57,7 @@ impl WebAuthnService {
                 alg: -258, // RSASSA-PSS
             },
             PublicKeyCredentialParameters {
-                alg_type: "pubic-key".to_string(),
+                alg_type: "public-key".to_string(),
                 alg: -259, // RSASSA-PSS
             },
             PublicKeyCredentialParameters {
