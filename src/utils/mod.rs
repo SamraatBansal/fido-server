@@ -1,1 +1,3 @@
-//! Utilities module
+//! Utils module
+
+pub mod testing;
