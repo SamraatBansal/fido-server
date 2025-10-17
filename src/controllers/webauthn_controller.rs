@@ -1,9 +1,9 @@
 //! WebAuthn controller for handling FIDO2 endpoints
 
-use actix_web::{web, HttpRequest, HttpResponse};
+use actix_web::{web, HttpResponse};
 use crate::domain::models::*;
 use crate::domain::services::WebAuthnService;
-use crate::error::{AppError, Result};
+use crate::error::Result;
 use std::sync::Arc;
 
 /// Controller for WebAuthn operations
