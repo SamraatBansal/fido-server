@@ -52,7 +52,7 @@ pub struct ServerPublicKeyCredentialCreationOptionsResponse {
 }
 
 /// Request for assertion options
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct ServerPublicKeyCredentialGetOptionsRequest {
     pub username: String,
     pub user_verification: Option<String>,
