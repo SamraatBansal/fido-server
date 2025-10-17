@@ -114,7 +114,7 @@ impl WebAuthnService {
             },
             challenge,
             pub_key_cred_params,
-            timeout: 180000, // 180 seconds (as expected by Newman tests)
+            timeout: 10000, // 10 seconds (as expected by FIDO conformance tests)
             exclude_credentials,
             authenticator_selection: Some(authenticator_selection),
             attestation,
