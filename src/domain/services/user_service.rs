@@ -1,7 +1,7 @@
 //! User service for user management
 
 use crate::domain::repositories::{User, UserRepository};
-use crate::error::{AppError, Result};
+use crate::error::Result;
 use async_trait::async_trait;
 use std::sync::Arc;
 use uuid::Uuid;
