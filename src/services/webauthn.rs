@@ -3,9 +3,7 @@
 use crate::error::{AppError, Result};
 use crate::types::*;
 use base64::{Engine as _, engine::general_purpose};
-use serde_json::json;
-use std::collections::HashMap;
-use uuid::Uuid;
+
 
 /// WebAuthn service for handling FIDO2 operations
 pub struct WebAuthnService {
