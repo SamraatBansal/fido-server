@@ -114,8 +114,10 @@ pub struct ServerPublicKeyCredentialUserEntity {
     /// User ID (base64url encoded)
     pub id: String,
     /// Username
+    #[serde(rename = "name")]
     pub name: String,
     /// Display name
+    #[serde(rename = "displayName")]
     pub display_name: String,
 }
 
