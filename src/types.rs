@@ -9,6 +9,8 @@ pub struct ServerResponse {
     pub status: String,
     #[serde(rename = "errorMessage")]
     pub error_message: String,
+    #[serde(rename = "sessionId")]
+    pub session_id: String,
 }
 
 impl ServerResponse {
