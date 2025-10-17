@@ -3,9 +3,7 @@
 use crate::error::AppError;
 use crate::models::webauthn::*;
 use base64::{Engine as _, engine::general_purpose};
-use serde_json::Value;
 use std::collections::HashMap;
-use uuid::Uuid;
 
 /// WebAuthn service implementation
 pub struct WebAuthnService {
