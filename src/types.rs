@@ -78,6 +78,8 @@ pub struct ServerPublicKeyCredentialGetOptionsResponse {
     pub status: String,
     #[serde(rename = "errorMessage")]
     pub error_message: String,
+    #[serde(rename = "sessionId")]
+    pub session_id: String,
     pub challenge: String,
     pub timeout: u32,
     #[serde(rename = "rpId")]
