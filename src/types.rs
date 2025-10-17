@@ -83,7 +83,7 @@ pub struct ServerPublicKeyCredential {
 }
 
 /// Server authenticator response (enum for attestation and assertion)
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(tag = "responseType")]
 pub enum ServerAuthenticatorResponse {
     #[serde(rename = "attestation")]
