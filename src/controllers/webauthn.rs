@@ -21,6 +21,14 @@ impl WebAuthnController {
         _req: HttpRequest,
         payload: web::Json<ServerPublicKeyCredentialCreationOptionsRequest>,
     ) -> Result<HttpResponse> {
+        // Validate required fields
+        if payload.username.is_empty() {
+            return Err(AppError::BadRequest("Username is required".to_string()));
+        }
+        if payload.display_name.is_empty() {
+            return Err(AppError::BadRequest("Display name is required".to_string()));
+        }
+
         let response = self.service.generate_attestation_options(payload.into_inner()).await?;
         Ok(HttpResponse::Ok().json(response))
     }
