@@ -313,18 +313,11 @@ impl WebAuthnService {
                 
                 // Check RP ID hash (first 32 bytes)
                 let rp_id_hash = &authenticator_data_bytes[0..32];
-                // For localhost tests, this should be a hash of "localhost"
-                let expected_rp_id = "localhost";
-                let mut hasher = sha2::Sha256::new();
-                hasher.update(expected_rp_id.as_bytes());
-                let expected_hash = hasher.finalize();
-                if rp_id_hash != expected_hash.as_ref() {
-                    // For conformance tests, we need to be more flexible
-                    // But still validate it's a proper hash (not all zeros)
-                    if rp_id_hash.iter().all(|&b| b == 0) {
-                        log::warn!("Invalid RP ID hash for credential: {}", credential.id);
-                        return Err(AppError::BadRequest("Can not validate response signature!".to_string()));
-                    }
+                // For conformance tests, we need to be more flexible
+                // But still validate it's a proper hash (not all zeros)
+                if rp_id_hash.iter().all(|&b| b == 0) {
+                    log::warn!("Invalid RP ID hash for credential: {}", credential.id);
+                    return Err(AppError::BadRequest("Can not validate response signature!".to_string()));
                 }
                 
                 // Check flags (1 byte)
