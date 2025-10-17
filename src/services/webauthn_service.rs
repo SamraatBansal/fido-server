@@ -3,7 +3,6 @@
 use crate::error::AppError;
 use crate::models::webauthn::*;
 use base64::{Engine as _, engine::general_purpose};
-use std::collections::HashMap;
 
 /// WebAuthn service implementation
 pub struct WebAuthnService {
