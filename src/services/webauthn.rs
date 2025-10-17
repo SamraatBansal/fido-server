@@ -3,6 +3,7 @@
 use crate::error::{AppError, Result};
 use crate::types::*;
 use base64::{Engine as _, engine::general_purpose};
+use std::collections::HashMap;
 
 
 /// WebAuthn service for handling FIDO2 operations
