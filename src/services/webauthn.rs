@@ -78,10 +78,10 @@ impl WebAuthnService {
             rp,
             user,
             challenge,
-            pubKeyCredParams: pub_key_cred_params,
+            pub_key_cred_params,
             timeout: Some(10000),
-            excludeCredentials: exclude_credentials,
-            authenticatorSelection: request.authenticatorSelection,
+            exclude_credentials,
+            authenticator_selection: request.authenticator_selection,
             attestation: Some(request.attestation),
             extensions: None,
         };
