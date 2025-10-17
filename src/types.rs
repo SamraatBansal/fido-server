@@ -48,6 +48,8 @@ pub struct ServerPublicKeyCredentialCreationOptionsResponse {
     pub status: String,
     #[serde(rename = "errorMessage")]
     pub error_message: String,
+    #[serde(rename = "sessionId")]
+    pub session_id: String,
     pub rp: PublicKeyCredentialRpEntity,
     pub user: ServerPublicKeyCredentialUserEntity,
     pub challenge: String,
