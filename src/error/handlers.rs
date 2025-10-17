@@ -1,7 +1,7 @@
 //! Custom error handlers for actix-web
 
 use actix_web::{error::JsonPayloadError, HttpResponse, Result};
-use crate::error::{AppError, ServerResponse};
+use crate::types::ServerResponse;
 
 /// Handle JSON payload errors and return proper JSON responses
 pub fn handle_json_payload_error(err: JsonPayloadError, _req: &actix_web::HttpRequest) -> Result<HttpResponse> {
