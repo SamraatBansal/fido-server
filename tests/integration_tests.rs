@@ -104,7 +104,7 @@ async fn test_assertion_options_success() {
 
 #[actix_web::test]
 async fn test_assertion_result_success() {
-    let app = TestServer::new(|| {
+    let app = TestServer::start(|| {
         App::new().configure(configure)
     });
 
