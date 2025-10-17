@@ -151,6 +151,7 @@ impl WebAuthnService {
         Ok(ServerPublicKeyCredentialGetOptionsResponse {
             status: "ok".to_string(),
             error_message: "".to_string(),
+            session_id: uuid::Uuid::new_v4().to_string(),
             challenge,
             timeout: 20000, // 20 seconds
             rp_id: self.rp_id.clone(),
