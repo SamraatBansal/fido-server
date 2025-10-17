@@ -1,7 +1,6 @@
 //! JSON error handling middleware
 
 use actix_web::{dev::ServiceRequest, dev::ServiceResponse, Error, Result};
-use actix_web::middleware::Logger;
 use actix_web::body::MessageBody;
 use actix_web::dev::{forward_ready, Service, Transform};
 use futures::future::{ok, Ready};
