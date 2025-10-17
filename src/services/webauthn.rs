@@ -88,7 +88,7 @@ impl WebAuthnService {
     /// Verify attestation response
     pub async fn verify_attestation(
         &self,
-        credential: ServerPublicKeyCredential,
+        _credential: ServerPublicKeyCredential,
     ) -> Result<ServerResponse> {
         // For now, just return success
         // In a real implementation, this would:
