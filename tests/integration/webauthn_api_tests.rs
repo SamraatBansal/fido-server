@@ -156,10 +156,13 @@ async fn test_attestation_result_missing_id() {
 
     let resp = test::call_service(&app, req).await;
     
-    assert!(resp.status().is_client_error());
+    println!("Response status: {}", resp.status());
     
     let response: ServerResponse = test::read_body_json(resp).await;
     
+    println!("Response body: {:?}", response);
+    
+    assert!(resp.status().is_client_error());
     assert_eq!(response.status, "failed");
     assert!(response.error_message.contains("Missing credential ID"));
 }
@@ -266,10 +269,13 @@ async fn test_assertion_result_missing_id() {
 
     let resp = test::call_service(&app, req).await;
     
-    assert!(resp.status().is_client_error());
+    println!("Response status: {}", resp.status());
     
     let response: ServerResponse = test::read_body_json(resp).await;
     
+    println!("Response body: {:?}", response);
+    
+    assert!(resp.status().is_client_error());
     assert_eq!(response.status, "failed");
     assert!(response.error_message.contains("Missing credential ID"));
 }
