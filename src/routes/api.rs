@@ -17,7 +17,7 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
     let challenge_repo = Arc::new(MockChallengeRepository::new());
     
     // Initialize services
-    let crypto_service = Arc::new(CryptoServiceImpl::new());
+    let _crypto_service = Arc::new(CryptoServiceImpl::new());
     let webauthn_service = Arc::new(WebAuthnServiceImpl::new(
         user_repo.clone(),
         credential_repo.clone(),
