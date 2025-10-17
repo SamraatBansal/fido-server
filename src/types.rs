@@ -63,6 +63,7 @@ pub struct ServerPublicKeyCredentialCreationOptionsResponse {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ServerPublicKeyCredentialGetOptionsRequest {
     pub username: String,
+    #[serde(rename = "userVerification")]
     pub user_verification: Option<String>,
 }
 
