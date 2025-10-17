@@ -33,7 +33,7 @@ pub struct JsonErrorHandlerMiddleware<S> {
 
 impl<S, B> Service<ServiceRequest> for JsonErrorHandlerMiddleware<S>
 where
-    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error> + 'static,
+    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error> + Clone + 'static,
     S::Future: 'static,
     B: MessageBody + 'static,
 {
