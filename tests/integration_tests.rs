@@ -1,15 +1,13 @@
 //! Integration tests for FIDO2 WebAuthn server
 
-mod integration;
-
-use actix_test::TestServer;
+use actix_test::{self, TestServer};
 use actix_web::{App, http::StatusCode};
 use serde_json::json;
 use fido_server::routes::api::configure;
 
 #[actix_web::test]
 async fn test_attestation_options_success() {
-    let app = TestServer::new(|| {
+    let app = TestServer::start(|| {
         App::new().configure(configure)
     });
 
