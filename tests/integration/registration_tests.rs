@@ -3,7 +3,7 @@
 use actix_test::{self, TestServer};
 use actix_web::{App, http::StatusCode};
 use serde_json::json;
-use crate::routes::api::configure;
+use fido_server::routes::api::configure;
 
 #[actix_web::test]
 async fn test_attestation_options_success() {
