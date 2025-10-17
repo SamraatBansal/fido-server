@@ -72,6 +72,7 @@ pub struct ServerPublicKeyCredentialGetOptionsResponse {
     pub error_message: String,
     pub challenge: String,
     pub timeout: u32,
+    #[serde(rename = "rpId")]
     pub rp_id: String,
     #[serde(rename = "allowCredentials")]
     pub allow_credentials: Vec<ServerPublicKeyCredentialDescriptor>,
