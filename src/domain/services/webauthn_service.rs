@@ -37,6 +37,7 @@ pub struct WebAuthnServiceImpl {
     challenge_repository: Arc<dyn ChallengeRepository>,
     rp_name: String,
     rp_id: String,
+    #[allow(dead_code)]
     origin: String,
 }
 
