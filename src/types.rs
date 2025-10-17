@@ -93,7 +93,7 @@ pub enum ServerAuthenticatorResponse {
 }
 
 /// Server authenticator attestation response
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct ServerAuthenticatorAttestationResponse {
     #[serde(rename = "clientDataJSON")]
     pub client_data_json: String,
