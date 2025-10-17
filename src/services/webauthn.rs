@@ -318,7 +318,7 @@ impl WebAuthnService {
                 let mut hasher = sha2::Sha256::new();
                 hasher.update(expected_rp_id.as_bytes());
                 let expected_hash = hasher.finalize();
-                if rp_id_hash != expected_hash.as_slice() {
+                if rp_id_hash != expected_hash.as_ref() {
                     // For conformance tests, we need to be more flexible
                     // But still validate it's a proper hash (not all zeros)
                     if rp_id_hash.iter().all(|&b| b == 0) {
