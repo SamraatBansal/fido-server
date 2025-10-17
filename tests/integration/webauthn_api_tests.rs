@@ -1,22 +1,14 @@
 //! Integration tests for FIDO2 WebAuthn API
 
-use actix_web::{test, web, App};
+use actix_web::{test, web, App, HttpResponse};
 use fido_server::controllers::webauthn_controller::*;
 use fido_server::models::webauthn::*;
 use fido_server::services::webauthn_service::WebAuthnService;
 use fido_server::utils::testing::*;
 use std::sync::Arc;
 
-/// Create test application with WebAuthn endpoints
-async fn create_test_app() -> App<
-    impl actix_web::dev::ServiceFactory<
-        actix_web::dev::ServiceRequest,
-        Config = (),
-        Response = actix_web::dev::ServiceResponse,
-        Error = actix_web::Error,
-        InitError = (),
-    >,
-> {
+#[actix_web::test]
+async fn test_attestation_options_success() {
     let webauthn_service = Arc::new(WebAuthnService::new(
         "Example Corporation".to_string(),
         "localhost".to_string(),
@@ -25,17 +17,14 @@ async fn create_test_app() -> App<
     
     let controller = Arc::new(WebAuthnController::new(webauthn_service));
 
-    App::new()
-        .app_data(web::Data::new(controller))
-        .service(registration_challenge)
-        .service(registration_result)
-        .service(authentication_challenge)
-        .service(authentication_result)
-}
-
-#[actix_web::test]
-async fn test_attestation_options_success() {
-    let app = create_test_app().await;
+    let app = test::init_service(
+        App::new()
+            .app_data(web::Data::new(controller))
+            .service(registration_challenge)
+            .service(registration_result)
+            .service(authentication_challenge)
+            .service(authentication_result)
+    ).await;
     
     let req = test::TestRequest::post()
         .uri("/attestation/options")
@@ -62,7 +51,22 @@ async fn test_attestation_options_success() {
 
 #[actix_web::test]
 async fn test_attestation_options_minimal_request() {
-    let app = create_test_app().await;
+    let webauthn_service = Arc::new(WebAuthnService::new(
+        "Example Corporation".to_string(),
+        "localhost".to_string(),
+        "http://localhost:8080".to_string(),
+    ));
+    
+    let controller = Arc::new(WebAuthnController::new(webauthn_service));
+
+    let app = test::init_service(
+        App::new()
+            .app_data(web::Data::new(controller))
+            .service(registration_challenge)
+            .service(registration_result)
+            .service(authentication_challenge)
+            .service(authentication_result)
+    ).await;
     
     let minimal_request = ServerPublicKeyCredentialCreationOptionsRequest {
         username: "test@example.com".to_string(),
@@ -91,7 +95,22 @@ async fn test_attestation_options_minimal_request() {
 
 #[actix_web::test]
 async fn test_attestation_result_success() {
-    let app = create_test_app().await;
+    let webauthn_service = Arc::new(WebAuthnService::new(
+        "Example Corporation".to_string(),
+        "localhost".to_string(),
+        "http://localhost:8080".to_string(),
+    ));
+    
+    let controller = Arc::new(WebAuthnController::new(webauthn_service));
+
+    let app = test::init_service(
+        App::new()
+            .app_data(web::Data::new(controller))
+            .service(registration_challenge)
+            .service(registration_result)
+            .service(authentication_challenge)
+            .service(authentication_result)
+    ).await;
     
     let req = test::TestRequest::post()
         .uri("/attestation/result")
@@ -110,7 +129,22 @@ async fn test_attestation_result_success() {
 
 #[actix_web::test]
 async fn test_attestation_result_missing_id() {
-    let app = create_test_app().await;
+    let webauthn_service = Arc::new(WebAuthnService::new(
+        "Example Corporation".to_string(),
+        "localhost".to_string(),
+        "http://localhost:8080".to_string(),
+    ));
+    
+    let controller = Arc::new(WebAuthnController::new(webauthn_service));
+
+    let app = test::init_service(
+        App::new()
+            .app_data(web::Data::new(controller))
+            .service(registration_challenge)
+            .service(registration_result)
+            .service(authentication_challenge)
+            .service(authentication_result)
+    ).await;
     
     let mut credential = create_mock_attestation_credential();
     credential.id = "".to_string();
@@ -132,7 +166,22 @@ async fn test_attestation_result_missing_id() {
 
 #[actix_web::test]
 async fn test_assertion_options_success() {
-    let app = create_test_app().await;
+    let webauthn_service = Arc::new(WebAuthnService::new(
+        "Example Corporation".to_string(),
+        "localhost".to_string(),
+        "http://localhost:8080".to_string(),
+    ));
+    
+    let controller = Arc::new(WebAuthnController::new(webauthn_service));
+
+    let app = test::init_service(
+        App::new()
+            .app_data(web::Data::new(controller))
+            .service(registration_challenge)
+            .service(registration_result)
+            .service(authentication_challenge)
+            .service(authentication_result)
+    ).await;
     
     let req = test::TestRequest::post()
         .uri("/assertion/options")
@@ -156,7 +205,22 @@ async fn test_assertion_options_success() {
 
 #[actix_web::test]
 async fn test_assertion_result_success() {
-    let app = create_test_app().await;
+    let webauthn_service = Arc::new(WebAuthnService::new(
+        "Example Corporation".to_string(),
+        "localhost".to_string(),
+        "http://localhost:8080".to_string(),
+    ));
+    
+    let controller = Arc::new(WebAuthnController::new(webauthn_service));
+
+    let app = test::init_service(
+        App::new()
+            .app_data(web::Data::new(controller))
+            .service(registration_challenge)
+            .service(registration_result)
+            .service(authentication_challenge)
+            .service(authentication_result)
+    ).await;
     
     let req = test::TestRequest::post()
         .uri("/assertion/result")
@@ -175,7 +239,22 @@ async fn test_assertion_result_success() {
 
 #[actix_web::test]
 async fn test_assertion_result_missing_id() {
-    let app = create_test_app().await;
+    let webauthn_service = Arc::new(WebAuthnService::new(
+        "Example Corporation".to_string(),
+        "localhost".to_string(),
+        "http://localhost:8080".to_string(),
+    ));
+    
+    let controller = Arc::new(WebAuthnController::new(webauthn_service));
+
+    let app = test::init_service(
+        App::new()
+            .app_data(web::Data::new(controller))
+            .service(registration_challenge)
+            .service(registration_result)
+            .service(authentication_challenge)
+            .service(authentication_result)
+    ).await;
     
     let mut credential = create_mock_assertion_credential();
     credential.id = "".to_string();
@@ -197,7 +276,22 @@ async fn test_assertion_result_missing_id() {
 
 #[actix_web::test]
 async fn test_registration_flow_complete() {
-    let app = create_test_app().await;
+    let webauthn_service = Arc::new(WebAuthnService::new(
+        "Example Corporation".to_string(),
+        "localhost".to_string(),
+        "http://localhost:8080".to_string(),
+    ));
+    
+    let controller = Arc::new(WebAuthnController::new(webauthn_service));
+
+    let app = test::init_service(
+        App::new()
+            .app_data(web::Data::new(controller))
+            .service(registration_challenge)
+            .service(registration_result)
+            .service(authentication_challenge)
+            .service(authentication_result)
+    ).await;
     
     // Step 1: Get registration challenge
     let registration_req = test::TestRequest::post()
@@ -227,7 +321,22 @@ async fn test_registration_flow_complete() {
 
 #[actix_web::test]
 async fn test_authentication_flow_complete() {
-    let app = create_test_app().await;
+    let webauthn_service = Arc::new(WebAuthnService::new(
+        "Example Corporation".to_string(),
+        "localhost".to_string(),
+        "http://localhost:8080".to_string(),
+    ));
+    
+    let controller = Arc::new(WebAuthnController::new(webauthn_service));
+
+    let app = test::init_service(
+        App::new()
+            .app_data(web::Data::new(controller))
+            .service(registration_challenge)
+            .service(registration_result)
+            .service(authentication_challenge)
+            .service(authentication_result)
+    ).await;
     
     // Step 1: Get authentication challenge
     let auth_req = test::TestRequest::post()
