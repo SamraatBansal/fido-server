@@ -1,32 +1,28 @@
 //! WebAuthn service for FIDO2 operations
 
-use crate::error::{AppError, Result};
+use crate::error::Result;
 use crate::types::*;
 use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
 use rand::{distributions::Alphanumeric, Rng};
-use std::collections::HashMap;
-use webauthn_rs::prelude::*;
 
 pub struct WebAuthnService {
-    webauthn: Webauthn,
+    rp_name: String,
+    rp_id: String,
+    origin: String,
 }
 
 impl WebAuthnService {
     pub fn new(rp_name: &str, rp_id: &str, origin: &str) -> Result<Self> {
-        let rp = RelyingParty {
-            name: rp_name,
-            id: rp_id,
-            origin,
-        };
-
-        let webauthn = Webauthn::new(rp);
-
-        Ok(Self { webauthn })
+        Ok(Self {
+            rp_name: rp_name.to_string(),
+            rp_id: rp_id.to_string(),
+            origin: origin.to_string(),
+        })
     }
 
     /// Generate a random challenge (16-64 bytes, base64url encoded)
     fn generate_challenge() -> String {
-        let mut rng = rand::thread_rng();
+        let rng = rand::thread_rng();
         let challenge: String = rng
             .sample_iter(&Alphanumeric)
             .take(32)
