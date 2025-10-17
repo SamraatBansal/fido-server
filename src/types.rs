@@ -43,6 +43,7 @@ pub struct ServerPublicKeyCredentialCreationOptionsResponse {
     pub rp: PublicKeyCredentialRpEntity,
     pub user: ServerPublicKeyCredentialUserEntity,
     pub challenge: String,
+    #[serde(rename = "pubKeyCredParams")]
     pub pub_key_cred_params: Vec<PublicKeyCredentialParameters>,
     pub timeout: u32,
     pub exclude_credentials: Vec<ServerPublicKeyCredentialDescriptor>,
