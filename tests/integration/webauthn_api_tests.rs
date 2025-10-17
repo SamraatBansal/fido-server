@@ -1,6 +1,6 @@
 //! Integration tests for FIDO2 WebAuthn API
 
-use actix_web::{test, web, App, HttpResponse};
+use actix_web::{test, web, App};
 use fido_server::controllers::webauthn_controller::*;
 use fido_server::models::webauthn::*;
 use fido_server::services::webauthn_service::WebAuthnService;
@@ -302,7 +302,7 @@ async fn test_registration_flow_complete() {
     let registration_resp = test::call_service(&app, registration_req).await;
     assert!(registration_resp.status().is_success());
     
-    let registration_response: ServerPublicKeyCredentialCreationOptionsResponse = 
+    let _registration_response: ServerPublicKeyCredentialCreationOptionsResponse = 
         test::read_body_json(registration_resp).await;
     
     // Step 2: Complete registration
@@ -347,7 +347,7 @@ async fn test_authentication_flow_complete() {
     let auth_resp = test::call_service(&app, auth_req).await;
     assert!(auth_resp.status().is_success());
     
-    let auth_response: ServerPublicKeyCredentialGetOptionsResponse = 
+    let _auth_response: ServerPublicKeyCredentialGetOptionsResponse = 
         test::read_body_json(auth_resp).await;
     
     // Step 2: Complete authentication
