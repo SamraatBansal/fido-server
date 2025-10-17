@@ -120,7 +120,7 @@ pub struct PublicKeyCredentialRpEntity {
 }
 
 /// User entity for server response
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct ServerPublicKeyCredentialUserEntity {
     pub id: String,
     pub name: String,
