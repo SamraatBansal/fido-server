@@ -123,7 +123,7 @@ async fn test_complete_fido2_authentication_flow() {
     assert_eq!(assertion_options["userVerification"], "required");
     assert!(assertion_options["allowCredentials"].is_array());
 
-    // Step 2: Simulate assertion result (would normally come from authenticator)
+    // Step 2: Simulate assertion result with invalid origin to test error handling
     let assertion_result_req = test::TestRequest::post()
         .uri("/assertion/result")
         .set_json(&json!({
@@ -132,7 +132,7 @@ async fn test_complete_fido2_authentication_flow() {
                 "authenticatorData": "SZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2MBAAAAAA",
                 "signature": "MEYCIQCv7EqsBRtf2E4o_BjzZfBwNpP8fLjd5y6TUOLWt5l9DQIhANiYig9newAJZYTzG1i5lwP-YQk9uXFnnDaHnr2yCKXL",
                 "userHandle": "",
-                "clientDataJSON": "eyJjaGFsbGVuZ2UiOiJ4ZGowQ0JmWDY5MnFzQVRweTBrTmM4NTMzSmR2ZExVcHFZUDh3RFRYX1pFIiwiY2xpZW50RXh0ZW5zaW9ucyI6e30sImhhc2hBbGdvcml0aG0iOiJTSEEtMjU2Iiwib3JpZ2luIjoiaHR0cDovL2xvY2FsaG9zdDozMDAwIiwidHlwZSI6IndlYmF1dGhuLmdldCJ9"
+                "clientDataJSON": "eyJjaGFsbGVuZ2UiOiJ0ZXN0LWNoYWxsZW5nZSIsImNsaWVudEV4dGVuc2lvbnMiOnt9LCJoYXNoQWxnb3JpdGhtIjoiU0hBLTI1NiIsIm9yaWdpbiI6Imh0dHA6Ly9ldmlsLmV4YW1wbGUuY29tIiwidHlwZSI6IndlYmF1dGhuLmdldCJ9"
             },
             "getClientExtensionResults": {},
             "type": "public-key"
@@ -140,8 +140,7 @@ async fn test_complete_fido2_authentication_flow() {
         .to_request();
 
     let assertion_result_resp = test::call_service(&app, assertion_result_req).await;
-    // This will fail because we haven't implemented full signature verification yet
-    // But it should return the proper error format
+    // This should fail due to invalid origin
     assert!(!assertion_result_resp.status().is_success());
     
     let assertion_result: serde_json::Value = test::read_body_json(assertion_result_resp).await;
