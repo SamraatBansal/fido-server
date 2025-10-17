@@ -72,7 +72,7 @@ pub struct ServerPublicKeyCredentialGetOptionsResponse {
 }
 
 /// Server public key credential
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct ServerPublicKeyCredential {
     pub id: String,
     #[serde(rename = "type")]
