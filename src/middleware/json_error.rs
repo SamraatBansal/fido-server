@@ -12,7 +12,7 @@ pub struct JsonErrorHandler;
 
 impl<S, B> Transform<S, ServiceRequest> for JsonErrorHandler
 where
-    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error> + 'static,
+    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error> + Clone + 'static,
     S::Future: 'static,
     B: MessageBody + 'static,
 {
