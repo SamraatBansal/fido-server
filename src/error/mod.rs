@@ -6,15 +6,19 @@ use thiserror::Error;
 /// Application error type
 #[derive(Error, Debug)]
 pub enum AppError {
+    /// Invalid request error
     #[error("Invalid request: {0}")]
     BadRequest(String),
     
+    /// Internal server error
     #[error("Internal server error: {0}")]
     InternalError(String),
     
+    /// WebAuthn-specific error
     #[error("WebAuthn error: {0}")]
     WebAuthnError(String),
     
+    /// JSON serialization error
     #[error("Serialization error: {0}")]
     SerializationError(#[from] serde_json::Error),
 }
