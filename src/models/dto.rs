@@ -69,8 +69,11 @@ pub struct ServerPublicKeyCredentialGetOptionsResponse {
     pub error_message: String,
     pub challenge: String,
     pub timeout: Option<u64>,
+    #[serde(rename = "rpId")]
     pub rp_id: String,
+    #[serde(rename = "allowCredentials")]
     pub allow_credentials: Vec<ServerPublicKeyCredentialDescriptor>,
+    #[serde(rename = "userVerification")]
     pub user_verification: Option<String>,
     pub extensions: Option<HashMap<String, serde_json::Value>>,
 }
