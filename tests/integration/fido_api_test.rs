@@ -13,9 +13,9 @@ async fn test_attestation_options_success() {
     let webauthn_config = WebAuthnConfig::default();
     let webauthn_service: Arc<dyn WebAuthnService> = Arc::new(WebAuthnServiceImpl::new(webauthn_config));
     
-    let app = TestServer::with(move || {
-        App::new().configure(|cfg| configure_fido_routes(cfg, webauthn_service.clone()))
-    });
+    let app = test::init_service(
+        App::new().configure(|cfg| configure_fido_routes(cfg, webauthn_service))
+    ).await;
 
     let request_body = serde_json::json!({
         "username": "johndoe@example.com",
@@ -28,14 +28,15 @@ async fn test_attestation_options_success() {
         "attestation": "direct"
     });
 
-    let response = app
-        .post("/attestation/options")
-        .send_json(&request_body)
-        .await;
+    let req = test::TestRequest::post()
+        .uri("/attestation/options")
+        .set_json(&request_body)
+        .to_request();
 
-    assert_eq!(response.status_code(), http::StatusCode::OK);
+    let response = test::call_service(&app, req).await;
+    assert_eq!(response.status(), http::StatusCode::OK);
 
-    let result: serde_json::Value = response.json().await;
+    let result: serde_json::Value = test::read_body_json(response).await;
     assert_eq!(result["status"], "ok");
     assert_eq!(result["errorMessage"], "");
     assert!(result["rp"]["name"].as_str().is_some());
