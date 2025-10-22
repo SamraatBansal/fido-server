@@ -160,9 +160,6 @@ impl WebAuthnService for WebAuthnServiceImpl {
         &self,
         request: ServerPublicKeyCredentialCreationOptionsRequest,
     ) -> Result<ServerPublicKeyCredentialCreationOptionsResponse> {
-        // Debug logging
-        println!("DEBUG: Request authenticatorSelection: {:?}", request.authenticator_selection);
-        
         // Check if user exists, create if not (for testing purposes)
         let user = match self.find_user_by_username(&request.username).await? {
             Some(user) => user,
