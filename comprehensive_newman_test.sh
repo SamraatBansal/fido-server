@@ -33,7 +33,7 @@ run_test() {
     
     # Extract status code and body
     status_code=$(echo "$response" | tail -n1)
-    body=$(echo "$response" | head -n -1)
+    body=$(echo "$response" | sed '$d')
     
     TOTAL_TESTS=$((TOTAL_TESTS + 1))
     
