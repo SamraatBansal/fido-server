@@ -19,6 +19,15 @@ impl ServerResponse {
         Self {
             status: "ok".to_string(),
             error_message: "".to_string(),
+            session_id: None,
+        }
+    }
+
+    pub fn success_with_session(session_id: String) -> Self {
+        Self {
+            status: "ok".to_string(),
+            error_message: "".to_string(),
+            session_id: Some(session_id),
         }
     }
 
@@ -26,6 +35,15 @@ impl ServerResponse {
         Self {
             status: "failed".to_string(),
             error_message: message.into(),
+            session_id: None,
+        }
+    }
+
+    pub fn error_with_session(message: impl Into<String>, session_id: String) -> Self {
+        Self {
+            status: "failed".to_string(),
+            error_message: message.into(),
+            session_id: Some(session_id),
         }
     }
 }
