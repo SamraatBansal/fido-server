@@ -9,6 +9,7 @@ use crate::models::dto::{
 use crate::services::WebAuthnService;
 use actix_web::{web, HttpRequest, HttpResponse, ResponseError};
 use std::sync::Arc;
+use uuid::Uuid;
 
 /// Controller for handling assertion operations
 pub struct AssertionController {
