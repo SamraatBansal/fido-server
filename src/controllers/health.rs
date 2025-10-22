@@ -1,7 +1,7 @@
 //! Health check controller
 
 use crate::error::Result;
-use actix_web::{web, HttpResponse};
+use actix_web::HttpResponse;
 use serde_json::json;
 
 /// Health check endpoint
