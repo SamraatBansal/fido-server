@@ -55,6 +55,8 @@ pub struct ServerPublicKeyCredentialCreationOptionsResponse {
     pub authenticator_selection: Option<AuthenticatorSelectionCriteria>,
     pub attestation: Option<String>,
     pub extensions: Option<HashMap<String, serde_json::Value>>,
+    #[serde(rename = "sessionId")]
+    pub session_id: String,
 }
 
 /// Request for assertion options (credential get)
