@@ -9,6 +9,9 @@ pub struct ServerResponse {
     pub status: String,
     #[serde(rename = "errorMessage")]
     pub error_message: String,
+    #[serde(rename = "sessionId")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub session_id: Option<String>,
 }
 
 impl ServerResponse {
