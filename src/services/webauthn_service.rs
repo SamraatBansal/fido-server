@@ -7,12 +7,10 @@ use crate::models::{
         ServerPublicKeyCredentialGetOptionsRequest, ServerPublicKeyCredentialGetOptionsResponse,
         ServerPublicKeyCredential, ServerResponse, ServerPublicKeyCredentialUserEntity,
         PublicKeyCredentialRpEntity, PublicKeyCredentialParameters, ServerPublicKeyCredentialDescriptor,
-        AuthenticatorSelectionCriteria,
     },
     webauthn::{User, Credential, Challenge, WebAuthnConfig, ChallengeType},
 };
 use async_trait::async_trait;
-use std::collections::HashMap;
 use uuid::Uuid;
 use base64::{Engine as _, engine::general_purpose};
 
@@ -96,7 +94,7 @@ impl WebAuthnServiceImpl {
         }
     }
 
-    async fn find_credentials_by_user(&self, user_id: &Uuid) -> Result<Vec<Credential>> {
+    async fn find_credentials_by_user(&self, _user_id: &Uuid) -> Result<Vec<Credential>> {
         // Mock implementation - return empty for now
         Ok(vec![])
     }
@@ -119,13 +117,13 @@ impl WebAuthnServiceImpl {
         Ok(())
     }
 
-    async fn find_and_consume_challenge(&self, challenge_str: &str, challenge_type: ChallengeType) -> Result<Option<Challenge>> {
+    async fn find_and_consume_challenge(&self, challenge_str: &str, _challenge_type: ChallengeType) -> Result<Option<Challenge>> {
         // Mock implementation - in real code, this would find and mark as used
         println!("Looking for challenge: {}", challenge_str);
         Ok(None) // For now, return None to simulate not found
     }
 
-    async fn store_credential(&self, user_id: &Uuid, credential_id: &str, public_key: &str) -> Result<()> {
+    async fn store_credential(&self, user_id: &Uuid, credential_id: &str, _public_key: &str) -> Result<()> {
         // Mock implementation - in real code, this would store to database
         println!("Storing credential for user {}: {}", user_id, credential_id);
         Ok(())
