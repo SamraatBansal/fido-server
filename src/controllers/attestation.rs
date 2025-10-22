@@ -2,20 +2,22 @@
 
 use crate::error::{AppError, Result};
 use crate::models::dto::{
-    ServerPublicKeyCredentialCreationOptionsRequest, ServerPublicKeyCredentialCreationOptionsResponse,
-    ServerPublicKeyCredential, ServerResponse,
+    ServerPublicKeyCredentialCreationOptionsRequest,
+    ServerPublicKeyCredential,
 };
 use crate::services::WebAuthnService;
 use actix_web::{web, HttpRequest, HttpResponse};
 use std::sync::Arc;
 
+/// Controller for handling attestation operations
 pub struct AttestationController {
-    webauthn_service: Arc<dyn WebAuthnService>,
+    _webauthn_service: Arc<dyn WebAuthnService>,
 }
 
 impl AttestationController {
+    /// Create a new attestation controller
     pub fn new(webauthn_service: Arc<dyn WebAuthnService>) -> Self {
-        Self { webauthn_service }
+        Self { _webauthn_service: webauthn_service }
     }
 
     /// Generate attestation options for credential creation
