@@ -9,7 +9,6 @@ use fido_server::models::{
     ServerPublicKeyCredentialGetOptionsRequest,
     AuthenticatorSelectionCriteria,
     AttestationConveyancePreference,
-    ServerPublicKeyCredential,
 };
 use serde_json::json;
 
@@ -77,10 +76,9 @@ async fn test_attestation_options_success() {
 
 #[actix_web::test]
 async fn test_attestation_options_missing_username() {
-    let app = fido_server::routes::configure_routes;
-    let mut server = TestServer::new(|| {
-        actix_web::App::new().configure(fido_server::routes::configure_routes)
-    });
+    let app = test::init_service(
+        App::new().configure(fido_server::routes::configure_routes)
+    ).await;
 
     let request = json!({
         "displayName": "John Doe",
@@ -92,21 +90,20 @@ async fn test_attestation_options_missing_username() {
         "attestation": "direct"
     });
 
-    let response = server
-        .post("/api/v1/attestation/options")
-        .send_json(&request)
-        .await
-        .unwrap();
+    let req = test::TestRequest::post()
+        .uri("/api/v1/attestation/options")
+        .set_json(&request)
+        .to_request();
 
+    let response = test::call_service(&app, req).await;
     assert_eq!(response.status(), 400);
 }
 
 #[actix_web::test]
 async fn test_attestation_options_missing_display_name() {
-    let app = fido_server::routes::configure_routes;
-    let mut server = TestServer::new(|| {
-        actix_web::App::new().configure(fido_server::routes::configure_routes)
-    });
+    let app = test::init_service(
+        App::new().configure(fido_server::routes::configure_routes)
+    ).await;
 
     let request = json!({
         "username": "johndoe@example.com",
@@ -118,120 +115,116 @@ async fn test_attestation_options_missing_display_name() {
         "attestation": "direct"
     });
 
-    let response = server
-        .post("/api/v1/attestation/options")
-        .send_json(&request)
-        .await
-        .unwrap();
+    let req = test::TestRequest::post()
+        .uri("/api/v1/attestation/options")
+        .set_json(&request)
+        .to_request();
 
+    let response = test::call_service(&app, req).await;
     assert_eq!(response.status(), 400);
 }
 
 #[actix_web::test]
 async fn test_attestation_result_success() {
-    let app = fido_server::routes::configure_routes;
-    let mut server = TestServer::new(|| {
-        actix_web::App::new().configure(fido_server::routes::configure_routes)
-    });
+    let app = test::init_service(
+        App::new().configure(fido_server::routes::configure_routes)
+    ).await;
 
     // Mock attestation result (simplified for testing)
-    let request = ServerPublicKeyCredential {
-        id: "LFdoCFJTyB82ZzSJUHc-c72yraRc_1mPvGX8ToE8su39xX26Jcqd31LUkKOS36FIAWgWl6itMKqmDvruha6ywA".to_string(),
-        cred_type: "public-key".to_string(),
-        response: serde_json::json!({
+    let request = json!({
+        "id": "LFdoCFJTyB82ZzSJUHc-c72yraRc_1mPvGX8ToE8su39xX26Jcqd31LUkKOS36FIAWgWl6itMKqmDvruha6ywA",
+        "type": "public-key",
+        "response": {
             "clientDataJSON": "eyJjaGFsbGVuZ2UiOiJOeHlab3B3VktiRmw3RW5uTWFlXzVGbmlyN1FKN1FXcDFVRlVLakZIbGZrIiwiY2xpZW50RXh0ZW5zaW9ucyI6e30sImhhc2hBbGdvcml0aG0iOiJTSEEtMjU2Iiwib3JpZ2luIjoiaHR0cDovL2xvY2FsaG9zdDozMDAwIiwidHlwZSI6IndlYmF1dGhuLmNyZWF0ZSJ9",
             "attestationObject": "o2NmbXRoZmlkby11MmZnYXR0U3RtdKJjc2lnWEcwRQIgVzzvX3Nyp_g9j9f2B-tPWy6puW01aZHI8RXjwqfDjtQCIQDLsdniGPO9iKr7tdgVV-FnBYhvzlZLG3u28rVt10YXfGN4NWOBWQJOMIICSjCCATKgAwIBAgIEVxb3wDANBgkqhkiG9w0BAQsFADAuMSwwKgYDVQQDEyNZdWJpY28gVTJGIFJvb3QgQ0EgU2VyaWFsIDQ1NzIwMDYzMTAgFw0xNDA4MDEwMDAwMDBaGA8yMDUwMDkwNDAwMDAwMFowLDEqMCgGA1UEAwwhWXViaWNvIFUyRiBFRSBTZXJpYWwgMjUwNTY5MjI2MTc2MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEZNkcVNbZV43TsGB4TEY21UijmDqvNSfO6y3G4ytnnjP86ehjFK28-FdSGy9MSZ-Ur3BVZb4iGVsptk5NrQ3QYqM7MDkwIgYJKwYBBAGCxAoCBBUxLjMuNi4xLjQuMS40MTQ4Mi4xLjUwEwYLKwYBBAGC5RwCAQEEBAMCBSAwDQYJKoZIhvcNAQELBQADggEBAHibGMqbpNt2IOL4i4z96VEmbSoid9Xj--m2jJqg6RpqSOp1TO8L3lmEA22uf4uj_eZLUXYEw6EbLm11TUo3Ge-odpMPoODzBj9aTKC8oDFPfwWj6l1O3ZHTSma1XVyPqG4A579f3YAjfrPbgj404xJns0mqx5wkpxKlnoBKqo1rqSUmonencd4xanO_PHEfxU0iZif615Xk9E4bcANPCfz-OLfeKXiT-1msixwzz8XGvl2OTMJ_Sh9G9vhE-HjAcovcHfumcdoQh_WM445Za6Pyn9BZQV3FCqMviRR809sIATfU5lu86wu_5UGIGI7MFDEYeVGSqzpzh6mlcn8QSIZoYXV0aERhdGFYxEmWDeWIDoxodDQXD2R2YFuP5K65ooYyx5lc87qDHZdjQQAAAAAAAAAAAAAAAAAAAAAAAAAAAEAsV2gIUlPIHzZnNIlQdz5zvbKtpFz_WY-8ZfxOgTyy7f3Ffbolyp3fUtSQo5LfoUgBaBaXqK0wqqYO-u6FrrLApQECAyYgASFYIPr9-YH8DuBsOnaI3KJa0a39hyxh9LDtHErNvfQSyxQsIlgg4rAuQQ5uy4VXGFbkiAt0uwgJJodp-DymkoBcrGsLtkI"
-        }),
-        get_client_extension_results: Some(json!({})),
-    };
+        },
+        "getClientExtensionResults": {}
+    });
 
-    let response = server
-        .post("/api/v1/attestation/result")
-        .send_json(&request)
-        .await
-        .unwrap();
+    let req = test::TestRequest::post()
+        .uri("/api/v1/attestation/result")
+        .set_json(&request)
+        .to_request();
 
+    let response = test::call_service(&app, req).await;
     assert_eq!(response.status(), 200);
 
-    let json_response: serde_json::Value = response.json().await.unwrap();
+    let json_response: serde_json::Value = test::read_body_json(response).await;
     assert_eq!(json_response["status"], "ok");
     assert_eq!(json_response["errorMessage"], "");
 }
 
 #[actix_web::test]
 async fn test_assertion_options_user_not_found() {
-    let app = fido_server::routes::configure_routes;
-    let mut server = TestServer::new(|| {
-        actix_web::App::new().configure(fido_server::routes::configure_routes)
-    });
+    let app = test::init_service(
+        App::new().configure(fido_server::routes::configure_routes)
+    ).await;
 
     let request = ServerPublicKeyCredentialGetOptionsRequest {
         username: "nonexistent@example.com".to_string(),
         user_verification: Some("required".to_string()),
     };
 
-    let response = server
-        .post("/api/v1/assertion/options")
-        .send_json(&request)
-        .await
-        .unwrap();
+    let req = test::TestRequest::post()
+        .uri("/api/v1/assertion/options")
+        .set_json(&request)
+        .to_request();
 
+    let response = test::call_service(&app, req).await;
     assert_eq!(response.status(), 404);
 
-    let json_response: serde_json::Value = response.json().await.unwrap();
+    let json_response: serde_json::Value = test::read_body_json(response).await;
     assert_eq!(json_response["status"], "failed");
     assert!(json_response["errorMessage"].as_str().unwrap().contains("User does not exists"));
 }
 
 #[actix_web::test]
 async fn test_assertion_options_missing_username() {
-    let app = fido_server::routes::configure_routes;
-    let mut server = TestServer::new(|| {
-        actix_web::App::new().configure(fido_server::routes::configure_routes)
-    });
+    let app = test::init_service(
+        App::new().configure(fido_server::routes::configure_routes)
+    ).await;
 
     let request = json!({
         "userVerification": "required"
     });
 
-    let response = server
-        .post("/api/v1/assertion/options")
-        .send_json(&request)
-        .await
-        .unwrap();
+    let req = test::TestRequest::post()
+        .uri("/api/v1/assertion/options")
+        .set_json(&request)
+        .to_request();
 
+    let response = test::call_service(&app, req).await;
     assert_eq!(response.status(), 400);
 }
 
 #[actix_web::test]
 async fn test_assertion_result_success() {
-    let app = fido_server::routes::configure_routes;
-    let mut server = TestServer::new(|| {
-        actix_web::App::new().configure(fido_server::routes::configure_routes)
-    });
+    let app = test::init_service(
+        App::new().configure(fido_server::routes::configure_routes)
+    ).await;
 
     // Mock assertion result (simplified for testing)
-    let request = ServerPublicKeyCredential {
-        id: "LFdoCFJTyB82ZzSJUHc-c72yraRc_1mPvGX8ToE8su39xX26Jcqd31LUkKOS36FIAWgWl6itMKqmDvruha6ywA".to_string(),
-        cred_type: "public-key".to_string(),
-        response: serde_json::json!({
+    let request = json!({
+        "id": "LFdoCFJTyB82ZzSJUHc-c72yraRc_1mPvGX8ToE8su39xX26Jcqd31LUkKOS36FIAWgWl6itMKqmDvruha6ywA",
+        "type": "public-key",
+        "response": {
             "authenticatorData": "SZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2MBAAAAAA",
             "signature": "MEYCIQCv7EqsBRtf2E4o_BjzZfBwNpP8fLjd5y6TUOLWt5l9DQIhANiYig9newAJZYTzG1i5lwP-YQk9uXFnnDaHnr2yCKXL",
             "userHandle": "",
             "clientDataJSON": "eyJjaGFsbGVuZ2UiOiJ4ZGowQ0JmWDY5MnFzQVRweTBrTmM4NTMzSmR2ZExVcHFZUDh3RFRYX1pFIiwiY2xpZW50RXh0ZW5zaW9ucyI6e30sImhhc2hBbGdvcml0aG0iOiJTSEEtMjU2Iiwib3JpZ2luIjoiaHR0cDovL2xvY2FsaG9zdDozMDAwIiwidHlwZSI6IndlYmF1dGhuLmdldCJ9"
-        }),
-        get_client_extension_results: Some(json!({})),
-    };
+        },
+        "getClientExtensionResults": {}
+    });
 
-    let response = server
-        .post("/api/v1/assertion/result")
-        .send_json(&request)
-        .await
-        .unwrap();
+    let req = test::TestRequest::post()
+        .uri("/api/v1/assertion/result")
+        .set_json(&request)
+        .to_request();
 
+    let response = test::call_service(&app, req).await;
     assert_eq!(response.status(), 200);
 
-    let json_response: serde_json::Value = response.json().await.unwrap();
+    let json_response: serde_json::Value = test::read_body_json(response).await;
     assert_eq!(json_response["status"], "ok");
     assert_eq!(json_response["errorMessage"], "");
 }
