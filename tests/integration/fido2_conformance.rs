@@ -30,15 +30,16 @@ async fn test_attestation_options_success() {
         attestation: Some(AttestationConveyancePreference::Direct),
     };
 
-    let response = server
-        .post("/api/v1/attestation/options")
-        .send_json(&request)
-        .await
-        .unwrap();
+    let req = test::TestRequest::post()
+        .uri("/api/v1/attestation/options")
+        .set_json(&request)
+        .to_request();
+
+    let response = test::call_service(&app, req).await;
 
     assert_eq!(response.status(), 200);
 
-    let json_response: serde_json::Value = response.json().await.unwrap();
+    let json_response: serde_json::Value = test::read_body_json(response).await;
     
     // Verify response structure according to FIDO2 conformance
     assert_eq!(json_response["status"], "ok");
