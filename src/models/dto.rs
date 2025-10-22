@@ -182,7 +182,7 @@ pub struct PublicKeyCredentialParameters {
 }
 
 /// Authenticator selection criteria
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AuthenticatorSelectionCriteria {
     #[serde(rename = "requireResidentKey")]
     pub require_resident_key: Option<bool>,
