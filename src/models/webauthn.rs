@@ -99,7 +99,7 @@ pub struct WebAuthnConfig {
 impl Default for WebAuthnConfig {
     fn default() -> Self {
         Self {
-            rp_name: "FIDO Server".to_string(),
+            rp_name: "Example Corporation".to_string(),
             rp_id: "localhost".to_string(),
             rp_origin: "http://localhost:3000".to_string(),
             timeout: 60000, // 60 seconds
