@@ -1,0 +1,105 @@
+{
+  "info": {
+    "name": "FIDO2 Original Failure Reproduction",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Attestation Options Test 1",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test(\"Response time is acceptable\", function () {",
+              "    pm.expect(pm.response.responseTime).to.be.below(1000);",
+              "});",
+              "pm.test(\"Content-Type is present\", function () {",
+              "    pm.response.to.have.header(\"Content-Type\");",
+              "});",
+              "pm.test(\"Response is valid JSON\", function () {",
+              "    pm.response.to.be.json;",
+              "});",
+              "pm.test(\"Response has expected fields\", function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('status');",
+              "    pm.expect(jsonData).to.have.property('errorMessage');",
+              "    pm.expect(jsonData).to.have.property('rp');",
+              "    pm.expect(jsonData).to.have.property('user');",
+              "    pm.expect(jsonData).to.have.property('challenge');",
+              "    pm.expect(jsonData).to.have.property('pubKeyCredParams');",
+              "});",
+              "pm.test(\"Response fields have correct types\", function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData.status).to.be.a('string');",
+              "    pm.expect(jsonData.errorMessage).to.be.a('string');",
+              "    pm.expect(jsonData.challenge).to.be.a('string');",
+              "    pm.expect(jsonData.pubKeyCredParams).to.be.an('array');",
+              "});",
+              "pm.test(\"Request was successful\", function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData.status).to.eql('ok');",
+              "    pm.expect(jsonData.errorMessage).to.eql('');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{"key": "Content-Type", "value": "application/json"}],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"username\": \"johndoe@example.com\", \"displayName\": \"John Doe\", \"authenticatorSelection\": {\"requireResidentKey\": false, \"authenticatorAttachment\": \"cross-platform\", \"userVerification\": \"preferred\"}, \"attestation\": \"direct\"}"
+        },
+        "url": {"raw": "http://localhost:8080/attestation/options", "protocol": "http", "host": ["localhost"], "port": "8080", "path": ["attestation", "options"]}
+      }
+    },
+    {
+      "name": "Attestation Result - Should Fail 1",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 400\", function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "pm.test(\"Response time is acceptable\", function () {",
+              "    pm.expect(pm.response.responseTime).to.be.below(1000);",
+              "});",
+              "pm.test(\"Content-Type is present\", function () {",
+              "    pm.response.to.have.header(\"Content-Type\");",
+              "});",
+              "pm.test(\"Response is valid JSON\", function () {",
+              "    pm.response.to.be.json;",
+              "});",
+              "pm.test(\"Response has expected fields\", function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('status');",
+              "    pm.expect(jsonData).to.have.property('errorMessage');",
+              "});",
+              "pm.test(\"Response fields have correct types\", function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData.status).to.be.a('string');",
+              "    pm.expect(jsonData.errorMessage).to.be.a('string');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{"key": "Content-Type", "value": "application/json"}],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"id\": \"\", \"response\": {\"clientDataJSON\": \"\", \"attestationObject\": \"\"}, \"type\": \"public-key\"}"
+        },
+        "url": {"raw": "http://localhost:8080/attestation/result", "protocol": "http", "host": ["localhost"], "port": "8080", "path": ["attestation", "result"]}
+      }
+    }
+  ]
+}
