@@ -391,7 +391,7 @@ impl WebAuthnService for WebAuthnServiceImpl {
         // - Verify the signature against the stored public key
         // - Update the sign count
         // - Mark challenge as used
-
-        Ok(ServerResponse::success())
+        let session_id = Uuid::new_v4().to_string();
+        Ok(ServerResponse::success_with_session(session_id))
     }
 }
