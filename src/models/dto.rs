@@ -82,6 +82,8 @@ pub struct ServerPublicKeyCredentialGetOptionsResponse {
     #[serde(rename = "userVerification")]
     pub user_verification: Option<String>,
     pub extensions: Option<HashMap<String, serde_json::Value>>,
+    #[serde(rename = "sessionId")]
+    pub session_id: String,
 }
 
 /// Server public key credential (for attestation/result and assertion/result)
