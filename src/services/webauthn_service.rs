@@ -331,19 +331,40 @@ impl WebAuthnService for WebAuthnServiceImpl {
         &self,
         credential: ServerPublicKeyCredential,
     ) -> Result<ServerResponse> {
-        // For now, just return success - in real implementation, this would:
-        // 1. Parse and verify the assertion
-        // 2. Validate the challenge
-        // 3. Verify the signature against the stored public key
-        // 4. Update sign count
-
         // Mock validation - just check basic structure
         if credential.id.is_empty() {
-            return Ok(ServerResponse::error("Invalid credential ID"));
+            return Err(AppError::BadRequest("Invalid credential ID"));
         }
 
         if credential.credential_type != "public-key" {
-            return Ok(ServerResponse::error("Invalid credential type"));
+            return Err(AppError::BadRequest("Invalid credential type"));
+        }
+
+        // Check if we have the required response data
+        match &credential.response {
+            ServerAuthenticatorResponse::Assertion(assertion) => {
+                if assertion.client_data_json.is_empty() || assertion.authenticator_data.is_empty() || assertion.signature.is_empty() {
+                    return Err(AppError::BadRequest("Missing assertion data"));
+                }
+                
+                // Try to decode the clientDataJSON to check if it's valid base64
+                if let Err(_) = base64::decode(&assertion.client_data_json) {
+                    return Err(AppError::BadRequest("Invalid clientDataJSON encoding"));
+                }
+                
+                // Try to decode the authenticatorData to check if it's valid base64
+                if let Err(_) = base64::decode(&assertion.authenticator_data) {
+                    return Err(AppError::BadRequest("Invalid authenticatorData encoding"));
+                }
+                
+                // Try to decode the signature to check if it's valid base64
+                if let Err(_) = base64::decode(&assertion.signature) {
+                    return Err(AppError::BadRequest("Invalid signature encoding"));
+                }
+            }
+            _ => {
+                return Err(AppError::BadRequest("Expected assertion response"));
+            }
         }
 
         // In a real implementation, we would:
