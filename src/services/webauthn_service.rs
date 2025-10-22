@@ -288,6 +288,9 @@ impl WebAuthnService for WebAuthnServiceImpl {
             let challenge = Challenge::new_assertion(&request.username);
             self.store_challenge(&challenge).await?;
 
+            // Generate session ID
+            let session_id = Uuid::new_v4().to_string();
+
             // Build response with mock credentials
             let response = ServerPublicKeyCredentialGetOptionsResponse {
                 status: "ok".to_string(),
@@ -298,6 +301,7 @@ impl WebAuthnService for WebAuthnServiceImpl {
                 allow_credentials: mock_credentials,
                 user_verification: request.user_verification,
                 extensions: None,
+                session_id,
             };
 
             return Ok(response);
