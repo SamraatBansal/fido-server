@@ -69,6 +69,7 @@ pub struct ServerPublicKeyCredentialGetOptionsRequest {
 #[derive(Debug, Serialize)]
 pub struct ServerPublicKeyCredentialGetOptionsResponse {
     pub status: String,
+    #[serde(rename = "errorMessage")]
     pub error_message: String,
     pub challenge: String,
     pub timeout: Option<u64>,
