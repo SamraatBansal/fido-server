@@ -15,7 +15,7 @@ use fido_server::models::{
 };
 use serde_json::json;
 
-#[actix_test::test]
+#[actix_web::test]
 async fn test_attestation_options_success() {
     let app = fido_server::routes::configure_routes;
     let mut server = TestServer::start(|| {
