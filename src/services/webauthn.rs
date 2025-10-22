@@ -51,6 +51,7 @@ pub struct InMemoryWebAuthnService {
 }
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 struct ChallengeData {
     challenge: String,
     username: Option<String>,
@@ -59,6 +60,7 @@ struct ChallengeData {
 }
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 struct UserData {
     id: String,
     username: String,
@@ -67,6 +69,7 @@ struct UserData {
 }
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 struct CredentialData {
     id: String,
     user_id: String,
