@@ -143,7 +143,10 @@ pub struct PublicKeyCredentialParameters {
 /// Authenticator selection criteria
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AuthenticatorSelectionCriteria {
+    #[serde(rename = "requireResidentKey")]
     pub require_resident_key: Option<bool>,
+    #[serde(rename = "userVerification")]
     pub user_verification: Option<String>,
+    #[serde(rename = "authenticatorAttachment")]
     pub authenticator_attachment: Option<String>,
 }
