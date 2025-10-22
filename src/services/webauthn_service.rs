@@ -336,7 +336,7 @@ impl WebAuthnService for WebAuthnServiceImpl {
             allow_credentials,
             user_verification: request.user_verification,
             extensions: None,
-            session_id,
+            session_id: Some(session_id),
         };
 
         Ok(response)
