@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ServerResponse {
     pub status: String,
+    #[serde(rename = "errorMessage")]
     pub error_message: String,
 }
 
