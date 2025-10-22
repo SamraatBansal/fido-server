@@ -48,11 +48,18 @@ impl AssertionController {
         validate_origin(&req)?;
 
         // Verify assertion
-        let response = webauthn_service
-            .verify_assertion(credential.into_inner())
-            .await?;
-
-        Ok(HttpResponse::Ok().json(response))
+        match webauthn_service.verify_assertion(credential.into_inner()).await {
+            Ok(response) => Ok(HttpResponse::Ok().json(response)),
+            Err(e) => {
+                // Return the error with proper status code
+                let status_code = e.status_code();
+                let error_response = ServerResponse {
+                    status: "failed".to_string(),
+                    error_message: e.to_string(),
+                };
+                Ok(HttpResponse::build(status_code).json(error_response))
+            }
+        }
     }
 }
 
