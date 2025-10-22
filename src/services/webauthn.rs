@@ -114,6 +114,7 @@ impl InMemoryWebAuthnService {
         challenge_id
     }
 
+    #[allow(dead_code)]
     async fn cleanup_expired_challenges(&self) {
         let now = chrono::Utc::now();
         let mut challenges = self.challenges.write().await;
