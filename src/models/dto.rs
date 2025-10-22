@@ -41,6 +41,7 @@ pub struct ServerPublicKeyCredentialCreationOptionsRequest {
 #[derive(Debug, Serialize)]
 pub struct ServerPublicKeyCredentialCreationOptionsResponse {
     pub status: String,
+    #[serde(rename = "errorMessage")]
     pub error_message: String,
     pub rp: PublicKeyCredentialRpEntity,
     pub user: ServerPublicKeyCredentialUserEntity,
