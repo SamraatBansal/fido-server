@@ -105,7 +105,8 @@ pub struct ServerPublicKeyCredentialGetOptionsResponse {
     pub user_verification: Option<String>,
     pub extensions: Option<HashMap<String, serde_json::Value>>,
     #[serde(rename = "sessionId")]
-    pub session_id: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub session_id: Option<String>,
 }
 
 /// Server public key credential (for attestation/result and assertion/result)
