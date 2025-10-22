@@ -334,11 +334,11 @@ impl WebAuthnService for WebAuthnServiceImpl {
     ) -> Result<ServerResponse> {
         // Mock validation - just check basic structure
         if credential.id.is_empty() {
-            return Err(AppError::BadRequest("Invalid credential ID"));
+            return Err(AppError::BadRequest("Invalid credential ID".to_string()));
         }
 
         if credential.credential_type != "public-key" {
-            return Err(AppError::BadRequest("Invalid credential type"));
+            return Err(AppError::BadRequest("Invalid credential type".to_string()));
         }
 
         // Check if we have the required response data
