@@ -60,7 +60,7 @@ impl Challenge {
         }
     }
 
-    pub fn new_assertion(username: &str) -> Self {
+    pub fn new_assertion(_username: &str) -> Self {
         Self {
             id: Uuid::new_v4(),
             user_id: None, // Will be resolved when user is found
