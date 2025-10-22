@@ -1,18 +1,20 @@
 //! Unit tests for WebAuthn service
 
+use crate::error::AppError;
+use crate::models::{
+    ServerPublicKeyCredentialCreationOptionsRequest,
+    ServerPublicKeyCredentialGetOptionsRequest,
+    AuthenticatorSelectionCriteria,
+    AttestationConveyancePreference,
+    RegistrationCompletionRequest,
+    AuthenticationCompletionRequest,
+};
+use crate::services::webauthn::InMemoryWebAuthnService;
+use crate::services::WebAuthnService;
+use serde_json::json;
+
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::models::{
-        ServerPublicKeyCredentialCreationOptionsRequest,
-        ServerPublicKeyCredentialGetOptionsRequest,
-        AuthenticatorSelectionCriteria,
-        AttestationConveyancePreference,
-        RegistrationCompletionRequest,
-        AuthenticationCompletionRequest,
-        ServerPublicKeyCredential,
-    };
-    use serde_json::json;
 
     #[tokio::test]
     async fn test_generate_registration_challenge_success() {
