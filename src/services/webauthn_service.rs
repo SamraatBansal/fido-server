@@ -208,7 +208,7 @@ impl WebAuthnService for WebAuthnServiceImpl {
             timeout: Some(self.config.timeout),
             exclude_credentials: if exclude_credentials.is_empty() { None } else { Some(exclude_credentials) },
             authenticator_selection: request.authenticator_selection.clone(),
-            attestation: request.attestation.or_else(|| Some("none".to_string())),
+            attestation: request.attestation.clone(),
             extensions: None,
             session_id: Some(session_id),
         };
