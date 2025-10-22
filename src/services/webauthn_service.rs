@@ -210,7 +210,7 @@ impl WebAuthnService for WebAuthnServiceImpl {
             authenticator_selection: request.authenticator_selection.clone(),
             attestation: request.attestation.or_else(|| Some("none".to_string())),
             extensions: None,
-            session_id,
+            session_id: Some(session_id),
         };
 
         Ok(response)
