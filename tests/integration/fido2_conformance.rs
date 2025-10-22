@@ -3,7 +3,7 @@
 //! These tests verify that the server implements the FIDO2/WebAuthn API
 //! according to the conformance requirements.
 
-use actix_web::{test, web, App};
+use actix_web::{test, App};
 use fido_server::models::{
     ServerPublicKeyCredentialCreationOptionsRequest,
     ServerPublicKeyCredentialGetOptionsRequest,
