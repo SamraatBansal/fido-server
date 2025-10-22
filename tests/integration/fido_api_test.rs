@@ -1,7 +1,6 @@
 //! Integration tests for FIDO2/WebAuthn API endpoints
 
-use actix_test::{self, TestServer};
-use actix_web::{App, http};
+use actix_web::{test, App, http};
 use fido_server::{
     models::webauthn::WebAuthnConfig,
     routes::api::configure_fido_routes,
