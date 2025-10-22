@@ -258,8 +258,8 @@ impl WebAuthnService for WebAuthnServiceImpl {
         // - Parse attestationObject and verify signature
         // - Extract and store the public key
         // - Mark challenge as used
-
-        Ok(ServerResponse::success())
+        let session_id = Uuid::new_v4().to_string();
+        Ok(ServerResponse::success_with_session(session_id))
     }
 
     async fn generate_assertion_options(
