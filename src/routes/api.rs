@@ -1,6 +1,6 @@
 //! API routes configuration
 
-use actix_web::{web, Scope};
+use actix_web::web;
 use crate::controllers::{
     attestation_options_handler, attestation_result_handler,
     assertion_options_handler, assertion_result_handler,
