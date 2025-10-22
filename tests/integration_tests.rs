@@ -1,7 +1,7 @@
 //! Integration tests for FIDO2/WebAuthn endpoints
 
 use actix_test::{self, TestServer};
-use actix_web::{App, web};
+use actix_web::{App, test, web};
 use fido_server::{
     models::webauthn::WebAuthnConfig,
     routes::api::configure_fido_routes,
@@ -10,11 +10,15 @@ use fido_server::{
 use serde_json::json;
 use std::sync::Arc;
 
-async fn create_test_app() -> TestServer {
+async fn create_test_app() -> impl actix_web::dev::Service<
+    actix_web::dev::ServiceRequest,
+    Response = actix_web::dev::ServiceResponse,
+    Error = actix_web::Error,
+> {
     let webauthn_config = WebAuthnConfig::default();
     let webauthn_service: Arc<dyn WebAuthnService> = Arc::new(WebAuthnServiceImpl::new(webauthn_config));
 
-    actix_test::init_service(
+    test::init_service(
         App::new().configure(|cfg| configure_fido_routes(cfg, webauthn_service))
     )
     .await
