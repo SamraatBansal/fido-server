@@ -7,6 +7,7 @@ use std::collections::HashMap;
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ServerResponse {
     pub status: String,
+    #[serde(rename = "errorMessage")]
     pub error_message: String,
 }
 
