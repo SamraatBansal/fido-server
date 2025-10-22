@@ -26,14 +26,23 @@ impl AssertionController {
     pub async fn options(
         req: HttpRequest,
         webauthn_service: web::Data<Arc<dyn WebAuthnService>>,
-        request: web::Json<ServerPublicKeyCredentialGetOptionsRequest>,
+        body: web::Bytes,
     ) -> Result<HttpResponse> {
         // Validate origin
         validate_origin(&req)?;
 
+        // Parse JSON manually to handle errors properly
+        let request: ServerPublicKeyCredentialGetOptionsRequest = match serde_json::from_slice(&body) {
+            Ok(req) => req,
+            Err(e) => {
+                let error_response = ServerResponse::error(format!("Invalid request format: {}", e));
+                return Ok(HttpResponse::BadRequest().json(error_response));
+            }
+        };
+
         // Generate assertion options
         let response = webauthn_service
-            .generate_assertion_options(request.into_inner())
+            .generate_assertion_options(request)
             .await?;
 
         Ok(HttpResponse::Ok().json(response))
