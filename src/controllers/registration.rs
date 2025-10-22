@@ -1,12 +1,10 @@
 //! Registration controller for FIDO2/WebAuthn
 
 use actix_web::{web, HttpRequest, HttpResponse};
-use crate::error::{AppError, Result};
+use crate::error::Result;
 use crate::models::{
     ServerPublicKeyCredentialCreationOptionsRequest,
-    ServerPublicKeyCredentialCreationOptionsResponse,
     RegistrationCompletionRequest,
-    RegistrationCompletionResponse,
 };
 use crate::services::WebAuthnService;
 
