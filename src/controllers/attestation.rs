@@ -62,7 +62,8 @@ impl AttestationController {
         let credential: ServerPublicKeyCredential = match serde_json::from_slice(&body) {
             Ok(cred) => cred,
             Err(e) => {
-                let error_response = ServerResponse::error(format!("Invalid request format: {}", e));
+                let session_id = Uuid::new_v4().to_string();
+                let error_response = ServerResponse::error_with_session(format!("Invalid request format: {}", e), session_id);
                 return Ok(HttpResponse::BadRequest().json(error_response));
             }
         };
