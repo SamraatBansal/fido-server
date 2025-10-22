@@ -150,7 +150,6 @@ async fn test_attestation_result_success() {
     assert_eq!(response.status(), 200);
 
     let json_response: serde_json::Value = test::read_body_json(response).await;
-    println!("Attestation result response: {}", serde_json::to_string_pretty(&json_response).unwrap());
     assert_eq!(json_response["status"], "ok");
     assert_eq!(json_response["errorMessage"], "");
 }
@@ -226,7 +225,6 @@ async fn test_assertion_result_success() {
     assert_eq!(response.status(), 200);
 
     let json_response: serde_json::Value = test::read_body_json(response).await;
-    println!("Attestation result response: {}", serde_json::to_string_pretty(&json_response).unwrap());
     assert_eq!(json_response["status"], "ok");
     assert_eq!(json_response["errorMessage"], "");
 }
