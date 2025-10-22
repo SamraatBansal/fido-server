@@ -7,7 +7,7 @@ use crate::models::dto::{
     ServerResponse,
 };
 use crate::services::WebAuthnService;
-use actix_web::{web, HttpRequest, HttpResponse};
+use actix_web::{web, HttpRequest, HttpResponse, ResponseError};
 use std::sync::Arc;
 
 /// Controller for handling attestation operations
