@@ -190,6 +190,9 @@ impl WebAuthnService for WebAuthnServiceImpl {
         let challenge = Challenge::new_attestation(user.id);
         self.store_challenge(&challenge).await?;
 
+        // Generate session ID
+        let session_id = Uuid::new_v4().to_string();
+
         // Build response
         let response = ServerPublicKeyCredentialCreationOptionsResponse {
             status: "ok".to_string(),
@@ -204,9 +207,10 @@ impl WebAuthnService for WebAuthnServiceImpl {
             pub_key_cred_params: self.create_pub_key_cred_params(),
             timeout: Some(self.config.timeout),
             exclude_credentials: if exclude_credentials.is_empty() { None } else { Some(exclude_credentials) },
-            authenticator_selection: request.authenticator_selection,
+            authenticator_selection: request.authenticator_selection.clone(),
             attestation: request.attestation.or_else(|| Some("none".to_string())),
             extensions: None,
+            session_id,
         };
 
         Ok(response)
