@@ -81,17 +81,23 @@ impl WebAuthnServiceImpl {
 
     async fn find_user_by_username(&self, username: &str) -> Result<Option<User>> {
         // Mock implementation - in real code, this would query the database
-        if username == "johndoe@example.com" {
-            Ok(Some(User {
-                id: Uuid::new_v4(),
-                username: username.to_string(),
-                display_name: "John Doe".to_string(),
-                created_at: chrono::Utc::now(),
-                updated_at: chrono::Utc::now(),
-            }))
-        } else {
-            Ok(None)
-        }
+        // For testing, create a user for any email address
+        let display_name = match username {
+            "johndoe@example.com" => "John Doe".to_string(),
+            "test@example.com" => "Test User".to_string(),
+            _ => {
+                // Extract name from email (before @) or use the full email
+                username.split('@').next().unwrap_or(username).to_string()
+            }
+        };
+        
+        Ok(Some(User {
+            id: Uuid::new_v4(),
+            username: username.to_string(),
+            display_name,
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
+        }))
     }
 
     async fn find_credentials_by_user(&self, user_id: &Uuid) -> Result<Vec<Credential>> {
