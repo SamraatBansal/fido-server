@@ -18,7 +18,7 @@ use serde_json::json;
 #[actix_web::test]
 async fn test_attestation_options_success() {
     let app = fido_server::routes::configure_routes;
-    let mut server = TestServer::start(|| {
+    let mut server = TestServer::new(|| {
         actix_web::App::new().configure(fido_server::routes::configure_routes)
     });
 
@@ -80,7 +80,7 @@ async fn test_attestation_options_success() {
 #[actix_web::test]
 async fn test_attestation_options_missing_username() {
     let app = fido_server::routes::configure_routes;
-    let mut server = TestServer::start(|| {
+    let mut server = TestServer::new(|| {
         actix_web::App::new().configure(fido_server::routes::configure_routes)
     });
 
@@ -106,7 +106,7 @@ async fn test_attestation_options_missing_username() {
 #[actix_web::test]
 async fn test_attestation_options_missing_display_name() {
     let app = fido_server::routes::configure_routes;
-    let mut server = TestServer::start(|| {
+    let mut server = TestServer::new(|| {
         actix_web::App::new().configure(fido_server::routes::configure_routes)
     });
 
@@ -132,7 +132,7 @@ async fn test_attestation_options_missing_display_name() {
 #[actix_web::test]
 async fn test_attestation_result_success() {
     let app = fido_server::routes::configure_routes;
-    let mut server = TestServer::start(|| {
+    let mut server = TestServer::new(|| {
         actix_web::App::new().configure(fido_server::routes::configure_routes)
     });
 
@@ -163,7 +163,7 @@ async fn test_attestation_result_success() {
 #[actix_web::test]
 async fn test_assertion_options_user_not_found() {
     let app = fido_server::routes::configure_routes;
-    let mut server = TestServer::start(|| {
+    let mut server = TestServer::new(|| {
         actix_web::App::new().configure(fido_server::routes::configure_routes)
     });
 
@@ -188,7 +188,7 @@ async fn test_assertion_options_user_not_found() {
 #[actix_web::test]
 async fn test_assertion_options_missing_username() {
     let app = fido_server::routes::configure_routes;
-    let mut server = TestServer::start(|| {
+    let mut server = TestServer::new(|| {
         actix_web::App::new().configure(fido_server::routes::configure_routes)
     });
 
@@ -208,7 +208,7 @@ async fn test_assertion_options_missing_username() {
 #[actix_web::test]
 async fn test_assertion_result_success() {
     let app = fido_server::routes::configure_routes;
-    let mut server = TestServer::start(|| {
+    let mut server = TestServer::new(|| {
         actix_web::App::new().configure(fido_server::routes::configure_routes)
     });
 
