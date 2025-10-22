@@ -1,12 +1,10 @@
 //! Authentication controller for FIDO2/WebAuthn
 
 use actix_web::{web, HttpRequest, HttpResponse};
-use crate::error::{AppError, Result};
+use crate::error::Result;
 use crate::models::{
     ServerPublicKeyCredentialGetOptionsRequest,
-    ServerPublicKeyCredentialGetOptionsResponse,
     AuthenticationCompletionRequest,
-    AuthenticationCompletionResponse,
 };
 use crate::services::WebAuthnService;
 
