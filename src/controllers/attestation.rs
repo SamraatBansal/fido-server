@@ -52,13 +52,22 @@ impl AttestationController {
     pub async fn result(
         req: HttpRequest,
         webauthn_service: web::Data<Arc<dyn WebAuthnService>>,
-        credential: web::Json<ServerPublicKeyCredential>,
+        body: web::Bytes,
     ) -> Result<HttpResponse> {
         // Validate origin
         validate_origin(&req)?;
 
+        // Parse JSON manually to handle errors properly
+        let credential: ServerPublicKeyCredential = match serde_json::from_slice(&body) {
+            Ok(cred) => cred,
+            Err(e) => {
+                let error_response = ServerResponse::error(format!("Invalid request format: {}", e));
+                return Ok(HttpResponse::BadRequest().json(error_response));
+            }
+        };
+
         // Verify attestation
-        match webauthn_service.verify_attestation(credential.into_inner()).await {
+        match webauthn_service.verify_attestation(credential).await {
             Ok(response) => Ok(HttpResponse::Ok().json(response)),
             Err(e) => {
                 // Return the error with proper status code
