@@ -40,6 +40,9 @@ async fn test_attestation_options_success() {
 
     let json_response: serde_json::Value = test::read_body_json(response).await;
     
+    // Debug: print the actual response
+    println!("Actual response: {}", serde_json::to_string_pretty(&json_response).unwrap());
+    
     // Verify response structure according to FIDO2 conformance
     assert_eq!(json_response["status"], "ok");
     assert_eq!(json_response["errorMessage"], "");
