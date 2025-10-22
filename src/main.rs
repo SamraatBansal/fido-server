@@ -30,7 +30,7 @@ async fn main() -> io::Result<()> {
         App::new()
             .wrap(Logger::default())
             .wrap(cors)
-            .configure(fido_server::routes::api::configure)
+            .configure(fido_server::routes::configure_routes)
     })
     .bind((host, port))?
     .run()
