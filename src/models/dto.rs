@@ -85,6 +85,7 @@ pub struct ServerPublicKeyCredential {
     pub id: String,
     pub response: ServerAuthenticatorResponse,
     #[serde(default)]
+    #[serde(rename = "getClientExtensionResults")]
     pub get_client_extension_results: HashMap<String, serde_json::Value>,
     #[serde(rename = "type")]
     pub credential_type: String,
