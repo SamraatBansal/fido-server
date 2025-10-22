@@ -39,9 +39,9 @@ async fn test_attestation_options_success() {
         "attestation": "direct"
     });
 
-    let resp = actix_test::call_service(
+    let resp = test::call_service(
         &app,
-        actix_test::TestRequest::post()
+        test::TestRequest::post()
             .uri("/attestation/options")
             .set_json(&request)
             .to_request()
@@ -70,9 +70,9 @@ async fn test_attestation_options_user_not_found() {
         "displayName": "Nonexistent User"
     });
 
-    let resp = actix_test::call_service(
+    let resp = test::call_service(
         &app,
-        actix_test::TestRequest::post()
+        test::TestRequest::post()
             .uri("/attestation/options")
             .set_json(&request)
             .to_request()
