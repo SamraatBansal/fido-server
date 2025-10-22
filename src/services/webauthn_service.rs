@@ -362,18 +362,21 @@ impl WebAuthnService for WebAuthnServiceImpl {
                     return Err(AppError::BadRequest("Missing assertion data".to_string()));
                 }
                 
-                // Try to decode the clientDataJSON to check if it's valid base64
-                if let Err(_) = general_purpose::STANDARD.decode(&assertion.client_data_json) {
+                // Try to decode the clientDataJSON to check if it's valid base64 or base64url
+                if general_purpose::STANDARD.decode(&assertion.client_data_json).is_err()
+                    && general_purpose::URL_SAFE_NO_PAD.decode(&assertion.client_data_json).is_err() {
                     return Err(AppError::BadRequest("Invalid clientDataJSON encoding".to_string()));
                 }
                 
-                // Try to decode the authenticatorData to check if it's valid base64
-                if let Err(_) = general_purpose::STANDARD.decode(&assertion.authenticator_data) {
+                // Try to decode the authenticatorData to check if it's valid base64 or base64url
+                if general_purpose::STANDARD.decode(&assertion.authenticator_data).is_err()
+                    && general_purpose::URL_SAFE_NO_PAD.decode(&assertion.authenticator_data).is_err() {
                     return Err(AppError::BadRequest("Invalid authenticatorData encoding".to_string()));
                 }
                 
-                // Try to decode the signature to check if it's valid base64
-                if let Err(_) = general_purpose::STANDARD.decode(&assertion.signature) {
+                // Try to decode the signature to check if it's valid base64 or base64url
+                if general_purpose::STANDARD.decode(&assertion.signature).is_err()
+                    && general_purpose::URL_SAFE_NO_PAD.decode(&assertion.signature).is_err() {
                     return Err(AppError::BadRequest("Invalid signature encoding".to_string()));
                 }
             }
