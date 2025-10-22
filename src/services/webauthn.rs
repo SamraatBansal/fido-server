@@ -242,3 +242,6 @@ impl WebAuthnService for InMemoryWebAuthnService {
 
 /// Default WebAuthn service implementation
 pub type DefaultWebAuthnService = InMemoryWebAuthnService;
+
+#[cfg(test)]
+mod tests;
