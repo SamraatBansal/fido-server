@@ -72,7 +72,16 @@ pub struct ServerAuthenticatorAttestationResponse {
 }
 
 /// Registration completion request
-pub type RegistrationCompletionRequest = ServerPublicKeyCredential;
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RegistrationCompletionRequest {
+    pub id: String,
+    #[serde(rename = "response")]
+    pub response: ServerAuthenticatorAttestationResponse,
+    #[serde(rename = "getClientExtensionResults")]
+    pub get_client_extension_results: Option<serde_json::Value>,
+    #[serde(rename = "type")]
+    pub cred_type: String,
+}
 
 /// Registration completion response
 pub type RegistrationCompletionResponse = ServerResponse;
