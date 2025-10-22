@@ -50,7 +50,7 @@ async fn test_attestation_options_success() {
 
     assert!(resp.status().is_success());
 
-    let body: serde_json::Value = actix_test::read_body_json(resp).await;
+    let body: serde_json::Value = test::read_body_json(resp).await;
     
     assert_eq!(body["status"], "ok");
     assert_eq!(body["error_message"], "");
@@ -107,7 +107,7 @@ async fn test_attestation_result_success() {
 
     assert!(resp.status().is_success());
 
-    let body: serde_json::Value = actix_test::read_body_json(resp).await;
+    let body: serde_json::Value = test::read_body_json(resp).await;
     assert_eq!(body["status"], "ok");
     assert_eq!(body["error_message"], "");
 }
@@ -136,7 +136,7 @@ async fn test_attestation_result_invalid_credential() {
 
     assert!(resp.status().is_success());
 
-    let body: serde_json::Value = actix_test::read_body_json(resp).await;
+    let body: serde_json::Value = test::read_body_json(resp).await;
     assert_eq!(body["status"], "failed");
     assert!(!body["error_message"].as_str().unwrap().is_empty());
 }
@@ -211,7 +211,7 @@ async fn test_assertion_result_success() {
 
     assert!(resp.status().is_success());
 
-    let body: serde_json::Value = actix_test::read_body_json(resp).await;
+    let body: serde_json::Value = test::read_body_json(resp).await;
     assert_eq!(body["status"], "ok");
     assert_eq!(body["error_message"], "");
 }
@@ -242,7 +242,7 @@ async fn test_assertion_result_invalid_credential() {
 
     assert!(resp.status().is_success());
 
-    let body: serde_json::Value = actix_test::read_body_json(resp).await;
+    let body: serde_json::Value = test::read_body_json(resp).await;
     assert_eq!(body["status"], "failed");
     assert!(!body["error_message"].as_str().unwrap().is_empty());
 }
@@ -261,6 +261,6 @@ async fn test_health_check() {
 
     assert!(resp.status().is_success());
 
-    let body: serde_json::Value = actix_test::read_body_json(resp).await;
+    let body: serde_json::Value = test::read_body_json(resp).await;
     assert_eq!(body["status"], "healthy");
 }
