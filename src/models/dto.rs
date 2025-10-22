@@ -111,9 +111,12 @@ pub struct ServerAuthenticatorAttestationResponse {
 /// Server authenticator assertion response
 #[derive(Debug, Deserialize)]
 pub struct ServerAuthenticatorAssertionResponse {
+    #[serde(rename = "authenticatorData")]
     pub authenticator_data: String,
     pub signature: String,
+    #[serde(rename = "userHandle")]
     pub user_handle: Option<String>,
+    #[serde(rename = "clientDataJSON")]
     pub client_data_json: String,
 }
 
