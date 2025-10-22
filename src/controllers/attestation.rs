@@ -53,10 +53,8 @@ impl AttestationController {
             Err(e) => {
                 // Return the error with proper status code
                 let status_code = e.status_code();
-                let error_response = ServerResponse {
-                    status: "failed".to_string(),
-                    error_message: e.to_string(),
-                };
+                let session_id = Uuid::new_v4().to_string(); // Generate session ID for error response
+                let error_response = ServerResponse::error_with_session(e.to_string(), session_id);
                 Ok(HttpResponse::build(status_code).json(error_response))
             }
         }
