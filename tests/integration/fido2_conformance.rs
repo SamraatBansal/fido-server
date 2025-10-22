@@ -3,24 +3,21 @@
 //! These tests verify that the server implements the FIDO2/WebAuthn API
 //! according to the conformance requirements.
 
-use actix_test::{self, TestServer};
+use actix_web::{test, web, App};
 use fido_server::models::{
     ServerPublicKeyCredentialCreationOptionsRequest,
     ServerPublicKeyCredentialGetOptionsRequest,
     AuthenticatorSelectionCriteria,
     AttestationConveyancePreference,
     ServerPublicKeyCredential,
-    ServerAuthenticatorAttestationResponse,
-    ServerAuthenticatorAssertionResponse,
 };
 use serde_json::json;
 
 #[actix_web::test]
 async fn test_attestation_options_success() {
-    let app = fido_server::routes::configure_routes;
-    let mut server = TestServer::new(|| {
-        actix_web::App::new().configure(fido_server::routes::configure_routes)
-    });
+    let app = test::init_service(
+        App::new().configure(fido_server::routes::configure_routes)
+    ).await;
 
     let request = ServerPublicKeyCredentialCreationOptionsRequest {
         username: "johndoe@example.com".to_string(),
