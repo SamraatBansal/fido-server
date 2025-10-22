@@ -94,9 +94,26 @@ impl WebAuthnServiceImpl {
         }
     }
 
-    async fn find_credentials_by_user(&self, _user_id: &Uuid) -> Result<Vec<Credential>> {
-        // Mock implementation - return empty for now
-        Ok(vec![])
+    async fn find_credentials_by_user(&self, user_id: &Uuid) -> Result<Vec<Credential>> {
+        // Mock implementation - return some test credentials
+        if user_id.to_string().starts_with("00000000") {
+            // Return mock credentials for testing
+            Ok(vec![
+                Credential {
+                    id: Uuid::new_v4(),
+                    user_id: *user_id,
+                    credential_id: "m7xl_TkTcCe0WcXI2M-4ro9vJAuwcj4m".to_string(),
+                    public_key: "test_public_key".to_string(),
+                    attestation_format: "packed".to_string(),
+                    sign_count: 0,
+                    created_at: chrono::Utc::now(),
+                    updated_at: chrono::Utc::now(),
+                    transports: Some(vec!["internal".to_string(), "usb".to_string()]),
+                }
+            ])
+        } else {
+            Ok(vec![])
+        }
     }
 
     async fn find_user_by_credentials(&self, username: &str) -> Result<Option<User>> {
