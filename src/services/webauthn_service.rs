@@ -236,13 +236,15 @@ impl WebAuthnService for WebAuthnServiceImpl {
                     return Err(AppError::BadRequest("Missing attestation data".to_string()));
                 }
                 
-                // Try to decode the clientDataJSON to check if it's valid base64
-                if let Err(_) = general_purpose::STANDARD.decode(&attestation.client_data_json) {
+                // Try to decode the clientDataJSON to check if it's valid base64 or base64url
+                if general_purpose::STANDARD.decode(&attestation.client_data_json).is_err() 
+                    && general_purpose::URL_SAFE_NO_PAD.decode(&attestation.client_data_json).is_err() {
                     return Err(AppError::BadRequest("Invalid clientDataJSON encoding".to_string()));
                 }
                 
-                // Try to decode the attestationObject to check if it's valid base64
-                if let Err(_) = general_purpose::STANDARD.decode(&attestation.attestation_object) {
+                // Try to decode the attestationObject to check if it's valid base64 or base64url
+                if general_purpose::STANDARD.decode(&attestation.attestation_object).is_err()
+                    && general_purpose::URL_SAFE_NO_PAD.decode(&attestation.attestation_object).is_err() {
                     return Err(AppError::BadRequest("Invalid attestationObject encoding".to_string()));
                 }
             }
