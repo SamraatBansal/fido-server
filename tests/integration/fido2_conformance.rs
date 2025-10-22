@@ -77,7 +77,7 @@ async fn test_attestation_options_success() {
     assert_eq!(json_response["attestation"], "direct");
 }
 
-#[actix_test::test]
+#[actix_web::test]
 async fn test_attestation_options_missing_username() {
     let app = fido_server::routes::configure_routes;
     let mut server = TestServer::start(|| {
@@ -103,7 +103,7 @@ async fn test_attestation_options_missing_username() {
     assert_eq!(response.status(), 400);
 }
 
-#[actix_test::test]
+#[actix_web::test]
 async fn test_attestation_options_missing_display_name() {
     let app = fido_server::routes::configure_routes;
     let mut server = TestServer::start(|| {
@@ -129,7 +129,7 @@ async fn test_attestation_options_missing_display_name() {
     assert_eq!(response.status(), 400);
 }
 
-#[actix_test::test]
+#[actix_web::test]
 async fn test_attestation_result_success() {
     let app = fido_server::routes::configure_routes;
     let mut server = TestServer::start(|| {
@@ -160,7 +160,7 @@ async fn test_attestation_result_success() {
     assert_eq!(json_response["errorMessage"], "");
 }
 
-#[actix_test::test]
+#[actix_web::test]
 async fn test_assertion_options_user_not_found() {
     let app = fido_server::routes::configure_routes;
     let mut server = TestServer::start(|| {
@@ -185,7 +185,7 @@ async fn test_assertion_options_user_not_found() {
     assert!(json_response["errorMessage"].as_str().unwrap().contains("User does not exists"));
 }
 
-#[actix_test::test]
+#[actix_web::test]
 async fn test_assertion_options_missing_username() {
     let app = fido_server::routes::configure_routes;
     let mut server = TestServer::start(|| {
@@ -205,7 +205,7 @@ async fn test_assertion_options_missing_username() {
     assert_eq!(response.status(), 400);
 }
 
-#[actix_test::test]
+#[actix_web::test]
 async fn test_assertion_result_success() {
     let app = fido_server::routes::configure_routes;
     let mut server = TestServer::start(|| {
