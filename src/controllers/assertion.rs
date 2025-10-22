@@ -4,6 +4,7 @@ use crate::error::{AppError, Result};
 use crate::models::dto::{
     ServerPublicKeyCredentialGetOptionsRequest,
     ServerPublicKeyCredential,
+    ServerResponse,
 };
 use crate::services::WebAuthnService;
 use actix_web::{web, HttpRequest, HttpResponse};
