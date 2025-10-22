@@ -2,7 +2,13 @@
 
 use actix_cors::Cors;
 use actix_web::{middleware::Logger, App, HttpServer};
+use fido_server::{
+    models::webauthn::WebAuthnConfig,
+    routes::api::configure_fido_routes,
+    services::{WebAuthnService, WebAuthnServiceImpl},
+};
 use std::io;
+use std::sync::Arc;
 
 #[actix_web::main]
 async fn main() -> io::Result<()> {
@@ -11,11 +17,14 @@ async fn main() -> io::Result<()> {
 
     log::info!("Starting FIDO Server...");
 
-    // TODO: Load configuration from config file
+    // Load configuration
+    let webauthn_config = WebAuthnConfig::default();
+    
+    // Initialize WebAuthn service
+    let webauthn_service: Arc<dyn WebAuthnService> = Arc::new(WebAuthnServiceImpl::new(webauthn_config));
+
     let host = "127.0.0.1";
     let port = 8080;
-
-    // TODO: Initialize database connection pool
 
     log::info!("Server running at http://{}:{}", host, port);
 
@@ -30,7 +39,7 @@ async fn main() -> io::Result<()> {
         App::new()
             .wrap(Logger::default())
             .wrap(cors)
-            .configure(fido_server::routes::api::configure)
+            .configure(|cfg| configure_fido_routes(cfg, webauthn_service.clone()))
     })
     .bind((host, port))?
     .run()
