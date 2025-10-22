@@ -7,6 +7,7 @@ use crate::models::{
         ServerPublicKeyCredentialGetOptionsRequest, ServerPublicKeyCredentialGetOptionsResponse,
         ServerPublicKeyCredential, ServerResponse, ServerPublicKeyCredentialUserEntity,
         PublicKeyCredentialRpEntity, PublicKeyCredentialParameters, ServerPublicKeyCredentialDescriptor,
+        ServerAuthenticatorResponse,
     },
     webauthn::{User, Credential, Challenge, WebAuthnConfig, ChallengeType},
 };
@@ -217,32 +218,32 @@ impl WebAuthnService for WebAuthnServiceImpl {
     ) -> Result<ServerResponse> {
         // Mock validation - just check basic structure
         if credential.id.is_empty() {
-            return Err(AppError::BadRequest("Invalid credential ID"));
+            return Err(AppError::BadRequest("Invalid credential ID".to_string()));
         }
 
         if credential.credential_type != "public-key" {
-            return Err(AppError::BadRequest("Invalid credential type"));
+            return Err(AppError::BadRequest("Invalid credential type".to_string()));
         }
 
         // Check if we have the required response data
         match &credential.response {
             ServerAuthenticatorResponse::Attestation(attestation) => {
                 if attestation.client_data_json.is_empty() || attestation.attestation_object.is_empty() {
-                    return Err(AppError::BadRequest("Missing attestation data"));
+                    return Err(AppError::BadRequest("Missing attestation data".to_string()));
                 }
                 
                 // Try to decode the clientDataJSON to check if it's valid base64
-                if let Err(_) = base64::decode(&attestation.client_data_json) {
-                    return Err(AppError::BadRequest("Invalid clientDataJSON encoding"));
+                if let Err(_) = general_purpose::STANDARD.decode(&attestation.client_data_json) {
+                    return Err(AppError::BadRequest("Invalid clientDataJSON encoding".to_string()));
                 }
                 
                 // Try to decode the attestationObject to check if it's valid base64
-                if let Err(_) = base64::decode(&attestation.attestation_object) {
-                    return Err(AppError::BadRequest("Invalid attestationObject encoding"));
+                if let Err(_) = general_purpose::STANDARD.decode(&attestation.attestation_object) {
+                    return Err(AppError::BadRequest("Invalid attestationObject encoding".to_string()));
                 }
             }
             _ => {
-                return Err(AppError::BadRequest("Expected attestation response"));
+                return Err(AppError::BadRequest("Expected attestation response".to_string()));
             }
         }
 
@@ -344,26 +345,26 @@ impl WebAuthnService for WebAuthnServiceImpl {
         match &credential.response {
             ServerAuthenticatorResponse::Assertion(assertion) => {
                 if assertion.client_data_json.is_empty() || assertion.authenticator_data.is_empty() || assertion.signature.is_empty() {
-                    return Err(AppError::BadRequest("Missing assertion data"));
+                    return Err(AppError::BadRequest("Missing assertion data".to_string()));
                 }
                 
                 // Try to decode the clientDataJSON to check if it's valid base64
-                if let Err(_) = base64::decode(&assertion.client_data_json) {
-                    return Err(AppError::BadRequest("Invalid clientDataJSON encoding"));
+                if let Err(_) = general_purpose::STANDARD.decode(&assertion.client_data_json) {
+                    return Err(AppError::BadRequest("Invalid clientDataJSON encoding".to_string()));
                 }
                 
                 // Try to decode the authenticatorData to check if it's valid base64
-                if let Err(_) = base64::decode(&assertion.authenticator_data) {
-                    return Err(AppError::BadRequest("Invalid authenticatorData encoding"));
+                if let Err(_) = general_purpose::STANDARD.decode(&assertion.authenticator_data) {
+                    return Err(AppError::BadRequest("Invalid authenticatorData encoding".to_string()));
                 }
                 
                 // Try to decode the signature to check if it's valid base64
-                if let Err(_) = base64::decode(&assertion.signature) {
-                    return Err(AppError::BadRequest("Invalid signature encoding"));
+                if let Err(_) = general_purpose::STANDARD.decode(&assertion.signature) {
+                    return Err(AppError::BadRequest("Invalid signature encoding".to_string()));
                 }
             }
             _ => {
-                return Err(AppError::BadRequest("Expected assertion response"));
+                return Err(AppError::BadRequest("Expected assertion response".to_string()));
             }
         }
 
