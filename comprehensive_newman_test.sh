@@ -67,8 +67,8 @@ run_test() {
     fi
     
     # Check errorMessage field
-    local error_message=$(echo "$body" | jq -r '.errorMessage // empty')
-    if [ -n "$error_message" ]; then
+    local error_message=$(echo "$body" | jq -r '.errorMessage // "NOT_FOUND"')
+    if [ "$error_message" != "NOT_FOUND" ]; then
         echo "  ✅ PASS: Has errorMessage field"
     else
         echo "  ❌ FAIL: Missing errorMessage field"
