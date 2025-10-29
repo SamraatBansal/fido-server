@@ -64,7 +64,40 @@ async fn main() -> io::Result<()> {
             .app_data(webauthn_controller.clone())
             .wrap(Logger::default())
             .wrap(cors)
-            .configure(|cfg| api::configure(cfg, webauthn_controller.clone()))
+            .service(
+                web::scope("/attestation")
+                    .route("/options", web::post().to({
+                        let controller = webauthn_controller.clone();
+                        move |req| {
+                            let controller = controller.clone();
+                            async move { controller.attestation_options(req).await }
+                        }
+                    }))
+                    .route("/result", web::post().to({
+                        let controller = webauthn_controller.clone();
+                        move |req| {
+                            let controller = controller.clone();
+                            async move { controller.attestation_result(req).await }
+                        }
+                    }))
+            )
+            .service(
+                web::scope("/assertion")
+                    .route("/options", web::post().to({
+                        let controller = webauthn_controller.clone();
+                        move |req| {
+                            let controller = controller.clone();
+                            async move { controller.assertion_options(req).await }
+                        }
+                    }))
+                    .route("/result", web::post().to({
+                        let controller = webauthn_controller.clone();
+                        move |req| {
+                            let controller = controller.clone();
+                            async move { controller.assertion_result(req).await }
+                        }
+                    }))
+            )
             .configure(api::configure_api)
     })
     .bind((host, port))?
