@@ -2,11 +2,11 @@
 
 use async_trait::async_trait;
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
+use rand::Rng;
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 
 use crate::config::WebAuthnConfig;
-use crate::db::models::{Credential, NewCredential, NewUser, User};
+use crate::db::models::{Credential, NewCredential, NewUser};
 use crate::db::repository::{ChallengeRepository, CredentialRepository, UserRepository};
 use crate::error::{AppError, Result};
 
