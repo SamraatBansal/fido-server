@@ -1,8 +1,15 @@
 //! FIDO Server Main Entry Point
 
 use actix_cors::Cors;
-use actix_web::{middleware::Logger, App, HttpServer};
+use actix_web::{middleware::Logger, web, App, HttpServer};
 use std::io;
+use std::sync::Arc;
+
+use fido_server::config::Config;
+use fido_server::controllers::WebAuthnController;
+use fido_server::db::{Database, PgCredentialRepository, PgChallengeRepository, PgUserRepository};
+use fido_server::services::webauthn::{WebAuthnServiceImpl, WebAuthnService};
+use fido_server::routes::api;
 
 #[actix_web::main]
 async fn main() -> io::Result<()> {
@@ -11,11 +18,38 @@ async fn main() -> io::Result<()> {
 
     log::info!("Starting FIDO Server...");
 
-    // TODO: Load configuration from config file
-    let host = "127.0.0.1";
-    let port = 8080;
+    // Load configuration
+    let config = Config::from_env();
+    log::info!("Configuration loaded: {:?}", config);
 
-    // TODO: Initialize database connection pool
+    // Initialize database connection pool
+    let database = Database::new(&config.database.url, config.database.max_connections)
+        .expect("Failed to initialize database connection pool");
+
+    // Run database migrations
+    log::info!("Running database migrations...");
+    let conn = database.get_connection().expect("Failed to get database connection for migrations");
+    diesel_migrations::embed_migrations!("migrations");
+    embedded_migrations::run(&conn).expect("Failed to run database migrations");
+
+    // Initialize repositories
+    let user_repo = PgUserRepository::new(database.get_connection().expect("Failed to get connection"));
+    let credential_repo = PgCredentialRepository::new(database.get_connection().expect("Failed to get connection"));
+    let challenge_repo = PgChallengeRepository::new(database.get_connection().expect("Failed to get connection"));
+
+    // Initialize WebAuthn service
+    let webauthn_service = WebAuthnServiceImpl::new(
+        config.webauthn.clone(),
+        user_repo,
+        credential_repo,
+        challenge_repo,
+    ).expect("Failed to initialize WebAuthn service");
+
+    // Initialize controller
+    let webauthn_controller = web::Data::new(WebAuthnController::new(webauthn_service));
+
+    let host = config.server.host.clone();
+    let port = config.server.port;
 
     log::info!("Server running at http://{}:{}", host, port);
 
@@ -28,9 +62,11 @@ async fn main() -> io::Result<()> {
             .max_age(3600);
 
         App::new()
+            .app_data(webauthn_controller.clone())
             .wrap(Logger::default())
             .wrap(cors)
-            .configure(fido_server::routes::api::configure)
+            .configure(|cfg| api::configure(cfg, webauthn_controller.clone()))
+            .configure(api::configure_api)
     })
     .bind((host, port))?
     .run()
