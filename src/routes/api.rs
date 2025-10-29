@@ -1,6 +1,6 @@
 //! API routes configuration
 
-use actix_web::{web, HttpResponse};
+use actix_web::web;
 
 pub fn configure_api(cfg: &mut web::ServiceConfig) {
     cfg.route("/health", web::get().to(health_check));
