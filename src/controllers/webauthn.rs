@@ -1,9 +1,7 @@
 //! Controllers for handling HTTP requests
 
-use actix_web::{web, HttpResponse, Result as ActixResult};
-use serde_json::json;
+use actix_web::{web, HttpResponse, ResponseError, Result as ActixResult};
 
-use crate::error::{AppError, Result};
 use crate::services::webauthn::*;
 
 pub struct WebAuthnController<W> {
