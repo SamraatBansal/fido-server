@@ -1,6 +1,7 @@
 //! Database repository layer
 
 use diesel::prelude::*;
+use std::sync::{Arc, Mutex};
 use uuid::Uuid;
 
 use crate::db::models::*;
@@ -28,105 +29,114 @@ pub trait ChallengeRepository: Send + Sync {
 }
 
 pub struct PgUserRepository {
-    conn: PooledPg,
+    conn: Arc<Mutex<PooledPg>>,
 }
 
 impl PgUserRepository {
     pub fn new(conn: PooledPg) -> Self {
-        Self { conn }
+        Self { conn: Arc::new(Mutex::new(conn)) }
     }
 }
 
 impl UserRepository for PgUserRepository {
     fn create_user(&self, new_user: NewUser) -> Result<User> {
+        let mut conn = self.conn.lock().unwrap();
         diesel::insert_into(users::table)
             .values(&new_user)
             .returning(User::as_returning())
-            .get_result(&mut self.conn)
+            .get_result(&mut *conn)
             .map_err(AppError::Database)
     }
 
     fn find_user_by_username(&self, username: &str) -> Result<Option<User>> {
+        let mut conn = self.conn.lock().unwrap();
         users::table
             .filter(users::username.eq(username))
-            .first::<User>(&mut self.conn)
+            .first::<User>(&mut *conn)
             .optional()
             .map_err(AppError::Database)
     }
 
     fn find_user_by_id(&self, user_id: Uuid) -> Result<Option<User>> {
+        let mut conn = self.conn.lock().unwrap();
         users::table
             .filter(users::id.eq(user_id))
-            .first::<User>(&mut self.conn)
+            .first::<User>(&mut *conn)
             .optional()
             .map_err(AppError::Database)
     }
 }
 
 pub struct PgCredentialRepository {
-    conn: PooledPg,
+    conn: Arc<Mutex<PooledPg>>,
 }
 
 impl PgCredentialRepository {
     pub fn new(conn: PooledPg) -> Self {
-        Self { conn }
+        Self { conn: Arc::new(Mutex::new(conn)) }
     }
 }
 
 impl CredentialRepository for PgCredentialRepository {
     fn create_credential(&self, new_credential: NewCredential) -> Result<Credential> {
+        let mut conn = self.conn.lock().unwrap();
         diesel::insert_into(credentials::table)
             .values(&new_credential)
             .returning(Credential::as_returning())
-            .get_result(&mut self.conn)
+            .get_result(&mut *conn)
             .map_err(AppError::Database)
     }
 
     fn find_credentials_by_user(&self, user_id: Uuid) -> Result<Vec<Credential>> {
+        let mut conn = self.conn.lock().unwrap();
         credentials::table
             .filter(credentials::user_id.eq(user_id))
-            .load::<Credential>(&mut self.conn)
+            .load::<Credential>(&mut *conn)
             .map_err(AppError::Database)
     }
 
     fn find_credential_by_id(&self, credential_id: &[u8]) -> Result<Option<Credential>> {
+        let mut conn = self.conn.lock().unwrap();
         credentials::table
             .filter(credentials::credential_id.eq(credential_id))
-            .first::<Credential>(&mut self.conn)
+            .first::<Credential>(&mut *conn)
             .optional()
             .map_err(AppError::Database)
     }
 
     fn update_sign_count(&self, credential_id: &[u8], sign_count: i64) -> Result<()> {
+        let mut conn = self.conn.lock().unwrap();
         diesel::update(credentials::table.filter(credentials::credential_id.eq(credential_id)))
             .set(credentials::sign_count.eq(sign_count))
-            .execute(&mut self.conn)
+            .execute(&mut *conn)
             .map(|_| ())
             .map_err(AppError::Database)
     }
 }
 
 pub struct PgChallengeRepository {
-    conn: PooledPg,
+    conn: Arc<Mutex<PooledPg>>,
 }
 
 impl PgChallengeRepository {
     pub fn new(conn: PooledPg) -> Self {
-        Self { conn }
+        Self { conn: Arc::new(Mutex::new(conn)) }
     }
 }
 
 impl ChallengeRepository for PgChallengeRepository {
     fn create_challenge(&self, new_challenge: NewChallenge) -> Result<Challenge> {
+        let mut conn = self.conn.lock().unwrap();
         diesel::insert_into(challenges::table)
             .values(&new_challenge)
             .returning(Challenge::as_returning())
-            .get_result(&mut self.conn)
+            .get_result(&mut *conn)
             .map_err(AppError::Database)
     }
 
     fn find_and_consume_challenge(&self, challenge: &str, challenge_type: &str) -> Result<Option<Challenge>> {
-        self.conn.transaction::<Option<Challenge>, _, _>(|conn| {
+        let mut conn = self.conn.lock().unwrap();
+        conn.transaction::<Option<Challenge>, _, _>(|conn| {
             let found_challenge = challenges::table
                 .filter(challenges::challenge.eq(challenge))
                 .filter(challenges::challenge_type.eq(challenge_type))
@@ -146,10 +156,11 @@ impl ChallengeRepository for PgChallengeRepository {
     }
 
     fn cleanup_expired_challenges(&self) -> Result<()> {
+        let mut conn = self.conn.lock().unwrap();
         diesel::delete(
             challenges::table.filter(challenges::expires_at.lt(chrono::Utc::now().naive_utc())),
         )
-        .execute(&mut self.conn)
+        .execute(&mut *conn)
         .map(|_| ())
         .map_err(AppError::Database)
     }
