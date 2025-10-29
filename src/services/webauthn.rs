@@ -6,7 +6,7 @@ use rand::Rng;
 use serde::{Deserialize, Serialize};
 
 use crate::config::WebAuthnConfig;
-use crate::db::models::{Credential, NewCredential, NewUser};
+use crate::db::models::{Credential, NewUser};
 use crate::db::repository::{ChallengeRepository, CredentialRepository, UserRepository};
 use crate::error::{AppError, Result};
 
