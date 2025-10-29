@@ -2,6 +2,7 @@
 
 use actix_web::{web, HttpResponse};
 use crate::controllers::webauthn::*;
+use crate::services::webauthn::*;
 
 pub fn configure<W>(cfg: &mut web::ServiceConfig, controller: web::Data<WebAuthnController<W>>)
 where
