@@ -182,8 +182,8 @@ where
         BASE64.encode(challenge_bytes)
     }
 
-    fn user_to_webauthn_user(&self, user: &User) -> webauthn_rs::prelude::User {
-        webauthn_rs::prelude::User {
+    fn user_to_webauthn_user(&self, user: &User) -> User {
+        User {
             id: user.id.as_bytes().to_vec(),
             name: user.username.clone(),
             display_name: user.display_name.clone(),
