@@ -327,12 +327,19 @@ where
             .ok_or_else(|| AppError::UserNotFound("User not found".to_string()))?;
 
         // Create attestation response for webauthn-rs
-        let attestation_resp = AttestationResponse {
-            credential_id: BASE64
+        let attestation_resp = webauthn_rs::prelude::PublicKeyCredential {
+            id: BASE64
                 .decode(&response.id)
                 .map_err(|e| AppError::InvalidInput(format!("Invalid credential ID: {}", e)))?,
-            client_data_json,
-            attestation_object,
+            raw_id: BASE64
+                .decode(&response.id)
+                .map_err(|e| AppError::InvalidInput(format!("Invalid credential ID: {}", e)))?,
+            response: webauthn_rs::prelude::AuthenticatorAttestationResponse {
+                attestation_object,
+                client_data_json,
+            },
+            type_: webauthn_rs_proto::PublicKeyCredentialType::PublicKey,
+                extensions: webauthn_rs_proto::AuthenticationExtensionsClientOutputs::new(),
         };
 
         // Verify attestation
@@ -343,14 +350,14 @@ where
             .map_err(|e| AppError::InvalidAttestation(format!("Attestation verification failed: {}", e)))?;
 
         // Store credential
-        let new_credential = Result::<Credential, AppError>::Ok(NewCredential {
+        let new_credential = NewCredential {
             user_id,
-            credential_id: result.credential_id.clone(),
+            credential_id: result.cred_id.clone(),
             public_key: result.public_key.clone(),
-            sign_count: result.sign_count as i64,
-            attestation_format: result.attestation_format.clone(),
-            aaguid: result.aaguid,
-        })?;
+            sign_count: result.counter as i64,
+            attestation_format: "none".to_string(), // Simplified for now
+            aaguid: None,
+        };
 
         self.credential_repo.create_credential(new_credential)?;
 
