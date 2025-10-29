@@ -30,7 +30,8 @@ async fn main() -> io::Result<()> {
     // Run database migrations
     log::info!("Running database migrations...");
     let conn = database.get_connection().expect("Failed to get database connection for migrations");
-    fido_server::migrations::MIGRATIONS.run(&conn).expect("Failed to run database migrations");
+    diesel_migrations::MigrationHarness::run_pending_migrations(&mut conn, &fido_server::migrations::MIGRATIONS)
+        .expect("Failed to run database migrations");
 
     // Initialize repositories
     let user_repo = PgUserRepository::new(database.get_connection().expect("Failed to get connection"));
