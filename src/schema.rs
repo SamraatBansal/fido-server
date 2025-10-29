@@ -2,7 +2,6 @@
 
 diesel::table! {
     use diesel::sql_types::*;
-    use crate::models::UserMapping;
 
     users (id) {
         id -> Uuid,
