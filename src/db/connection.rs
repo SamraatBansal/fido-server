@@ -1,21 +1,31 @@
-//! Database connection management
+//! Database connection pool and utilities
 
-use diesel::r2d2::{self, ConnectionManager};
-use diesel::PgConnection;
+use diesel::pg::PgConnection;
+use diesel::r2d2::{ConnectionManager, Pool, PooledConnection};
+use std::sync::Arc;
 
-/// Type alias for database connection pool
-pub type DbPool = r2d2::Pool<ConnectionManager<PgConnection>>;
+pub type PgPool = Pool<ConnectionManager<PgConnection>>;
+pub type PooledPg = PooledConnection<ConnectionManager<PgConnection>>;
 
-/// Establish database connection pool
-///
-/// # Arguments
-///
-/// * `database_url` - PostgreSQL database URL
-///
-/// # Errors
-///
-/// Returns an error if the connection pool cannot be established
-pub fn establish_connection(database_url: &str) -> Result<DbPool, r2d2::PoolError> {
-    let manager = ConnectionManager::<PgConnection>::new(database_url);
-    r2d2::Pool::builder().build(manager)
+#[derive(Clone)]
+pub struct Database {
+    pool: Arc<PgPool>,
+}
+
+impl Database {
+    pub fn new(database_url: &str, max_connections: u32) -> Result<Self, crate::error::AppError> {
+        let manager = ConnectionManager::<PgConnection>::new(database_url);
+        let pool = Pool::builder()
+            .max_size(max_connections)
+            .build(manager)
+            .map_err(crate::error::AppError::DatabaseConnection)?;
+
+        Ok(Self {
+            pool: Arc::new(pool),
+        })
+    }
+
+    pub fn get_connection(&self) -> Result<PooledPg, crate::error::AppError> {
+        self.pool.get().map_err(crate::error::AppError::DatabaseConnection)
+    }
 }
