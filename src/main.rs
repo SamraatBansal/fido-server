@@ -3,7 +3,7 @@
 use actix_cors::Cors;
 use actix_web::{middleware::Logger, web, App, HttpServer};
 use std::io;
-use std::sync::Arc;
+
 
 use fido_server::config::Config;
 use fido_server::controllers::WebAuthnController;
