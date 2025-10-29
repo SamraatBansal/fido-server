@@ -4,6 +4,7 @@ use diesel::prelude::*;
 use uuid::Uuid;
 
 use crate::db::models::*;
+use crate::db::PooledPg;
 use crate::error::{AppError, Result};
 use crate::schema::{challenges, credentials, users};
 
