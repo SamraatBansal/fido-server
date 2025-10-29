@@ -30,7 +30,7 @@ async fn main() -> io::Result<()> {
     // Run database migrations
     log::info!("Running database migrations...");
     let conn = database.get_connection().expect("Failed to get database connection for migrations");
-    diesel_migrations::MigrationHarness::run_pending_migrations(&mut conn, &fido_server::migrations::MIGRATIONS)
+    diesel_migrations::MigrationHarness::run_pending_migrations(&mut conn, fido_server::migrations::MIGRATIONS)
         .expect("Failed to run database migrations");
 
     // Initialize repositories
