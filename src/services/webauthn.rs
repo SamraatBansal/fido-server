@@ -158,17 +158,13 @@ where
         credential_repo: C,
         challenge_repo: R,
     ) -> Result<Self> {
-        let rp = RelyingParty {
-            id: config.rp_id.clone(),
-            name: config.rp_name.clone(),
-            origin: Url::parse(&config.rp_origin)
-                .map_err(|e| AppError::Internal(format!("Invalid origin URL: {}", e)))?,
-        };
+        let rp_origin = Url::parse(&config.rp_origin)
+            .map_err(|e| AppError::Internal(format!("Invalid origin URL: {}", e)))?;
 
-        let webauthn = WebauthnBuilder::new(rp)
-            .map_err(|e| AppError::Internal(format!("Failed to create WebAuthn instance: {}", e)))?
+        let webauthn = WebauthnBuilder::new(&config.rp_id, &rp_origin)
+            .rp_name(&config.rp_name)
             .build()
-            .map_err(|e| AppError::Internal(format!("Failed to build WebAuthn: {}", e)))?;
+            .map_err(|e| AppError::Internal(format!("Failed to create WebAuthn instance: {}", e)))?;
 
         Ok(Self {
             webauthn,
