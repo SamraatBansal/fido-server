@@ -28,10 +28,13 @@ pub struct NewUser {
 pub struct Credential {
     pub id: Uuid,
     pub user_id: Uuid,
+    #[diesel(deserialize_as = Vec<u8>)]
     pub credential_id: Vec<u8>,
+    #[diesel(deserialize_as = Vec<u8>)]
     pub public_key: Vec<u8>,
     pub sign_count: i64,
     pub attestation_format: String,
+    #[diesel(deserialize_as = Option<Vec<u8>>)]
     pub aaguid: Option<Vec<u8>>,
     pub created_at: chrono::NaiveDateTime,
     pub updated_at: chrono::NaiveDateTime,
