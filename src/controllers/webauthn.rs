@@ -85,39 +85,3 @@ where
     }
 }
 
-// Factory functions for dependency injection
-pub fn make_attestation_options_handler<W>(
-    controller: web::Data<WebAuthnController<W>>,
-) -> impl Fn(web::Json<ServerPublicKeyCredentialCreationOptionsRequest>) -> ActixResult<HttpResponse>
-where
-    W: WebAuthnService + 'static,
-{
-    move |request| controller.attestation_options(request)
-}
-
-pub fn make_attestation_result_handler<W>(
-    controller: web::Data<WebAuthnController<W>>,
-) -> impl Fn(web::Json<ServerPublicKeyCredential>) -> ActixResult<HttpResponse>
-where
-    W: WebAuthnService + 'static,
-{
-    move |request| controller.attestation_result(request)
-}
-
-pub fn make_assertion_options_handler<W>(
-    controller: web::Data<WebAuthnController<W>>,
-) -> impl Fn(web::Json<ServerPublicKeyCredentialGetOptionsRequest>) -> ActixResult<HttpResponse>
-where
-    W: WebAuthnService + 'static,
-{
-    move |request| controller.assertion_options(request)
-}
-
-pub fn make_assertion_result_handler<W>(
-    controller: web::Data<WebAuthnController<W>>,
-) -> impl Fn(web::Json<ServerPublicKeyCredential>) -> ActixResult<HttpResponse>
-where
-    W: WebAuthnService + 'static,
-{
-    move |request| controller.assertion_result(request)
-}
