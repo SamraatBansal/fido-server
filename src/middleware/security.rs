@@ -1,9 +1,6 @@
 //! Security middleware
 
-use actix_web::{dev::ServiceRequest, error, Error, HttpMessage};
-use actix_web::{dev::ServiceResponse, Result};
-use actix_web::{middleware, web};
-use std::time::Duration;
+use actix_web::middleware;
 
 pub fn security_headers() -> middleware::DefaultHeaders {
     middleware::DefaultHeaders::new()
