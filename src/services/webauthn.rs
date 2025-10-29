@@ -248,11 +248,11 @@ where
         let credential_algorithms = vec![
             PublicKeyCredentialParameters {
                 alg: COSEAlgorithm::ES256,
-                type_: PublicKeyCredentialType::PublicKey,
+                type_: webauthn_rs_proto::PublicKeyCredentialType::PublicKey,
             },
             PublicKeyCredentialParameters {
                 alg: COSEAlgorithm::RS256,
-                type_: PublicKeyCredentialType::PublicKey,
+                type_: webauthn_rs_proto::PublicKeyCredentialType::PublicKey,
             },
         ];
 
