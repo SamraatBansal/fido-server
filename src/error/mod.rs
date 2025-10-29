@@ -14,7 +14,7 @@ pub enum AppError {
     DatabaseConnection(#[from] diesel::result::ConnectionError),
     
     #[error("WebAuthn error: {0}")]
-    WebAuthn(#[from] webauthn_rs::error::WebauthnError),
+    WebAuthn(String),
     
     #[error("Serialization error: {0}")]
     Serialization(#[from] serde_json::Error),
