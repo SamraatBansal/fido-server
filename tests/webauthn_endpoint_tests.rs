@@ -1,6 +1,6 @@
 //! WebAuthn endpoint tests
 
-use actix_web::{test, App, web};
+use actix_web::{test, App};
 use serde_json::json;
 
 #[actix_web::test]
