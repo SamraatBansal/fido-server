@@ -1,6 +1,6 @@
 //! Basic integration tests
 
-use actix_web::{test, web, App};
+use actix_web::{test, App};
 
 #[actix_web::test]
 async fn test_health_check() {
