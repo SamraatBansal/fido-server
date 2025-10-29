@@ -261,7 +261,7 @@ where
         Ok(ServerPublicKeyCredentialCreationOptionsResponse {
             status: "ok".to_string(),
             error_message: "".to_string(),
-            rp: PublicKeyCredentialRpEntity {
+            rp: webauthn_rs_proto::PublicKeyCredentialRpEntity {
                 id: Some(self.config.rp_id.clone()),
                 name: self.config.rp_name.clone(),
             },
