@@ -455,22 +455,26 @@ where
             .ok_or_else(|| AppError::CredentialNotFound("Credential not found".to_string()))?;
 
         // Create assertion response for webauthn-rs
-        let assertion_resp = AssertionResponse {
-            credential_id: credential.credential_id.clone(),
-            client_data_json,
-            authenticator_data,
-            signature,
-            user_handle: assertion_response
-                .user_handle
-                .and_then(|uh| BASE64.decode(&uh).ok()),
+        let assertion_resp = webauthn_rs::prelude::PublicKeyCredential {
+            id: credential.credential_id.clone(),
+            raw_id: credential.credential_id.clone(),
+            response: webauthn_rs::prelude::AuthenticatorAssertionResponse {
+                authenticator_data,
+                client_data_json,
+                signature,
+                user_handle: assertion_response
+                    .user_handle
+                    .and_then(|uh| BASE64.decode(&uh).ok()),
+            },
+            type_: webauthn_rs_proto::PublicKeyCredentialType::PublicKey,
+            extensions: webauthn_rs_proto::AuthenticationExtensionsClientOutputs::new(),
         };
 
         // Verify assertion
-        let authenticator = Authenticator {
-            credential_id: credential.credential_id,
-            public_key: credential.public_key,
-            sign_count: credential.sign_count as u64,
-            aaguid: credential.aaguid,
+        let authenticator = webauthn_rs::prelude::Authenticator {
+            cred_id: credential.credential_id.clone(),
+            public_key: credential.public_key.clone(),
+            counter: credential.sign_count as u64,
         };
 
         let result = self
@@ -480,7 +484,7 @@ where
 
         // Update sign count
         self.credential_repo
-            .update_sign_count(&credential.credential_id, result.new_sign_count as i64)?;
+            .update_sign_count(&credential.credential_id, result.counter as i64)?;
 
         Ok(crate::error::ServerResponse::success())
     }
