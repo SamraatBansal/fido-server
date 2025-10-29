@@ -18,7 +18,7 @@ impl Database {
         let pool = Pool::builder()
             .max_size(max_connections)
             .build(manager)
-            .map_err(crate::error::AppError::DatabaseConnection)?;
+            .map_err(|e| crate::error::AppError::DatabaseConnection(e.to_string()))?;
 
         Ok(Self {
             pool: Arc::new(pool),
@@ -26,6 +26,6 @@ impl Database {
     }
 
     pub fn get_connection(&self) -> Result<PooledPg, crate::error::AppError> {
-        self.pool.get().map_err(crate::error::AppError::DatabaseConnection)
+        self.pool.get().map_err(|e| crate::error::AppError::DatabaseConnection(e.to_string()))
     }
 }
