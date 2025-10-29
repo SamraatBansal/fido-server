@@ -2,5 +2,7 @@
 
 pub mod connection;
 pub mod models;
+pub mod repository;
 
-pub use connection::{establish_connection, DbPool};
+pub use connection::{Database, PooledPg, PgPool};
+pub use models::{Challenge, Credential, NewChallenge, NewCredential, NewUser, User};
