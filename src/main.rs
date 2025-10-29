@@ -7,8 +7,9 @@ use std::sync::Arc;
 
 use fido_server::config::Config;
 use fido_server::controllers::WebAuthnController;
-use fido_server::db::{Database, PgCredentialRepository, PgChallengeRepository, PgUserRepository};
-use fido_server::services::webauthn::{WebAuthnServiceImpl, WebAuthnService};
+use fido_server::db::{Database};
+use fido_server::db::repository::{PgCredentialRepository, PgChallengeRepository, PgUserRepository};
+use fido_server::services::webauthn::{WebAuthnServiceImpl};
 use fido_server::routes::api;
 
 #[actix_web::main]
