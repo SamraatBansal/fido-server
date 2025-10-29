@@ -175,7 +175,6 @@ where
     }
 
     fn generate_challenge_string(&self) -> String {
-        use rand::RngCore;
         let mut rng = rand::thread_rng();
         let challenge_bytes: [u8; 32] = rng.gen();
         BASE64.encode(challenge_bytes)
