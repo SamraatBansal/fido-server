@@ -95,6 +95,7 @@ pub struct RegistrationOptionsResponse {
     #[serde(rename = "pubKeyCredParams")]
     pub pub_key_cred_params: Vec<PubKeyCredParam>,
     pub timeout: u32,
+    #[serde(rename = "excludeCredentials")]
     pub exclude_credentials: Vec<CredentialDescriptor>,
     pub authenticator_selection: Option<AuthenticatorSelection>,
     pub attestation: String,
