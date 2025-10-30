@@ -99,13 +99,14 @@ impl PostgresCredentialRepository {
 
 #[async_trait]
 impl CredentialRepository for PostgresCredentialRepository {
-    async fn find_by_user_id(&self, user_id: Uuid) -> Result<Vec<Credential>> {
+    async fn find_by_user_id(&self, user_id: &str) -> Result<Vec<Credential>> {
         let mut conn = self.pool.get()
             .map_err(|e| crate::error::AppError::Internal(format!("Database connection error: {}", e)))?;
+        let user_id = user_id.to_string();
         
         let creds = tokio::task::spawn_blocking(move || {
             credentials::table
-                .filter(credentials::user_id.eq(user_id))
+                .filter(credentials::user_id.eq(&user_id))
                 .load::<Credential>(&mut conn)
         }).await??;
         
