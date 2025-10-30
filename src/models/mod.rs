@@ -33,6 +33,7 @@ pub struct Credential {
     pub public_key: Vec<u8>,
     pub sign_count: i64,
     pub attestation_format: String,
+    #[diesel(sql_type = Nullable<Binary>)]
     pub attestation_data: Option<Vec<u8>>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
