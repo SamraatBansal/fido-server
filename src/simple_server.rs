@@ -92,6 +92,7 @@ pub struct RegistrationOptionsResponse {
     pub rp: RpEntity,
     pub user: UserEntity,
     pub challenge: String,
+    #[serde(rename = "pubKeyCredParams")]
     pub pub_key_cred_params: Vec<PubKeyCredParam>,
     pub timeout: u32,
     pub exclude_credentials: Vec<CredentialDescriptor>,
