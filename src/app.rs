@@ -54,21 +54,26 @@ impl AppState {
                     use crate::db::repositories::mocks::{MockUserRepository, MockCredentialRepository, MockChallengeRepository};
                 
                 let user_repo = Arc::new(MockUserRepository::new());
-                let credential_repo = Arc::new(MockCredentialRepository::new());
-                let challenge_repo = Arc::new(MockChallengeRepository::new());
-                
-                let webauthn_service = Arc::new(WebAuthnService::new(
-                    config.webauthn.clone(),
-                    user_repo.clone(),
-                    credential_repo.clone(),
-                    challenge_repo.clone(),
-                )?);
-                
-                let user_service = Arc::new(UserService::new(user_repo));
-                let credential_service = Arc::new(CredentialService::new(credential_repo));
-                let security_service = Arc::new(SecurityService::new(challenge_repo));
-                
-                (None, webauthn_service, user_service, credential_service, security_service)
+                    let credential_repo = Arc::new(MockCredentialRepository::new());
+                    let challenge_repo = Arc::new(MockChallengeRepository::new());
+                    
+                    let webauthn_service = Arc::new(WebAuthnService::new(
+                        config.webauthn.clone(),
+                        user_repo.clone(),
+                        credential_repo.clone(),
+                        challenge_repo.clone(),
+                    )?);
+                    
+                    let user_service = Arc::new(UserService::new(user_repo));
+                    let credential_service = Arc::new(CredentialService::new(credential_repo));
+                    let security_service = Arc::new(SecurityService::new(challenge_repo));
+                    
+                    (None, webauthn_service, user_service, credential_service, security_service)
+                }
+                #[cfg(not(test))]
+                {
+                    return Err("Database configuration required for production".into());
+                }
             };
 
         Ok(Self {
