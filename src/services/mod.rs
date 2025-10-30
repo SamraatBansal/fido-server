@@ -115,10 +115,6 @@ impl WebAuthnService for WebAuthnServiceImpl {
                 cred_type: "public-key".to_string(),
                 alg: -7, // ES256
             },
-            PublicKeyCredentialParameters {
-                cred_type: "public-key".to_string(),
-                alg: -257, // RS256
-            },
         ];
 
         Ok(ServerPublicKeyCredentialCreationOptionsResponse {
