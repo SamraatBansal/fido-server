@@ -86,7 +86,6 @@ strip = true
 [lints.rust]
 unused_must_use = "deny"
 unused_imports = "warn"
-dead_code = "warn"
 
 [lints.clippy]
 all = "deny"
