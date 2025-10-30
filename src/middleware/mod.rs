@@ -1,4 +1,3 @@
-use actix_web::{dev::ServiceRequest, Error, Result};
 use actix_web::middleware::Logger;
 
 pub fn request_logger() -> Logger {
