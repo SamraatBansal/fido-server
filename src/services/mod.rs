@@ -224,11 +224,10 @@ impl WebAuthnService for WebAuthnServiceImpl {
             status: "ok".to_string(),
             error_message: "".to_string(),
             challenge,
-            timeout: Some(60000),
+            timeout: Some(20000),
             rp_id: self.rp_id.clone(),
             allow_credentials,
             user_verification: request.user_verification,
-            extensions: None,
         })
     }
 
