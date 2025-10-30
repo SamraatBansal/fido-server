@@ -1,5 +1,7 @@
 //! Simplified FIDO2 server implementation
 
+#![allow(dead_code)]
+
 use actix_web::{web, App, HttpResponse, HttpServer, Result, middleware::Logger};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
