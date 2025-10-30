@@ -22,6 +22,7 @@ pub trait CredentialRepository: Send + Sync {
     async fn update_sign_count(&self, credential_id: &[u8], sign_count: i64) -> Result<()>;
 }
 
+#[async_trait]
 pub trait ChallengeRepository: Send + Sync {
     async fn create_challenge(&self, challenge: &NewChallenge) -> Result<Challenge>;
     async fn find_and_consume_challenge(&self, challenge: &str, challenge_type: &str) -> Result<Option<Challenge>>;
