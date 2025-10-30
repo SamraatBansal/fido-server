@@ -17,7 +17,6 @@ pub trait WebAuthnService: Send + Sync {
 }
 
 pub struct WebAuthnServiceImpl {
-    webauthn: Webauthn,
     user_repo: Arc<dyn UserRepository>,
     credential_repo: Arc<dyn CredentialRepository>,
     challenge_repo: Arc<dyn ChallengeRepository>,
