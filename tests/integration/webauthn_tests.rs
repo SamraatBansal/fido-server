@@ -385,7 +385,7 @@ async fn test_assertion_result_success() {
     // Assert
     assert!(status.is_success());
 
-    let body: ServerResponse = test::read_body_json(resp).await;
+    let body: ServerResponse = serde_json::from_str(&body_str).unwrap();
     assert_eq!(body.status, "ok");
     assert_eq!(body.error_message, "");
 }
