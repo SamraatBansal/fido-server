@@ -2,37 +2,37 @@
 
 diesel::table! {
     challenges (id) {
-        id -> Uuid,
-        user_id -> Nullable<Uuid>,
+        id -> Text,
+        user_id -> Nullable<Text>,
         challenge -> Text,
         challenge_type -> Text,
-        expires_at -> Timestamptz,
+        expires_at -> Text,
         used -> Bool,
-        created_at -> Timestamptz,
+        created_at -> Text,
     }
 }
 
 diesel::table! {
     credentials (id) {
-        id -> Uuid,
-        user_id -> Uuid,
-        credential_id -> Bytea,
-        public_key -> Bytea,
-        sign_count -> Int8,
+        id -> Text,
+        user_id -> Text,
+        credential_id -> Blob,
+        public_key -> Blob,
+        sign_count -> Integer,
         attestation_format -> Text,
-        attestation_data -> Nullable<Bytea>,
-        created_at -> Timestamptz,
-        updated_at -> Timestamptz,
+        attestation_data -> Nullable<Blob>,
+        created_at -> Text,
+        updated_at -> Text,
     }
 }
 
 diesel::table! {
     users (id) {
-        id -> Uuid,
+        id -> Text,
         username -> Text,
         display_name -> Text,
-        created_at -> Timestamptz,
-        updated_at -> Timestamptz,
+        created_at -> Text,
+        updated_at -> Text,
     }
 }
 
