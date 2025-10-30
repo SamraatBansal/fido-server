@@ -100,6 +100,7 @@ pub struct ServerPublicKeyCredential {
     pub cred_type: String,
     pub id: String,
     pub response: ServerAuthenticatorResponse,
+    #[serde(rename = "getClientExtensionResults")]
     pub get_client_extension_results: Option<AuthenticationExtensionsClientOutputs>,
 }
 
