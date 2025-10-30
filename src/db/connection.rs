@@ -14,7 +14,7 @@ pub fn create_pool(database_url: &str) -> crate::error::Result<PgPool> {
     let pool = Pool::builder()
         .max_size(15)
         .build(manager)
-        .map_err(|e| crate::error::AppError::DatabaseConnection(e))?;
+        .map_err(|e| crate::error::AppError::DatabaseConnection(e.to_string()))?;
     
     Ok(pool)
 }
@@ -31,7 +31,7 @@ pub fn run_migrations(pool: &PgPool) -> crate::error::Result<()> {
     const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
     
     let mut conn = pool.get()
-        .map_err(|e| crate::error::AppError::DatabaseConnection(e))?;
+        .map_err(|e| crate::error::AppError::DatabaseConnection(e.to_string()))?;
     
     conn.run_pending_migrations(MIGRATIONS)
         .map_err(|e| crate::error::AppError::Database(diesel::result::Error::DatabaseError(
