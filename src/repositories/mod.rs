@@ -11,15 +11,15 @@ use async_trait::async_trait;
 pub trait UserRepository: Send + Sync {
     async fn find_by_username(&self, username: &str) -> Result<Option<User>>;
     async fn create_user(&self, user: &NewUser) -> Result<User>;
-    async fn find_by_id(&self, id: Uuid) -> Result<Option<User>>;
+    async fn find_by_id(&self, id: &str) -> Result<Option<User>>;
 }
 
 #[async_trait]
 pub trait CredentialRepository: Send + Sync {
-    async fn find_by_user_id(&self, user_id: Uuid) -> Result<Vec<Credential>>;
+    async fn find_by_user_id(&self, user_id: &str) -> Result<Vec<Credential>>;
     async fn find_by_credential_id(&self, credential_id: &[u8]) -> Result<Option<Credential>>;
     async fn create_credential(&self, credential: &NewCredential) -> Result<Credential>;
-    async fn update_sign_count(&self, credential_id: &[u8], sign_count: i64) -> Result<()>;
+    async fn update_sign_count(&self, credential_id: &[u8], sign_count: i32) -> Result<()>;
 }
 
 #[async_trait]
