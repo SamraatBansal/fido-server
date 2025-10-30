@@ -74,7 +74,7 @@ impl RateLimitMiddleware {
 
 impl<S, B> Transform<S, ServiceRequest> for RateLimitMiddleware
 where
-    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error> + 'static,
+    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error> + 'static + Clone,
     S::Future: 'static,
     B: 'static,
 {
@@ -99,7 +99,7 @@ pub struct RateLimitMiddlewareService<S> {
 
 impl<S, B> Service<ServiceRequest> for RateLimitMiddlewareService<S>
 where
-    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error> + 'static,
+    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error> + 'static + Clone,
     S::Future: 'static,
     B: 'static,
 {
