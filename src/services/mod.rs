@@ -1,6 +1,6 @@
 use crate::error::{AppError, Result};
 use crate::dtos::*;
-use crate::models::{User, NewUser, NewCredential, Challenge, NewChallenge};
+use crate::models::{User, NewUser, NewCredential, NewChallenge};
 use crate::repositories::{UserRepository, CredentialRepository, ChallengeRepository};
 use base64::{Engine as _, engine::general_purpose};
 use uuid::Uuid;
