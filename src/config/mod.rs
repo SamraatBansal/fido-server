@@ -49,36 +49,32 @@ impl Default for Config {
 
 impl Config {
     pub fn from_env() -> Result<Self, config::ConfigError> {
-        let mut settings = config::Config::default();
-        
-        // Start with default configuration
-        settings.merge(config::Config::try_from(&Config::default())?)?;
+        let settings = Config::default();
         
         // Override with environment variables
-        if let Ok(host) = env::var("SERVER_HOST") {
-            settings.set("server.host", host)?;
-        }
-        
-        if let Ok(port) = env::var("SERVER_PORT") {
-            settings.set("server.port", port.parse::<u16>().unwrap_or(8080))?;
-        }
-        
-        if let Ok(database_url) = env::var("DATABASE_URL") {
-            settings.set("database.url", database_url)?;
-        }
-        
-        if let Ok(rp_name) = env::var("WEBAUTHN_RP_NAME") {
-            settings.set("webauthn.rp_name", rp_name)?;
-        }
-        
-        if let Ok(rp_id) = env::var("WEBAUTHN_RP_ID") {
-            settings.set("webauthn.rp_id", rp_id)?;
-        }
-        
-        if let Ok(rp_origin) = env::var("WEBAUTHN_RP_ORIGIN") {
-            settings.set("webauthn.rp_origin", rp_origin)?;
-        }
-        
-        settings.try_into()
+        let server_host = env::var("SERVER_HOST").ok();
+        let server_port = env::var("SERVER_PORT").ok();
+        let database_url = env::var("DATABASE_URL").ok();
+        let webauthn_rp_name = env::var("WEBAUTHN_RP_NAME").ok();
+        let webauthn_rp_id = env::var("WEBAUTHN_RP_ID").ok();
+        let webauthn_rp_origin = env::var("WEBAUTHN_RP_ORIGIN").ok();
+
+        Ok(Config {
+            server: ServerConfig {
+                host: server_host.unwrap_or_else(|| settings.server.host.clone()),
+                port: server_port
+                    .and_then(|p| p.parse().ok())
+                    .unwrap_or(settings.server.port),
+            },
+            database: DatabaseConfig {
+                url: database_url.unwrap_or_else(|| settings.database.url.clone()),
+                max_connections: settings.database.max_connections,
+            },
+            webauthn: WebAuthnConfig {
+                rp_name: webauthn_rp_name.unwrap_or_else(|| settings.webauthn.rp_name.clone()),
+                rp_id: webauthn_rp_id.unwrap_or_else(|| settings.webauthn.rp_id.clone()),
+                rp_origin: webauthn_rp_origin.unwrap_or_else(|| settings.webauthn.rp_origin.clone()),
+            },
+        })
     }
 }
