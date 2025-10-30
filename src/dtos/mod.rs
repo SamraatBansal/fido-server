@@ -58,7 +58,6 @@ pub struct ServerPublicKeyCredentialCreationOptionsResponse {
     #[serde(rename = "authenticatorSelection")]
     pub authenticator_selection: Option<AuthenticatorSelectionCriteria>,
     pub attestation: Option<String>,
-    pub extensions: Option<AuthenticationExtensionsClientInputs>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
