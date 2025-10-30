@@ -57,7 +57,8 @@ impl UserRepository for PostgresUserRepository {
     }
 
     async fn create_user(&self, new_user: &NewUser) -> Result<User> {
-        let mut conn = self.pool.get()?;
+        let mut conn = self.pool.get()
+            .map_err(|e| crate::error::AppError::Internal(format!("Database connection error: {}", e)))?;
         let new_user = new_user.clone();
         
         let user = tokio::task::spawn_blocking(move || {
@@ -71,7 +72,8 @@ impl UserRepository for PostgresUserRepository {
     }
 
     async fn find_by_id(&self, id: Uuid) -> Result<Option<User>> {
-        let mut conn = self.pool.get()?;
+        let mut conn = self.pool.get()
+            .map_err(|e| crate::error::AppError::Internal(format!("Database connection error: {}", e)))?;
         
         let user = tokio::task::spawn_blocking(move || {
             users::table
@@ -94,9 +96,11 @@ impl PostgresCredentialRepository {
     }
 }
 
+#[async_trait]
 impl CredentialRepository for PostgresCredentialRepository {
     async fn find_by_user_id(&self, user_id: Uuid) -> Result<Vec<Credential>> {
-        let mut conn = self.pool.get()?;
+        let mut conn = self.pool.get()
+            .map_err(|e| crate::error::AppError::Internal(format!("Database connection error: {}", e)))?;
         
         let creds = tokio::task::spawn_blocking(move || {
             credentials::table
@@ -108,7 +112,8 @@ impl CredentialRepository for PostgresCredentialRepository {
     }
 
     async fn find_by_credential_id(&self, credential_id: &[u8]) -> Result<Option<Credential>> {
-        let mut conn = self.pool.get()?;
+        let mut conn = self.pool.get()
+            .map_err(|e| crate::error::AppError::Internal(format!("Database connection error: {}", e)))?;
         let credential_id = credential_id.to_vec();
         
         let cred = tokio::task::spawn_blocking(move || {
@@ -122,7 +127,8 @@ impl CredentialRepository for PostgresCredentialRepository {
     }
 
     async fn create_credential(&self, new_credential: &NewCredential) -> Result<Credential> {
-        let mut conn = self.pool.get()?;
+        let mut conn = self.pool.get()
+            .map_err(|e| crate::error::AppError::Internal(format!("Database connection error: {}", e)))?;
         let new_credential = new_credential.clone();
         
         let cred = tokio::task::spawn_blocking(move || {
@@ -136,7 +142,8 @@ impl CredentialRepository for PostgresCredentialRepository {
     }
 
     async fn update_sign_count(&self, credential_id: &[u8], sign_count: i64) -> Result<()> {
-        let mut conn = self.pool.get()?;
+        let mut conn = self.pool.get()
+            .map_err(|e| crate::error::AppError::Internal(format!("Database connection error: {}", e)))?;
         let credential_id = credential_id.to_vec();
         
         tokio::task::spawn_blocking(move || {
@@ -162,9 +169,11 @@ impl PostgresChallengeRepository {
     }
 }
 
+#[async_trait]
 impl ChallengeRepository for PostgresChallengeRepository {
     async fn create_challenge(&self, new_challenge: &NewChallenge) -> Result<Challenge> {
-        let mut conn = self.pool.get()?;
+        let mut conn = self.pool.get()
+            .map_err(|e| crate::error::AppError::Internal(format!("Database connection error: {}", e)))?;
         let new_challenge = new_challenge.clone();
         
         let challenge = tokio::task::spawn_blocking(move || {
@@ -178,7 +187,8 @@ impl ChallengeRepository for PostgresChallengeRepository {
     }
 
     async fn find_and_consume_challenge(&self, challenge_str: &str, challenge_type: &str) -> Result<Option<Challenge>> {
-        let mut conn = self.pool.get()?;
+        let mut conn = self.pool.get()
+            .map_err(|e| crate::error::AppError::Internal(format!("Database connection error: {}", e)))?;
         let challenge_str = challenge_str.to_string();
         let challenge_type = challenge_type.to_string();
         
@@ -206,7 +216,8 @@ impl ChallengeRepository for PostgresChallengeRepository {
     }
 
     async fn cleanup_expired_challenges(&self) -> Result<()> {
-        let mut conn = self.pool.get()?;
+        let mut conn = self.pool.get()
+            .map_err(|e| crate::error::AppError::Internal(format!("Database connection error: {}", e)))?;
         
         tokio::task::spawn_blocking(move || {
             diesel::delete(
