@@ -154,7 +154,6 @@ pub struct ServerPublicKeyCredentialGetOptionsResponse {
     pub allow_credentials: Vec<ServerPublicKeyCredentialDescriptor>,
     #[serde(rename = "userVerification")]
     pub user_verification: Option<String>,
-    pub extensions: Option<AuthenticationExtensionsClientInputs>,
 }
 
 impl Default for AuthenticatorSelectionCriteria {
