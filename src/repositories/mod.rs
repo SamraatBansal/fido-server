@@ -143,7 +143,7 @@ impl CredentialRepository for PostgresCredentialRepository {
         Ok(cred)
     }
 
-    async fn update_sign_count(&self, credential_id: &[u8], sign_count: i64) -> Result<()> {
+    async fn update_sign_count(&self, credential_id: &[u8], sign_count: i32) -> Result<()> {
         let mut conn = self.pool.get()
             .map_err(|e| crate::error::AppError::Internal(format!("Database connection error: {}", e)))?;
         let credential_id = credential_id.to_vec();
@@ -152,7 +152,7 @@ impl CredentialRepository for PostgresCredentialRepository {
             diesel::update(credentials::table.filter(credentials::credential_id.eq(&credential_id)))
                 .set((
                     credentials::sign_count.eq(sign_count),
-                    credentials::updated_at.eq(Utc::now()),
+                    credentials::updated_at.eq(Utc::now().to_rfc3339()),
                 ))
                 .execute(&mut conn)
         }).await??;
