@@ -76,7 +76,7 @@ impl WebAuthnService {
             .into_iter()
             .map(|cred| ServerPublicKeyCredentialDescriptor {
                 credential_type: "public-key".to_string(),
-                id: base64::encode_config(&cred.credential_id, base64::URL_SAFE_NO_PAD),
+                id: crate::utils::encode_base64url(&cred.credential_id),
                 transports: None,
             })
             .collect();
@@ -108,7 +108,7 @@ impl WebAuthnService {
                 name: self.config.rp_name.clone(),
             },
             user: ServerPublicKeyCredentialUserEntity {
-                id: base64::encode_config(user.id.as_bytes(), base64::URL_SAFE_NO_PAD),
+                id: crate::utils::encode_base64url(user.id.as_bytes()),
                 name: user.username,
                 display_name: user.display_name,
             },
@@ -136,7 +136,7 @@ impl WebAuthnService {
         };
 
         // Decode client data JSON
-        let client_data_json = base64::decode_config(&attestation_response.client_data_json, base64::URL_SAFE_NO_PAD)
+        let client_data_json = crate::utils::decode_base64url(&attestation_response.client_data_json)
             .map_err(|_| AppError::InvalidInput("Invalid client data JSON encoding".to_string()))?;
 
         // Parse client data JSON to get challenge
@@ -163,13 +163,13 @@ impl WebAuthnService {
             .ok_or_else(|| AppError::UserNotFound("User not found".to_string()))?;
 
         // Decode attestation object
-        let attestation_object = base64::decode_config(&attestation_response.attestation_object, base64::URL_SAFE_NO_PAD)
+        let attestation_object = crate::utils::decode_base64url(&attestation_response.attestation_object)
             .map_err(|_| AppError::InvalidInput("Invalid attestation object encoding".to_string()))?;
 
         // Create webauthn-rs credential
         let webauthn_credential = webauthn_rs::proto::PublicKeyCredential {
             id: credential.id.clone(),
-            raw_id: base64::decode_config(&credential.id, base64::URL_SAFE_NO_PAD)
+            raw_id: crate::utils::decode_base64url(&credential.id)
                 .map_err(|_| AppError::InvalidInput("Invalid credential ID encoding".to_string()))?,
             response: webauthn_rs::proto::AuthenticatorAttestationResponseRaw {
                 attestation_object,
@@ -199,7 +199,7 @@ impl WebAuthnService {
 
         Ok(RegistrationResultResponse {
             response: crate::models::ServerResponse::success(),
-            credential_id: Some(base64::encode_config(&result.credential_id, base64::URL_SAFE_NO_PAD)),
+            credential_id: Some(crate::utils::encode_base64url(&result.credential_id)),
         })
     }
 
@@ -228,7 +228,7 @@ impl WebAuthnService {
             .into_iter()
             .map(|cred| ServerPublicKeyCredentialDescriptor {
                 credential_type: "public-key".to_string(),
-                id: base64::encode_config(&cred.credential_id, base64::URL_SAFE_NO_PAD),
+                id: crate::utils::encode_base64url(&cred.credential_id),
                 transports: None,
             })
             .collect();
@@ -238,10 +238,10 @@ impl WebAuthnService {
             .generate_challenge_authenticate_options(
                 allow_credentials.iter().map(|desc| webauthn_rs::proto::PublicKeyCredentialDescriptor {
                     type_: webauthn_rs::proto::PublicKeyCredentialType::PublicKey,
-                    id: base64::decode_config(&desc.id, base64::URL_SAFE_NO_PAD).unwrap_or_default(),
+                    id: crate::utils::decode_base64url(&desc.id).unwrap_or_default(),
                     transports: None,
                 }).collect(),
-                request.user_verification.unwrap_or(webauthn_rs::proto::UserVerificationPolicy::Preferred),
+                request.user_verification.unwrap_or(webauthn_rs_proto::UserVerificationPolicy::Preferred),
                 self.config.timeout,
                 None,
             )
@@ -282,7 +282,7 @@ impl WebAuthnService {
         };
 
         // Decode client data JSON
-        let client_data_json = base64::decode_config(&assertion_response.client_data_json, base64::URL_SAFE_NO_PAD)
+        let client_data_json = crate::utils::decode_base64url(&assertion_response.client_data_json)
             .map_err(|_| AppError::InvalidInput("Invalid client data JSON encoding".to_string()))?;
 
         // Parse client data JSON to get challenge
@@ -305,7 +305,7 @@ impl WebAuthnService {
         }
 
         // Get credential
-        let credential_id = base64::decode_config(&credential.id, base64::URL_SAFE_NO_PAD)
+        let credential_id = crate::utils::decode_base64url(&credential.id)
             .map_err(|_| AppError::InvalidInput("Invalid credential ID encoding".to_string()))?;
 
         let mut stored_credential = self.credential_repo.get_credential_by_id(&credential_id).await?
@@ -317,10 +317,10 @@ impl WebAuthnService {
         }
 
         // Decode authenticator data and signature
-        let authenticator_data = base64::decode_config(&assertion_response.authenticator_data, base64::URL_SAFE_NO_PAD)
+        let authenticator_data = crate::utils::decode_base64url(&assertion_response.authenticator_data)
             .map_err(|_| AppError::InvalidInput("Invalid authenticator data encoding".to_string()))?;
 
-        let signature = base64::decode_config(&assertion_response.signature, base64::URL_SAFE_NO_PAD)
+        let signature = crate::utils::decode_base64url(&assertion_response.signature)
             .map_err(|_| AppError::InvalidInput("Invalid signature encoding".to_string()))?;
 
         // Create webauthn-rs credential
@@ -331,7 +331,7 @@ impl WebAuthnService {
                 authenticator_data,
                 signature,
                 user_handle: assertion_response.user_handle
-                    .and_then(|uh| base64::decode_config(&uh, base64::URL_SAFE_NO_PAD).ok()),
+                    .and_then(|uh| crate::utils::decode_base64url(&uh).ok()),
                 client_data_json,
             },
             extensions: credential.get_client_extension_results.unwrap_or_default(),
