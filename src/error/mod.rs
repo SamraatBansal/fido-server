@@ -53,6 +53,7 @@ impl actix_web::error::ResponseError for AppError {
             AppError::WebAuthn(_) => StatusCode::BAD_REQUEST,
             AppError::Serialization(_) => StatusCode::INTERNAL_SERVER_ERROR,
             AppError::Base64(_) => StatusCode::BAD_REQUEST,
+            AppError::TaskJoin(_) => StatusCode::INTERNAL_SERVER_ERROR,
             AppError::InvalidRequest(_) => StatusCode::BAD_REQUEST,
             AppError::UserNotFound(_) => StatusCode::NOT_FOUND,
             AppError::CredentialNotFound => StatusCode::NOT_FOUND,
