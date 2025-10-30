@@ -46,6 +46,9 @@ sha2 = "0.10"
 url = "2.5"
 async-trait = "0.1"
 
+# System
+num_cpus = "1.16"
+
 # Configuration
 config = "0.14"
 dotenv = "0.15"
