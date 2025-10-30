@@ -67,7 +67,7 @@ impl Default for Config {
                 rp_id: "localhost".to_string(),
                 rp_origin: "http://localhost:8080".to_string(),
                 timeout: Some(60000),
-                attestation_preference: webauthn_rs::proto::AttestationConveyancePreference::Direct,
+                attestation_preference: webauthn_rs_proto::AttestationConveyancePreference::Direct,
             },
             security: SecurityConfig {
                 challenge_expiry_seconds: 300, // 5 minutes
