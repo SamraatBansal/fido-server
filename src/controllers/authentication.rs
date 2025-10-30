@@ -56,11 +56,17 @@ pub fn configure(cfg: &mut web::ServiceConfig, controller: Arc<AuthenticationCon
         web::scope("/assertion")
             .route("/options", web::post().to({
                 let controller = controller.clone();
-                move |req, body| controller.generate_options(body, req)
+                move |body, req| {
+                    let controller = controller.clone();
+                    async move { controller.generate_options(body, req).await }
+                }
             }))
             .route("/result", web::post().to({
                 let controller = controller.clone();
-                move |req, body| controller.verify_authentication(body, req)
+                move |body, req| {
+                    let controller = controller.clone();
+                    async move { controller.verify_authentication(body, req).await }
+                }
             }))
     );
 }
