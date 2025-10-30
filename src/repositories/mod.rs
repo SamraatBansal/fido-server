@@ -134,14 +134,15 @@ impl CredentialRepository for PostgresCredentialRepository {
             .map_err(|e| crate::error::AppError::Internal(format!("Database connection error: {}", e)))?;
         let new_credential = new_credential.clone();
         
-        let cred = tokio::task::spawn_blocking(move || {
+        tokio::task::spawn_blocking(move || {
             diesel::insert_into(credentials::table)
                 .values(&new_credential)
-                .returning(Credential::as_returning())
-                .get_result(&mut conn)
+                .execute(&mut conn)
         }).await??;
         
-        Ok(cred)
+        // Find the credential we just created
+        self.find_by_credential_id(&new_credential.credential_id).await?
+            .ok_or_else(|| crate::error::AppError::Internal("Failed to retrieve created credential".to_string()))
     }
 
     async fn update_sign_count(&self, credential_id: &[u8], sign_count: i32) -> Result<()> {
