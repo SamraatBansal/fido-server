@@ -36,7 +36,7 @@ pub struct WebAuthnConfig {
     pub rp_id: String,
     pub rp_origin: String,
     pub timeout: Option<u32>,
-    pub attestation_preference: webauthn_rs::proto::AttestationConveyancePreference,
+    pub attestation_preference: webauthn_rs_proto::AttestationConveyancePreference,
 }
 
 /// Security configuration
