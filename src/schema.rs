@@ -6,9 +6,9 @@ diesel::table! {
         user_id -> Nullable<Uuid>,
         challenge -> Text,
         challenge_type -> Text,
-        expires_at -> Timestamp,
+        expires_at -> Timestamptz,
         used -> Bool,
-        created_at -> Timestamp,
+        created_at -> Timestamptz,
     }
 }
 
@@ -21,8 +21,8 @@ diesel::table! {
         sign_count -> Int8,
         attestation_format -> Text,
         attestation_data -> Nullable<Bytea>,
-        created_at -> Timestamp,
-        updated_at -> Timestamp,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
     }
 }
 
@@ -31,8 +31,8 @@ diesel::table! {
         id -> Uuid,
         username -> Text,
         display_name -> Text,
-        created_at -> Timestamp,
-        updated_at -> Timestamp,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
     }
 }
 
