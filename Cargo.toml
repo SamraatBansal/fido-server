@@ -49,6 +49,9 @@ async-trait = "0.1"
 # System
 num_cpus = "1.16"
 
+# Futures
+futures-util = "0.3"
+
 # Configuration
 config = "0.14"
 dotenv = "0.15"
