@@ -7,6 +7,7 @@ use std::sync::{Arc, Mutex};
 use uuid::Uuid;
 use chrono::{DateTime, Utc, Duration};
 use rand::RngCore;
+use base64::{Engine as _, engine::general_purpose};
 
 /// Simple server state
 pub struct SimpleState {
