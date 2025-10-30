@@ -202,8 +202,8 @@ pub struct Credential {
 
 impl User {
     /// Convert to webauthn-rs User
-    pub fn to_webauthn_user(&self) -> webauthn_rs::proto::User {
-        webauthn_rs::proto::User {
+    pub fn to_webauthn_user(&self) -> webauthn_rs_proto::User {
+        webauthn_rs_proto::User {
             id: self.id.as_bytes().to_vec(),
             name: self.username.clone(),
             display_name: self.display_name.clone(),
@@ -213,8 +213,8 @@ impl User {
 
 impl Credential {
     /// Convert to webauthn-rs Credential
-    pub fn to_webauthn_credential(&self) -> webauthn_rs::proto::Credential {
-        webauthn_rs::proto::Credential {
+    pub fn to_webauthn_credential(&self) -> webauthn_rs_proto::Credential {
+        webauthn_rs_proto::Credential {
             credential_id: self.credential_id.clone(),
             public_key: self.public_key.clone(),
             sign_count: self.sign_count,
