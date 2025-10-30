@@ -1,4 +1,4 @@
-use actix_web::{HttpServer, App, middleware};
+use actix_web::{HttpServer, App, middleware as actix_middleware};
 use actix_cors::Cors;
 use std::sync::Arc;
 
