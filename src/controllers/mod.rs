@@ -59,29 +59,34 @@ impl WebAuthnController {
 }
 
 pub fn configure_routes(cfg: &mut web::ServiceConfig, controller: Arc<WebAuthnController>) {
+    let controller1 = controller.clone();
+    let controller2 = controller.clone();
+    let controller3 = controller.clone();
+    let controller4 = controller.clone();
+    
     cfg.service(
         web::scope("/webauthn")
-            .route("/attestation/options", web::post().to({
-                let controller = controller.clone();
-                move |req| async move {
+            .route("/attestation/options", web::post().to(move |req| {
+                let controller = controller1.clone();
+                async move {
                     controller.begin_attestation(req).await
                 }
             }))
-            .route("/attestation/result", web::post().to({
-                let controller = controller.clone();
-                move |req| async move {
+            .route("/attestation/result", web::post().to(move |req| {
+                let controller = controller2.clone();
+                async move {
                     controller.finish_attestation(req).await
                 }
             }))
-            .route("/assertion/options", web::post().to({
-                let controller = controller.clone();
-                move |req| async move {
+            .route("/assertion/options", web::post().to(move |req| {
+                let controller = controller3.clone();
+                async move {
                     controller.begin_assertion(req).await
                 }
             }))
-            .route("/assertion/result", web::post().to({
-                let controller = controller.clone();
-                move |req| async move {
+            .route("/assertion/result", web::post().to(move |req| {
+                let controller = controller4.clone();
+                async move {
                     controller.finish_assertion(req).await
                 }
             }))
@@ -90,29 +95,34 @@ pub fn configure_routes(cfg: &mut web::ServiceConfig, controller: Arc<WebAuthnCo
 
 // Alternative route configuration for the exact paths specified in the requirements
 pub fn configure_standard_routes(cfg: &mut web::ServiceConfig, controller: Arc<WebAuthnController>) {
+    let controller1 = controller.clone();
+    let controller2 = controller.clone();
+    let controller3 = controller.clone();
+    let controller4 = controller.clone();
+    
     cfg.service(
         web::scope("")
-            .route("/attestation/options", web::post().to({
-                let controller = controller.clone();
-                move |req| async move {
+            .route("/attestation/options", web::post().to(move |req| {
+                let controller = controller1.clone();
+                async move {
                     controller.begin_attestation(req).await
                 }
             }))
-            .route("/attestation/result", web::post().to({
-                let controller = controller.clone();
-                move |req| async move {
+            .route("/attestation/result", web::post().to(move |req| {
+                let controller = controller2.clone();
+                async move {
                     controller.finish_attestation(req).await
                 }
             }))
-            .route("/assertion/options", web::post().to({
-                let controller = controller.clone();
-                move |req| async move {
+            .route("/assertion/options", web::post().to(move |req| {
+                let controller = controller3.clone();
+                async move {
                     controller.begin_assertion(req).await
                 }
             }))
-            .route("/assertion/result", web::post().to({
-                let controller = controller.clone();
-                move |req| async move {
+            .route("/assertion/result", web::post().to(move |req| {
+                let controller = controller4.clone();
+                async move {
                     controller.finish_assertion(req).await
                 }
             }))
