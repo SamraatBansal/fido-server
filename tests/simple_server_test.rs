@@ -55,7 +55,7 @@ async fn test_registration_options() {
     
     // Read body as bytes first
     let body_bytes = test::read_body(resp).await;
-    let body_str = String::from_utf8(body_bytes).unwrap();
+    let body_str = String::from_utf8(body_bytes.to_vec()).unwrap();
     println!("Response body: {}", body_str);
     
     assert!(resp.status().is_success());
