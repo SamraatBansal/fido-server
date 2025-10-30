@@ -33,7 +33,7 @@ pub struct SecurityHeadersMiddlewareService<S> {
 
 impl<S, B> Service<ServiceRequest> for SecurityHeadersMiddlewareService<S>
 where
-    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error> + 'static,
+    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error> + 'static + Clone,
     S::Future: 'static,
     B: 'static,
 {
