@@ -51,14 +51,15 @@ async fn test_registration_options() {
     let resp = test::call_service(&app, req).await;
     
     // Print status for debugging
-    println!("Status: {}", resp.status());
+    let status = resp.status();
+    println!("Status: {}", status);
     
     // Read body as bytes first
     let body_bytes = test::read_body(resp).await;
     let body_str = String::from_utf8(body_bytes.to_vec()).unwrap();
     println!("Response body: {}", body_str);
     
-    assert!(resp.status().is_success());
+    assert!(status.is_success());
 
     // Parse JSON
     let body: serde_json::Value = serde_json::from_str(&body_str).unwrap();
