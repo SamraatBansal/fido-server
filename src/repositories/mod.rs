@@ -176,6 +176,22 @@ impl PostgresChallengeRepository {
 
 #[async_trait]
 impl ChallengeRepository for PostgresChallengeRepository {
+    async fn find_challenge(&self, challenge_str: &str, challenge_type: &str) -> Result<Option<Challenge>> {
+        let mut conn = self.pool.get()
+            .map_err(|e| crate::error::AppError::Internal(format!("Database connection error: {}", e)))?;
+        let challenge_str = challenge_str.to_string();
+        let challenge_type = challenge_type.to_string();
+        
+        let challenge = tokio::task::spawn_blocking(move || {
+            challenges::table
+                .filter(challenges::challenge.eq(&challenge_str))
+                .filter(challenges::challenge_type.eq(&challenge_type))
+                .first::<Challenge>(&mut conn)
+                .optional()
+        }).await??;
+        
+        Ok(challenge)
+    }
     async fn create_challenge(&self, new_challenge: &NewChallenge) -> Result<Challenge> {
         let mut conn = self.pool.get()
             .map_err(|e| crate::error::AppError::Internal(format!("Database connection error: {}", e)))?;
