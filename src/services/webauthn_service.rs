@@ -171,7 +171,7 @@ impl WebAuthnService {
             id: credential.id.clone(),
             raw_id: crate::utils::decode_base64url(&credential.id)
                 .map_err(|_| AppError::InvalidInput("Invalid credential ID encoding".to_string()))?,
-            response: webauthn_rs::proto::AuthenticatorAttestationResponseRaw {
+            response: webauthn_rs_proto::AuthenticatorAttestationResponseRaw {
                 attestation_object,
                 client_data_json,
             },
