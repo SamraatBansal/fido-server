@@ -204,7 +204,7 @@ async fn test_assertion_options_success() {
             attestation_data: None,
             created_at: chrono::Utc::now(),
             updated_at: chrono::Utc::now(),
-        }]));
+        })));
 
     // Mock challenge creation
     mock_challenge_repo
@@ -316,7 +316,7 @@ async fn test_attestation_result_success() {
         .returning(move |_, _| Ok(Some(fido_server::models::Challenge {
             id: challenge_id,
             user_id: Some(user_id),
-            challenge: "test_challenge".to_string(),
+            challenge: "dGVzdF9jaGFsbGVuZ2U=".to_string(), // base64 of "test_challenge"
             challenge_type: "registration".to_string(),
             expires_at: chrono::Utc::now() + chrono::Duration::minutes(5),
             used: false,
@@ -372,7 +372,7 @@ async fn test_attestation_result_success() {
     let req = test::TestRequest::post()
         .uri("/attestation/result")
         .set_json(json!({
-            "id": "test_credential_id",
+            "id": "dGVzdF9jcmVkZW50aWFsX2lk", // base64 of "test_credential_id"
             "response": {
                 "clientDataJSON": "eyJjaGFsbGVuZ2UiOiJ0ZXN0X2NoYWxsZW5nZSIsInR5cGUiOiJ3ZWJhdXRobi5jcmVhdGUifQ",
                 "attestationObject": "o2NmbXRkbm9uZWdhdHRTdG10oGhhdXRoRGF0YVjESZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2MBAAAAAA"
