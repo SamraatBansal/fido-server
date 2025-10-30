@@ -74,7 +74,7 @@ pub struct RegistrationOptionsRequest {
     pub attestation: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct AuthenticatorSelection {
     pub require_resident_key: Option<bool>,
     pub authenticator_attachment: Option<String>,
@@ -213,7 +213,7 @@ impl SimpleState {
     fn generate_challenge(&self) -> String {
         let mut bytes = [0u8; 32];
         rand::thread_rng().fill_bytes(&mut bytes);
-        base64::encode_config(&bytes, base64::URL_SAFE_NO_PAD)
+        general_purpose::URL_SAFE_NO_PAD.encode(&bytes)
     }
 
     fn store_challenge(&self, challenge: String, user_id: String, challenge_type: String) {
@@ -242,7 +242,7 @@ impl SimpleState {
             user.clone()
         } else {
             let user = SimpleUser {
-                id: base64::encode_config(Uuid::new_v4().as_bytes(), base64::URL_SAFE_NO_PAD),
+                id: general_purpose::URL_SAFE_NO_PAD.encode(Uuid::new_v4().as_bytes()),
                 username: username.to_string(),
                 display_name: display_name.to_string(),
                 created_at: Utc::now(),
@@ -333,8 +333,8 @@ pub async fn generate_registration_options(
         ],
         timeout: 60000,
         exclude_credentials,
-        authenticator_selection: request.authenticator_selection,
-        attestation: request.attestation.unwrap_or_else(|| "none".to_string()),
+        authenticator_selection: request.authenticator_selection.clone(),
+        attestation: request.attestation.clone().unwrap_or_else(|| "none".to_string()),
     };
 
     Ok(HttpResponse::Ok().json(response))
@@ -346,17 +346,15 @@ pub async fn verify_registration(
     request: web::Json<RegistrationResultRequest>,
 ) -> Result<HttpResponse> {
     // Decode client data JSON to get challenge
-    let client_data_json = base64::decode_config(&request.response.client_data_json, base64::URL_SAFE_NO_PAD);
+    let client_data_json = general_purpose::URL_SAFE_NO_PAD.decode(&request.response.client_data_json);
     if client_data_json.is_err() {
         return Ok(HttpResponse::BadRequest().json(ServerResponse::error("Invalid client data JSON")));
     }
 
-    let client_data: serde_json::Value = serde_json::from_slice(&client_data_json.unwrap());
-    if client_data.is_err() {
-        return Ok(HttpResponse::BadRequest().json(ServerResponse::error("Invalid client data JSON format")));
-    }
+    let client_data: serde_json::Value = serde_json::from_slice(&client_data_json.unwrap())
+        .map_err(|_| HttpResponse::BadRequest().json(ServerResponse::error("Invalid client data JSON format")))?;
 
-    let challenge = client_data.unwrap()
+    let challenge = client_data
         .get("challenge")
         .and_then(|v| v.as_str())
         .unwrap_or("");
@@ -423,7 +421,7 @@ pub async fn generate_authentication_options(
         timeout: 60000,
         rp_id: "localhost".to_string(),
         allow_credentials,
-        user_verification: request.user_verification,
+        user_verification: request.user_verification.clone(),
     };
 
     Ok(HttpResponse::Ok().json(response))
