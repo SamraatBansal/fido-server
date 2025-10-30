@@ -197,17 +197,18 @@ impl ChallengeRepository for PostgresChallengeRepository {
     async fn create_challenge(&self, new_challenge: &NewChallenge) -> Result<Challenge> {
         let mut conn = self.pool.get()
             .map_err(|e| crate::error::AppError::Internal(format!("Database connection error: {}", e)))?;
-        let new_challenge = new_challenge.clone();
+        let challenge_clone = new_challenge.clone();
         let challenge_str = new_challenge.challenge.clone();
+        let challenge_type = new_challenge.challenge_type.clone();
         
         tokio::task::spawn_blocking(move || {
             diesel::insert_into(challenges::table)
-                .values(&new_challenge)
+                .values(&challenge_clone)
                 .execute(&mut conn)
         }).await??;
         
         // Find the challenge we just created
-        self.find_challenge(&challenge_str, &new_challenge.challenge_type).await?
+        self.find_challenge(&challenge_str, &challenge_type).await?
             .ok_or_else(|| crate::error::AppError::Internal("Failed to retrieve created challenge".to_string()))
     }
 
