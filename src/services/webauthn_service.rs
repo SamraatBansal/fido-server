@@ -2,7 +2,7 @@
 
 use std::sync::Arc;
 use uuid::Uuid;
-use webauthn_rs::{WebAuthn, WebAuthnBuilder};
+use webauthn_rs::{Webauthn, WebauthnBuilder};
 use crate::config::WebAuthnConfig;
 use crate::db::repositories::{UserRepository, CredentialRepository, ChallengeRepository};
 use crate::models::{
