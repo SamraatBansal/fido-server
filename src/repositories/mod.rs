@@ -193,6 +193,7 @@ impl ChallengeRepository for PostgresChallengeRepository {
             .map_err(|e| crate::error::AppError::Internal(format!("Database connection error: {}", e)))?;
         let challenge_str = challenge_str.to_string();
         let challenge_type = challenge_type.to_string();
+        let now = Utc::now().to_rfc3339();
         
         let challenge = tokio::task::spawn_blocking(move || {
             conn.transaction::<_, diesel::result::Error, _>(|conn| {
@@ -200,12 +201,12 @@ impl ChallengeRepository for PostgresChallengeRepository {
                     .filter(challenges::challenge.eq(&challenge_str))
                     .filter(challenges::challenge_type.eq(&challenge_type))
                     .filter(challenges::used.eq(false))
-                    .filter(challenges::expires_at.gt(Utc::now()))
+                    .filter(challenges::expires_at.gt(&now))
                     .first::<Challenge>(conn)
                     .optional()?;
 
                 if let Some(ref ch) = challenge {
-                    diesel::update(challenges::table.filter(challenges::id.eq(ch.id)))
+                    diesel::update(challenges::table.filter(challenges::id.eq(&ch.id)))
                         .set(challenges::used.eq(true))
                         .execute(conn)?;
                 }
