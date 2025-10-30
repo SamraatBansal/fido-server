@@ -31,7 +31,7 @@ impl WebAuthnService {
         credential_repo: Arc<dyn CredentialRepository>,
         challenge_repo: Arc<dyn ChallengeRepository>,
     ) -> Result<Self> {
-        let webauthn = WebAuthnBuilder::new(&config.rp_id, &config.rp_origin)
+        let webauthn = WebauthnBuilder::new(&config.rp_id, &config.rp_origin)
             .rp_name(&config.rp_name)
             .build()
             .map_err(|e| AppError::Configuration(format!("Failed to create WebAuthn instance: {}", e)))?;
