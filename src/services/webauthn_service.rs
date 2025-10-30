@@ -167,7 +167,7 @@ impl WebAuthnService {
             .map_err(|_| AppError::InvalidInput("Invalid attestation object encoding".to_string()))?;
 
         // Create webauthn-rs credential
-        let webauthn_credential = webauthn_rs::proto::PublicKeyCredential {
+        let webauthn_credential = webauthn_rs_proto::PublicKeyCredential {
             id: credential.id.clone(),
             raw_id: crate::utils::decode_base64url(&credential.id)
                 .map_err(|_| AppError::InvalidInput("Invalid credential ID encoding".to_string()))?,
@@ -236,8 +236,8 @@ impl WebAuthnService {
         // Generate challenge
         let (options, state) = self.webauthn
             .generate_challenge_authenticate_options(
-                allow_credentials.iter().map(|desc| webauthn_rs::proto::PublicKeyCredentialDescriptor {
-                    type_: webauthn_rs::proto::PublicKeyCredentialType::PublicKey,
+                allow_credentials.iter().map(|desc| webauthn_rs_proto::PublicKeyCredentialDescriptor {
+                    type_: webauthn_rs_proto::PublicKeyCredentialType::PublicKey,
                     id: crate::utils::decode_base64url(&desc.id).unwrap_or_default(),
                     transports: None,
                 }).collect(),
@@ -324,7 +324,7 @@ impl WebAuthnService {
             .map_err(|_| AppError::InvalidInput("Invalid signature encoding".to_string()))?;
 
         // Create webauthn-rs credential
-        let webauthn_credential = webauthn_rs::proto::PublicKeyCredential {
+        let webauthn_credential = webauthn_rs_proto::PublicKeyCredential {
             id: credential.id.clone(),
             raw_id: credential_id,
             response: webauthn_rs::proto::AuthenticatorAssertionResponseRaw {
