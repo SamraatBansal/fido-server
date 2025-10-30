@@ -1,14 +1,15 @@
 use actix_web::{web, HttpResponse};
 use crate::dtos::*;
-use crate::services::WebAuthnService;
+use crate::services::{WebAuthnService, WebAuthnServiceImpl};
 use crate::error::AppError;
+use std::sync::Arc;
 
 pub struct WebAuthnController {
-    webauthn_service: web::Data<dyn WebAuthnService>,
+    webauthn_service: Arc<WebAuthnServiceImpl>,
 }
 
 impl WebAuthnController {
-    pub fn new(webauthn_service: web::Data<dyn WebAuthnService>) -> Self {
+    pub fn new(webauthn_service: Arc<WebAuthnServiceImpl>) -> Self {
         Self { webauthn_service }
     }
 
