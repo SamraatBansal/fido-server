@@ -89,11 +89,11 @@ impl WebAuthnService for WebAuthnServiceImpl {
         
         // Store challenge
         let new_challenge = NewChallenge {
-            id: Uuid::new_v4(),
-            user_id: Some(user.id),
+            id: Uuid::new_v4().to_string(),
+            user_id: Some(user.id.clone()),
             challenge: challenge.clone(),
             challenge_type: "registration".to_string(),
-            expires_at: Utc::now() + Duration::minutes(5),
+            expires_at: (Utc::now() + Duration::minutes(5)).to_rfc3339(),
         };
         self.challenge_repo.create_challenge(&new_challenge).await?;
 
