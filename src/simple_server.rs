@@ -108,6 +108,7 @@ pub struct RpEntity {
 pub struct UserEntity {
     pub id: String,
     pub name: String,
+    #[serde(rename = "displayName")]
     pub display_name: String,
 }
 
