@@ -12,7 +12,7 @@ pub struct SecurityHeadersMiddleware;
 
 impl<S, B> Transform<S, ServiceRequest> for SecurityHeadersMiddleware
 where
-    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error> + 'static,
+    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error> + 'static + Clone,
     S::Future: 'static,
     B: 'static,
 {
