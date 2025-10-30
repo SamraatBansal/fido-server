@@ -1,14 +1,14 @@
 use crate::error::{AppError, Result};
 use crate::dtos::*;
-use crate::models::{User, NewUser, Credential, NewCredential, Challenge, NewChallenge};
+use crate::models::{User, NewUser, NewCredential, Challenge, NewChallenge};
 use crate::repositories::{UserRepository, CredentialRepository, ChallengeRepository};
-use webauthn_rs::prelude::*;
 use base64::{Engine as _, engine::general_purpose};
 use uuid::Uuid;
 use chrono::{Utc, Duration};
 use std::sync::Arc;
-use trand::random;
+use rand::RngCore;
 
+#[async_trait::async_trait]
 pub trait WebAuthnService: Send + Sync {
     async fn begin_registration(&self, request: ServerPublicKeyCredentialCreationOptionsRequest) -> Result<ServerPublicKeyCredentialCreationOptionsResponse>;
     async fn finish_registration(&self, credential: ServerPublicKeyCredential) -> Result<ServerResponse>;
