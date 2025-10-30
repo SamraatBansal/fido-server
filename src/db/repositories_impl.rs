@@ -35,7 +35,7 @@ impl UserRepository for PgUserRepository {
         };
 
         let mut conn = self.pool.get()
-            .map_err(|e| AppError::DatabaseConnection(e))?;
+            .map_err(|e| AppError::DatabaseConnection(e.to_string()))?;
 
         let user: User = diesel::insert_into(users::table)
             .values(&new_user)
@@ -50,7 +50,7 @@ impl UserRepository for PgUserRepository {
         use crate::schema::users;
         
         let mut conn = self.pool.get()
-            .map_err(|e| AppError::DatabaseConnection(e))?;
+            .map_err(|e| AppError::DatabaseConnection(e.to_string()))?;
 
         let user: Option<User> = users::table
             .filter(users::username.eq(username))
@@ -65,7 +65,7 @@ impl UserRepository for PgUserRepository {
         use crate::schema::users;
         
         let mut conn = self.pool.get()
-            .map_err(|e| AppError::DatabaseConnection(e))?;
+            .map_err(|e| AppError::DatabaseConnection(e.to_string()))?;
 
         let user: Option<User> = users::table
             .filter(users::id.eq(user_id))
@@ -86,7 +86,7 @@ impl UserRepository for PgUserRepository {
         };
 
         let mut conn = self.pool.get()
-            .map_err(|e| AppError::DatabaseConnection(e))?;
+            .map_err(|e| AppError::DatabaseConnection(e.to_string()))?;
 
         diesel::update(users::table.filter(users::id.eq(user.id)))
             .set(&update_user)
@@ -100,7 +100,7 @@ impl UserRepository for PgUserRepository {
         use crate::schema::users;
         
         let mut conn = self.pool.get()
-            .map_err(|e| AppError::DatabaseConnection(e))?;
+            .map_err(|e| AppError::DatabaseConnection(e.to_string()))?;
 
         diesel::delete(users::table.filter(users::id.eq(user_id)))
             .execute(&mut conn)
@@ -130,7 +130,7 @@ impl CredentialRepository for PgCredentialRepository {
             .map_err(|e| AppError::Serialization(e))?;
 
         let mut conn = self.pool.get()
-            .map_err(|e| AppError::DatabaseConnection(e))?;
+            .map_err(|e| AppError::DatabaseConnection(e.to_string()))?;
 
         diesel::insert_into(credentials::table)
             .values(&new_credential)
@@ -144,7 +144,7 @@ impl CredentialRepository for PgCredentialRepository {
         use crate::schema::credentials;
         
         let mut conn = self.pool.get()
-            .map_err(|e| AppError::DatabaseConnection(e))?;
+            .map_err(|e| AppError::DatabaseConnection(e.to_string()))?;
 
         let credential: Option<Credential> = credentials::table
             .filter(credentials::credential_id.eq(credential_id))
@@ -166,7 +166,7 @@ impl CredentialRepository for PgCredentialRepository {
         use crate::schema::credentials;
         
         let mut conn = self.pool.get()
-            .map_err(|e| AppError::DatabaseConnection(e))?;
+            .map_err(|e| AppError::DatabaseConnection(e.to_string()))?;
 
         let credentials: Vec<Credential> = credentials::table
             .filter(credentials::user_id.eq(user_id))
@@ -191,7 +191,7 @@ impl CredentialRepository for PgCredentialRepository {
         };
 
         let mut conn = self.pool.get()
-            .map_err(|e| AppError::DatabaseConnection(e))?;
+            .map_err(|e| AppError::DatabaseConnection(e.to_string()))?;
 
         diesel::update(credentials::table.filter(credentials::id.eq(credential.id)))
             .set(&update_credential)
@@ -205,7 +205,7 @@ impl CredentialRepository for PgCredentialRepository {
         use crate::schema::credentials;
         
         let mut conn = self.pool.get()
-            .map_err(|e| AppError::DatabaseConnection(e))?;
+            .map_err(|e| AppError::DatabaseConnection(e.to_string()))?;
 
         diesel::delete(credentials::table.filter(credentials::credential_id.eq(credential_id)))
             .execute(&mut conn)
@@ -234,7 +234,7 @@ impl ChallengeRepository for PgChallengeRepository {
         let new_challenge = NewChallenge::from(challenge.clone());
 
         let mut conn = self.pool.get()
-            .map_err(|e| AppError::DatabaseConnection(e))?;
+            .map_err(|e| AppError::DatabaseConnection(e.to_string()))?;
 
         diesel::insert_into(challenges::table)
             .values(&new_challenge)
@@ -248,7 +248,7 @@ impl ChallengeRepository for PgChallengeRepository {
         use crate::schema::challenges;
         
         let mut conn = self.pool.get()
-            .map_err(|e| AppError::DatabaseConnection(e))?;
+            .map_err(|e| AppError::DatabaseConnection(e.to_string()))?;
 
         let challenge_record: Option<Challenge> = challenges::table
             .filter(challenges::challenge.eq(challenge))
@@ -269,7 +269,7 @@ impl ChallengeRepository for PgChallengeRepository {
         use crate::schema::challenges;
         
         let mut conn = self.pool.get()
-            .map_err(|e| AppError::DatabaseConnection(e))?;
+            .map_err(|e| AppError::DatabaseConnection(e.to_string()))?;
 
         let challenge_record: Option<Challenge> = conn.transaction(|conn| {
             let ch: Option<Challenge> = challenges::table
@@ -298,7 +298,7 @@ impl ChallengeRepository for PgChallengeRepository {
         use crate::schema::challenges;
         
         let mut conn = self.pool.get()
-            .map_err(|e| AppError::DatabaseConnection(e))?;
+            .map_err(|e| AppError::DatabaseConnection(e.to_string()))?;
 
         let count = diesel::delete(challenges::table.filter(challenges::expires_at.lt(Utc::now())))
             .execute(&mut conn)
