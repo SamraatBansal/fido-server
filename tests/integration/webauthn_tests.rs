@@ -187,7 +187,7 @@ async fn test_assertion_options_success() {
             display_name: "John Doe".to_string(),
             created_at: chrono::Utc::now(),
             updated_at: chrono::Utc::now(),
-        })));
+        }]));
 
     // Mock existing credentials
     mock_credential_repo
@@ -334,7 +334,7 @@ async fn test_attestation_result_success() {
             display_name: "John Doe".to_string(),
             created_at: chrono::Utc::now(),
             updated_at: chrono::Utc::now(),
-        })));
+        }]));
 
     // Mock credential creation
     mock_credential_repo
@@ -350,7 +350,7 @@ async fn test_attestation_result_success() {
             attestation_data: cred.attestation_data.clone(),
             created_at: chrono::Utc::now(),
             updated_at: chrono::Utc::now(),
-        })));
+        }]));
 
     let webauthn_service = Arc::new(WebAuthnServiceImpl::new(
         Arc::new(mock_user_repo),
