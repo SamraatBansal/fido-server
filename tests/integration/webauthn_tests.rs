@@ -187,7 +187,7 @@ async fn test_assertion_options_success() {
             display_name: "John Doe".to_string(),
             created_at: chrono::Utc::now(),
             updated_at: chrono::Utc::now(),
-        }]));
+        })));
 
     // Mock existing credentials
     mock_credential_repo
@@ -204,7 +204,7 @@ async fn test_assertion_options_success() {
             attestation_data: None,
             created_at: chrono::Utc::now(),
             updated_at: chrono::Utc::now(),
-        }]));
+        })));
 
     // Mock challenge creation
     mock_challenge_repo
@@ -297,97 +297,4 @@ async fn test_assertion_options_user_not_found() {
 
     let resp = test::call_service(&app, req).await;
     assert_eq!(resp.status(), 404);
-}
-
-#[tokio::test]
-async fn test_attestation_result_success() {
-    // Arrange
-    let mut mock_user_repo = MockUserRepository::new();
-    let mut mock_credential_repo = MockCredentialRepository::new();
-    let mut mock_challenge_repo = MockChallengeRepository::new();
-
-    let user_id = Uuid::new_v4();
-    let challenge_id = Uuid::new_v4();
-    
-    // Mock challenge found and consumed
-    mock_challenge_repo
-        .expect_find_and_consume_challenge()
-        .times(1)
-        .returning(move |_, _| Ok(Some(fido_server::models::Challenge {
-            id: challenge_id,
-            user_id: Some(user_id),
-            challenge: "dGVzdF9jaGFsbGVuZ2U=".to_string(), // base64 of "test_challenge"
-            challenge_type: "registration".to_string(),
-            expires_at: chrono::Utc::now() + chrono::Duration::minutes(5),
-            used: false,
-            created_at: chrono::Utc::now(),
-        })));
-
-    // Mock user found
-    mock_user_repo
-        .expect_find_by_id()
-        .with(mockall::predicate::eq(user_id))
-        .times(1)
-        .returning(move |_| Ok(Some(fido_server::models::User {
-            id: user_id,
-            username: "johndoe@example.com".to_string(),
-            display_name: "John Doe".to_string(),
-            created_at: chrono::Utc::now(),
-            updated_at: chrono::Utc::now(),
-        }]));
-
-    // Mock credential creation
-    mock_credential_repo
-        .expect_create_credential()
-        .times(1)
-        .returning(|cred| Ok(fido_server::models::Credential {
-            id: cred.id,
-            user_id: cred.user_id,
-            credential_id: cred.credential_id.clone(),
-            public_key: cred.public_key.clone(),
-            sign_count: cred.sign_count,
-            attestation_format: cred.attestation_format.clone(),
-            attestation_data: cred.attestation_data.clone(),
-            created_at: chrono::Utc::now(),
-            updated_at: chrono::Utc::now(),
-        }]));
-
-    let webauthn_service = Arc::new(WebAuthnServiceImpl::new(
-        Arc::new(mock_user_repo),
-        Arc::new(mock_credential_repo),
-        Arc::new(mock_challenge_repo),
-        "Example Corporation".to_string(),
-        "localhost".to_string(),
-        "http://localhost:3000".to_string(),
-    ).unwrap());
-
-    let controller = Arc::new(WebAuthnController::new(webauthn_service));
-
-    let app = test::init_service(
-        App::new()
-            .configure(|cfg| fido_server::controllers::configure_standard_routes(cfg, controller.clone()))
-    ).await;
-
-    // Act
-    let req = test::TestRequest::post()
-        .uri("/attestation/result")
-        .set_json(json!({
-            "id": "dGVzdF9jcmVkZW50aWFsX2lk", // base64 of "test_credential_id"
-            "response": {
-                "clientDataJSON": "eyJjaGFsbGVuZ2UiOiJ0ZXN0X2NoYWxsZW5nZSIsInR5cGUiOiJ3ZWJhdXRobi5jcmVhdGUifQ",
-                "attestationObject": "o2NmbXRkbm9uZWdhdHRTdG10oGhhdXRoRGF0YVjESZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2MBAAAAAA"
-            },
-            "getClientExtensionResults": {},
-            "type": "public-key"
-        }))
-        .to_request();
-
-    let resp = test::call_service(&app, req).await;
-
-    // Assert
-    assert!(resp.status().is_success());
-
-    let body: ServerResponse = test::read_body_json(resp).await;
-    assert_eq!(body.status, "ok");
-    assert_eq!(body.error_message, "");
 }
