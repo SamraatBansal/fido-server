@@ -59,7 +59,7 @@ impl WebAuthnServiceImpl {
             Ok(user)
         } else {
             let new_user = NewUser {
-                id: Uuid::new_v4(),
+                id: Uuid::new_v4().to_string(),
                 username: username.to_string(),
                 display_name: display_name.to_string(),
             };
