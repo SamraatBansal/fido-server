@@ -221,11 +221,12 @@ impl ChallengeRepository for PostgresChallengeRepository {
     async fn cleanup_expired_challenges(&self) -> Result<()> {
         let mut conn = self.pool.get()
             .map_err(|e| crate::error::AppError::Internal(format!("Database connection error: {}", e)))?;
+        let now = Utc::now().to_rfc3339();
         
         tokio::task::spawn_blocking(move || {
             diesel::delete(
                 challenges::table.filter(
-                    challenges::expires_at.lt(Utc::now())
+                    challenges::expires_at.lt(&now)
                 )
             ).execute(&mut conn)
         }).await??;
