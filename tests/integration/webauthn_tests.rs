@@ -136,7 +136,7 @@ async fn test_attestation_options_success() {
     // Assert
     assert!(status.is_success());
 
-    let body: ServerPublicKeyCredentialCreationOptionsResponse = test::read_body_json(resp).await;
+    let body: ServerPublicKeyCredentialCreationOptionsResponse = serde_json::from_str(&body_str).unwrap();
     assert_eq!(body.status, "ok");
     assert_eq!(body.error_message, "");
     assert_eq!(body.rp.name, "Example Corporation");
