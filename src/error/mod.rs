@@ -10,7 +10,7 @@ pub enum AppError {
     InvalidInput(String),
 
     #[error("WebAuthn error: {0}")]
-    WebAuthn(#[from] webauthn_rs::error::WebauthnError),
+    WebAuthn(#[from] webauthn_rs::WebauthnError),
 
     #[error("Database error: {0}")]
     Database(#[from] diesel::result::Error),
