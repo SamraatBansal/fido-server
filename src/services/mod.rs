@@ -124,11 +124,10 @@ impl WebAuthnService for WebAuthnServiceImpl {
             user: user_entity,
             challenge,
             pub_key_cred_params,
-            timeout: Some(60000),
+            timeout: Some(10000),
             exclude_credentials: Some(exclude_credentials),
             authenticator_selection: request.authenticator_selection,
             attestation: request.attestation,
-            extensions: None,
         })
     }
 
