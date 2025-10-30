@@ -51,7 +51,7 @@ async fn main() -> std::io::Result<()> {
     ).expect("Failed to create WebAuthn service"));
 
     // Initialize controller
-    let webauthn_controller = web::Data::new(WebAuthnController::new(webauthn_service.clone()));
+    let webauthn_controller = Arc::new(WebAuthnController::new(webauthn_service.clone()));
 
     // Start HTTP server
     HttpServer::new(move || {
@@ -62,7 +62,6 @@ async fn main() -> std::io::Result<()> {
             .max_age(3600);
 
         App::new()
-            .app_data(webauthn_controller.clone())
             .wrap(cors)
             .wrap(middleware::Logger::default())
             .configure(|cfg| controllers::configure_standard_routes(cfg, webauthn_controller.clone()))
