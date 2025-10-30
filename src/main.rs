@@ -1,4 +1,4 @@
-use actix_web::{web, HttpRequest, HttpResponse, HttpServer, App, Result, middleware};
+use actix_web::{HttpServer, App, middleware};
 use actix_cors::Cors;
 use std::sync::Arc;
 
@@ -16,10 +16,9 @@ mod services;
 mod utils;
 
 use controllers::WebAuthnController;
-use services::{WebAuthnService, WebAuthnServiceImpl};
+use services::WebAuthnServiceImpl;
 use repositories::{PostgresUserRepository, PostgresCredentialRepository, PostgresChallengeRepository};
 use db::establish_connection_pool;
-use error::AppError;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
