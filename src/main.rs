@@ -1,8 +1,9 @@
 //! FIDO Server Main Entry Point
 
-use actix_cors::Cors;
-use actix_web::{middleware::Logger, App, HttpServer};
+use actix_web::middleware::Logger;
 use std::io;
+use std::sync::Arc;
+use fido_server::{Config, AppState, create_server};
 
 #[actix_web::main]
 async fn main() -> io::Result<()> {
@@ -11,28 +12,22 @@ async fn main() -> io::Result<()> {
 
     log::info!("Starting FIDO Server...");
 
-    // TODO: Load configuration from config file
-    let host = "127.0.0.1";
-    let port = 8080;
+    // Load configuration
+    let config = Config::from_env().expect("Failed to load configuration");
+    
+    log::info!("Configuration loaded successfully");
+    log::info!("Server will bind to {}:{}", config.server.host, config.server.port);
+    log::info!("WebAuthn RP ID: {}", config.webauthn.rp_id);
+    log::info!("WebAuthn RP Origin: {}", config.webauthn.rp_origin);
 
-    // TODO: Initialize database connection pool
+    // Create application state
+    let state = Arc::new(AppState::new(config).await.expect("Failed to create application state"));
 
-    log::info!("Server running at http://{}:{}", host, port);
+    // Create and run server
+    let server = create_server(state).await.expect("Failed to create server");
 
-    HttpServer::new(move || {
-        // Configure CORS
-        let cors = Cors::default()
-            .allow_any_origin()
-            .allow_any_method()
-            .allow_any_header()
-            .max_age(3600);
+    log::info!("FIDO Server started successfully");
 
-        App::new()
-            .wrap(Logger::default())
-            .wrap(cors)
-            .configure(fido_server::routes::api::configure)
-    })
-    .bind((host, port))?
-    .run()
-    .await
+    // Run the server
+    server.await
 }
