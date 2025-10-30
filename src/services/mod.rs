@@ -39,7 +39,6 @@ impl WebAuthnServiceImpl {
         // This will be expanded later for full FIDO2 compliance
 
         Ok(Self {
-            webauthn,
             user_repo,
             credential_repo,
             challenge_repo,
@@ -50,7 +49,8 @@ impl WebAuthnServiceImpl {
     }
 
     fn generate_challenge(&self) -> String {
-        let bytes: [u8; 32] = random();
+        let mut bytes = [0u8; 32];
+        rand::thread_rng().fill_bytes(&mut bytes);
         general_purpose::URL_SAFE_NO_PAD.encode(bytes)
     }
 
