@@ -25,6 +25,7 @@ pub trait CredentialRepository: Send + Sync {
 #[async_trait]
 pub trait ChallengeRepository: Send + Sync {
     async fn create_challenge(&self, challenge: &NewChallenge) -> Result<Challenge>;
+    async fn find_challenge(&self, challenge: &str, challenge_type: &str) -> Result<Option<Challenge>>;
     async fn find_and_consume_challenge(&self, challenge: &str, challenge_type: &str) -> Result<Option<Challenge>>;
     async fn cleanup_expired_challenges(&self) -> Result<()>;
 }
