@@ -17,6 +17,9 @@ pub enum AppError {
     #[error("Base64 decoding error: {0}")]
     Base64(#[from] base64::DecodeError),
     
+    #[error("Task join error: {0}")]
+    TaskJoin(#[from] tokio::task::JoinError),
+    
     #[error("Invalid request: {0}")]
     InvalidRequest(String),
     
