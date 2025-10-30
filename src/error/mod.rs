@@ -16,7 +16,7 @@ pub enum AppError {
     Database(#[from] diesel::result::Error),
 
     #[error("Database connection error: {0}")]
-    DatabaseConnection(#[from] diesel::result::ConnectionError),
+    DatabaseConnection(String),
 
     #[error("User not found: {0}")]
     UserNotFound(String),
