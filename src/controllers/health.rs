@@ -96,7 +96,10 @@ pub fn configure(cfg: &mut web::ServiceConfig, controller: Arc<HealthController>
         web::scope("/health")
             .route("", web::get().to({
                 let controller = controller.clone();
-                move |req| controller.health_check(req)
+                move |req| {
+                    let controller = controller.clone();
+                    async move { controller.health_check(req).await }
+                }
             }))
     );
 }
