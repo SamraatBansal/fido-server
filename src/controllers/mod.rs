@@ -58,7 +58,7 @@ impl WebAuthnController {
     }
 }
 
-pub fn configure_routes(cfg: &mut web::ServiceConfig, controller: web::Data<WebAuthnController>) {
+pub fn configure_routes(cfg: &mut web::ServiceConfig, controller: Arc<WebAuthnController>) {
     cfg.service(
         web::scope("/webauthn")
             .route("/attestation/options", web::post().to({
@@ -89,7 +89,7 @@ pub fn configure_routes(cfg: &mut web::ServiceConfig, controller: web::Data<WebA
 }
 
 // Alternative route configuration for the exact paths specified in the requirements
-pub fn configure_standard_routes(cfg: &mut web::ServiceConfig, controller: web::Data<WebAuthnController>) {
+pub fn configure_standard_routes(cfg: &mut web::ServiceConfig, controller: Arc<WebAuthnController>) {
     cfg.service(
         web::scope("")
             .route("/attestation/options", web::post().to({
