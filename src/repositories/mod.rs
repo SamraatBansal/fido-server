@@ -39,9 +39,11 @@ impl PostgresUserRepository {
     }
 }
 
+#[async_trait]
 impl UserRepository for PostgresUserRepository {
     async fn find_by_username(&self, username: &str) -> Result<Option<User>> {
-        let mut conn = self.pool.get()?;
+        let mut conn = self.pool.get()
+            .map_err(|e| crate::error::AppError::Internal(format!("Database connection error: {}", e)))?;
         let username = username.to_string();
         
         let user = tokio::task::spawn_blocking(move || {
