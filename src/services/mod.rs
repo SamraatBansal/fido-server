@@ -196,7 +196,7 @@ impl WebAuthnService for WebAuthnServiceImpl {
             .ok_or(AppError::UserNotFound(request.username))?;
 
         // Get user's credentials
-        let credentials = self.credential_repo.find_by_user_id(user.id).await?;
+        let credentials = self.credential_repo.find_by_user_id(&user.id).await?;
         
         if credentials.is_empty() {
             return Err(AppError::CredentialNotFound);
