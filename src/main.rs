@@ -5,15 +5,15 @@ use std::sync::Arc;
 mod config;
 mod controllers;
 mod db;
+mod dtos;
 mod error;
-mod middleware as app_middleware;
+mod middleware;
 mod models;
 mod repositories;
 mod routes;
 mod schema;
 mod services;
 mod utils;
-mod dtos;
 
 use controllers::WebAuthnController;
 use services::{WebAuthnService, WebAuthnServiceImpl};
