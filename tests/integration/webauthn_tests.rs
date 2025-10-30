@@ -375,17 +375,10 @@ async fn test_assertion_result_success() {
 
     let resp = test::call_service(&app, req).await;
 
-    // Debug: print status and body
-    let status = resp.status();
-    println!("Response status: {}", status);
-    let body_bytes = test::read_body(resp).await;
-    let body_str = String::from_utf8(body_bytes.to_vec()).unwrap_or_else(|_| "Invalid UTF-8".to_string());
-    println!("Response body: {}", body_str);
-    
     // Assert
-    assert!(status.is_success());
+    assert!(resp.status().is_success());
 
-    let body: ServerResponse = serde_json::from_str(&body_str).unwrap();
+    let body: ServerResponse = test::read_body_json(resp).await;
     assert_eq!(body.status, "ok");
     assert_eq!(body.error_message, "");
 }
