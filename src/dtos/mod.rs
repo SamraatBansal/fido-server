@@ -34,8 +34,11 @@ pub struct ServerPublicKeyCredentialCreationOptionsRequest {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AuthenticatorSelectionCriteria {
+    #[serde(rename = "requireResidentKey")]
     pub require_resident_key: Option<bool>,
+    #[serde(rename = "authenticatorAttachment")]
     pub authenticator_attachment: Option<String>,
+    #[serde(rename = "userVerification")]
     pub user_verification: Option<String>,
 }
 
