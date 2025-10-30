@@ -3,7 +3,7 @@
 use actix_web::{
     dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform},
     web::{Bytes, Payload},
-    Error, HttpMessage,
+    Error,
 };
 use futures_util::future::LocalBoxFuture;
 use std::future::ready;
@@ -17,7 +17,7 @@ impl RequestValidationMiddleware {
 
 impl<S, B> Transform<S, ServiceRequest> for RequestValidationMiddleware
 where
-    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error> + 'static,
+    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error> + 'static + Clone,
     S::Future: 'static,
     B: 'static,
 {
@@ -38,7 +38,7 @@ pub struct RequestValidationMiddlewareService<S> {
 
 impl<S, B> Service<ServiceRequest> for RequestValidationMiddlewareService<S>
 where
-    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error> + 'static,
+    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error> + 'static + Clone,
     S::Future: 'static,
     B: 'static,
 {
@@ -69,7 +69,7 @@ where
                 if let Some(content_length) = req.headers().get("content-length") {
                     if let Ok(length_str) = content_length.to_str() {
                         if let Ok(length) = length_str.parse::<usize>() {
-                            if length > Self::MAX_REQUEST_SIZE {
+                            if length > RequestValidationMiddleware::MAX_REQUEST_SIZE {
                                 return Err(actix_web::error::ErrorPayloadTooLarge("Request too large"));
                             }
                         }
