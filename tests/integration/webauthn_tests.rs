@@ -132,8 +132,8 @@ async fn test_attestation_options_success() {
     let body_str = String::from_utf8(body_bytes.to_vec()).unwrap_or_else(|_| "Invalid UTF-8".to_string());
     println!("Response body: {}", body_str);
     
-    // Return early for now to see the response
-    return;
+    // Assert
+    assert!(resp.status().is_success());
 
     let body: ServerPublicKeyCredentialCreationOptionsResponse = test::read_body_json(resp).await;
     assert_eq!(body.status, "ok");
