@@ -127,13 +127,14 @@ async fn test_attestation_options_success() {
     let resp = test::call_service(&app, req).await;
 
     // Debug: print status and body
-    println!("Response status: {}", resp.status());
+    let status = resp.status();
+    println!("Response status: {}", status);
     let body_bytes = test::read_body(resp).await;
     let body_str = String::from_utf8(body_bytes.to_vec()).unwrap_or_else(|_| "Invalid UTF-8".to_string());
     println!("Response body: {}", body_str);
     
     // Assert
-    assert!(resp.status().is_success());
+    assert!(status.is_success());
 
     let body: ServerPublicKeyCredentialCreationOptionsResponse = test::read_body_json(resp).await;
     assert_eq!(body.status, "ok");
