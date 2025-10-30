@@ -17,9 +17,7 @@ pub fn establish_connection_pool() -> Result<Pool, anyhow::Error> {
     Ok(pool)
 }
 
-pub fn run_migrations(pool: &Pool) -> Result<(), anyhow::Error> {
-    let mut conn = pool.get()?;
-    
+pub fn run_migrations(_pool: &Pool) -> Result<(), anyhow::Error> {
     // For now, we'll skip automatic migrations and assume the database is set up
     // In production, you would want to run migrations here
     println!("Database migrations skipped - please run them manually");
