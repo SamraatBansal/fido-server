@@ -177,8 +177,8 @@ impl WebAuthnService for WebAuthnServiceImpl {
         // For now, we'll store the credential without full WebAuthn verification
         // In a production implementation, you would verify the attestation using webauthn-rs
         let new_credential = NewCredential {
-            id: Uuid::new_v4(),
-            user_id: user.id,
+            id: Uuid::new_v4().to_string(),
+            user_id: user.id.clone(),
             credential_id: credential_id.clone(),
             public_key: attestation_object, // Store attestation object for now
             sign_count: 0,
