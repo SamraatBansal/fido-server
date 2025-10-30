@@ -327,7 +327,7 @@ impl WebAuthnService {
         let webauthn_credential = webauthn_rs_proto::PublicKeyCredential {
             id: credential.id.clone(),
             raw_id: credential_id,
-            response: webauthn_rs::proto::AuthenticatorAssertionResponseRaw {
+            response: webauthn_rs_proto::AuthenticatorAssertionResponseRaw {
                 authenticator_data,
                 signature,
                 user_handle: assertion_response.user_handle
