@@ -49,7 +49,9 @@ impl AppState {
                 (Some(pool), webauthn_service, user_service, credential_service, security_service)
             } else {
                 // Use mock repositories for testing
-                use crate::db::repositories::mocks::{MockUserRepository, MockCredentialRepository, MockChallengeRepository};
+                #[cfg(test)]
+                {
+                    use crate::db::repositories::mocks::{MockUserRepository, MockCredentialRepository, MockChallengeRepository};
                 
                 let user_repo = Arc::new(MockUserRepository::new());
                 let credential_repo = Arc::new(MockCredentialRepository::new());
