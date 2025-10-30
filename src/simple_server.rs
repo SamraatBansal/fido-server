@@ -352,7 +352,7 @@ pub async fn verify_registration(
     }
 
     let client_data: serde_json::Value = serde_json::from_slice(&client_data_json.unwrap())
-        .map_err(|_| ServerResponse::error("Invalid client data JSON format"))?;
+        .map_err(|_| actix_web::error::ErrorBadRequest("Invalid client data JSON format"))?;
 
     let challenge = client_data
         .get("challenge")
@@ -439,7 +439,7 @@ pub async fn verify_authentication(
     }
 
     let client_data: serde_json::Value = serde_json::from_slice(&client_data_json.unwrap())
-        .map_err(|_| ServerResponse::error("Invalid client data JSON format"))?;
+        .map_err(|_| actix_web::error::ErrorBadRequest("Invalid client data JSON format"))?;
 
     let challenge = client_data
         .get("challenge")
