@@ -3,10 +3,11 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use uuid::Uuid;
-use webauthn_rs::proto::{
+use webauthn_rs_proto::{
     AttestationConveyancePreference, AuthenticatorAttachment, AuthenticatorSelectionCriteria,
     AuthenticatorTransport, COSEAlgorithm, COSEKey, PublicKeyCredentialParameters,
-    UserVerificationPolicy,
+    UserVerificationPolicy, PublicKeyCredentialUserEntity, PublicKeyCredentialRpEntity,
+    PublicKeyCredentialDescriptor, PublicKeyCredentialType,
 };
 
 /// Standard server response format
