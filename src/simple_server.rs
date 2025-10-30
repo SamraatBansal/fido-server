@@ -438,10 +438,10 @@ pub async fn verify_authentication(
         return Ok(HttpResponse::BadRequest().json(ServerResponse::error("Invalid client data JSON")));
     }
 
-    let client_data: serde_json::Value = serde_json::from_slice(&client_data_json.unwrap());
-    
+    let client_data: serde_json::Value = serde_json::from_slice(&client_data_json.unwrap())
+        .map_err(|_| ServerResponse::error("Invalid client data JSON format"))?;
 
-    let challenge = client_data.unwrap()
+    let challenge = client_data
         .get("challenge")
         .and_then(|v| v.as_str())
         .unwrap_or("");
