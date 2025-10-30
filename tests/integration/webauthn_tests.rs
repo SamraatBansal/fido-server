@@ -126,6 +126,9 @@ async fn test_attestation_options_success() {
 
     let resp = test::call_service(&app, req).await;
 
+    // Debug: print status
+    println!("Response status: {}", resp.status());
+    
     // Assert
     assert!(resp.status().is_success());
 
