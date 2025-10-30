@@ -49,9 +49,19 @@ async fn test_registration_options() {
         .to_request();
 
     let resp = test::call_service(&app, req).await;
+    
+    // Print status for debugging
+    println!("Status: {}", resp.status());
+    
+    // Read body as bytes first
+    let body_bytes = test::read_body(resp).await;
+    let body_str = String::from_utf8(body_bytes).unwrap();
+    println!("Response body: {}", body_str);
+    
     assert!(resp.status().is_success());
 
-    let body: serde_json::Value = test::read_body_json(resp).await;
+    // Parse JSON
+    let body: serde_json::Value = serde_json::from_str(&body_str).unwrap();
     assert_eq!(body["status"], "ok");
     assert_eq!(body["rp"]["name"], "FIDO Server");
     assert_eq!(body["user"]["name"], "test@example.com");
