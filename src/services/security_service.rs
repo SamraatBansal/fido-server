@@ -59,7 +59,7 @@ impl SecurityService {
         }
 
         // Verify it's valid base64url
-        base64::decode_config(challenge, base64::URL_SAFE_NO_PAD)
+        crate::utils::decode_base64url(challenge)
             .map_err(|_| AppError::InvalidInput("Invalid challenge format".to_string()))?;
 
         Ok(())
