@@ -114,11 +114,11 @@ async fn test_attestation_options_success() {
         .uri("/attestation/options")
         .set_json(json!({
             "username": "johndoe@example.com",
-            "display_name": "John Doe",
-            "authenticator_selection": {
-                "require_resident_key": false,
-                "authenticator_attachment": "cross-platform",
-                "user_verification": "preferred"
+            "displayName": "John Doe",
+            "authenticatorSelection": {
+                "requireResidentKey": false,
+                "authenticatorAttachment": "cross-platform",
+                "userVerification": "preferred"
             },
             "attestation": "direct"
         }))
