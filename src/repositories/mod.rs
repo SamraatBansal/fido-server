@@ -71,13 +71,14 @@ impl UserRepository for PostgresUserRepository {
         Ok(user)
     }
 
-    async fn find_by_id(&self, id: Uuid) -> Result<Option<User>> {
+    async fn find_by_id(&self, id: &str) -> Result<Option<User>> {
         let mut conn = self.pool.get()
             .map_err(|e| crate::error::AppError::Internal(format!("Database connection error: {}", e)))?;
+        let id = id.to_string();
         
         let user = tokio::task::spawn_blocking(move || {
             users::table
-                .filter(users::id.eq(id))
+                .filter(users::id.eq(&id))
                 .first::<User>(&mut conn)
                 .optional()
         }).await??;
