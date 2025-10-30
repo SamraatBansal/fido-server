@@ -1,4 +1,4 @@
-use actix_web::{web, HttpRequest, HttpResponse, Result};
+use actix_web::{web, HttpResponse};
 use crate::dtos::*;
 use crate::services::WebAuthnService;
 use crate::error::AppError;
