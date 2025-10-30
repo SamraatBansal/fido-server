@@ -9,6 +9,10 @@ pub fn establish_connection_pool() -> Result<Pool, anyhow::Error> {
     let database_url = env::var("DATABASE_URL")
         .unwrap_or_else(|_| "fido_server.db".to_string());
     
+    // Create a connection first to ensure the database is accessible
+    let conn = SqliteConnection::establish(&database_url)?;
+    drop(conn);
+    
     let manager = ConnectionManager::<SqliteConnection>::new(database_url);
     let pool = r2d2::Pool::builder()
         .max_size(15)
