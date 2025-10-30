@@ -20,9 +20,11 @@ pub fn establish_connection_pool() -> Result<Pool, anyhow::Error> {
 pub fn run_migrations(pool: &Pool) -> Result<(), anyhow::Error> {
     let mut conn = pool.get()?;
     
-    // Run embedded migrations
-    diesel_migrations::embed_migrations!("migrations");
-    embedded_migrations::run(&mut conn)?;
+    // Run migrations using diesel_migrations
+    let migration_result = diesel_migrations::run_pending_migrations(&mut conn);
     
-    Ok(())
+    match migration_result {
+        Ok(_) => Ok(()),
+        Err(e) => Err(anyhow::anyhow!("Migration failed: {}", e)),
+    }
 }
