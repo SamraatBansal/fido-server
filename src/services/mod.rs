@@ -163,7 +163,7 @@ impl WebAuthnService for WebAuthnServiceImpl {
         let user_id = stored_challenge.user_id
             .ok_or(AppError::InvalidRequest("Challenge has no user ID".to_string()))?;
         
-        let user = self.user_repo.find_by_id(user_id).await?
+        let user = self.user_repo.find_by_id(&user_id).await?
             .ok_or(AppError::UserNotFound("User not found".to_string()))?;
 
         // Decode attestation object
