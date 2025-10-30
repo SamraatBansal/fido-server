@@ -74,7 +74,7 @@ impl WebAuthnService for WebAuthnServiceImpl {
         let user = self.get_or_create_user(&request.username, &request.display_name).await?;
         
         // Get existing credentials for excludeCredentials
-        let existing_creds = self.credential_repo.find_by_user_id(user.id).await?;
+        let existing_creds = self.credential_repo.find_by_user_id(&user.id).await?;
         let exclude_credentials: Vec<ServerPublicKeyCredentialDescriptor> = existing_creds
             .into_iter()
             .map(|cred| ServerPublicKeyCredentialDescriptor {
