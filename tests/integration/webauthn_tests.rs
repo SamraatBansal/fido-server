@@ -5,44 +5,45 @@ use fido_server::{
     services::{WebAuthnService, WebAuthnServiceImpl},
     repositories::{UserRepository, CredentialRepository, ChallengeRepository},
     dtos::*,
-    error::AppError,
+    error::Result,
 };
 use std::sync::Arc;
 use uuid::Uuid;
 use mockall::mock;
+use async_trait::async_trait;
 
 // Mock implementations for testing
 mock! {
     UserRepository {}
 
-    #[async_trait::async_trait]
+    #[async_trait]
     impl UserRepository for UserRepository {
-        async fn find_by_username(&self, username: &str) -> Result<Option<fido_server::models::User>, AppError>;
-        async fn create_user(&self, user: &fido_server::models::NewUser) -> Result<fido_server::models::User, AppError>;
-        async fn find_by_id(&self, id: Uuid) -> Result<Option<fido_server::models::User>, AppError>;
+        async fn find_by_username(&self, username: &str) -> Result<Option<fido_server::models::User>>;
+        async fn create_user(&self, user: &fido_server::models::NewUser) -> Result<fido_server::models::User>;
+        async fn find_by_id(&self, id: Uuid) -> Result<Option<fido_server::models::User>>;
     }
 }
 
 mock! {
     CredentialRepository {}
 
-    #[async_trait::async_trait]
+    #[async_trait]
     impl CredentialRepository for CredentialRepository {
-        async fn find_by_user_id(&self, user_id: Uuid) -> Result<Vec<fido_server::models::Credential>, AppError>;
-        async fn find_by_credential_id(&self, credential_id: &[u8]) -> Result<Option<fido_server::models::Credential>, AppError>;
-        async fn create_credential(&self, credential: &fido_server::models::NewCredential) -> Result<fido_server::models::Credential>, AppError>;
-        async fn update_sign_count(&self, credential_id: &[u8], sign_count: i64) -> Result<(), AppError>;
+        async fn find_by_user_id(&self, user_id: Uuid) -> Result<Vec<fido_server::models::Credential>>;
+        async fn find_by_credential_id(&self, credential_id: &[u8]) -> Result<Option<fido_server::models::Credential>>;
+        async fn create_credential(&self, credential: &fido_server::models::NewCredential) -> Result<fido_server::models::Credential>;
+        async fn update_sign_count(&self, credential_id: &[u8], sign_count: i64) -> Result<()>;
     }
 }
 
 mock! {
     ChallengeRepository {}
 
-    #[async_trait::async_trait]
+    #[async_trait]
     impl ChallengeRepository for ChallengeRepository {
-        async fn create_challenge(&self, challenge: &fido_server::models::NewChallenge) -> Result<fido_server::models::Challenge, AppError>;
-        async fn find_and_consume_challenge(&self, challenge: &str, challenge_type: &str) -> Result<Option<fido_server::models::Challenge>, AppError>;
-        async fn cleanup_expired_challenges(&self) -> Result<(), AppError>;
+        async fn create_challenge(&self, challenge: &fido_server::models::NewChallenge) -> Result<fido_server::models::Challenge>;
+        async fn find_and_consume_challenge(&self, challenge: &str, challenge_type: &str) -> Result<Option<fido_server::models::Challenge>>;
+        async fn cleanup_expired_challenges(&self) -> Result<()>;
     }
 }
 
@@ -101,12 +102,11 @@ async fn test_attestation_options_success() {
         "http://localhost:3000".to_string(),
     ).unwrap());
 
-    let controller = WebAuthnController::new(webauthn_service.into());
+    let controller = Arc::new(WebAuthnController::new(webauthn_service));
 
     let app = test::init_service(
         App::new()
-            .app_data(web::Data::new(controller))
-            .configure(|cfg| fido_server::controllers::configure_standard_routes(cfg, web::Data::new(controller)))
+            .configure(|cfg| fido_server::controllers::configure_standard_routes(cfg, controller.clone()))
     ).await;
 
     // Act
@@ -144,8 +144,15 @@ async fn test_attestation_options_success() {
 async fn test_attestation_options_missing_username() {
     let app = test::init_service(
         App::new()
-            .configure(|cfg| fido_server::controllers::configure_standard_routes(cfg, web::Data::new(WebAuthnController::new(
-                web::Data::new(MockWebAuthnService::new())
+            .configure(|cfg| fido_server::controllers::configure_standard_routes(cfg, Arc::new(WebAuthnController::new(
+                Arc::new(WebAuthnServiceImpl::new(
+                    Arc::new(MockUserRepository::new()),
+                    Arc::new(MockCredentialRepository::new()),
+                    Arc::new(MockChallengeRepository::new()),
+                    "Example Corporation".to_string(),
+                    "localhost".to_string(),
+                    "http://localhost:3000".to_string(),
+                ).unwrap())
             ))))
     ).await;
 
@@ -222,12 +229,11 @@ async fn test_assertion_options_success() {
         "http://localhost:3000".to_string(),
     ).unwrap());
 
-    let controller = WebAuthnController::new(webauthn_service.into());
+    let controller = Arc::new(WebAuthnController::new(webauthn_service));
 
     let app = test::init_service(
         App::new()
-            .app_data(web::Data::new(controller))
-            .configure(|cfg| fido_server::controllers::configure_standard_routes(cfg, web::Data::new(controller)))
+            .configure(|cfg| fido_server::controllers::configure_standard_routes(cfg, controller.clone()))
     ).await;
 
     // Act
@@ -275,12 +281,11 @@ async fn test_assertion_options_user_not_found() {
         "http://localhost:3000".to_string(),
     ).unwrap());
 
-    let controller = WebAuthnController::new(webauthn_service.into());
+    let controller = Arc::new(WebAuthnController::new(webauthn_service));
 
     let app = test::init_service(
         App::new()
-            .app_data(web::Data::new(controller))
-            .configure(|cfg| fido_server::controllers::configure_standard_routes(cfg, web::Data::new(controller)))
+            .configure(|cfg| fido_server::controllers::configure_standard_routes(cfg, controller.clone()))
     ).await;
 
     let req = test::TestRequest::post()
@@ -292,32 +297,4 @@ async fn test_assertion_options_user_not_found() {
 
     let resp = test::call_service(&app, req).await;
     assert_eq!(resp.status(), 404);
-}
-
-// Mock WebAuthnService for simpler tests
-struct MockWebAuthnService;
-
-impl MockWebAuthnService {
-    fn new() -> Self {
-        Self
-    }
-}
-
-#[async_trait::async_trait]
-impl WebAuthnService for MockWebAuthnService {
-    async fn begin_registration(&self, _request: ServerPublicKeyCredentialCreationOptionsRequest) -> Result<ServerPublicKeyCredentialCreationOptionsResponse> {
-        Err(AppError::Internal("Not implemented".to_string()))
-    }
-
-    async fn finish_registration(&self, _credential: ServerPublicKeyCredential) -> Result<ServerResponse> {
-        Err(AppError::Internal("Not implemented".to_string()))
-    }
-
-    async fn begin_authentication(&self, _request: ServerPublicKeyCredentialGetOptionsRequest) -> Result<ServerPublicKeyCredentialGetOptionsResponse> {
-        Err(AppError::Internal("Not implemented".to_string()))
-    }
-
-    async fn finish_authentication(&self, _credential: ServerPublicKeyCredential) -> Result<ServerResponse> {
-        Err(AppError::Internal("Not implemented".to_string()))
-    }
 }
