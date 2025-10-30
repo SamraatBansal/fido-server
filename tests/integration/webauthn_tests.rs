@@ -204,7 +204,7 @@ async fn test_assertion_options_success() {
             attestation_data: None,
             created_at: chrono::Utc::now(),
             updated_at: chrono::Utc::now(),
-        })));
+        }]));
 
     // Mock challenge creation
     mock_challenge_repo
