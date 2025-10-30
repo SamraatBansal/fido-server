@@ -352,7 +352,7 @@ pub async fn verify_registration(
     }
 
     let client_data: serde_json::Value = serde_json::from_slice(&client_data_json.unwrap())
-        .map_err(|_| HttpResponse::BadRequest().json(ServerResponse::error("Invalid client data JSON format")))?;
+        .map_err(|_| ServerResponse::error("Invalid client data JSON format"))?;
 
     let challenge = client_data
         .get("challenge")
@@ -433,15 +433,13 @@ pub async fn verify_authentication(
     request: web::Json<AuthenticationResultRequest>,
 ) -> Result<HttpResponse> {
     // Decode client data JSON to get challenge
-    let client_data_json = base64::decode_config(&request.response.client_data_json, base64::URL_SAFE_NO_PAD);
+    let client_data_json = general_purpose::URL_SAFE_NO_PAD.decode(&request.response.client_data_json);
     if client_data_json.is_err() {
         return Ok(HttpResponse::BadRequest().json(ServerResponse::error("Invalid client data JSON")));
     }
 
     let client_data: serde_json::Value = serde_json::from_slice(&client_data_json.unwrap());
-    if client_data.is_err() {
-        return Ok(HttpResponse::BadRequest().json(ServerResponse::error("Invalid client data JSON format")));
-    }
+    
 
     let challenge = client_data.unwrap()
         .get("challenge")
