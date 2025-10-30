@@ -62,7 +62,7 @@ async fn main() -> std::io::Result<()> {
 
         App::new()
             .wrap(cors)
-            .wrap(middleware::Logger::default())
+            .wrap(actix_web::middleware::Logger::default())
             .configure(|cfg| controllers::configure_standard_routes(cfg, webauthn_controller.clone()))
     })
     .bind("0.0.0.0:8080")?
