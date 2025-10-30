@@ -205,7 +205,7 @@ impl ChallengeRepository for PostgresChallengeRepository {
         }).await??;
         
         // Find the challenge we just created
-        self.find_and_consume_challenge(&challenge_str, &new_challenge.challenge_type).await?
+        self.find_challenge(&challenge_str, &new_challenge.challenge_type).await?
             .ok_or_else(|| crate::error::AppError::Internal("Failed to retrieve created challenge".to_string()))
     }
 
