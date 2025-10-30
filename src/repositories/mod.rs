@@ -14,6 +14,7 @@ pub trait UserRepository: Send + Sync {
     async fn find_by_id(&self, id: Uuid) -> Result<Option<User>>;
 }
 
+#[async_trait]
 pub trait CredentialRepository: Send + Sync {
     async fn find_by_user_id(&self, user_id: Uuid) -> Result<Vec<Credential>>;
     async fn find_by_credential_id(&self, credential_id: &[u8]) -> Result<Option<Credential>>;
