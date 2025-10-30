@@ -1,6 +1,6 @@
+# For documentation on how to configure Diesel, see
+# https://diesel.rs/guides/configuring-diesel-cli
+
 [print_schema]
 file = "src/schema.rs"
-custom_type_derives = ["diesel::query_builder::QueryId"]
-
-[migrations_directory]
-dir = "migrations"
+custom_type_derives = ["diesel::deserialize::FromSqlRow", "diesel::expression::AsExpression"]
