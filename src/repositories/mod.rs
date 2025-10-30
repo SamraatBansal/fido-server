@@ -60,16 +60,17 @@ impl UserRepository for PostgresUserRepository {
     async fn create_user(&self, new_user: &NewUser) -> Result<User> {
         let mut conn = self.pool.get()
             .map_err(|e| crate::error::AppError::Internal(format!("Database connection error: {}", e)))?;
-        let new_user = new_user.clone();
+        let user_clone = new_user.clone();
+        let username = new_user.username.clone();
         
         tokio::task::spawn_blocking(move || {
             diesel::insert_into(users::table)
-                .values(&new_user)
+                .values(&user_clone)
                 .execute(&mut conn)
         }).await??;
         
         // Find the user we just created
-        self.find_by_username(&new_user.username).await?
+        self.find_by_username(&username).await?
             .ok_or_else(|| crate::error::AppError::Internal("Failed to retrieve created user".to_string()))
     }
 
