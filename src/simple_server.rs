@@ -71,6 +71,7 @@ impl ServerResponse {
 #[derive(Debug, Deserialize)]
 pub struct RegistrationOptionsRequest {
     pub username: String,
+    #[serde(rename = "displayName")]
     pub display_name: String,
     pub authenticator_selection: Option<AuthenticatorSelection>,
     pub attestation: Option<String>,
