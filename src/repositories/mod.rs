@@ -61,14 +61,15 @@ impl UserRepository for PostgresUserRepository {
             .map_err(|e| crate::error::AppError::Internal(format!("Database connection error: {}", e)))?;
         let new_user = new_user.clone();
         
-        let user = tokio::task::spawn_blocking(move || {
+        tokio::task::spawn_blocking(move || {
             diesel::insert_into(users::table)
                 .values(&new_user)
-                .returning(User::as_returning())
-                .get_result(&mut conn)
+                .execute(&mut conn)
         }).await??;
         
-        Ok(user)
+        // Find the user we just created
+        self.find_by_username(&new_user.username).await?
+            .ok_or_else(|| crate::error::AppError::Internal("Failed to retrieve created user".to_string()))
     }
 
     async fn find_by_id(&self, id: &str) -> Result<Option<User>> {
