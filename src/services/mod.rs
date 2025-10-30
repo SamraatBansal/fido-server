@@ -71,6 +71,7 @@ impl WebAuthnServiceImpl {
 #[async_trait::async_trait]
 impl WebAuthnService for WebAuthnServiceImpl {
     async fn begin_registration(&self, request: ServerPublicKeyCredentialCreationOptionsRequest) -> Result<ServerPublicKeyCredentialCreationOptionsResponse> {
+        println!("DEBUG: begin_registration called with username: {}", request.username);
         let user = self.get_or_create_user(&request.username, &request.display_name).await?;
         
         // Get existing credentials for excludeCredentials
