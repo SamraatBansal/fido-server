@@ -302,7 +302,7 @@ async fn test_assertion_options_user_not_found() {
 #[tokio::test]
 async fn test_assertion_result_success() {
     // Arrange
-    let mut mock_user_repo = MockUserRepository::new();
+    let mock_user_repo = MockUserRepository::new();
     let mut mock_credential_repo = MockCredentialRepository::new();
     let mut mock_challenge_repo = MockChallengeRepository::new();
 
