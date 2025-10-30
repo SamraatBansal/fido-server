@@ -1,11 +1,13 @@
-use crate::error::{AppError, Result};
+use crate::error::Result;
 use crate::models::{User, NewUser, Credential, NewCredential, Challenge, NewChallenge};
 use crate::schema::{users, credentials, challenges};
 use diesel::prelude::*;
 use uuid::Uuid;
-use chrono::{DateTime, Utc, Duration};
+use chrono::Utc;
 use std::sync::Arc;
+use async_trait::async_trait;
 
+#[async_trait]
 pub trait UserRepository: Send + Sync {
     async fn find_by_username(&self, username: &str) -> Result<Option<User>>;
     async fn create_user(&self, user: &NewUser) -> Result<User>;
