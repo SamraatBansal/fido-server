@@ -21,7 +21,7 @@ impl SecurityService {
         let mut bytes = [0u8; 32];
         use rand::RngCore;
         rand::thread_rng().fill_bytes(&mut bytes);
-        Ok(base64::encode_config(&bytes, base64::URL_SAFE_NO_PAD))
+        Ok(crate::utils::encode_base64url(&bytes))
     }
 
     /// Store challenge
