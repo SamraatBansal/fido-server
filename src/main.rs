@@ -26,8 +26,8 @@ async fn main() -> io::Result<()> {
     
     let webauthn_controller = Arc::new(WebAuthnController::new(webauthn_service));
 
-    let host = "127.0.0.1";
-    let port = 8080;
+    let host = &settings.server.host;
+    let port = settings.server.port;
 
     log::info!("Server running at http://{}:{}", host, port);
 
