@@ -3,7 +3,7 @@
 //! This module provides the core WebAuthn functionality for registration and authentication.
 
 use crate::error::{AppError, Result};
-use crate::webauthn_types::*;
+use crate::webauthn::*;
 use base64::{Engine as _, engine::general_purpose};
 use std::collections::HashMap;
 use std::sync::Arc;
