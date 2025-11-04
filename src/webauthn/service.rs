@@ -125,7 +125,7 @@ impl WebAuthnServiceImpl {
     }
 
     /// Get user credentials
-    async fn get_user_credentials(&self, user_id: &str) -> Result<Vec<Credential>> {
+    pub async fn get_user_credentials(&self, user_id: &str) -> Result<Vec<Credential>> {
         let credentials = self.credential_store.read().await;
         Ok(credentials
             .values()
