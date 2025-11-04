@@ -276,7 +276,7 @@ impl WebAuthnService for DatabaseWebAuthnService {
         let cred_id_bytes = general_purpose::URL_SAFE_NO_PAD.decode(&credential.id)
             .map_err(|_| AppError::BadRequest("Invalid credential ID encoding".to_string()))?;
 
-        let new_credential = crate::schema::credential::NewCredential {
+        let new_credential = crate::schema::NewCredential {
             user_id: user.id,
             credential_id: credential.id.clone(),
             public_key: cred_id_bytes, // Simplified - should be actual public key
