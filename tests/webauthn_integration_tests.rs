@@ -66,6 +66,7 @@ async fn test_attestation_options_missing_username() {
     let req = test::TestRequest::post()
         .uri("/webauthn/attestation/options")
         .set_json(&json!({
+            "username": "",
             "displayName": "John Doe",
             "attestation": "direct"
         }))
