@@ -2,11 +2,10 @@
 //! 
 //! Handles the HTTP endpoints for FIDO2/WebAuthn registration and authentication.
 
-use actix_web::{web, HttpRequest, HttpResponse, Result as ActixResult};
-use serde_json::json;
+use actix_web::{web, HttpResponse, Result as ActixResult};
 use std::sync::Arc;
 
-use crate::error::{AppError, Result};
+use crate::error::AppError;
 use crate::webauthn::*;
 use crate::webauthn::service::WebAuthnService;
 
