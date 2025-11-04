@@ -109,7 +109,7 @@ async fn test_error_response_format() {
         }))
         .to_request();
 
-    let resp = test::call_service(&app, &request).await;
+    let resp = test::call_service(&app, request).await;
     assert_eq!(resp.status(), 400);
 
     let result: serde_json::Value = test::read_body_json(resp).await;
@@ -127,7 +127,7 @@ async fn test_error_response_format() {
         }))
         .to_request();
 
-    let resp = test::call_service(&app, &request).await;
+    let resp = test::call_service(&app, request).await;
     assert_eq!(resp.status(), 400);
 
     let result: serde_json::Value = test::read_body_json(resp).await;
