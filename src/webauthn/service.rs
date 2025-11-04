@@ -10,8 +10,6 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use uuid::Uuid;
-use url::Url;
-use webauthn_rs::prelude::*;
 
 /// Trait for WebAuthn operations
 #[async_trait::async_trait]
@@ -50,7 +48,6 @@ pub type CredentialStore = Arc<RwLock<HashMap<String, Credential>>>;
 /// WebAuthn service implementation
 pub struct WebAuthnServiceImpl {
     config: WebAuthnConfig,
-    webauthn: Webauthn,
     challenge_store: ChallengeStore,
     user_store: UserStore,
     credential_store: CredentialStore,
@@ -58,19 +55,8 @@ pub struct WebAuthnServiceImpl {
 
 impl WebAuthnServiceImpl {
     pub fn new(config: WebAuthnConfig) -> Self {
-        let rp = RelyingParty {
-            id: config.rp_id.clone(),
-            name: config.rp_name.clone(),
-            origin: Url::parse(&config.rp_origin).unwrap_or_else(|_| {
-                Url::parse("http://localhost:8080").expect("Valid fallback URL")
-            }),
-        };
-
-        let webauthn = Webauthn::new(rp);
-
         Self {
             config,
-            webauthn,
             challenge_store: Arc::new(RwLock::new(HashMap::new())),
             user_store: Arc::new(RwLock::new(HashMap::new())),
             credential_store: Arc::new(RwLock::new(HashMap::new())),
@@ -170,6 +156,40 @@ impl WebAuthnServiceImpl {
         }
         Ok(())
     }
+
+    /// Verify client data JSON
+    fn verify_client_data_json(&self, client_data_json: &str, expected_type: &str, expected_origin: &str) -> Result<String> {
+        let client_data_bytes = general_purpose::URL_SAFE_NO_PAD.decode(client_data_json)
+            .map_err(|_| AppError::BadRequest("Invalid client data JSON encoding".to_string()))?;
+        
+        let client_data: serde_json::Value = serde_json::from_slice(&client_data_bytes)
+            .map_err(|_| AppError::BadRequest("Invalid client data JSON format".to_string()))?;
+
+        // Verify type
+        let client_type = client_data.get("type")
+            .and_then(|v| v.as_str())
+            .ok_or_else(|| AppError::BadRequest("Missing type in client data".to_string()))?;
+        
+        if client_type != expected_type {
+            return Err(AppError::BadRequest(format!("Invalid client data type: expected {}, got {}", expected_type, client_type)));
+        }
+
+        // Verify origin
+        let origin = client_data.get("origin")
+            .and_then(|v| v.as_str())
+            .ok_or_else(|| AppError::BadRequest("Missing origin in client data".to_string()))?;
+        
+        if origin != expected_origin {
+            return Err(AppError::BadRequest(format!("Invalid origin: expected {}, got {}", expected_origin, origin)));
+        }
+
+        // Extract and return challenge
+        let challenge = client_data.get("challenge")
+            .and_then(|v| v.as_str())
+            .ok_or_else(|| AppError::BadRequest("Missing challenge in client data".to_string()))?;
+
+        Ok(challenge.to_string())
+    }
 }
 
 #[async_trait::async_trait]
@@ -248,19 +268,15 @@ impl WebAuthnService for WebAuthnServiceImpl {
         credential: ServerPublicKeyCredential,
         username: &str,
     ) -> Result<ServerResponse> {
-        // Decode client data JSON to extract challenge
-        let client_data_bytes = general_purpose::URL_SAFE_NO_PAD.decode(&credential.response.client_data_json)
-            .map_err(|_| AppError::BadRequest("Invalid client data JSON".to_string()))?;
-        
-        let client_data: serde_json::Value = serde_json::from_slice(&client_data_bytes)
-            .map_err(|_| AppError::BadRequest("Invalid client data JSON format".to_string()))?;
-
-        let challenge = client_data.get("challenge")
-            .and_then(|v| v.as_str())
-            .ok_or_else(|| AppError::BadRequest("Missing challenge in client data".to_string()))?;
+        // Verify client data JSON
+        let challenge = self.verify_client_data_json(
+            &credential.response.client_data_json,
+            "webauthn.create",
+            &self.config.rp_origin,
+        )?;
 
         // Validate challenge
-        self.validate_challenge(challenge, ChallengeType::Registration).await?;
+        self.validate_challenge(&challenge, ChallengeType::Registration).await?;
 
         // Get user
         let users = self.user_store.read().await;
@@ -268,17 +284,31 @@ impl WebAuthnService for WebAuthnServiceImpl {
             .ok_or_else(|| AppError::NotFound("User not found".to_string()))?
             .clone();
 
-        // For now, we'll implement a simplified version
-        // In a real implementation, you would verify the attestation object using webauthn-rs
-        
+        // Basic validation of credential structure
+        if credential.id.is_empty() {
+            return Err(AppError::BadRequest("Credential ID is required".to_string()));
+        }
+
+        if credential.cred_type != "public-key" {
+            return Err(AppError::BadRequest("Invalid credential type".to_string()));
+        }
+
+        if credential.response.client_data_json.is_empty() {
+            return Err(AppError::BadRequest("Client data JSON is required".to_string()));
+        }
+
+        if credential.response.attestation_object.is_empty() {
+            return Err(AppError::BadRequest("Attestation object is required".to_string()));
+        }
+
         // Store credential (simplified - in real implementation you'd extract the public key from attestation)
-        let cred_id = general_purpose::URL_SAFE_NO_PAD.decode(&credential.id)
-            .map_err(|_| AppError::BadRequest("Invalid credential ID".to_string()))?;
+        let cred_id_bytes = general_purpose::URL_SAFE_NO_PAD.decode(&credential.id)
+            .map_err(|_| AppError::BadRequest("Invalid credential ID encoding".to_string()))?;
 
         let new_credential = Credential {
             id: credential.id.clone(),
             user_id: user.id,
-            public_key: cred_id, // Simplified - should be actual public key
+            public_key: cred_id_bytes, // Simplified - should be actual public key
             sign_count: 0,
             created_at: chrono::Utc::now(),
             last_used_at: None,
@@ -340,19 +370,36 @@ impl WebAuthnService for WebAuthnServiceImpl {
         &self,
         credential: ServerAssertionPublicKeyCredential,
     ) -> Result<ServerResponse> {
-        // Decode client data JSON to extract challenge
-        let client_data_bytes = general_purpose::URL_SAFE_NO_PAD.decode(&credential.response.client_data_json)
-            .map_err(|_| AppError::BadRequest("Invalid client data JSON".to_string()))?;
-        
-        let client_data: serde_json::Value = serde_json::from_slice(&client_data_bytes)
-            .map_err(|_| AppError::BadRequest("Invalid client data JSON format".to_string()))?;
-
-        let challenge = client_data.get("challenge")
-            .and_then(|v| v.as_str())
-            .ok_or_else(|| AppError::BadRequest("Missing challenge in client data".to_string()))?;
+        // Verify client data JSON
+        let challenge = self.verify_client_data_json(
+            &credential.response.client_data_json,
+            "webauthn.get",
+            &self.config.rp_origin,
+        )?;
 
         // Validate challenge
-        let _username = self.validate_challenge(challenge, ChallengeType::Authentication).await?;
+        let _username = self.validate_challenge(&challenge, ChallengeType::Authentication).await?;
+
+        // Basic validation of assertion structure
+        if credential.id.is_empty() {
+            return Err(AppError::BadRequest("Credential ID is required".to_string()));
+        }
+
+        if credential.cred_type != "public-key" {
+            return Err(AppError::BadRequest("Invalid credential type".to_string()));
+        }
+
+        if credential.response.client_data_json.is_empty() {
+            return Err(AppError::BadRequest("Client data JSON is required".to_string()));
+        }
+
+        if credential.response.authenticator_data.is_empty() {
+            return Err(AppError::BadRequest("Authenticator data is required".to_string()));
+        }
+
+        if credential.response.signature.is_empty() {
+            return Err(AppError::BadRequest("Signature is required".to_string()));
+        }
 
         // Get credential
         let stored_credential = self.get_credential(&credential.id)
@@ -360,10 +407,10 @@ impl WebAuthnService for WebAuthnServiceImpl {
             .ok_or_else(|| AppError::BadRequest("Credential not found".to_string()))?;
 
         // In a real implementation, you would:
-        // 1. Verify the signature using webauthn-rs
-        // 2. Check the authenticator data
-        // 3. Update the sign count
-        // 4. Verify the user verification if required
+        // 1. Verify the signature using the stored public key
+        // 2. Check the authenticator data flags
+        // 3. Verify the user verification if required
+        // 4. Check for replay attacks
 
         // For now, just update the sign count and return success
         self.update_sign_count(&credential.id, stored_credential.sign_count + 1).await?;
