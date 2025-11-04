@@ -103,6 +103,7 @@ async fn test_attestation_options_missing_display_name() {
         .uri("/webauthn/attestation/options")
         .set_json(&json!({
             "username": "johndoe@example.com",
+            "displayName": "",
             "attestation": "direct"
         }))
         .to_request();
