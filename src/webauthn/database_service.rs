@@ -5,7 +5,7 @@
 
 use crate::error::{AppError, Result};
 use crate::webauthn::*;
-use crate::schema::{UserRepository, CredentialRepository, ChallengeRepository, ChallengeType};
+use crate::schema::{UserRepository, CredentialRepository, ChallengeRepository};
 use base64::{Engine as _, engine::general_purpose};
 use std::sync::Arc;
 use uuid::Uuid;
