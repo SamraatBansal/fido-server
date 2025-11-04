@@ -168,9 +168,12 @@ pub struct ServerPublicKeyCredentialGetOptionsResponse {
 /// Authentication: ServerAuthenticatorAssertionResponse
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ServerAuthenticatorAssertionResponse {
+    #[serde(rename = "authenticatorData")]
     pub authenticator_data: String,
     pub signature: String,
+    #[serde(rename = "userHandle")]
     pub user_handle: String,
+    #[serde(rename = "clientDataJSON")]
     pub client_data_json: String,
 }
 
