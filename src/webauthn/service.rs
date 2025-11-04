@@ -84,7 +84,7 @@ impl WebAuthnServiceImpl {
     }
 
     /// Validate and consume a challenge
-    async fn validate_challenge(&self, challenge: &str, challenge_type: ChallengeType) -> Result<Option<String>> {
+    pub async fn validate_challenge(&self, challenge: &str, challenge_type: ChallengeType) -> Result<Option<String>> {
         let mut challenges = self.challenge_store.write().await;
         if let Some(challenge_data) = challenges.remove(challenge) {
             // Check if challenge is not too old (5 minutes)
