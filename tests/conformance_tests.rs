@@ -5,7 +5,7 @@ use actix_web::{test, web, App};
 use serde_json::json;
 use std::sync::Arc;
 
-use fido_server::controllers::{WebAuthnController, begin_registration, finish_registration, begin_authentication, finish_authentication};
+use fido_server::controllers::WebAuthnController;
 use fido_server::webauthn::{WebAuthnConfig, WebAuthnServiceImpl};
 
 #[actix_web::test]
