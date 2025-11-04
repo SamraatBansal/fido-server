@@ -58,6 +58,14 @@ async fn test_attestation_result_success() {
         .to_request();
 
     let resp = test::call_service(&app, credential_request).await;
+    println!("Response status: {}", resp.status());
+    
+    if !resp.status().is_success() {
+        let body = test::read_body(resp).await;
+        let body_str = String::from_utf8_lossy(&body);
+        println!("Error response body: '{}'", body_str);
+    }
+    
     assert!(resp.status().is_success());
 
     let result: ServerResponse = test::read_body_json(resp).await;
