@@ -33,8 +33,9 @@ impl ServerResponse {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ServerPublicKeyCredentialCreationOptionsRequest {
     pub username: String,
+    #[serde(rename = "displayName")]
     pub display_name: String,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none", rename = "authenticatorSelection")]
     pub authenticator_selection: Option<AuthenticatorSelectionCriteria>,
     #[serde(default = "default_attestation")]
     pub attestation: String,
