@@ -150,14 +150,16 @@ pub struct ServerPublicKeyCredentialGetOptionsRequest {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ServerPublicKeyCredentialGetOptionsResponse {
     pub status: String,
+    #[serde(rename = "errorMessage")]
     pub error_message: String,
     pub challenge: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub timeout: Option<u64>,
+    #[serde(rename = "rpId")]
     pub rp_id: String,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default, skip_serializing_if = "Vec::is_empty", rename = "allowCredentials")]
     pub allow_credentials: Vec<ServerPublicKeyCredentialDescriptor>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none", rename = "userVerification")]
     pub user_verification: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub extensions: Option<AuthenticationExtensionsClientInputs>,
