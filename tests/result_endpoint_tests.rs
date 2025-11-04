@@ -355,7 +355,7 @@ async fn test_assertion_result_empty_authenticator_data() {
 }
 
 #[actix_web::test]
-async fn test_assertion_result_missing_signature() {
+async fn test_assertion_result_empty_signature() {
     // Setup test service
     let webauthn_config = WebAuthnConfig::default();
     let webauthn_service = Arc::new(WebAuthnServiceImpl::new(webauthn_config));
@@ -367,7 +367,7 @@ async fn test_assertion_result_missing_signature() {
             .configure(fido_server::routes::api::configure)
     ).await;
 
-    // Test with missing signature
+    // Test with empty signature
     let assertion_request = test::TestRequest::post()
         .uri("/webauthn/assertion/result")
         .set_json(&json!({
@@ -376,6 +376,7 @@ async fn test_assertion_result_missing_signature() {
             "response": {
                 "clientDataJSON": "invalid",
                 "authenticatorData": "invalid",
+                "signature": "",
                 "userHandle": ""
             }
         }))
