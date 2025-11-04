@@ -178,11 +178,20 @@ async fn test_complete_fido_conformance_validation() {
     let _challenge = reg_result["challenge"].as_str().unwrap();
     let user_id = reg_result["user"]["id"].as_str().unwrap();
     
-    // Create a mock credential response
+    // Create a proper mock credential response with valid base64url encoding
+    let client_data_json = serde_json::json!({
+        "challenge": challenge,
+        "origin": "http://localhost:8080",
+        "type": "webauthn.create"
+    });
+    
+    let client_data_bytes = serde_json::to_vec(&client_data_json).unwrap();
+    let client_data_b64 = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(&client_data_bytes);
+    
     let mock_credential = json!({
         "id": "LFdoCFJTyB82ZzSJUHc-c72yraRc_1mPvGX8ToE8su39xX26Jcqd31LUkKOS36FIAWgWl6itMKqmDvruha6ywA",
         "response": {
-            "clientDataJSON": &format!("eyJjaGFsbGVuZ2UiOiJ7fSIsIm9yaWdpbiI6Imh0dHA6Ly9sb2NhbGhvc3Q6ODA4MCIsInR5cGUiOiJ3ZWJhdXRobi5jcmVhdGUifQ=="),
+            "clientDataJSON": client_data_b64,
             "attestationObject": "o2NmbXRkbm9uZWdhdHRTdG10oGhhdXRoRGF0YVjESZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2MBAAAAAQ"
         },
         "getClientExtensionResults": {},
