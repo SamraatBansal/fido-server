@@ -115,7 +115,7 @@ impl DatabaseWebAuthnService {
         if let Some(user) = self.user_repo.get_user_by_username(username).await? {
             Ok(user)
         } else {
-            let new_user = crate::schema::user::NewUser {
+            let new_user = crate::schema::NewUser {
                 username: username.to_string(),
                 display_name: display_name.to_string(),
             };
