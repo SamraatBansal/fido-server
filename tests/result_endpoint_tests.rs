@@ -135,7 +135,7 @@ async fn test_attestation_result_invalid_type() {
 }
 
 #[actix_web::test]
-async fn test_attestation_result_missing_client_data() {
+async fn test_attestation_result_empty_client_data() {
     // Setup test service
     let webauthn_config = WebAuthnConfig::default();
     let webauthn_service = Arc::new(WebAuthnServiceImpl::new(webauthn_config));
@@ -147,13 +147,14 @@ async fn test_attestation_result_missing_client_data() {
             .configure(fido_server::routes::api::configure)
     ).await;
 
-    // Test with missing client data JSON
+    // Test with empty client data JSON
     let credential_request = test::TestRequest::post()
         .uri("/webauthn/attestation/result")
         .set_json(&json!({
             "id": "test_credential_id",
             "type": "public-key",
             "response": {
+                "clientDataJSON": "",
                 "attestationObject": "invalid"
             }
         }))
