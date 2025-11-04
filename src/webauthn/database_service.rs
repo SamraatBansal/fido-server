@@ -102,7 +102,11 @@ impl DatabaseWebAuthnService {
             }
 
             // Check challenge type
-            let record_type = ChallengeType::from(&record.challenge_type);
+            let record_type = match record.challenge_type.as_str() {
+            "registration" => crate::webauthn::ChallengeType::Registration,
+            "authentication" => crate::webauthn::ChallengeType::Authentication,
+            _ => return Err(AppError::BadRequest("Invalid challenge type".to_string())),
+        };
             if std::mem::discriminant(&record_type) != std::mem::discriminant(&challenge_type) {
                 return Err(AppError::BadRequest("Invalid challenge type".to_string()));
             }
