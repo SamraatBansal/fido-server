@@ -219,7 +219,7 @@ async fn test_assertion_result_success() {
 
     // Simulate storing a credential
     let credential = Credential {
-        id: "test_credential_id".to_string(),
+        id: base64::engine::general_purpose::URL_SAFE_NO_PAD.encode("test_credential_id"),
         user_id: "user_id".to_string(),
         public_key: vec![1, 2, 3, 4],
         sign_count: 0,
