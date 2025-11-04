@@ -126,7 +126,7 @@ pub struct ServerPublicKeyCredential {
     #[serde(rename = "type")]
     pub cred_type: String,
     pub response: ServerAuthenticatorAttestationResponse,
-    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
+    #[serde(default, skip_serializing_if = "HashMap::is_empty", rename = "getClientExtensionResults")]
     pub get_client_extension_results: HashMap<String, serde_json::Value>,
 }
 
