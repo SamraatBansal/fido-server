@@ -202,9 +202,20 @@ async fn test_assertion_result_success() {
 
 #[actix_web::test]
 async fn test_assertion_result_invalid_credential_type() {
-    // Setup test service
+    // Setup test service and create a user first
     let webauthn_config = WebAuthnConfig::default();
     let webauthn_service = Arc::new(WebAuthnServiceImpl::new(webauthn_config));
+    
+    // First, create a user by initiating registration
+    let registration_request = ServerPublicKeyCredentialCreationOptionsRequest {
+        username: "test@example.com".to_string(),
+        display_name: "Test User".to_string(),
+        authenticator_selection: None,
+        attestation: "none".to_string(),
+    };
+    
+    let _reg_result = webauthn_service.begin_registration(registration_request).await.unwrap();
+
     let webauthn_controller = Arc::new(WebAuthnController::new(webauthn_service));
 
     let app = test::init_service(
