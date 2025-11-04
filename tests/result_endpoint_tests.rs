@@ -94,8 +94,13 @@ async fn test_attestation_result_empty_id() {
     let resp = test::call_service(&app, credential_request).await;
     assert_eq!(resp.status(), 400);
 
-    let result: ServerResponse = test::read_body_json(resp).await;
+    let body = test::read_body(resp).await;
+    let body_str = String::from_utf8_lossy(&body);
+    println!("Error response body: '{}'", body_str);
+    
+    let result: ServerResponse = serde_json::from_str(&body_str).unwrap();
     assert_eq!(result.status, "failed");
+    println!("Actual error message: '{}'", result.error_message);
     assert!(result.error_message.contains("Credential ID is required"));
 }
 
