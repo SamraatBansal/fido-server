@@ -249,14 +249,23 @@ async fn test_complete_fido_conformance_validation() {
     let allow_creds = auth_result["allowCredentials"].as_array().unwrap();
     assert!(!allow_creds.is_empty(), "Should have credentials for authentication");
     
-    // Create a mock assertion response
+    // Create a mock assertion response with proper client data
+    let auth_client_data_json = serde_json::json!({
+        "challenge": _auth_challenge,
+        "origin": "http://localhost:3000",
+        "type": "webauthn.get"
+    });
+    
+    let auth_client_data_bytes = serde_json::to_vec(&auth_client_data_json).unwrap();
+    let auth_client_data_b64 = URL_SAFE_NO_PAD.encode(&auth_client_data_bytes);
+    
     let mock_assertion = json!({
         "id": "LFdoCFJTyB82ZzSJUHc-c72yraRc_1mPvGX8ToE8su39xX26Jcqd31LUkKOS36FIAWgWl6itMKqmDvruha6ywA",
         "response": {
             "authenticatorData": "SZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2MBAAAAAA",
             "signature": "MEYCIQCv7EqsBRtf2E4o_BjzZfBwNpP8fLjd5y6TUOLWt5l9DQIhANiYig9newAJZYTzG1i5lwP-YQk9uXFnnDaHnr2yCKXL",
             "userHandle": user_id,
-            "clientDataJSON": &format!("eyJjaGFsbGVuZ2UiOiJ7fSIsIm9yaWdpbiI6Imh0dHA6Ly9sb2NhbGhvc3Q6ODA4MCIsInR5cGUiOiJ3ZWJhdXRoLmdldCJ9")
+            "clientDataJSON": auth_client_data_b64
         },
         "getClientExtensionResults": {},
         "type": "public-key"
