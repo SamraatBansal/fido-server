@@ -7,8 +7,8 @@ diesel::table! {
         #[max_length = 255]
         username -> Nullable<Varchar>,
         challenge_type -> Varchar,
-        expires_at -> Timestamp,
-        created_at -> Timestamp,
+        expires_at -> Timestamptz,
+        created_at -> Timestamptz,
     }
 }
 
@@ -23,9 +23,9 @@ diesel::table! {
         attestation_type -> Nullable<Varchar>,
         aaguid -> Nullable<Bytea>,
         transports -> Nullable<Jsonb>,
-        created_at -> Timestamp,
-        updated_at -> Timestamp,
-        last_used_at -> Nullable<Timestamp>,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
+        last_used_at -> Nullable<Timestamptz>,
     }
 }
 
@@ -34,8 +34,8 @@ diesel::table! {
         id -> Uuid,
         username -> Varchar,
         display_name -> Varchar,
-        created_at -> Timestamp,
-        updated_at -> Timestamp,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
     }
 }
 
