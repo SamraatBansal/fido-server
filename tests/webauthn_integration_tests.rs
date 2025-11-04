@@ -4,9 +4,9 @@ use actix_web::{test, web, App};
 use serde_json::json;
 use std::sync::Arc;
 
-use fido_server::controllers::{WebAuthnController, begin_registration, finish_registration, begin_authentication, finish_authentication};
-use fido_server::webauthn::{WebAuthnConfig, WebAuthnServiceImpl};
-use fido_server::webauthn_types::*;
+use fido_server::controllers::{WebAuthnController, begin_registration, begin_authentication};
+use fido_server::webauthn::{WebAuthnConfig, WebAuthnServiceImpl, WebAuthnService};
+use fido_server::webauthn::*;
 
 #[actix_web::test]
 async fn test_attestation_options_success() {
