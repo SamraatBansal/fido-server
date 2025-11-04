@@ -4,6 +4,8 @@
 
 pub mod types;
 pub mod service;
+pub mod database_service;
 
 pub use types::*;
 pub use service::*;
+pub use database_service::*;
