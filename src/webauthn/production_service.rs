@@ -379,7 +379,7 @@ impl WebAuthnService for ProductionWebAuthnService {
         // 4. Check for replay attacks
 
         // For now, just update the sign count and return success
-        self.credential_repo.update_sign_count(&credential.id, stored_credential.sign_count + 1).await?;
+        self.credential_repo.update_sign_count(&credential.id, (stored_credential.sign_count + 1) as i32).await?;
 
         Ok(ServerResponse::success())
     }
