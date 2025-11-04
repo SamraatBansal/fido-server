@@ -182,7 +182,7 @@ async fn test_complete_fido_conformance_validation() {
     // Create a proper mock credential response with valid base64url encoding
     let client_data_json = serde_json::json!({
         "challenge": challenge,
-        "origin": "http://localhost:8080",
+        "origin": "http://localhost:3000",
         "type": "webauthn.create"
     });
     
