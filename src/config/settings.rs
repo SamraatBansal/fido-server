@@ -61,6 +61,7 @@ impl Settings {
             database: DatabaseSettings {
                 url: "postgres://localhost/fido_server".to_string(),
                 max_pool_size: 10,
+                in_memory: true, // Default to in-memory for development
             },
             webauthn: WebAuthnSettings {
                 rp_id: "localhost".to_string(),
