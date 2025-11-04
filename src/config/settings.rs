@@ -65,7 +65,7 @@ impl Settings {
             },
             webauthn: WebAuthnSettings {
                 rp_id: "localhost".to_string(),
-                rp_name: "FIDO Server".to_string(),
+                rp_name: "Example Corporation".to_string(),
                 origin: "http://localhost:8080".to_string(),
             },
         })
