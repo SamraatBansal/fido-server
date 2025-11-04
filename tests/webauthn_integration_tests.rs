@@ -75,15 +75,9 @@ async fn test_attestation_options_missing_username() {
     let resp = test::call_service(&app, req).await;
     assert_eq!(resp.status(), 400);
 
-    let body = test::read_body(resp).await;
-    let body_str = String::from_utf8_lossy(&body);
-    println!("Response body: '{}'", body_str);
-    
-    if !body_str.is_empty() {
-        let result: ServerResponse = serde_json::from_str(&body_str).unwrap();
-        assert_eq!(result.status, "failed");
-        assert!(result.error_message.contains("Username is required"));
-    }
+    let result: ServerResponse = test::read_body_json(resp).await;
+    assert_eq!(result.status, "failed");
+    assert!(result.error_message.contains("Username is required"));
 }
 
 #[actix_web::test]
