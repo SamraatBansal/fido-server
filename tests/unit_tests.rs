@@ -5,6 +5,7 @@
 use fido_server::webauthn::*;
 use fido_server::webauthn::service::{WebAuthnService, WebAuthnServiceImpl};
 use std::collections::HashMap;
+use base64::Engine;
 
 fn create_test_service() -> WebAuthnServiceImpl {
     let config = WebAuthnConfig {
