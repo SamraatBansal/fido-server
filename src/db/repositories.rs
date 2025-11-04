@@ -2,14 +2,12 @@
 
 use async_trait::async_trait;
 use diesel::prelude::*;
-use diesel::r2d2::{self, ConnectionManager};
 use std::sync::Arc;
 use uuid::Uuid;
 use chrono::{DateTime, Utc, Duration};
 use crate::error::{AppError, Result};
 use crate::db::models::*;
 use crate::db::DbPool;
-use crate::webauthn::{User, Credential, ChallengeData, ChallengeType};
 
 /// Type alias for database connection pool
 pub type Pool = Arc<DbPool>;
