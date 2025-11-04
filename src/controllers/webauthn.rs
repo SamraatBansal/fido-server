@@ -29,22 +29,9 @@ pub async fn begin_registration(
     match controller.webauthn_service.begin_registration(request.into_inner()).await {
         Ok(response) => Ok(HttpResponse::Ok().json(response)),
         Err(AppError::BadRequest(msg)) => {
-            Ok(HttpResponse::BadRequest().json(ServerPublicKeyCredentialCreationOptionsResponse {
+            Ok(HttpResponse::BadRequest().json(ServerResponse {
                 status: "failed".to_string(),
                 error_message: msg,
-                rp: PublicKeyCredentialRpEntity { name: String::new() },
-                user: ServerPublicKeyCredentialUserEntity {
-                    id: String::new(),
-                    name: String::new(),
-                    display_name: String::new(),
-                },
-                challenge: String::new(),
-                pub_key_cred_params: vec![],
-                timeout: None,
-                exclude_credentials: vec![],
-                authenticator_selection: None,
-                attestation: None,
-                extensions: None,
             }))
         }
         Err(AppError::NotFound(msg)) => {
