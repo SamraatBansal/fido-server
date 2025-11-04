@@ -187,7 +187,7 @@ async fn test_complete_fido_conformance_validation() {
     });
     
     let client_data_bytes = serde_json::to_vec(&client_data_json).unwrap();
-    let client_data_b64 = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(&client_data_bytes);
+    let client_data_b64 = URL_SAFE_NO_PAD.encode(&client_data_bytes);
     
     let mock_credential = json!({
         "id": "LFdoCFJTyB82ZzSJUHc-c72yraRc_1mPvGX8ToE8su39xX26Jcqd31LUkKOS36FIAWgWl6itMKqmDvruha6ywA",
