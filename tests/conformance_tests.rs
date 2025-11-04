@@ -100,10 +100,11 @@ async fn test_error_response_format() {
             .configure(fido_server::routes::api::configure)
     ).await;
 
-    // Test error format for missing username
+    // Test error format for empty username
     let request = test::TestRequest::post()
         .uri("/webauthn/attestation/options")
         .set_json(&json!({
+            "username": "",
             "displayName": "John Doe",
             "attestation": "direct"
         }))
