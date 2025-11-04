@@ -135,7 +135,7 @@ impl WebAuthnServiceImpl {
     }
 
     /// Store credential
-    async fn store_credential(&self, credential: Credential) -> Result<()> {
+    pub async fn store_credential(&self, credential: Credential) -> Result<()> {
         let mut credentials = self.credential_store.write().await;
         credentials.insert(credential.id.clone(), credential);
         Ok(())
