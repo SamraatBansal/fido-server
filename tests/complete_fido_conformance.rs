@@ -176,7 +176,7 @@ async fn test_complete_fido_conformance_validation() {
     assert!(resp.status().is_success());
     
     let reg_result: serde_json::Value = test::read_body_json(resp).await;
-    let _challenge = reg_result["challenge"].as_str().unwrap();
+    let challenge = reg_result["challenge"].as_str().unwrap();
     let user_id = reg_result["user"]["id"].as_str().unwrap();
     
     // Create a proper mock credential response with valid base64url encoding
