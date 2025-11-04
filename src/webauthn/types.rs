@@ -60,16 +60,18 @@ pub struct AuthenticatorSelectionCriteria {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ServerPublicKeyCredentialCreationOptionsResponse {
     pub status: String,
+    #[serde(rename = "errorMessage")]
     pub error_message: String,
     pub rp: PublicKeyCredentialRpEntity,
     pub user: ServerPublicKeyCredentialUserEntity,
     pub challenge: String,
+    #[serde(rename = "pubKeyCredParams")]
     pub pub_key_cred_params: Vec<PublicKeyCredentialParameters>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub timeout: Option<u64>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default, skip_serializing_if = "Vec::is_empty", rename = "excludeCredentials")]
     pub exclude_credentials: Vec<ServerPublicKeyCredentialDescriptor>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none", rename = "authenticatorSelection")]
     pub authenticator_selection: Option<AuthenticatorSelectionCriteria>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub attestation: Option<String>,
