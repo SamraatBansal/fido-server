@@ -231,11 +231,11 @@ impl PostgresChallengeRepository {
 
 #[async_trait::async_trait]
 impl ChallengeRepository for PostgresChallengeRepository {
-    async fn create_challenge(&self, challenge: NewChallenge) -> Result<Challenge> {
+    async fn create_challenge(&self, challenge: NewChallenge) -> Result<crate::db::models::Challenge> {
         let mut conn = self.pool.get()
             .map_err(|e| AppError::DatabaseError(format!("Connection error: {}", e)))?;
 
-        let challenge: Challenge = diesel::insert_into(crate::db::schema::challenges::table)
+        let challenge: crate::db::models::Challenge = diesel::insert_into(crate::db::schema::challenges::table)
             .values(&challenge)
             .get_result(&mut conn)
             .map_err(|e| AppError::DatabaseError(format!("Failed to create challenge: {}", e)))?;
@@ -243,27 +243,27 @@ impl ChallengeRepository for PostgresChallengeRepository {
         Ok(challenge)
     }
 
-    async fn get_challenge_by_value(&self, challenge: &str) -> Result<Option<Challenge>> {
+    async fn get_challenge_by_value(&self, challenge: &str) -> Result<Option<crate::db::models::Challenge>> {
         let mut conn = self.pool.get()
             .map_err(|e| AppError::DatabaseError(format!("Connection error: {}", e)))?;
 
         let challenge = crate::db::schema::challenges::table
             .filter(crate::db::schema::challenges::challenge.eq(challenge))
-            .first::<Challenge>(&mut conn)
+            .first::<crate::db::models::Challenge>(&mut conn)
             .optional()
             .map_err(|e| AppError::DatabaseError(format!("Failed to get challenge: {}", e)))?;
 
         Ok(challenge)
     }
 
-    async fn consume_challenge(&self, challenge: &str) -> Result<Option<Challenge>> {
+    async fn consume_challenge(&self, challenge: &str) -> Result<Option<crate::db::models::Challenge>> {
         let mut conn = self.pool.get()
             .map_err(|e| AppError::DatabaseError(format!("Connection error: {}", e)))?;
 
         conn.transaction::<_, diesel::result::Error, _>(|conn| {
             let challenge = crate::db::schema::challenges::table
                 .filter(crate::db::schema::challenges::challenge.eq(challenge))
-                .first::<Challenge>(conn)
+                .first::<crate::db::models::Challenge>(conn)
                 .optional()?;
 
             if challenge.is_some() {
