@@ -133,6 +133,7 @@ pub struct ServerPublicKeyCredential {
 /// ServerAuthenticatorAttestationResponse
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ServerAuthenticatorAttestationResponse {
+    #[serde(rename = "clientDataJSON")]
     pub client_data_json: String,
     pub attestation_object: String,
 }
