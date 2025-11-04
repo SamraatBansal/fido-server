@@ -76,7 +76,10 @@ impl DatabaseWebAuthnService {
         let new_challenge = crate::schema::NewChallenge {
             challenge: challenge.to_string(),
             username,
-            challenge_type: challenge_type.as_str().to_string(),
+            challenge_type: match challenge_type {
+            crate::webauthn::ChallengeType::Registration => "registration".to_string(),
+            crate::webauthn::ChallengeType::Authentication => "authentication".to_string(),
+        },
             expires_at,
         };
 
