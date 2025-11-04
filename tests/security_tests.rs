@@ -76,9 +76,10 @@ async fn test_xss_prevention() {
             .to_request();
 
         let resp = test::call_service(&app, request).await;
+        let status = resp.status();
         let result: serde_json::Value = test::read_body_json(resp).await;
         
-        if resp.status().is_success() {
+        if status.is_success() {
             // Check that XSS payload is not reflected in response without proper encoding
             let response_str = result.to_string();
             assert!(!response_str.contains("<script>"));
