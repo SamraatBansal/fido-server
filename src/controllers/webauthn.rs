@@ -55,15 +55,6 @@ pub async fn finish_registration(
     controller: web::Data<Arc<WebAuthnController>>,
     request: web::Json<ServerPublicKeyCredential>,
 ) -> ActixResult<HttpResponse> {
-    // Extract username from client data JSON in the credential
-    let client_data_bytes = base64::engine::general_purpose::URL_SAFE_NO_PAD.decode(&request.response.client_data_json)
-        .unwrap_or_default();
-    
-    let client_data: serde_json::Value = serde_json::from_slice(&client_data_bytes)
-        .unwrap_or_default();
-    
-    // For now, we'll need to pass the username separately or extract it from the challenge
-    // Let's modify the service to handle this properly
     match controller.webauthn_service.finish_registration(request.into_inner(), "").await {
         Ok(response) => Ok(HttpResponse::Ok().json(response)),
         Err(AppError::BadRequest(msg)) => {
