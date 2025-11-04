@@ -272,7 +272,7 @@ impl WebAuthnService for ProductionWebAuthnService {
             .map_err(|_| AppError::BadRequest("Invalid credential ID encoding".to_string()))?;
 
         let new_credential = crate::db::models::NewCredential {
-            user_id: db_user.id,
+            user_id: Uuid::parse_str(&db_user.id.to_string()).unwrap_or(db_user.id),
             credential_id: credential.id.clone(),
             public_key: cred_id_bytes, // Simplified - should be actual public key
             sign_count: 0,
