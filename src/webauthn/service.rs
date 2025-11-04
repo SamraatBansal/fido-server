@@ -142,7 +142,7 @@ impl WebAuthnServiceImpl {
     }
 
     /// Get credential by ID
-    async fn get_credential(&self, credential_id: &str) -> Result<Option<Credential>> {
+    pub async fn get_credential(&self, credential_id: &str) -> Result<Option<Credential>> {
         let credentials = self.credential_store.read().await;
         Ok(credentials.get(credential_id).cloned())
     }
