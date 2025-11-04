@@ -142,7 +142,7 @@ pub struct ServerAuthenticatorAttestationResponse {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ServerPublicKeyCredentialGetOptionsRequest {
     pub username: String,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none", rename = "userVerification")]
     pub user_verification: Option<String>,
 }
 
