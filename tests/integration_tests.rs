@@ -12,14 +12,12 @@ use std::sync::Arc;
 use base64::Engine;
 
 /// Create test app with WebAuthn controller
-async fn create_test_app() -> App<
-    impl actix_web::dev::ServiceFactory<
-        actix_web::dev::ServiceRequest,
-        Config = (),
-        Response = actix_web::dev::ServiceResponse,
-        Error = actix_web::Error,
-        InitError = (),
-    >,
+async fn create_test_app() -> impl actix_web::dev::ServiceFactory<
+    actix_web::dev::ServiceRequest,
+    Config = (),
+    Response = actix_web::dev::ServiceResponse,
+    Error = actix_web::Error,
+    InitError = (),
 > {
     let settings = Settings::new().expect("Failed to create test settings");
     let webauthn_service = ServiceFactory::create_webauthn_service(&settings)
