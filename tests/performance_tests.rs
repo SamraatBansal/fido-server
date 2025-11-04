@@ -208,27 +208,18 @@ async fn test_memory_usage_stability() {
     let requests_per_round = 50;
     
     for round in 0..rounds {
-        let handles: Vec<_> = (0..requests_per_round)
-            .map(|i| {
-                let app = app.clone();
-                tokio::spawn(async move {
-                    let request = test::TestRequest::post()
-                        .uri("/webauthn/attestation/options")
-                        .set_json(&json!({
-                            "username": format!("user{}-round{}@example.com", i, round),
-                            "displayName": format!("User {} Round {}", i, round),
-                            "attestation": "none"
-                        }))
-                        .to_request();
-
-                    test::call_service(&app, request).await
-                })
-            })
-            .collect();
-
         let mut success_count = 0;
-        for handle in handles {
-            let resp = handle.await.unwrap();
+        for i in 0..requests_per_round {
+            let request = test::TestRequest::post()
+                .uri("/webauthn/attestation/options")
+                .set_json(&json!({
+                    "username": format!("user{}-round{}@example.com", i, round),
+                    "displayName": format!("User {} Round {}", i, round),
+                    "attestation": "none"
+                }))
+                .to_request();
+
+            let resp = test::call_service(&app, request).await;
             if resp.status().is_success() {
                 success_count += 1;
             }
