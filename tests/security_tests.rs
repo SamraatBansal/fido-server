@@ -265,7 +265,7 @@ async fn test_input_validation_edge_cases() {
         ("test..test@example.com", "Test User", "invalid email with double dots"),
     ];
 
-    for (username, display_name, description) in test_cases {
+    for (username, display_name, _description) in test_cases {
         let request = test::TestRequest::post()
             .uri("/webauthn/attestation/options")
             .set_json(&json!({
