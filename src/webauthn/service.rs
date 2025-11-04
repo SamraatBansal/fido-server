@@ -148,7 +148,7 @@ impl WebAuthnServiceImpl {
     }
 
     /// Update credential sign count
-    async fn update_sign_count(&self, credential_id: &str, sign_count: u32) -> Result<()> {
+    pub async fn update_sign_count(&self, credential_id: &str, sign_count: u32) -> Result<()> {
         let mut credentials = self.credential_store.write().await;
         if let Some(credential) = credentials.get_mut(credential_id) {
             credential.sign_count = sign_count;
