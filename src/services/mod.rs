@@ -45,7 +45,7 @@ impl ServiceFactory {
     }
 
     /// Create database connection pool
-    pub fn create_db_pool(database_url: &str, max_pool_size: u32) -> Result<Pool, Box<dyn std::error::Error>> {
+    pub fn create_db_pool(database_url: &str, _max_pool_size: u32) -> Result<Pool, Box<dyn std::error::Error>> {
         let pool = establish_connection(database_url)?;
         Ok(Arc::new(pool))
     }
