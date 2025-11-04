@@ -266,7 +266,7 @@ impl WebAuthnService for WebAuthnServiceImpl {
     async fn finish_registration(
         &self,
         credential: ServerPublicKeyCredential,
-        username: &str,
+        _username: &str,
     ) -> Result<ServerResponse> {
         // Verify client data JSON
         let challenge = self.verify_client_data_json(
@@ -275,12 +275,13 @@ impl WebAuthnService for WebAuthnServiceImpl {
             &self.config.rp_origin,
         )?;
 
-        // Validate challenge
-        self.validate_challenge(&challenge, ChallengeType::Registration).await?;
+        // Validate challenge and get username
+        let username = self.validate_challenge(&challenge, ChallengeType::Registration).await?
+            .ok_or_else(|| AppError::BadRequest("Username not found in challenge".to_string()))?;
 
         // Get user
         let users = self.user_store.read().await;
-        let user = users.get(username)
+        let user = users.get(&username)
             .ok_or_else(|| AppError::NotFound("User not found".to_string()))?
             .clone();
 
