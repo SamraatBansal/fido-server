@@ -159,7 +159,7 @@ pub struct ServerPublicKeyCredentialGetOptionsResponse {
     pub timeout: Option<u64>,
     #[serde(rename = "rpId")]
     pub rp_id: String,
-    #[serde(default, skip_serializing_if = "Vec::is_empty", rename = "allowCredentials")]
+    #[serde(default, rename = "allowCredentials")]
     pub allow_credentials: Vec<ServerPublicKeyCredentialDescriptor>,
     #[serde(default, skip_serializing_if = "Option::is_none", rename = "userVerification")]
     pub user_verification: Option<String>,
