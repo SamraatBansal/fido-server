@@ -223,7 +223,7 @@ async fn test_complete_fido_conformance_validation() {
     assert!(resp.status().is_success());
     
     let auth_result: serde_json::Value = test::read_body_json(resp).await;
-    let auth_challenge = auth_result["challenge"].as_str().unwrap();
+    let _auth_challenge = auth_result["challenge"].as_str().unwrap();
     
     // Verify allowCredentials contains the credential we just created
     let allow_creds = auth_result["allowCredentials"].as_array().unwrap();
