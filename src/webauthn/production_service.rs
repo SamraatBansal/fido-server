@@ -182,7 +182,7 @@ impl WebAuthnService for ProductionWebAuthnService {
             .iter()
             .map(|cred| ServerPublicKeyCredentialDescriptor {
                 cred_type: "public-key".to_string(),
-                id: general_purpose::URL_SAFE_NO_PAD.encode(&cred.credential_id),
+                id: general_purpose::URL_SAFE_NO_PAD.encode(&cred.id),
                 transports: vec![],
             })
             .collect();
