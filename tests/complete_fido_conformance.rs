@@ -4,7 +4,7 @@
 use actix_web::{test, web, App};
 use serde_json::json;
 use std::sync::Arc;
-use base64::{Engine as _, engine::general_purpose};
+use base64::{Engine as _, engine::general_purpose::URL_SAFE_NO_PAD};
 
 use fido_server::controllers::WebAuthnController;
 use fido_server::webauthn::{WebAuthnConfig, WebAuthnServiceImpl};
