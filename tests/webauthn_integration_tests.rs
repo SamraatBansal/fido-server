@@ -204,6 +204,7 @@ async fn test_assertion_options_missing_username() {
     let req = test::TestRequest::post()
         .uri("/webauthn/assertion/options")
         .set_json(&json!({
+            "username": "",
             "userVerification": "required"
         }))
         .to_request();
