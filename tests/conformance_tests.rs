@@ -73,7 +73,7 @@ async fn test_registration_flow_exact_spec_format() {
         }))
         .to_request();
 
-    let resp = test::call_service(&app, &auth_request).await;
+    let resp = test::call_service(&app, auth_request).await;
     assert!(resp.status().is_success());
 
     let result: serde_json::Value = test::read_body_json(resp).await;
