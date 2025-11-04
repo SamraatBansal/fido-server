@@ -3,6 +3,7 @@
 use actix_web::{test, web, App};
 use serde_json::json;
 use std::sync::Arc;
+use base64::Engine;
 
 use fido_server::controllers::WebAuthnController;
 use fido_server::webauthn::{WebAuthnConfig, WebAuthnServiceImpl, WebAuthnService};
