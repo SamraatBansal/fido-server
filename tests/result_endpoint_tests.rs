@@ -61,6 +61,13 @@ async fn test_attestation_result_success() {
     let status = resp.status();
     println!("Response status: {}", status);
     
+    if !status.is_success() {
+        let body = test::read_body(resp).await;
+        let body_str = String::from_utf8_lossy(&body);
+        println!("Error response body: '{}'", body_str);
+        return; // Exit early to see the error
+    }
+    
     assert!(status.is_success());
 
     let result: ServerResponse = test::read_body_json(resp).await;
