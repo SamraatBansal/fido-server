@@ -107,7 +107,7 @@ impl WebAuthnServiceImpl {
     }
 
     /// Get or create user
-    async fn get_or_create_user(&self, username: &str, display_name: &str) -> Result<User> {
+    pub async fn get_or_create_user(&self, username: &str, display_name: &str) -> Result<User> {
         let mut users = self.user_store.write().await;
         
         if let Some(user) = users.get(username) {
