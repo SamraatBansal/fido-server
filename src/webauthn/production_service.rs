@@ -117,6 +117,40 @@ impl ProductionWebAuthnService {
             last_used_at: credential.last_used_at,
         }
     }
+
+    /// Verify client data JSON
+    fn verify_client_data_json(&self, client_data_json: &str, expected_type: &str, expected_origin: &str) -> Result<String> {
+        let client_data_bytes = general_purpose::URL_SAFE_NO_PAD.decode(client_data_json)
+            .map_err(|_| AppError::BadRequest("Invalid client data JSON encoding".to_string()))?;
+        
+        let client_data: serde_json::Value = serde_json::from_slice(&client_data_bytes)
+            .map_err(|_| AppError::BadRequest("Invalid client data JSON format".to_string()))?;
+
+        // Verify type
+        let client_type = client_data.get("type")
+            .and_then(|v| v.as_str())
+            .ok_or_else(|| AppError::BadRequest("Missing type in client data".to_string()))?;
+        
+        if client_type != expected_type {
+            return Err(AppError::BadRequest(format!("Invalid client data type: expected {}, got {}", expected_type, client_type)));
+        }
+
+        // Verify origin
+        let origin = client_data.get("origin")
+            .and_then(|v| v.as_str())
+            .ok_or_else(|| AppError::BadRequest("Missing origin in client data".to_string()))?;
+        
+        if origin != expected_origin {
+            return Err(AppError::BadRequest(format!("Invalid origin: expected {}, got {}", expected_origin, origin)));
+        }
+
+        // Extract and return challenge
+        let challenge = client_data.get("challenge")
+            .and_then(|v| v.as_str())
+            .ok_or_else(|| AppError::BadRequest("Missing challenge in client data".to_string()))?;
+
+        Ok(challenge.to_string())
+    }
 }
 
 #[async_trait::async_trait]
