@@ -90,15 +90,9 @@ pub async fn begin_authentication(
     match controller.webauthn_service.begin_authentication(request.into_inner()).await {
         Ok(response) => Ok(HttpResponse::Ok().json(response)),
         Err(AppError::BadRequest(msg)) => {
-            Ok(HttpResponse::BadRequest().json(ServerPublicKeyCredentialGetOptionsResponse {
+            Ok(HttpResponse::BadRequest().json(ServerResponse {
                 status: "failed".to_string(),
                 error_message: msg,
-                challenge: String::new(),
-                timeout: None,
-                rp_id: String::new(),
-                allow_credentials: vec![],
-                user_verification: None,
-                extensions: None,
             }))
         }
         Err(AppError::NotFound(msg)) => {
