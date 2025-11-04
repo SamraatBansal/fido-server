@@ -48,7 +48,7 @@ async fn test_attestation_result_success() {
     let credential_request = test::TestRequest::post()
         .uri("/webauthn/attestation/result")
         .set_json(&json!({
-            "id": "test_credential_id",
+            "id": base64::engine::general_purpose::URL_SAFE_NO_PAD.encode("test_credential_id"),
             "type": "public-key",
             "response": {
                 "clientDataJSON": base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(client_data_json.to_string().as_bytes()),
