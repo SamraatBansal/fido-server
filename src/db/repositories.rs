@@ -133,11 +133,11 @@ impl PostgresCredentialRepository {
 
 #[async_trait::async_trait]
 impl CredentialRepository for PostgresCredentialRepository {
-    async fn create_credential(&self, credential: NewCredential) -> Result<Credential> {
+    async fn create_credential(&self, credential: NewCredential) -> Result<crate::db::models::Credential> {
         let mut conn = self.pool.get()
             .map_err(|e| AppError::DatabaseError(format!("Connection error: {}", e)))?;
 
-        let credential: Credential = diesel::insert_into(crate::db::schema::credentials::table)
+        let credential: crate::db::models::Credential = diesel::insert_into(crate::db::schema::credentials::table)
             .values(&credential)
             .get_result(&mut conn)
             .map_err(|e| AppError::DatabaseError(format!("Failed to create credential: {}", e)))?;
@@ -145,26 +145,26 @@ impl CredentialRepository for PostgresCredentialRepository {
         Ok(credential)
     }
 
-    async fn get_credential_by_id(&self, credential_id: &str) -> Result<Option<Credential>> {
+    async fn get_credential_by_id(&self, credential_id: &str) -> Result<Option<crate::db::models::Credential>> {
         let mut conn = self.pool.get()
             .map_err(|e| AppError::DatabaseError(format!("Connection error: {}", e)))?;
 
         let credential = crate::db::schema::credentials::table
             .filter(crate::db::schema::credentials::credential_id.eq(credential_id))
-            .first::<Credential>(&mut conn)
+            .first::<crate::db::models::Credential>(&mut conn)
             .optional()
             .map_err(|e| AppError::DatabaseError(format!("Failed to get credential: {}", e)))?;
 
         Ok(credential)
     }
 
-    async fn get_credentials_by_user_id(&self, user_id: &Uuid) -> Result<Vec<Credential>> {
+    async fn get_credentials_by_user_id(&self, user_id: &Uuid) -> Result<Vec<crate::db::models::Credential>> {
         let mut conn = self.pool.get()
             .map_err(|e| AppError::DatabaseError(format!("Connection error: {}", e)))?;
 
         let credentials = crate::db::schema::credentials::table
             .filter(crate::db::schema::credentials::user_id.eq(user_id))
-            .load::<Credential>(&mut conn)
+            .load::<crate::db::models::Credential>(&mut conn)
             .map_err(|e| AppError::DatabaseError(format!("Failed to get credentials: {}", e)))?;
 
         Ok(credentials)
