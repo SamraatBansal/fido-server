@@ -5,8 +5,9 @@ use actix_web::{middleware::Logger, web, App, HttpServer};
 use std::io;
 use std::sync::Arc;
 
+use fido_server::config::Settings;
 use fido_server::controllers::WebAuthnController;
-use fido_server::webauthn::{WebAuthnConfig, WebAuthnServiceImpl};
+use fido_server::services::ServiceFactory;
 
 #[actix_web::main]
 async fn main() -> io::Result<()> {
@@ -16,8 +17,13 @@ async fn main() -> io::Result<()> {
     log::info!("Starting FIDO Server...");
 
     // Load configuration
-    let webauthn_config = WebAuthnConfig::default();
-    let webauthn_service = Arc::new(WebAuthnServiceImpl::new(webauthn_config));
+    let settings = Settings::new().expect("Failed to load configuration");
+    
+    // Create WebAuthn service
+    let webauthn_service = ServiceFactory::create_webauthn_service(&settings)
+        .await
+        .expect("Failed to create WebAuthn service");
+    
     let webauthn_controller = Arc::new(WebAuthnController::new(webauthn_service));
 
     let host = "127.0.0.1";
