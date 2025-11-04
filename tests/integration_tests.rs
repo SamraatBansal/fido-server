@@ -4,12 +4,12 @@
 //! according to the FIDO Alliance specification.
 
 use actix_web::{test, web, App};
-use fido_server::controllers::{begin_registration, finish_registration, begin_authentication, finish_authentication};
 use fido_server::controllers::webauthn::WebAuthnController;
 use fido_server::services::ServiceFactory;
 use fido_server::config::Settings;
 use fido_server::webauthn::*;
 use std::sync::Arc;
+use base64::Engine;
 
 /// Create test app with WebAuthn controller
 async fn create_test_app() -> App<
