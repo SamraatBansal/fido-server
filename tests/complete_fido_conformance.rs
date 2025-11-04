@@ -269,7 +269,17 @@ async fn test_complete_fido_conformance_validation() {
         .to_request();
 
     let resp = test::call_service(&app, complete_auth_request).await;
-    assert!(resp.status().is_success(), "Authentication completion should succeed");
+    let auth_status = resp.status();
+    println!("Authentication completion status: {}", auth_status);
+    
+    if !auth_status.is_success() {
+        let body = test::read_body(resp).await;
+        let body_str = String::from_utf8_lossy(&body);
+        println!("Authentication completion error response: {}", body_str);
+        panic!("Authentication completion failed with status: {}", auth_status);
+    }
+    
+    assert!(auth_status.is_success(), "Authentication completion should succeed");
 
     let result: serde_json::Value = test::read_body_json(resp).await;
     println!("Authentication Result: {}", serde_json::to_string_pretty(&result).unwrap());
