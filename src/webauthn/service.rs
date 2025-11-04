@@ -10,6 +10,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use uuid::Uuid;
+use url::Url;
 use webauthn_rs::prelude::*;
 
 /// Trait for WebAuthn operations
