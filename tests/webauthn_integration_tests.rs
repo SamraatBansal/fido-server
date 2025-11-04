@@ -203,7 +203,7 @@ async fn test_assertion_options_missing_username() {
     let resp = test::call_service(&app, req).await;
     assert_eq!(resp.status(), 400);
 
-    let result: ServerPublicKeyCredentialGetOptionsResponse = test::read_body_json(resp).await;
+    let result: ServerResponse = test::read_body_json(resp).await;
     assert_eq!(result.status, "failed");
     assert!(result.error_message.contains("Username is required"));
 }
