@@ -70,7 +70,7 @@ impl WebAuthnServiceImpl {
     }
 
     /// Store a challenge
-    async fn store_challenge(&self, challenge: &str, username: Option<String>, challenge_type: ChallengeType) {
+    pub async fn store_challenge(&self, challenge: &str, username: Option<String>, challenge_type: ChallengeType) {
         let mut challenges = self.challenge_store.write().await;
         challenges.insert(
             challenge.to_string(),
