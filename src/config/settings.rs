@@ -25,10 +25,12 @@ pub struct ServerSettings {
 /// Database settings
 #[derive(Debug, Deserialize, Clone)]
 pub struct DatabaseSettings {
-    /// Database URL
+    /// Database URL (empty for in-memory mode)
     pub url: String,
     /// Maximum pool size
     pub max_pool_size: u32,
+    /// Use in-memory storage (for testing/development)
+    pub in_memory: bool,
 }
 
 /// WebAuthn settings
