@@ -196,15 +196,17 @@ async fn test_complete_fido_conformance_validation() {
         .to_request();
 
     let resp = test::call_service(&app, complete_request).await;
-    println!("Registration completion status: {}", resp.status());
+    let status = resp.status();
+    println!("Registration completion status: {}", status);
     
-    if !resp.status().is_success() {
+    if !status.is_success() {
         let body = test::read_body(resp).await;
         let body_str = String::from_utf8_lossy(&body);
         println!("Registration completion error response: {}", body_str);
+        panic!("Registration completion failed with status: {}", status);
     }
     
-    assert!(resp.status().is_success(), "Registration completion should succeed");
+    assert!(status.is_success(), "Registration completion should succeed");
 
     let result: serde_json::Value = test::read_body_json(resp).await;
     println!("Registration Result: {}", serde_json::to_string_pretty(&result).unwrap());
