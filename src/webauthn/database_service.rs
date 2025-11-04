@@ -73,7 +73,7 @@ impl DatabaseWebAuthnService {
     ) -> Result<()> {
         let expires_at = chrono::Utc::now() + chrono::Duration::minutes(5);
         
-        let new_challenge = crate::schema::challenge::NewChallenge {
+        let new_challenge = crate::schema::NewChallenge {
             challenge: challenge.to_string(),
             username,
             challenge_type: challenge_type.as_str().to_string(),
