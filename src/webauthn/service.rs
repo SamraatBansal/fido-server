@@ -158,7 +158,7 @@ impl WebAuthnServiceImpl {
     }
 
     /// Verify client data JSON
-    fn verify_client_data_json(&self, client_data_json: &str, expected_type: &str, expected_origin: &str) -> Result<String> {
+    pub fn verify_client_data_json(&self, client_data_json: &str, expected_type: &str, expected_origin: &str) -> Result<String> {
         let client_data_bytes = general_purpose::URL_SAFE_NO_PAD.decode(client_data_json)
             .map_err(|_| AppError::BadRequest("Invalid client data JSON encoding".to_string()))?;
         
