@@ -64,7 +64,7 @@ impl WebAuthnServiceImpl {
     }
 
     /// Generate a random challenge
-    fn generate_challenge(&self) -> String {
+    pub fn generate_challenge(&self) -> String {
         let challenge_bytes = rand::random::<[u8; 32]>();
         general_purpose::URL_SAFE_NO_PAD.encode(challenge_bytes)
     }
