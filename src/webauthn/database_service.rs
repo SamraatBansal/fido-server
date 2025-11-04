@@ -111,7 +111,7 @@ impl DatabaseWebAuthnService {
     }
 
     /// Get or create user
-    async fn get_or_create_user(&self, username: &str, display_name: &str) -> Result<crate::schema::user::User> {
+    async fn get_or_create_user(&self, username: &str, display_name: &str) -> Result<crate::schema::User> {
         if let Some(user) = self.user_repo.get_user_by_username(username).await? {
             Ok(user)
         } else {
