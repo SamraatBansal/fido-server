@@ -319,7 +319,7 @@ async fn test_assertion_result_empty_id() {
 }
 
 #[actix_web::test]
-async fn test_assertion_result_missing_authenticator_data() {
+async fn test_assertion_result_empty_authenticator_data() {
     // Setup test service
     let webauthn_config = WebAuthnConfig::default();
     let webauthn_service = Arc::new(WebAuthnServiceImpl::new(webauthn_config));
@@ -331,7 +331,7 @@ async fn test_assertion_result_missing_authenticator_data() {
             .configure(fido_server::routes::api::configure)
     ).await;
 
-    // Test with missing authenticator data
+    // Test with empty authenticator data
     let assertion_request = test::TestRequest::post()
         .uri("/webauthn/assertion/result")
         .set_json(&json!({
@@ -339,6 +339,7 @@ async fn test_assertion_result_missing_authenticator_data() {
             "type": "public-key",
             "response": {
                 "clientDataJSON": "invalid",
+                "authenticatorData": "",
                 "signature": "invalid",
                 "userHandle": ""
             }
