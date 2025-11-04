@@ -85,8 +85,8 @@ async fn test_attestation_result_empty_id() {
             "id": "",
             "type": "public-key",
             "response": {
-                "clientDataJSON": "invalid",
-                "attestationObject": "invalid"
+                "clientDataJSON": base64::engine::general_purpose::URL_SAFE_NO_PAD.encode("{\"type\":\"webauthn.create\",\"challenge\":\"invalid\",\"origin\":\"http://localhost:3000\"}"),
+                "attestationObject": "o2NmbXRkbm9uZWdhdHRTdG10oGhhdXRoRGF0YVjESZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2MBAAAAAQ"
             }
         }))
         .to_request();
