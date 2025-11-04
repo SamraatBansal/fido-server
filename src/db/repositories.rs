@@ -67,33 +67,33 @@ impl UserRepository for PostgresUserRepository {
         Ok(user)
     }
 
-    async fn get_user_by_username(&self, username: &str) -> Result<Option<User>> {
+    async fn get_user_by_username(&self, username: &str) -> Result<Option<crate::db::models::User>> {
         let mut conn = self.pool.get()
             .map_err(|e| AppError::DatabaseError(format!("Connection error: {}", e)))?;
 
         let user = crate::db::schema::users::table
             .filter(crate::db::schema::users::username.eq(username))
-            .first::<User>(&mut conn)
+            .first::<crate::db::models::User>(&mut conn)
             .optional()
             .map_err(|e| AppError::DatabaseError(format!("Failed to get user: {}", e)))?;
 
         Ok(user)
     }
 
-    async fn get_user_by_id(&self, user_id: &Uuid) -> Result<Option<User>> {
+    async fn get_user_by_id(&self, user_id: &Uuid) -> Result<Option<crate::db::models::User>> {
         let mut conn = self.pool.get()
             .map_err(|e| AppError::DatabaseError(format!("Connection error: {}", e)))?;
 
         let user = crate::db::schema::users::table
             .filter(crate::db::schema::users::id.eq(user_id))
-            .first::<User>(&mut conn)
+            .first::<crate::db::models::User>(&mut conn)
             .optional()
             .map_err(|e| AppError::DatabaseError(format!("Failed to get user: {}", e)))?;
 
         Ok(user)
     }
 
-    async fn update_user(&self, user_id: &Uuid, user: NewUser) -> Result<User> {
+    async fn update_user(&self, user_id: &Uuid, user: NewUser) -> Result<crate::db::models::User> {
         let mut conn = self.pool.get()
             .map_err(|e| AppError::DatabaseError(format!("Connection error: {}", e)))?;
 
@@ -102,7 +102,7 @@ impl UserRepository for PostgresUserRepository {
                 crate::db::schema::users::username.eq(user.username),
                 crate::db::schema::users::display_name.eq(user.display_name),
             ))
-            .get_result::<User>(&mut conn)
+            .get_result::<crate::db::models::User>(&mut conn)
             .map_err(|e| AppError::DatabaseError(format!("Failed to update user: {}", e)))?;
 
         Ok(user)
