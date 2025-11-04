@@ -124,7 +124,7 @@ impl DatabaseWebAuthnService {
     }
 
     /// Get user credentials
-    async fn get_user_credentials(&self, user_id: &Uuid) -> Result<Vec<crate::schema::credential::Credential>> {
+    async fn get_user_credentials(&self, user_id: &Uuid) -> Result<Vec<crate::schema::Credential>> {
         self.credential_repo.get_credentials_by_user(user_id).await
     }
 
