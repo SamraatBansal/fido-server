@@ -67,7 +67,7 @@ async fn test_attestation_result_success() {
 }
 
 #[actix_web::test]
-async fn test_attestation_result_missing_id() {
+async fn test_attestation_result_empty_id() {
     // Setup test service
     let webauthn_config = WebAuthnConfig::default();
     let webauthn_service = Arc::new(WebAuthnServiceImpl::new(webauthn_config));
@@ -79,10 +79,11 @@ async fn test_attestation_result_missing_id() {
             .configure(fido_server::routes::api::configure)
     ).await;
 
-    // Test with missing id field
+    // Test with empty id field
     let credential_request = test::TestRequest::post()
         .uri("/webauthn/attestation/result")
         .set_json(&json!({
+            "id": "",
             "type": "public-key",
             "response": {
                 "clientDataJSON": "invalid",
@@ -94,15 +95,9 @@ async fn test_attestation_result_missing_id() {
     let resp = test::call_service(&app, credential_request).await;
     assert_eq!(resp.status(), 400);
 
-    let body = test::read_body(resp).await;
-    let body_str = String::from_utf8_lossy(&body);
-    println!("Error response body: '{}'", body_str);
-    
-    if !body_str.is_empty() {
-        let result: ServerResponse = serde_json::from_str(&body_str).unwrap();
-        assert_eq!(result.status, "failed");
-        assert!(result.error_message.contains("Credential ID is required"));
-    }
+    let result: ServerResponse = test::read_body_json(resp).await;
+    assert_eq!(result.status, "failed");
+    assert!(result.error_message.contains("Credential ID is required"));
 }
 
 #[actix_web::test]
