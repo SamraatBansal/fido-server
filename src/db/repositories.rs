@@ -55,11 +55,11 @@ impl PostgresUserRepository {
 
 #[async_trait::async_trait]
 impl UserRepository for PostgresUserRepository {
-    async fn create_user(&self, user: NewUser) -> Result<User> {
+    async fn create_user(&self, user: NewUser) -> Result<crate::db::models::User> {
         let mut conn = self.pool.get()
             .map_err(|e| AppError::DatabaseError(format!("Connection error: {}", e)))?;
 
-        let user: User = diesel::insert_into(crate::db::schema::users::table)
+        let user: crate::db::models::User = diesel::insert_into(crate::db::schema::users::table)
             .values(&user)
             .get_result(&mut conn)
             .map_err(|e| AppError::DatabaseError(format!("Failed to create user: {}", e)))?;
