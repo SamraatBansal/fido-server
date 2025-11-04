@@ -7,8 +7,8 @@ use serde_json::json;
 use std::sync::Arc;
 
 use crate::error::{AppError, Result};
-use crate::webauthn_types::*;
-use crate::webauthn_service::WebAuthnService;
+use crate::webauthn::*;
+use crate::webauthn::service::WebAuthnService;
 
 /// WebAuthn controller
 pub struct WebAuthnController {
