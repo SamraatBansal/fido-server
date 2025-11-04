@@ -11,5 +11,6 @@ pub mod routes;
 pub mod schema;
 pub mod services;
 pub mod utils;
+pub mod webauthn;
 
 pub use error::{AppError, Result};
