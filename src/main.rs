@@ -6,7 +6,7 @@ use std::io;
 use std::sync::Arc;
 
 use fido_server::controllers::WebAuthnController;
-use fido_server::webauthn::{WebAuthnConfig, WebAuthnServiceImpl, DatabaseWebAuthnService, WebAuthnService};
+use fido_server::webauthn::{WebAuthnConfig, WebAuthnServiceImpl};
 
 #[actix_web::main]
 async fn main() -> io::Result<()> {
