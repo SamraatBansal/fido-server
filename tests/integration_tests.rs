@@ -12,12 +12,10 @@ use std::sync::Arc;
 use base64::Engine;
 
 /// Create test app with WebAuthn controller
-async fn create_test_app() -> impl actix_web::dev::ServiceFactory<
+async fn create_test_app() -> impl actix_web::dev::Service<
     actix_web::dev::ServiceRequest,
-    Config = (),
     Response = actix_web::dev::ServiceResponse,
     Error = actix_web::Error,
-    InitError = (),
 > {
     let settings = Settings::new().expect("Failed to create test settings");
     let webauthn_service = ServiceFactory::create_webauthn_service(&settings)
@@ -25,9 +23,12 @@ async fn create_test_app() -> impl actix_web::dev::ServiceFactory<
         .expect("Failed to create WebAuthn service");
     let controller = Arc::new(WebAuthnController::new(webauthn_service));
 
-    App::new()
+    let app = App::new()
         .app_data(web::Data::new(controller))
-        .configure(fido_server::routes::api::configure)
+        .configure(fido_server::routes::api::configure);
+
+    let srv = test::init_service(app).await;
+    srv
 }
 
 #[actix_web::test]
@@ -353,7 +354,7 @@ async fn test_assertion_result_success() {
             cred_type: "public-key".to_string(),
             response: ServerAuthenticatorAssertionResponse {
                 authenticator_data: "SZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2MBAAAAAA".to_string(),
-                signature: "MEUCIQCdBCNL4soW_2y2n1x8rXx9n8Q9o7t3z3x3x3x3x3x3x3x3x3x3x3x3x3x3x3x3x".to_string(),
+                signature: "MEUCIQCdBCNL4soW_2y2n1x8rXx9n8Q9o7t3z3x3x3x3x3x3x3x3x3x3x3x3x3x3x".to_string(),
                 user_handle: "".to_string(),
                 client_data_json: auth_client_data_json,
             },
@@ -492,7 +493,7 @@ async fn test_complete_registration_flow() {
             cred_type: "public-key".to_string(),
             response: ServerAuthenticatorAssertionResponse {
                 authenticator_data: "SZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2MBAAAAAA".to_string(),
-                signature: "MEUCIQCdBCNL4soW_2y2n1x8rXx9n8Q9o7t3z3x3x3x3x3x3x3x3x3x3x3x3x3x3x3x".to_string(),
+                signature: "MEUCIQCdBCNL4soW_2y2n1x8rXx9n8Q9o7t3z3x3x3x3x3x3x3x3x3x3x3x3x3x".to_string(),
                 user_handle: "".to_string(),
                 client_data_json: auth_client_data_json,
             },
