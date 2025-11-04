@@ -42,8 +42,7 @@ async fn test_attestation_result_success() {
     let client_data_json = json!({
         "type": "webauthn.create",
         "challenge": challenge,
-        "origin": "http://localhost:3000",
-        "crossOrigin": false
+        "origin": "http://localhost:3000"
     });
 
     let credential_request = test::TestRequest::post()
