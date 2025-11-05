@@ -56,7 +56,7 @@ impl ServiceFactory {
     }
 
     /// Run database migrations
-    async fn run_migrations(pool: &DbPool) -> Result<(), Box<dyn std::error::Error>> {
+    async fn run_migrations(_pool: &DbPool) -> Result<(), Box<dyn std::error::Error>> {
         // For now, we'll skip migrations since we don't have migration files
         // In a real implementation, you would run diesel migrations here
         Ok(())
