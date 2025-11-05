@@ -37,17 +37,31 @@ pub async fn options(
         .start_passkey_registration(&user, Some(exclude_credentials))
         .await?;
 
-    // Store challenge state with challenge value as lookup key
+    // Store challenge state
     let challenge_id = state.challenge_service
         .store_registration_challenge(user.id, reg_state)
         .await?;
     
-    // Also store a mapping from challenge value to user for result lookup
+    // Store mappings for challenge lookup
     let challenge_bytes = &creation_challenge.public_key.challenge;
-    let challenge_key = URL_SAFE_NO_PAD.encode(challenge_bytes);
+    let challenge_b64 = URL_SAFE_NO_PAD.encode(challenge_bytes);
+    
+    // Store mapping from challenge value to user ID
     state.challenge_service
-        .store_challenge_to_user_mapping(&challenge_key, user.id)
+        .store_challenge_to_user_mapping(&challenge_b64, user.id)
         .await?;
+    
+    // Store mapping from challenge value to challenge ID for state retrieval
+    let challenge_mapping_key = format!("reg_challenge_{}", challenge_b64);
+    let mapping_challenge = crate::models::StoredChallenge {
+        id: challenge_mapping_key,
+        user_id,
+        challenge_type: crate::models::ChallengeType::Registration,
+        challenge_data: challenge_id.clone(),
+        expires_at: chrono::Utc::now() + chrono::Duration::minutes(5),
+        created_at: chrono::Utc::now(),
+    };
+    state.challenge_service.storage.store_challenge(mapping_challenge).await?;
 
     // Convert to FIDO conformance format
     let response = AttestationOptionsResponse {
