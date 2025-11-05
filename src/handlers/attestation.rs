@@ -154,6 +154,19 @@ async fn result_inner(
         }),
     };
 
+    // Validate attestation response fields
+    if attestation_response.client_data_json.is_empty() {
+        return Err(AppError::Validation {
+            message: "clientDataJSON cannot be empty".to_string(),
+        });
+    }
+    
+    if attestation_response.attestation_object.is_empty() {
+        return Err(AppError::Validation {
+            message: "attestationObject cannot be empty".to_string(),
+        });
+    }
+
     // Decode attestation data
     let client_data_json = URL_SAFE_NO_PAD.decode(&attestation_response.client_data_json)
         .map_err(|_| AppError::Validation {
