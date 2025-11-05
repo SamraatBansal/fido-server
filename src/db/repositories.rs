@@ -278,8 +278,8 @@ impl CredentialRepository for PostgresCredentialRepository {
             let mut conn = pool.get()
                 .map_err(|e| AppError::DatabaseError(format!("Connection error: {}", e)))?;
             
-            let credential: Option<Credential> = credentials::table
-                .filter(credentials::id.eq(&id))
+            let credential: Option<Credential> = crate::db::schema::credentials::table
+                .filter(crate::db::schema::credentials::id.eq(&id))
                 .first(&mut conn)
                 .optional()
                 .map_err(|e| AppError::DatabaseError(format!("Failed to get credential: {}", e)))?;
