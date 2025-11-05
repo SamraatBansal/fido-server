@@ -34,7 +34,9 @@ impl UserService {
 
     async fn create_user(&self, username: &str, display_name: &str) -> AppResult<User> {
         // Generate a random user ID for WebAuthn (must be unique per user)
-        let user_id: [u8; 32] = rand::random();
+        use rand::RngCore;
+        let mut user_id = [0u8; 32];
+        rand::rngs::OsRng.fill_bytes(&mut user_id);
         
         let user = User {
             id: Uuid::new_v4(),
