@@ -66,10 +66,10 @@ impl ChallengeStore for PostgresChallengeStore {
             
             // Find and delete the challenge
             let deleted_count = diesel::delete(
-                challenges::table.filter(
-                    challenges::challenge.eq(&challenge)
-                        .and(challenges::username.eq(&username))
-                        .and(challenges::expires_at.gt(now))
+                crate::db::schema::challenges::table.filter(
+                    crate::db::schema::challenges::challenge.eq(&challenge)
+                        .and(crate::db::schema::challenges::username.eq(&username))
+                        .and(crate::db::schema::challenges::expires_at.gt(now))
                 )
             ).execute(&mut conn)
             .map_err(|e| AppError::DatabaseError(format!("Failed to validate challenge: {}", e)))?;
