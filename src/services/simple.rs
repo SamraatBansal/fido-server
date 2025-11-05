@@ -392,8 +392,8 @@ impl SimpleWebAuthnService {
         let challenges = &self.store.challenges.read().unwrap();
         for challenge in challenges.values() {
             if challenge.challenge_type == "authentication" && challenge.expires_at > Utc::now() {
-                if let Ok(stored_auth): Result<StoredAuthenticationChallenge, _> =
-                    serde_json::from_value(challenge.challenge_data.clone())
+                if let Ok(stored_auth) =
+                    serde_json::from_value::<StoredAuthenticationChallenge>(challenge.challenge_data.clone())
                 {
                     if stored_auth.state.challenge == challenge_value {
                         return Ok(challenge.clone());
