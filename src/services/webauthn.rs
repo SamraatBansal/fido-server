@@ -15,7 +15,7 @@ pub struct WebAuthnService {
 
 impl WebAuthnService {
     pub fn new(config: &WebAuthnConfig) -> Result<Self> {
-        let webauthn = WebAuthnBuilder::new(&config.rp_id, &config.rp_origin)?
+        let webauthn = WebauthnBuilder::new(&config.rp_id, &config.rp_origin)?
             .rp_name(&config.rp_name)
             .build()?;
 
