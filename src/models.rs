@@ -52,7 +52,7 @@ pub struct ServerPublicKeyCredentialDescriptor {
     pub type_: String,
     pub id: String, // base64url encoded
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub transports: Option<Vec<AuthenticatorTransport>>,
+    pub transports: Option<Vec<webauthn_rs::prelude::AuthenticatorTransport>>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
