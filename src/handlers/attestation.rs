@@ -108,6 +108,7 @@ async fn options_inner(
 
     tracing::info!("Registration options created for user: {}, challenge stored with ID: {}", 
                    req.username, challenge_id);
+    tracing::debug!("Response payload: {:?}", serde_json::to_string(&response));
 
     Ok(Json(response))
 }
