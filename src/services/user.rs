@@ -1,5 +1,5 @@
 use chrono::Utc;
-use rand::Rng;
+
 use std::sync::Arc;
 use uuid::Uuid;
 
