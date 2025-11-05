@@ -66,17 +66,18 @@ def test_missing_fields():
     
     test_error_response("/attestation/result", payload_empty_id, "Empty id field should fail")
     
-    # Test F-4: Missing "type" field
-    payload_missing_type = {
-        "id": "test123",
+    # Test F-6: wrong type field value
+    payload_wrong_type = {
+        "id": "dGVzdDEyMw",
         "response": {
-            "clientDataJSON": "eyJ0eXBlIjoid2ViYXV0aG4uY3JlYXRlIn0",
+            "clientDataJSON": "eyJ0eXBlIjoid2ViYXV0aG4uY3JlYXRlIiwiY2hhbGxlbmdlIjoidGVzdCIsIm9yaWdpbiI6Imh0dHA6Ly9sb2NhbGhvc3Q6OTk5OSJ9",
             "attestationObject": "o2NmbXRkbm9uZWdhdHRTdG10oGhhdXRoRGF0YVjESZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2NFAAAAAA"
         },
+        "type": "avocado-toast",
         "getClientExtensionResults": {}
     }
     
-    test_error_response("/attestation/result", payload_missing_type, "Missing type field should fail")
+    test_error_response("/attestation/result", payload_wrong_type, "Wrong type field should fail")
 
 def test_invalid_encodings():
     print("\n=== Testing invalid encoding validation ===")
