@@ -1,4 +1,3 @@
-use std::sync::Arc;
 use webauthn_rs::prelude::*;
 use uuid::Uuid;
 
@@ -7,13 +6,13 @@ use crate::error::{AppError, AppResult};
 use crate::models::User;
 
 pub struct WebAuthnService {
-    webauthn: WebAuthn,
+    webauthn: Webauthn,
     config: WebAuthnConfig,
 }
 
 impl WebAuthnService {
     pub fn new(config: &AppConfig) -> AppResult<Self> {
-        let webauthn = WebAuthnBuilder::new(&config.webauthn.rp_id, &config.webauthn.rp_origin)?
+        let webauthn = WebauthnBuilder::new(&config.webauthn.rp_id, &config.webauthn.rp_origin)?
             .rp_name(&config.webauthn.rp_name)
             .build()?;
         
