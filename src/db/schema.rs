@@ -1,6 +1,6 @@
 //! Database schema using Diesel
 
-table! {
+diesel::table! {
     users (id) {
         id -> Text,
         username -> Text,
@@ -10,7 +10,7 @@ table! {
     }
 }
 
-table! {
+diesel::table! {
     credentials (id) {
         id -> Text,
         user_id -> Text,
@@ -22,7 +22,7 @@ table! {
     }
 }
 
-table! {
+diesel::table! {
     challenges (id) {
         id -> Text,
         challenge -> Text,
@@ -32,7 +32,7 @@ table! {
     }
 }
 
-allow_tables_to_appear_in_same_query!(
+diesel::allow_tables_to_appear_in_same_query!(
     users,
     credentials,
     challenges,
