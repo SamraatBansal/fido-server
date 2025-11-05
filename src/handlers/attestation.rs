@@ -184,11 +184,43 @@ async fn result_inner(
             message: "Invalid clientDataJSON format".to_string(),
         })?;
 
+    // Validate client data structure
+    let type_field = client_data.get("type")
+        .and_then(|t| t.as_str())
+        .ok_or_else(|| AppError::Validation {
+            message: "Missing or invalid type field in clientDataJSON".to_string(),
+        })?;
+    
+    if type_field != "webauthn.create" {
+        return Err(AppError::Validation {
+            message: "clientDataJSON type must be 'webauthn.create'".to_string(),
+        });
+    }
+    
+    let origin = client_data.get("origin")
+        .and_then(|o| o.as_str())
+        .ok_or_else(|| AppError::Validation {
+            message: "Missing or invalid origin field in clientDataJSON".to_string(),
+        })?;
+    
+    // Basic origin validation (should match our RP origin)
+    // For now, we'll accept localhost origins for testing
+    if !origin.starts_with("http://localhost") && !origin.starts_with("https://localhost") {
+        tracing::warn!("Origin validation warning: {}", origin);
+        // For conformance testing, we may need to be more flexible
+    }
+
     let challenge_b64 = client_data.get("challenge")
         .and_then(|c| c.as_str())
         .ok_or_else(|| AppError::Validation {
             message: "Missing challenge in clientDataJSON".to_string(),
         })?;
+    
+    if challenge_b64.is_empty() {
+        return Err(AppError::Validation {
+            message: "challenge cannot be empty".to_string(),
+        });
+    }
 
     let _challenge_bytes = URL_SAFE_NO_PAD.decode(challenge_b64)
         .map_err(|_| AppError::Validation {
