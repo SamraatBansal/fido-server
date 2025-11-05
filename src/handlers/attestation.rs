@@ -141,7 +141,7 @@ pub async fn result(
             message: "Missing challenge in clientDataJSON".to_string(),
         })?;
 
-    let challenge_bytes = URL_SAFE_NO_PAD.decode(challenge_b64)
+    let _challenge_bytes = URL_SAFE_NO_PAD.decode(challenge_b64)
         .map_err(|_| AppError::Validation {
             message: "Invalid challenge encoding".to_string(),
         })?;
