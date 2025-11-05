@@ -1,91 +1,90 @@
 [package]
-name = "fido-server"
+name = "fido2-relying-party"
 version = "0.1.0"
 edition = "2021"
-authors = ["FIDO Server Team"]
+authors = ["FIDO2 Security Team"]
+description = "A secure FIDO2/WebAuthn Relying Party Server implementation in Rust"
 license = "MIT"
-repository = "https://github.com/yourorg/fido-server"
-readme = "README.md"
-
-[lib]
-name = "fido_server"
-path = "src/lib.rs"
-
-[[bin]]
-name = "fido-server"
-path = "src/main.rs"
 
 [dependencies]
-# Web Framework
-actix-web = "4.9"
-actix-cors = "0.7"
-actix-rt = "2.10"
-
-# FIDO/WebAuthn
+# WebAuthn Core
 webauthn-rs = "0.5"
-webauthn-rs-proto = "0.5"
+
+# Async Runtime
+tokio = { version = "1.0", features = ["full"] }
+
+# Web Framework
+axum = { version = "0.7", features = ["tokio", "json"] }
+tower = "0.4"
+tower-http = { version = "0.5", features = ["cors", "trace", "timeout", "compression"] }
 
 # Serialization
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 
 # Database
-diesel = { version = "2.1", features = ["postgres", "r2d2", "chrono", "uuid"] }
-diesel_migrations = "2.1"
-r2d2 = "0.8"
+sqlx = { version = "0.7", features = [
+    "postgres", 
+    "runtime-tokio-rustls", 
+    "uuid", 
+    "time", 
+    "json", 
+    "migrate"
+] }
 
-# Async
-tokio = { version = "1.40", features = ["full"] }
-futures = "0.3"
+# Utilities
+uuid = { version = "1.0", features = ["v4", "serde"] }
+base64 = "0.21"
+url = "2.4"
+time = { version = "0.3", features = ["serde", "formatting"] }
 
-# Cryptography
-base64 = "0.22"
-uuid = { version = "1.10", features = ["v4", "serde"] }
+# Security & Crypto
 rand = "0.8"
-sha2 = "0.10"
+ring = "0.17"
 
 # Configuration
-config = "0.14"
-dotenv = "0.15"
+config = "0.13"
+dotenvy = "0.15"
 
-# Logging
-log = "0.4"
-env_logger = "0.11"
+# Logging & Tracing
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+tracing-opentelemetry = "0.21"
 
 # Error Handling
-thiserror = "1.0"
 anyhow = "1.0"
+thiserror = "1.0"
 
-# Time
-chrono = { version = "0.4", features = ["serde"] }
+# HTTP Client (for testing)
+reqwest = { version = "0.11", features = ["json"], optional = true }
 
 [dev-dependencies]
-actix-test = "0.1"
-mockall = "0.13"
+tokio-test = "0.4"
+reqwest = { version = "0.11", features = ["json"] }
+testcontainers = "0.15"
+criterion = { version = "0.5", features = ["html_reports"] }
+proptest = "1.0"
+wiremock = "0.5"
 
-[profile.dev]
-opt-level = 0
-debug = true
+[features]
+default = []
+testing = ["reqwest"]
+
+[[bin]]
+name = "fido2-server"
+path = "src/main.rs"
+
+[[bench]]
+name = "webauthn_benchmarks"
+harness = false
 
 [profile.release]
 opt-level = 3
 lto = true
 codegen-units = 1
 panic = "abort"
-strip = true
 
-# Strict linting configuration
-[lints.rust]
-unused_must_use = "deny"
-missing_docs = "warn"
-unused_imports = "warn"
-dead_code = "warn"
-
-[lints.clippy]
-all = "deny"
-pedantic = "deny"
-nursery = "warn"
-cargo = "warn"
-# Allow some pedantic lints that are too strict
-module_name_repetitions = "allow"
-missing_errors_doc = "allow"
+[profile.dev]
+opt-level = 0
+debug = true
+overflow-checks = true
