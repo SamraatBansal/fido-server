@@ -162,7 +162,7 @@ impl WebAuthnService {
                     user_handle,
                 },
                 type_: "public-key".to_string(),
-                extensions: server_cred.get_client_extension_results.clone().unwrap_or_default(),
+                extensions: AuthenticationExtensionsClientOutputs::default(),
             })
         } else {
             Err(AppError::validation("Expected assertion response for authentication"))
