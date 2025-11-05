@@ -21,44 +21,17 @@ impl ServiceFactory {
             supported_algorithms: vec![-7, -257], // ES256, RS256
         };
 
-        if settings.database.in_memory {
-            // Use in-memory service for development/testing
-            let challenge_store = InMemoryChallengeStore::new();
-            let user_repo = InMemoryUserRepository::new();
-            let credential_repo = InMemoryCredentialRepository::new();
-            
-            let service = WebAuthnServiceImpl::new(
-                webauthn_config,
-                challenge_store,
-                user_repo,
-                credential_repo,
-            )?;
-            Ok(Arc::new(service))
-        } else {
-            // Use PostgreSQL service for production
-            let pool = Arc::new(crate::db::establish_connection(&settings.database.url)?);
-            
-            // Run migrations
-            Self::run_migrations(&pool).await?;
-            
-            let challenge_store = PostgresChallengeStore::new(pool.clone());
-            let user_repo = PostgresUserRepository::new(pool.clone());
-            let credential_repo = PostgresCredentialRepository::new(pool);
-            
-            let service = WebAuthnServiceImpl::new(
-                webauthn_config,
-                challenge_store,
-                user_repo,
-                credential_repo,
-            )?;
-            Ok(Arc::new(service))
-        }
-    }
-
-    /// Run database migrations
-    async fn run_migrations(_pool: &DbPool) -> Result<(), Box<dyn std::error::Error>> {
-        // For now, we'll skip migrations since we don't have migration files
-        // In a real implementation, you would run diesel migrations here
-        Ok(())
+        // Use in-memory service for development/testing
+        let challenge_store = InMemoryChallengeStore::new();
+        let user_repo = InMemoryUserRepository::new();
+        let credential_repo = InMemoryCredentialRepository::new();
+        
+        let service = WebAuthnServiceImpl::new(
+            webauthn_config,
+            challenge_store,
+            user_repo,
+            credential_repo,
+        )?;
+        Ok(Arc::new(service))
     }
 }
