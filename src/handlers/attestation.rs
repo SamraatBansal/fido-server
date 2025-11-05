@@ -166,6 +166,7 @@ pub async fn result(
         response: webauthn_rs_proto::attest::AuthenticatorAttestationResponseRaw {
             client_data_json: client_data_json.into(),
             attestation_object: attestation_object.into(),
+            transports: None,
         },
         type_: credential.type_.clone(),
         extensions: Default::default(),
