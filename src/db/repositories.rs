@@ -87,7 +87,7 @@ impl ChallengeStore for PostgresChallengeStore {
             
             let now = Utc::now();
             
-            diesel::delete(challenges::table.filter(challenges::expires_at.lt(now)))
+            diesel::delete(crate::db::schema::challenges::table.filter(crate::db::schema::challenges::expires_at.lt(now)))
                 .execute(&mut conn)
                 .map_err(|e| AppError::DatabaseError(format!("Failed to cleanup challenges: {}", e)))?;
             
