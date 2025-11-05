@@ -79,6 +79,31 @@ def test_missing_fields():
     
     test_error_response("/attestation/result", payload_wrong_type, "Wrong type field should fail")
 
+def test_basic_validation():
+    # Test basic /attestation/result with minimal valid data
+    payload = {
+        "id": "dGVzdDEyMw",
+        "response": {
+            "clientDataJSON": "eyJ0eXBlIjoid2ViYXV0aG4uY3JlYXRlIiwiY2hhbGxlbmdlIjoidGVzdCIsIm9yaWdpbiI6Imh0dHA6Ly9sb2NhbGhvc3Q6OTk5OSJ9",
+            "attestationObject": "o2NmbXRkbm9uZWdhdHRTdG10oGhhdXRoRGF0YVjESZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2NFAAAAAA"
+        },
+        "type": "public-key",
+        "getClientExtensionResults": {}
+    }
+    
+    try:
+        response = requests.post(
+            "http://localhost:9999/attestation/result",
+            json=payload,
+            headers={"Content-Type": "application/json"},
+            timeout=10
+        )
+        
+        print(f"Basic test: {response.status_code} - {response.text[:200]}")
+        
+    except Exception as e:
+        print(f"Basic test failed: {e}")
+
 def test_invalid_encodings():
     print("\n=== Testing invalid encoding validation ===")
     
