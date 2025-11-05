@@ -2,89 +2,60 @@
 name = "fido2-relying-party"
 version = "0.1.0"
 edition = "2021"
-authors = ["FIDO2 Security Team"]
-description = "A secure FIDO2/WebAuthn Relying Party Server implementation in Rust"
-license = "MIT"
 
 [dependencies]
-# WebAuthn Core
-webauthn-rs = "0.5"
+# WebAuthn
+webauthn-rs = { version = "0.5", features = ["danger-allow-state-serialisation"] }
 
-# Async Runtime
+# Web framework
+axum = { version = "0.7", features = ["macros"] }
+tower = { version = "0.4", features = ["util"] }
+tower-http = { version = "0.5", features = ["cors", "trace", "timeout", "limit"] }
+
+# Async runtime
 tokio = { version = "1.0", features = ["full"] }
 
-# Web Framework
-axum = { version = "0.7", features = ["tokio", "json"] }
-tower = "0.4"
-tower-http = { version = "0.5", features = ["cors", "trace", "timeout", "compression"] }
+# Database
+sqlx = { version = "0.8", features = ["runtime-tokio-rustls", "postgres", "uuid", "chrono", "json"] }
 
 # Serialization
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 
-# Database
-sqlx = { version = "0.7", features = [
-    "postgres", 
-    "runtime-tokio-rustls", 
-    "uuid", 
-    "time", 
-    "json", 
-    "migrate"
-] }
+# Time handling
+chrono = { version = "0.4", features = ["serde"] }
 
-# Utilities
+# UUID
 uuid = { version = "1.0", features = ["v4", "serde"] }
-base64 = "0.21"
-url = "2.4"
-time = { version = "0.3", features = ["serde", "formatting"] }
-
-# Security & Crypto
-rand = "0.8"
-ring = "0.17"
 
 # Configuration
-config = "0.13"
+config = "0.14"
+
+# Error handling
+thiserror = "1.0"
+anyhow = "1.0"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Base64
+base64 = "0.22"
+
+# Cryptographic utilities
+rand = "0.8"
+
+# Rate limiting
+governor = "0.6"
+
+# Environment variables
 dotenvy = "0.15"
 
-# Logging & Tracing
-tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
-tracing-opentelemetry = "0.21"
-
-# Error Handling
-anyhow = "1.0"
-thiserror = "1.0"
-
-# HTTP Client (for testing)
-reqwest = { version = "0.11", features = ["json"], optional = true }
-
 [dev-dependencies]
+# Testing
 tokio-test = "0.4"
-reqwest = { version = "0.11", features = ["json"] }
-testcontainers = "0.15"
-criterion = { version = "0.5", features = ["html_reports"] }
-proptest = "1.0"
-wiremock = "0.5"
+wiremock = "0.6"
+tempfile = "3.0"
 
 [features]
 default = []
-testing = ["reqwest"]
-
-[[bin]]
-name = "fido2-server"
-path = "src/main.rs"
-
-[[bench]]
-name = "webauthn_benchmarks"
-harness = false
-
-[profile.release]
-opt-level = 3
-lto = true
-codegen-units = 1
-panic = "abort"
-
-[profile.dev]
-opt-level = 0
-debug = true
-overflow-checks = true
