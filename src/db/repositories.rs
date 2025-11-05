@@ -176,17 +176,17 @@ impl UserRepository for PostgresUserRepository {
             let mut conn = pool.get()
                 .map_err(|e| AppError::DatabaseError(format!("Connection error: {}", e)))?;
             
-            diesel::update(users::table.filter(users::id.eq(&user.id)))
-                .((
-                    users::username.eq(&user.username),
-                    users::display_name.eq(&user.display_name),
-                    users::updated_at.eq(Utc::now()),
+            diesel::update(crate::db::schema::users::table.filter(crate::db::schema::users::id.eq(&user.id)))
+                .set((
+                    crate::db::schema::users::username.eq(&user.username),
+                    crate::db::schema::users::display_name.eq(&user.display_name),
+                    crate::db::schema::users::updated_at.eq(Utc::now()),
                 ))
                 .execute(&mut conn)
                 .map_err(|e| AppError::DatabaseError(format!("Failed to update user: {}", e)))?;
             
-            let updated_user: User = users::table
-                .filter(users::id.eq(&user.id))
+            let updated_user: User = crate::db::schema::users::table
+                .filter(crate::db::schema::users::id.eq(&user.id))
                 .first(&mut conn)
                 .map_err(|e| AppError::DatabaseError(format!("Failed to retrieve updated user: {}", e)))?;
             
