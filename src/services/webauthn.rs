@@ -1,8 +1,7 @@
 use webauthn_rs::prelude::*;
-use uuid::Uuid;
 
 use crate::config::{AppConfig, WebAuthnConfig};
-use crate::error::{AppError, AppResult};
+use crate::error::AppResult;
 use crate::models::User;
 
 pub struct WebAuthnService {
