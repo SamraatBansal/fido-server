@@ -1,41 +1,31 @@
 use axum::{
-    routing::{get, post, delete},
+    routing::{get, post},
     Router,
-    response::Json,
-    extract::State,
-    http::StatusCode,
+};
+use fido2_relying_party::{
+    config::AppConfig,
+    controllers::{
+        attestation::{get_attestation_options, post_attestation_result, AppState as AttestationState},
+        assertion::{get_assertion_options, post_assertion_result, AppState as AssertionState},
+    },
+    db::Database,
+    db::repositories::{ChallengeRepository, CredentialRepository, UserRepository},
+    middleware::{cors_layer, logging_layer, security_headers},
+    services::{ChallengeService, CredentialService, UserService, WebAuthnService},
+    AppError,
 };
 use std::sync::Arc;
+use tokio::signal;
 use tower::ServiceBuilder;
-use tower_http::{
-    cors::CorsLayer,
-    trace::TraceLayer,
-    timeout::TimeoutLayer,
-    compression::CompressionLayer,
-};
+use tower_http::timeout::TimeoutLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-use std::time::Duration;
 
-mod config;
-mod handlers;
-mod models;
-mod services;
-mod storage;
-mod security;
-mod errors;
-
-use config::AppConfig;
-use errors::AppError;
-
-/// Application state shared across handlers
 #[derive(Clone)]
 pub struct AppState {
-    pub config: Arc<AppConfig>,
-    pub webauthn_service: Arc<services::WebAuthnService>,
-    pub storage: Arc<dyn storage::Storage>,
-    pub challenge_service: Arc<services::ChallengeService>,
-    pub origin_validator: Arc<security::OriginValidator>,
-    pub rate_limiter: Arc<security::RateLimiter>,
+    pub webauthn_service: Arc<WebAuthnService>,
+    pub user_service: Arc<UserService>,
+    pub credential_service: Arc<CredentialService>,
+    pub challenge_service: Arc<ChallengeService>,
 }
 
 #[tokio::main]
@@ -46,143 +36,112 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             tracing_subscriber::EnvFilter::try_from_default_env()
                 .unwrap_or_else(|_| "fido2_relying_party=debug,tower_http=debug".into()),
         )
-        .with(tracing_subscriber::fmt::layer().json())
+        .with(tracing_subscriber::fmt::layer())
         .init();
 
-    tracing::info!("Starting FIDO2/WebAuthn Relying Party Server");
-
     // Load configuration
-    let config = Arc::new(AppConfig::load()?);
-    tracing::info!("Configuration loaded successfully");
+    let config = AppConfig::load()?;
+    tracing::info!("Loaded configuration for RP: {}", config.webauthn.rp_name);
 
-    // Initialize storage
-    let storage = storage::create_storage(&config).await?;
-    tracing::info!("Storage initialized");
+    // Initialize database
+    let database = Database::new(&config.database).await?;
+    tracing::info!("Database connected and migrations applied");
 
-    // Run database migrations
-    storage.migrate().await?;
-    tracing::info!("Database migrations completed");
+    // Initialize repositories
+    let user_repo = UserRepository::new(database.pool().clone());
+    let credential_repo = CredentialRepository::new(database.pool().clone());
+    let challenge_repo = ChallengeRepository::new(database.pool().clone());
 
     // Initialize services
-    let webauthn_service = Arc::new(services::WebAuthnService::new(&config)?);
-    let challenge_service = Arc::new(services::ChallengeService::new(storage.clone()));
-    let origin_validator = Arc::new(security::OriginValidator::new(config.allowed_origins.clone())?);
-    let rate_limiter = Arc::new(security::RateLimiter::new(config.rate_limit.clone()));
+    let webauthn_service = Arc::new(WebAuthnService::new(&config.webauthn)?);
+    let user_service = Arc::new(UserService::new(user_repo));
+    let credential_service = Arc::new(CredentialService::new(credential_repo));
+    let challenge_service = Arc::new(ChallengeService::new(challenge_repo, 5)); // 5 minute TTL
 
     // Create application state
     let app_state = AppState {
-        config: config.clone(),
-        webauthn_service,
-        storage,
-        challenge_service,
-        origin_validator,
-        rate_limiter,
+        webauthn_service: webauthn_service.clone(),
+        user_service: user_service.clone(),
+        credential_service: credential_service.clone(),
+        challenge_service: challenge_service.clone(),
     };
 
     // Build the application router
-    let app = create_app(app_state);
+    let app = Router::new()
+        // Registration endpoints
+        .route("/attestation/options", post(get_attestation_options))
+        .route("/attestation/result", post(post_attestation_result))
+        // Authentication endpoints
+        .route("/assertion/options", post(get_assertion_options))
+        .route("/assertion/result", post(post_assertion_result))
+        // Health check
+        .route("/health", get(health_check))
+        // State
+        .with_state(app_state)
+        // Middleware layers
+        .layer(
+            ServiceBuilder::new()
+                .layer(TimeoutLayer::new(std::time::Duration::from_secs(30)))
+                .layer(cors_layer(&config.security))
+                .layer(logging_layer())
+                .map_response(security_headers),
+        );
 
-    // Start the server
-    let listener = tokio::net::TcpListener::bind(&config.server.bind_address).await?;
-    tracing::info!("Server listening on {}", config.server.bind_address);
+    // Start server
+    let addr = format!("{}:{}", config.server.host, config.server.port);
+    let listener = tokio::net::TcpListener::bind(&addr).await?;
+    tracing::info!("FIDO2 Relying Party server listening on {}", addr);
 
-    axum::serve(listener, app).await?;
+    // Start background cleanup task
+    let cleanup_service = challenge_service.clone();
+    tokio::spawn(async move {
+        let mut interval = tokio::time::interval(std::time::Duration::from_secs(300)); // 5 minutes
+        loop {
+            interval.tick().await;
+            if let Err(e) = cleanup_service.cleanup_expired_challenges().await {
+                tracing::error!("Failed to cleanup expired challenges: {}", e);
+            }
+        }
+    });
+
+    // Start server with graceful shutdown
+    axum::serve(listener, app)
+        .with_graceful_shutdown(shutdown_signal())
+        .await?;
 
     Ok(())
 }
 
-fn create_app(state: AppState) -> Router {
-    Router::new()
-        // Health check endpoint
-        .route("/health", get(health_check))
-        
-        // WebAuthn attestation (registration) endpoints
-        .route(
-            "/webauthn/attestation/options/:user_id",
-            get(handlers::attestation::get_attestation_options),
-        )
-        .route(
-            "/webauthn/attestation/result/:user_id",
-            post(handlers::attestation::post_attestation_result),
-        )
-        
-        // WebAuthn assertion (authentication) endpoints
-        .route(
-            "/webauthn/assertion/options/:user_id",
-            get(handlers::assertion::get_assertion_options),
-        )
-        .route(
-            "/webauthn/assertion/result/:user_id",
-            post(handlers::assertion::post_assertion_result),
-        )
-        
-        // Credential management endpoints
-        .route(
-            "/webauthn/credentials/:user_id",
-            get(handlers::credentials::get_user_credentials),
-        )
-        .route(
-            "/webauthn/credentials/:credential_id",
-            delete(handlers::credentials::delete_credential),
-        )
-        
-        // Apply middleware
-        .layer(
-            ServiceBuilder::new()
-                .layer(TraceLayer::new_for_http())
-                .layer(CompressionLayer::new())
-                .layer(TimeoutLayer::new(Duration::from_secs(30)))
-                .layer(CorsLayer::permissive()) // Configure properly for production
-                .layer(axum::middleware::from_fn_with_state(
-                    state.clone(),
-                    security::rate_limit_middleware,
-                ))
-                .layer(axum::middleware::from_fn_with_state(
-                    state.clone(),
-                    security::security_headers_middleware,
-                )),
-        )
-        .with_state(state)
-}
-
-async fn health_check() -> Result<Json<serde_json::Value>, AppError> {
-    Ok(Json(serde_json::json!({
-        "status": "healthy",
-        "timestamp": time::OffsetDateTime::now_utc(),
-        "version": env!("CARGO_PKG_VERSION")
+async fn health_check() -> Result<axum::Json<serde_json::Value>, AppError> {
+    Ok(axum::Json(serde_json::json!({
+        "status": "ok",
+        "service": "fido2-relying-party",
+        "timestamp": chrono::Utc::now().to_rfc3339()
     })))
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use axum_test::TestServer;
+async fn shutdown_signal() {
+    let ctrl_c = async {
+        signal::ctrl_c()
+            .await
+            .expect("failed to install Ctrl+C handler");
+    };
 
-    #[tokio::test]
-    async fn test_health_check() {
-        let config = Arc::new(AppConfig::default());
-        let storage = Arc::new(storage::InMemoryStorage::new());
-        let webauthn_service = Arc::new(services::WebAuthnService::new(&config).unwrap());
-        let challenge_service = Arc::new(services::ChallengeService::new(storage.clone()));
-        let origin_validator = Arc::new(security::OriginValidator::new(vec!["https://localhost:3000".to_string()]).unwrap());
-        let rate_limiter = Arc::new(security::RateLimiter::new(Default::default()));
+    #[cfg(unix)]
+    let terminate = async {
+        signal::unix::signal(signal::unix::SignalKind::terminate())
+            .expect("failed to install signal handler")
+            .recv()
+            .await;
+    };
 
-        let app_state = AppState {
-            config,
-            webauthn_service,
-            storage,
-            challenge_service,
-            origin_validator,
-            rate_limiter,
-        };
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
 
-        let app = create_app(app_state);
-        let server = TestServer::new(app).unwrap();
-
-        let response = server.get("/health").await;
-        assert_eq!(response.status_code(), StatusCode::OK);
-
-        let body: serde_json::Value = response.json();
-        assert_eq!(body["status"], "healthy");
+    tokio::select! {
+        _ = ctrl_c => {},
+        _ = terminate => {},
     }
+
+    tracing::info!("Shutdown signal received, starting graceful shutdown");
 }
