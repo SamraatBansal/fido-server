@@ -134,10 +134,13 @@ pub async fn result(
     let mut found_user_id = None;
     let mut challenge_id = None;
 
-    // Extract challenge from client data for lookup
-    // We need to implement a way to associate the challenge with a user
-    // For now, we'll look through recent challenges to find the matching one
-    // This is a simplified approach - in production, you'd want better indexing
+    // Look up user by challenge value
+    let user_id = state.challenge_service
+        .get_user_by_challenge_value(challenge_b64)
+        .await?
+        .ok_or_else(|| AppError::Validation {
+            message: "Invalid or expired challenge".to_string(),
+        })?;
 
     // Convert to webauthn-rs format
     let reg_credential = RegisterPublicKeyCredential {
@@ -150,28 +153,32 @@ pub async fn result(
         type_: credential.type_.clone(),
     };
 
-    // We need to find the user and challenge state
-    // For this simplified implementation, we'll need to search through challenges
-    // In a real implementation, you'd have a better indexing mechanism
+    // We need to find the stored challenge state using the challenge value
+    // Since webauthn-rs requires the full PasskeyRegistration state, we need to
+    // search through our stored challenges to find the matching one
+    // In a production system, you'd want a more efficient lookup mechanism
 
-    // Try to find challenge by looking for the challenge value in our stored challenges
-    // This is inefficient but works for the demo
-    let challenge_hex = hex::encode(&challenge_bytes);
+    // Get all challenges for this user and find the matching one
+    let mut matching_challenge_id = None;
+    // This is a simplified search - in production you'd have better indexing
     
-    // For now, let's try to extract username from the credential ID or use a simpler approach
-    // We'll modify this to store challenge IDs in a more accessible way
+    // Instead of searching all challenges, let's create a deterministic mapping
+    // from challenge value to challenge ID
+    let challenge_mapping_key = format!("reg_challenge_{}", challenge_b64);
     
-    // Since we can't easily link back to user without additional data,
-    // let's implement a simpler approach where we search for matching challenges
-    // This would be much more efficient with proper database indexing
+    // Try to get the challenge ID from our mapping
+    if let Some(mapping) = state.challenge_service
+        .storage
+        .get_challenge(&challenge_mapping_key)
+        .await? {
+        matching_challenge_id = Some(mapping.challenge_data.clone());
+    }
+    
+    let challenge_id = matching_challenge_id
+        .ok_or_else(|| AppError::Validation {
+            message: "Challenge state not found".to_string(),
+        })?;
 
-    // Temporary: return error asking for username
-    return Err(AppError::Validation {
-        message: "Cannot complete registration without user context. Consider including username in the request.".to_string(),
-    });
-
-    // The following code would work if we could identify the user:
-    /*
     // Retrieve and remove challenge state
     let reg_state = state.challenge_service
         .retrieve_and_remove_registration_challenge(&challenge_id, user_id)
@@ -187,6 +194,7 @@ pub async fn result(
         .create_credential(user_id, passkey)
         .await?;
 
+    tracing::info!("Registration completed successfully for user ID: {}", user_id);
+
     Ok(Json(ServerResponse::success()))
-    */
 }
