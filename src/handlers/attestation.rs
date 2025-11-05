@@ -9,9 +9,8 @@ use crate::{
     error::AppError,
     models::{
         AttestationOptionsRequest, AttestationOptionsResponse,
-        ServerPublicKeyCredential, ServerPublicKeyCredentialUserEntity,
+        AttestationCredential, ServerPublicKeyCredentialUserEntity,
         ServerPublicKeyCredentialDescriptor, ServerResponse,
-        ServerAuthenticatorAttestationResponse,
     },
     AppState,
 };
