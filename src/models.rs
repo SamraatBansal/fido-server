@@ -60,7 +60,7 @@ pub struct ServerPublicKeyCredentialDescriptor {
 pub struct AssertionOptionsRequest {
     pub username: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub user_verification: Option<webauthn_rs::prelude::UserVerificationPolicy>,
+    pub user_verification: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -77,7 +77,7 @@ pub struct AssertionOptionsResponse {
     #[serde(rename = "allowCredentials", default)]
     pub allow_credentials: Vec<ServerPublicKeyCredentialDescriptor>,
     #[serde(rename = "userVerification", skip_serializing_if = "Option::is_none")]
-    pub user_verification: Option<webauthn_rs::prelude::UserVerificationPolicy>,
+    pub user_verification: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
