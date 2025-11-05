@@ -129,6 +129,17 @@ async fn result_inner(
 ) -> Result<Json<ServerResponse>, AppError> {
     tracing::info!("Registration result received for credential: {}", credential.id);
 
+    // Validate required fields first
+    if credential.id.is_empty() {
+        return Err(AppError::MissingField { field: "id".to_string() });
+    }
+    
+    if credential.type_ != "public-key" {
+        return Err(AppError::Validation {
+            message: "type must be 'public-key'".to_string(),
+        });
+    }
+
     // Decode credential
     let credential_id = URL_SAFE_NO_PAD.decode(&credential.id)
         .map_err(|_| AppError::Validation {
