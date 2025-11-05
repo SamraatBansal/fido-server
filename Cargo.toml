@@ -57,5 +57,9 @@ tokio-test = "0.4"
 wiremock = "0.6"
 tempfile = "3.0"
 
+[[bin]]
+name = "fido2-simple"
+path = "src/main_simple.rs"
+
 [features]
 default = []
