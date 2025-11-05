@@ -1,6 +1,6 @@
 use axum::{
     extract::State,
-    response::Json,
+    response::{IntoResponse, Json},
 };
 use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
 use webauthn_rs::prelude::*;
