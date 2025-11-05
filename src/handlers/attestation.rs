@@ -146,12 +146,7 @@ async fn result_inner(
         })?;
 
     // Extract attestation response
-    let attestation_response = match credential.response {
-        ServerAuthenticatorResponse::Attestation(attestation) => attestation,
-        _ => return Err(AppError::Validation {
-            message: "Expected attestation response".to_string(),
-        }),
-    };
+    let attestation_response = credential.response;
 
     // Validate attestation response fields
     if attestation_response.client_data_json.is_empty() {
