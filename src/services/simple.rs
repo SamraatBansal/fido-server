@@ -268,7 +268,7 @@ impl SimpleWebAuthnService {
             error_message: String::new(),
             challenge: request_challenge.challenge,
             timeout: Some(self.timeout_ms),
-            rp_id: Some(self.webauthn.get_allowed_origins()[0].domain().unwrap_or("localhost").to_string()),
+            rp_id: Some("localhost".to_string()), // TODO: Get from config
             allow_credentials: allow_credentials_server,
             user_verification: request.user_verification,
             extensions: None,
