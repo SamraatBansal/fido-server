@@ -92,16 +92,10 @@ pub async fn options(
         attestation: req.attestation,
     };
 
-        tracing::info!("Registration options created for user: {}, challenge stored with ID: {}", 
-                       req.username, challenge_id);
+    tracing::info!("Registration options created for user: {}, challenge stored with ID: {}", 
+                   req.username, challenge_id);
 
-        Ok(Json(response))
-    }
-    
-    match inner(state, req).await {
-        Ok(response) => response.into_response(),
-        Err(e) => e.into_response(),
-    }
+    Ok(Json(response))
 }
 
 pub async fn result(
