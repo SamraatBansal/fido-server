@@ -31,7 +31,7 @@ impl UserService {
         let new_user = NewUser {
             username: username.to_string(),
             display_name: display_name.to_string(),
-            user_id: webauthn_user_id.to_vec(),
+            user_id: webauthn_user_id,
         };
 
         let user = self.repository.create_user(new_user).await?;
