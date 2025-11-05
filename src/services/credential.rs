@@ -75,7 +75,7 @@ impl CredentialService {
 
     pub fn convert_to_passkey(&self, credential: &ActiveCredential) -> Result<Passkey> {
         // Parse the COSE key
-        let cose_key = CoseKey::try_from(credential.public_key.as_slice())
+        let cose_key = COSEKey::try_from(credential.public_key.as_slice())
             .map_err(|_| AppError::validation("Invalid COSE key format"))?;
 
         // Parse attestation type
