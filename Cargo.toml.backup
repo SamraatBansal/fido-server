@@ -1,0 +1,69 @@
+[package]
+name = "fido2-relying-party"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# WebAuthn
+webauthn-rs = { version = "0.5", features = ["danger-allow-state-serialisation"] }
+
+# Web framework
+axum = { version = "0.7", features = ["macros"] }
+tower = { version = "0.4", features = ["util"] }
+tower-http = { version = "0.5", features = ["cors", "trace", "timeout", "limit"] }
+
+# Async runtime
+tokio = { version = "1.0", features = ["full"] }
+
+# Database
+sqlx = { version = "0.8", features = ["runtime-tokio-rustls", "postgres", "uuid", "chrono", "json", "migrate"], default-features = false, optional = true }
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Time handling
+chrono = { version = "0.4", features = ["serde"] }
+
+# UUID
+uuid = { version = "1.0", features = ["v4", "serde"] }
+
+# Configuration
+config = "0.14"
+
+# Error handling
+thiserror = "1.0"
+anyhow = "1.0"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Base64
+base64 = "0.21"
+
+# Cryptographic utilities
+rand = "0.8"
+
+# Rate limiting
+governor = "0.6"
+
+# Environment variables
+dotenvy = "0.15"
+
+# URL parsing
+url = "2.5"
+
+[dev-dependencies]
+# Testing
+tokio-test = "0.4"
+wiremock = "0.6"
+tempfile = "3.0"
+
+[[bin]]
+name = "fido2-simple"
+path = "src/main_simple.rs"
+
+[features]
+default = []
+database = ["sqlx"]
