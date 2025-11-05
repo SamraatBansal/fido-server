@@ -49,17 +49,22 @@ def run_fido_validation_tests():
 def test_missing_fields():
     print("\n=== Testing missing field validation ===")
     
-    # Test F-1: Missing "id" field
-    payload_missing_id = {
+    # First test a basic valid structure to make sure server is working
+    test_basic_validation()
+    
+    # Test F-1: Missing "id" field (serde should reject this during deserialization)
+    # Let's test with an empty id instead
+    payload_empty_id = {
+        "id": "",  # Empty id should fail our validation
         "response": {
-            "clientDataJSON": "eyJ0eXBlIjoid2ViYXV0aG4uY3JlYXRlIn0",
+            "clientDataJSON": "eyJ0eXBlIjoid2ViYXV0aG4uY3JlYXRlIiwiY2hhbGxlbmdlIjoidGVzdCIsIm9yaWdpbiI6Imh0dHA6Ly9sb2NhbGhvc3Q6OTk5OSJ9",
             "attestationObject": "o2NmbXRkbm9uZWdhdHRTdG10oGhhdXRoRGF0YVjESZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2NFAAAAAA"
         },
         "type": "public-key",
         "getClientExtensionResults": {}
     }
     
-    test_error_response("/attestation/result", payload_missing_id, "Missing id field should fail")
+    test_error_response("/attestation/result", payload_empty_id, "Empty id field should fail")
     
     # Test F-4: Missing "type" field
     payload_missing_type = {
