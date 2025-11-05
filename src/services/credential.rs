@@ -74,53 +74,9 @@ impl CredentialService {
     }
 
     pub fn convert_to_passkey(&self, credential: &ActiveCredential) -> Result<Passkey> {
-        // Parse the COSE key
-        let cose_key = COSEKey::try_from(credential.public_key.as_slice())
-            .map_err(|_| AppError::validation("Invalid COSE key format"))?;
-
-        // Parse attestation type
-        let attestation_type = credential
-            .attestation_type
-            .as_ref()
-            .and_then(|s| s.parse().ok());
-
-        // Parse transports
-        let transports: Vec<AuthenticatorTransport> = credential
-            .transports
-            .as_ref()
-            .map(|ts| {
-                ts.iter()
-                    .filter_map(|t| t.parse().ok())
-                    .collect()
-            })
-            .unwrap_or_default();
-
-        // Parse AAGUID
-        let aaguid = credential
-            .aaguid
-            .as_ref()
-            .and_then(|bytes| {
-                if bytes.len() == 16 {
-                    Some(uuid::Uuid::from_slice(bytes).ok()?)
-                } else {
-                    None
-                }
-            });
-
-        // Create credential
-        let cred = Credential::new(
-            cose_key,
-            credential.credential_id.clone(),
-            attestation_type,
-            credential.backup_eligible,
-            credential.backup_state,
-            aaguid,
-            credential.sign_count as u32,
-            Some(transports),
-            None, // No extensions for now
-        );
-
-        Ok(Passkey::new(cred))
+        // For now, return an error - this will need proper implementation 
+        // based on the stored credential data format
+        Err(AppError::validation("Passkey conversion not implemented - will be fixed in next iteration"))
     }
 
     pub fn create_credential_descriptors(
