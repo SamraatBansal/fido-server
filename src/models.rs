@@ -11,9 +11,9 @@ pub struct AttestationOptionsRequest {
     pub username: String,
     pub display_name: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub authenticator_selection: Option<AuthenticatorSelectionCriteria>,
+    pub authenticator_selection: Option<webauthn_rs::prelude::AuthenticatorSelectionCriteria>,
     #[serde(default)]
-    pub attestation: Option<AttestationConveyancePreference>,
+    pub attestation: Option<webauthn_rs::prelude::AttestationConveyancePreference>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
