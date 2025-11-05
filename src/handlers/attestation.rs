@@ -67,14 +67,17 @@ pub async fn options(
     let response = AttestationOptionsResponse {
         status: "ok".to_string(),
         error_message: "".to_string(),
-        rp: creation_challenge.public_key.rp,
+        rp: serde_json::to_value(&creation_challenge.public_key.rp)?,
         user: ServerPublicKeyCredentialUserEntity {
             id: URL_SAFE_NO_PAD.encode(&user.user_id),
             name: user.username.clone(),
             display_name: user.display_name.clone(),
         },
         challenge: URL_SAFE_NO_PAD.encode(&creation_challenge.public_key.challenge),
-        pub_key_cred_params: creation_challenge.public_key.pub_key_cred_params,
+        pub_key_cred_params: creation_challenge.public_key.pub_key_cred_params
+            .into_iter()
+            .map(|p| serde_json::to_value(p).unwrap_or_default())
+            .collect(),
         timeout: Some(state.webauthn_service.timeout_ms()),
         exclude_credentials: creation_challenge.public_key.exclude_credentials
             .unwrap_or_default()
@@ -82,7 +85,7 @@ pub async fn options(
             .map(|cred| ServerPublicKeyCredentialDescriptor {
                 type_: "public-key".to_string(),
                 id: URL_SAFE_NO_PAD.encode(cred.id),
-                transports: cred.transports,
+                transports: cred.transports.map(|t| t.into_iter().map(|tr| format!("{:?}", tr).to_lowercase()).collect()),
             })
             .collect(),
         authenticator_selection: req.authenticator_selection,
