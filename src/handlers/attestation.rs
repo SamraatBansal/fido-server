@@ -159,12 +159,13 @@ pub async fn result(
     // Convert to webauthn-rs format
     let reg_credential = RegisterPublicKeyCredential {
         id: credential.id.clone(),
-        raw_id: credential_id,
+        raw_id: credential_id.into(),
         response: AuthenticatorAttestationResponseRaw {
             client_data_json,
             attestation_object,
         },
         type_: credential.type_.clone(),
+        extensions: None,
     };
 
     // We need to find the stored challenge state using the challenge value
