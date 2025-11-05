@@ -26,7 +26,7 @@ pub struct AttestationOptionsResponse {
     pub user: ServerPublicKeyCredentialUserEntity,
     pub challenge: String,
     #[serde(rename = "pubKeyCredParams")]
-    pub pub_key_cred_params: Vec<PublicKeyCredentialParameters>,
+    pub pub_key_cred_params: Vec<webauthn_rs::prelude::PublicKeyCredentialParameters>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timeout: Option<u32>,
     #[serde(rename = "excludeCredentials", default)]
