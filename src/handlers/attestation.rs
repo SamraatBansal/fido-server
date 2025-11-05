@@ -111,6 +111,16 @@ async fn options_inner(
 pub async fn result(
     State(state): State<AppState>,
     Json(credential): Json<ServerPublicKeyCredential>,
+) -> impl IntoResponse {
+    match result_inner(state, credential).await {
+        Ok(response) => response.into_response(),
+        Err(e) => e.into_response(),
+    }
+}
+
+async fn result_inner(
+    state: AppState,
+    credential: ServerPublicKeyCredential,
 ) -> Result<Json<ServerResponse>, AppError> {
     tracing::info!("Registration result received for credential: {}", credential.id);
 
