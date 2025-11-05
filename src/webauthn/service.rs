@@ -4,8 +4,6 @@ use async_trait::async_trait;
 use base64::{Engine as _, engine::general_purpose};
 use chrono::{DateTime, Utc};
 use serde_json::Value;
-use std::collections::HashMap;
-use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::error::{AppError, Result};
@@ -15,7 +13,6 @@ use crate::webauthn::{
     ServerPublicKeyCredentialGetOptionsResponse, ServerPublicKeyCredential,
     ServerPublicKeyCredentialUserEntity, ServerPublicKeyCredentialDescriptor,
     PublicKeyCredentialRpEntity, PublicKeyCredentialParameters, AuthenticatorSelectionCriteria,
-    AuthenticationExtensionsClientInputs, AuthenticationExtensionsClientOutputs,
     ATTESTATION_NONE, USER_VERIFICATION_PREFERRED, PUBLIC_KEY_CREDENTIAL_TYPE,
     ALG_ES256, ALG_RS256, AUTHENTICATOR_ATTACHMENT_CROSS_PLATFORM,
 };
