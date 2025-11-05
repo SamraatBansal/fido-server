@@ -101,7 +101,7 @@ pub async fn options(
 pub async fn result(
     State(state): State<AppState>,
     Json(credential): Json<ServerPublicKeyCredential>,
-) -> AppResult<impl IntoResponse> {
+) -> Result<Json<ServerResponse>, AppError> {
     tracing::info!("Registration result received for credential: {}", credential.id);
 
     // Decode credential
