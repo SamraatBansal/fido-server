@@ -208,7 +208,7 @@ impl UserRepository for PostgresUserRepository {
             let mut conn = pool.get()
                 .map_err(|e| AppError::DatabaseError(format!("Connection error: {}", e)))?;
             
-            diesel::delete(users::table.filter(users::id.eq(&user_id)))
+            diesel::delete(crate::db::schema::users::table.filter(crate::db::schema::users::id.eq(&user_id)))
                 .execute(&mut conn)
                 .map_err(|e| AppError::DatabaseError(format!("Failed to delete user: {}", e)))?;
             
