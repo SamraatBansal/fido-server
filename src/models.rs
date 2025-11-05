@@ -35,6 +35,8 @@ pub struct AttestationOptionsResponse {
     pub authenticator_selection: Option<serde_json::Value>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub attestation: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub extensions: Option<serde_json::Value>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
