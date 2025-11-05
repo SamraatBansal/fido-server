@@ -87,8 +87,9 @@ impl Storage for MemoryStorage {
     async fn get_credential_by_id(&self, credential_id: &[u8]) -> AppResult<Option<StoredCredential>> {
         let credential_id_hex = hex::encode(credential_id);
         
-        if let Some((user_id, index)) = self.credential_index.get(&credential_id_hex) {
-            if let Some(user_credentials) = self.credentials.get(&user_id) {
+        if let Some(entry) = self.credential_index.get(&credential_id_hex) {
+            let (user_id, index) = entry.value();
+            if let Some(user_credentials) = self.credentials.get(user_id) {
                 Ok(user_credentials.get(*index).cloned())
             } else {
                 Ok(None)
