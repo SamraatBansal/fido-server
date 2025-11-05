@@ -96,7 +96,7 @@ impl CredentialService {
     pub fn convert_to_credential_ids(&self, credentials: &[ActiveCredential]) -> Vec<CredentialID> {
         credentials
             .iter()
-            .map(|cred| cred.credential_id.clone())
+            .map(|cred| CredentialID::from(cred.credential_id.clone()))
             .collect()
     }
 }
