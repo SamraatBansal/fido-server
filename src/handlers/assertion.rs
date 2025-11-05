@@ -84,7 +84,7 @@ pub async fn options(
             .map(|cred| ServerPublicKeyCredentialDescriptor {
                 type_: "public-key".to_string(),
                 id: URL_SAFE_NO_PAD.encode(cred.id),
-                transports: cred.transports,
+                transports: cred.transports.map(|t| t.into_iter().map(|tr| format!("{:?}", tr).to_lowercase()).collect()),
             })
             .collect(),
         user_verification: req.user_verification,
