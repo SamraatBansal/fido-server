@@ -95,7 +95,13 @@ pub async fn options(
     tracing::info!("Registration options created for user: {}, challenge stored with ID: {}", 
                    req.username, challenge_id);
 
-    Ok(Json(response))
+    match (|| async {
+        // Error wrapper function
+        Result::<_, AppError>::Ok(Json(response))
+    })().await {
+        Ok(resp) => resp.into_response(),
+        Err(e) => e.into_response(),
+    }
 }
 
 pub async fn result(
