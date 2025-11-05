@@ -102,8 +102,9 @@ impl Storage for MemoryStorage {
     async fn update_credential_last_used(&self, credential_id: &[u8], last_used: DateTime<Utc>) -> AppResult<()> {
         let credential_id_hex = hex::encode(credential_id);
         
-        if let Some((user_id, index)) = self.credential_index.get(&credential_id_hex) {
-            if let Some(mut user_credentials) = self.credentials.get_mut(&user_id) {
+        if let Some(entry) = self.credential_index.get(&credential_id_hex) {
+            let (user_id, index) = entry.value();
+            if let Some(mut user_credentials) = self.credentials.get_mut(user_id) {
                 if let Some(credential) = user_credentials.get_mut(*index) {
                     credential.last_used_at = Some(last_used);
                 }
