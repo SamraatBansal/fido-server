@@ -151,6 +151,19 @@ impl ChallengeService {
             .ok_or(AppError::ChallengeNotFound)
     }
 
+    pub async fn find_authentication_challenge_by_value(
+        &self,
+        challenge_value: &str,
+    ) -> Result<crate::db::models::Challenge> {
+        // Convert challenge value to the stored ID format
+        let challenge_id = base64::encode_config(challenge_value.as_bytes(), base64::URL_SAFE_NO_PAD);
+        
+        self.repository
+            .get_challenge(&challenge_id)
+            .await?
+            .ok_or(AppError::ChallengeNotFound)
+    }
+
     fn generate_challenge_id(&self) -> String {
         let mut rng = rand::thread_rng();
         let random_bytes: [u8; 32] = rng.gen();
