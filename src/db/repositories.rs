@@ -125,13 +125,13 @@ impl UserRepository for PostgresUserRepository {
                 updated_at: Utc::now(),
             };
             
-            diesel::insert_into(users::table)
+            diesel::insert_into(crate::db::schema::users::table)
                 .values(&db_new_user)
                 .execute(&mut conn)
                 .map_err(|e| AppError::DatabaseError(format!("Failed to create user: {}", e)))?;
             
-            let user: User = users::table
-                .filter(users::id.eq(&db_new_user.id))
+            let user: User = crate::db::schema::users::table
+                .filter(crate::db::schema::users::id.eq(&db_new_user.id))
                 .first(&mut conn)
                 .map_err(|e| AppError::DatabaseError(format!("Failed to retrieve created user: {}", e)))?;
             
