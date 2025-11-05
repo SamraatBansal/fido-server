@@ -128,12 +128,7 @@ async fn result_inner(
         })?;
 
     // Extract assertion response
-    let assertion_response = match credential.response {
-        ServerAuthenticatorResponse::Assertion(assertion) => assertion,
-        _ => return Err(AppError::Validation {
-            message: "Expected assertion response".to_string(),
-        }),
-    };
+    let assertion_response = credential.response;
 
     // Decode assertion data
     let client_data_json = URL_SAFE_NO_PAD.decode(&assertion_response.client_data_json)
