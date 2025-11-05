@@ -163,7 +163,7 @@ pub async fn result(
     let reg_credential = RegisterPublicKeyCredential {
         id: credential.id.clone(),
         raw_id: credential_id.into(),
-        response: AuthenticatorAttestationResponseRaw {
+        response: webauthn_rs::prelude::AuthenticatorAttestationResponseRaw {
             client_data_json,
             attestation_object,
         },
