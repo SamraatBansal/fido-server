@@ -14,8 +14,7 @@ impl UserRepository {
     }
 
     pub async fn create_user(&self, new_user: NewUser) -> Result<User> {
-        let user = sqlx::query_as!(
-            User,
+        let row = sqlx::query!(
             r#"
             INSERT INTO users (username, display_name, user_id)
             VALUES ($1, $2, $3)
@@ -28,7 +27,15 @@ impl UserRepository {
         .fetch_one(&self.pool)
         .await?;
 
-        Ok(user)
+        Ok(User {
+            id: row.id,
+            username: row.username,
+            display_name: row.display_name,
+            user_id: row.user_id,
+            created_at: row.created_at,
+            updated_at: row.updated_at,
+            status: row.status,
+        })
     }
 
     pub async fn get_user_by_username(&self, username: &str) -> Result<Option<User>> {
