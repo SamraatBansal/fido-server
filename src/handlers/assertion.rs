@@ -164,7 +164,7 @@ pub async fn result(
     let auth_credential = PublicKeyCredential {
         id: credential.id.clone(),
         raw_id: credential_id.into(),
-        response: webauthn_rs::prelude::AuthenticatorAssertionResponseRaw {
+        response: webauthn_rs_proto::auth::AuthenticatorAssertionResponseRaw {
             client_data_json,
             authenticator_data,
             signature,
