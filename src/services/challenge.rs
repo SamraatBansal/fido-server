@@ -134,9 +134,33 @@ impl ChallengeService {
         self.repository.cleanup_expired_challenges().await
     }
 
+    pub async fn find_registration_challenge_by_value(
+        &self,
+        challenge_value: &str,
+    ) -> Result<crate::db::models::Challenge> {
+        // Generate the expected challenge ID from the value
+        let challenge_id = self.generate_challenge_id_from_value(challenge_value);
+        
+        self.repository
+            .get_challenge(&challenge_id)
+            .await?
+            .ok_or(AppError::ChallengeNotFound)
+    }
+
     fn generate_challenge_id(&self) -> String {
         let mut rng = rand::thread_rng();
         let random_bytes: [u8; 32] = rng.gen();
         base64::encode_config(random_bytes, base64::URL_SAFE_NO_PAD)
+    }
+
+    fn generate_challenge_id_from_value(&self, challenge: &str) -> String {
+        use std::collections::hash_map::DefaultHasher;
+        use std::hash::{Hash, Hasher};
+        
+        let mut hasher = DefaultHasher::new();
+        challenge.hash(&mut hasher);
+        let hash = hasher.finish();
+        
+        format!("chal_{:x}", hash)
     }
 }
