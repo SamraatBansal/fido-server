@@ -49,7 +49,7 @@ def test_fido_endpoints():
     # Test health check
     try:
         print("\nTesting /health endpoint...")
-        response = requests.get("http://localhost:3000/health", timeout=5)
+        response = requests.get("http://localhost:8080/health", timeout=5)
         print(f"Health Status: {response.status_code}")
         print(f"Health Response: {response.text}")
     except Exception as e:
