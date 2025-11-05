@@ -26,8 +26,7 @@ impl UserService {
         }
 
         // Generate WebAuthn user ID (random 64 bytes)
-        let mut rng = rand::thread_rng();
-        let webauthn_user_id: [u8; 64] = rng.gen();
+        let webauthn_user_id = crate::utils::crypto::generate_random_bytes(64);
 
         let new_user = NewUser {
             username: username.to_string(),
