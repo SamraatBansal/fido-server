@@ -57,3 +57,6 @@ config = "0.14"
 
 # Async traits
 async-trait = "0.1"
+
+# Hex encoding
+hex = "0.4"
