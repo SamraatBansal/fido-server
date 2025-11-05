@@ -66,3 +66,4 @@ path = "src/main_simple.rs"
 
 [features]
 default = []
+database = ["sqlx"]
