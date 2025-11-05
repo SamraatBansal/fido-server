@@ -11,7 +11,7 @@ use crate::{
         AttestationOptionsRequest, AttestationOptionsResponse,
         ServerPublicKeyCredential, ServerPublicKeyCredentialUserEntity,
         ServerPublicKeyCredentialDescriptor, ServerResponse,
-        ServerAuthenticatorResponse, ServerAuthenticatorAttestationResponse,
+        ServerAuthenticatorResponse,
     },
     AppState,
 };
