@@ -124,6 +124,7 @@ pub struct ServerAuthenticatorAssertionResponse {
 pub struct ServerPublicKeyCredentialUserEntity {
     pub id: String,
     pub name: String,
+    #[serde(rename = "displayName")]
     pub display_name: String,
 }
 
