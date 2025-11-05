@@ -163,7 +163,7 @@ pub async fn result(
     // Convert to webauthn-rs format
     let auth_credential = PublicKeyCredential {
         id: credential.id.clone(),
-        raw_id: credential_id,
+        raw_id: credential_id.into(),
         response: AuthenticatorAssertionResponseRaw {
             client_data_json,
             authenticator_data,
@@ -171,6 +171,7 @@ pub async fn result(
             user_handle,
         },
         type_: credential.type_.clone(),
+        extensions: None,
     };
 
     // Get the challenge ID from our mapping
