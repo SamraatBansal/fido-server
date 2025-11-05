@@ -127,6 +127,30 @@ impl ChallengeService {
         self.storage.cleanup_expired_challenges().await
     }
 
+    pub async fn store_challenge_to_user_mapping(&self, challenge_key: &str, user_id: Uuid) -> AppResult<()> {
+        // Store a temporary mapping from challenge value to user ID
+        // This allows us to look up the user when processing the result
+        let mapping_challenge = StoredChallenge {
+            id: format!("mapping_{}", challenge_key),
+            user_id,
+            challenge_type: ChallengeType::Registration, // doesn't matter for mappings
+            challenge_data: user_id.to_string(),
+            expires_at: Utc::now() + Duration::minutes(5),
+            created_at: Utc::now(),
+        };
+        self.storage.store_challenge(mapping_challenge).await
+    }
+
+    pub async fn get_user_by_challenge_value(&self, challenge_value: &str) -> AppResult<Option<Uuid>> {
+        let mapping_id = format!("mapping_{}", challenge_value);
+        if let Some(mapping) = self.storage.get_challenge(&mapping_id).await? {
+            if Utc::now() <= mapping.expires_at {
+                return Ok(Some(mapping.user_id));
+            }
+        }
+        Ok(None)
+    }
+
     fn generate_challenge_id(&self) -> String {
         rand::thread_rng()
             .sample_iter(&Alphanumeric)
