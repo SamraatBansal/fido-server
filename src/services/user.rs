@@ -89,9 +89,7 @@ impl UserService {
     }
 
     pub fn generate_webauthn_user_id(&self) -> Vec<u8> {
-        let mut rng = rand::thread_rng();
-        let user_id: [u8; 64] = rng.gen();
-        user_id.to_vec()
+        crate::utils::crypto::generate_random_bytes(64)
     }
 
     pub fn encode_user_id(&self, user_id: &[u8]) -> String {
