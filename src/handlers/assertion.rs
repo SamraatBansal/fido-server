@@ -107,7 +107,7 @@ async fn options_inner(
 
 pub async fn result(
     State(state): State<AppState>,
-    Json(credential): Json<ServerPublicKeyCredential>,
+    Json(credential): Json<AssertionCredential>,
 ) -> axum::response::Response {
     match result_inner(state, credential).await {
         Ok(response) => response.into_response(),
@@ -117,7 +117,7 @@ pub async fn result(
 
 async fn result_inner(
     state: AppState,
-    credential: ServerPublicKeyCredential,
+    credential: AssertionCredential,
 ) -> Result<Json<ServerResponse>, AppError> {
     tracing::info!("Authentication result received for credential: {}", credential.id);
 
