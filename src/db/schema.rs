@@ -5,8 +5,8 @@ diesel::table! {
         id -> Text,
         username -> Text,
         display_name -> Text,
-        created_at -> Timestamp,
-        updated_at -> Timestamp,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
     }
 }
 
@@ -16,7 +16,7 @@ diesel::table! {
         user_id -> Text,
         public_key -> Bytea,
         sign_count -> Int4,
-        created_at -> Timestamp,
+        created_at -> Timestamptz,
         attestation_format -> Text,
         aaguid -> Nullable<Bytea>,
     }
@@ -27,8 +27,8 @@ diesel::table! {
         id -> Text,
         challenge -> Text,
         username -> Text,
-        expires_at -> Timestamp,
-        created_at -> Timestamp,
+        expires_at -> Timestamptz,
+        created_at -> Timestamptz,
     }
 }
 
