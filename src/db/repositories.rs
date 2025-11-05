@@ -44,7 +44,7 @@ impl ChallengeStore for PostgresChallengeStore {
                 created_at: Utc::now(),
             };
             
-            diesel::insert_into(challenges::table)
+            diesel::insert_into(crate::db::schema::challenges::table)
                 .values(&new_challenge)
                 .execute(&mut conn)
                 .map_err(|e| AppError::DatabaseError(format!("Failed to store challenge: {}", e)))?;
