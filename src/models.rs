@@ -105,9 +105,10 @@ pub struct AssertionCredential {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase")]
 pub struct ServerAuthenticatorAttestationResponse {
+    #[serde(rename = "clientDataJSON")]
     pub client_data_json: String, // base64url encoded
+    #[serde(rename = "attestationObject")]
     pub attestation_object: String, // base64url encoded
 }
 
