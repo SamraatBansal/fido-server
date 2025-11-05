@@ -16,6 +16,7 @@ use crate::{
     AppState,
 };
 
+#[axum::debug_handler]
 pub async fn options(
     State(state): State<AppState>,
     Json(req): Json<AttestationOptionsRequest>,
