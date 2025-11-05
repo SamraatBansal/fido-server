@@ -304,8 +304,8 @@ impl CredentialRepository for PostgresCredentialRepository {
             let mut conn = pool.get()
                 .map_err(|e| AppError::DatabaseError(format!("Connection error: {}", e)))?;
             
-            let credentials: Vec<Credential> = credentials::table
-                .filter(credentials::user_id.eq(&user_id))
+            let credentials: Vec<Credential> = crate::db::schema::credentials::table
+                .filter(crate::db::schema::credentials::user_id.eq(&user_id))
                 .load(&mut conn)
                 .map_err(|e| AppError::DatabaseError(format!("Failed to get credentials: {}", e)))?;
             
