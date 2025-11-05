@@ -168,7 +168,7 @@ pub async fn result(
             attestation_object,
         },
         type_: credential.type_.clone(),
-        extensions: None,
+        extensions: Default::default(),
     };
 
     // We need to find the stored challenge state using the challenge value
