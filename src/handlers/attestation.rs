@@ -20,6 +20,16 @@ pub async fn options(
     State(state): State<AppState>,
     Json(req): Json<AttestationOptionsRequest>,
 ) -> impl IntoResponse {
+    match options_inner(state, req).await {
+        Ok(response) => response.into_response(),
+        Err(e) => e.into_response(),
+    }
+}
+
+async fn options_inner(
+    state: AppState,
+    req: AttestationOptionsRequest,
+) -> Result<Json<AttestationOptionsResponse>, AppError> {
     tracing::info!("Registration options request for user: {}", req.username);
 
     // Get or create user
