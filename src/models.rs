@@ -81,18 +81,7 @@ pub struct AssertionOptionsResponse {
     pub user_verification: Option<String>,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct ServerPublicKeyCredential {
-    pub id: String, // base64url encoded
-    pub response: ServerAuthenticatorResponse,
-    #[serde(rename = "getClientExtensionResults", default)]
-    pub get_client_extension_results: serde_json::Value,
-    #[serde(rename = "type")]
-    pub type_: String,
-}
-
-// Specific structures for each endpoint to avoid untagged enum confusion
+// Specific structures for each endpoint to avoid deserialization confusion
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AttestationCredential {
@@ -113,13 +102,6 @@ pub struct AssertionCredential {
     pub get_client_extension_results: serde_json::Value,
     #[serde(rename = "type")]
     pub type_: String,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-#[serde(untagged)]
-pub enum ServerAuthenticatorResponse {
-    Attestation(ServerAuthenticatorAttestationResponse),
-    Assertion(ServerAuthenticatorAssertionResponse),
 }
 
 #[derive(Debug, Deserialize, Serialize)]
