@@ -55,7 +55,7 @@ pub async fn options(
     let challenge_mapping_key = format!("reg_challenge_{}", challenge_b64);
     let mapping_challenge = crate::models::StoredChallenge {
         id: challenge_mapping_key,
-        user_id,
+        user_id: user.id,
         challenge_type: crate::models::ChallengeType::Registration,
         challenge_data: challenge_id.clone(),
         expires_at: chrono::Utc::now() + chrono::Duration::minutes(5),
