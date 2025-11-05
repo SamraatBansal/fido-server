@@ -30,6 +30,7 @@ impl ServerResponse {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ServerPublicKeyCredentialCreationOptionsRequest {
     pub username: String,
+    #[serde(rename = "displayName")]
     pub display_name: String,
     pub authenticator_selection: Option<AuthenticatorSelectionCriteria>,
     pub attestation: Option<String>,
