@@ -153,8 +153,8 @@ impl UserRepository for PostgresUserRepository {
             let mut conn = pool.get()
                 .map_err(|e| AppError::DatabaseError(format!("Connection error: {}", e)))?;
             
-            let user: Option<User> = users::table
-                .filter(users::username.eq(&username))
+            let user: Option<User> = crate::db::schema::users::table
+                .filter(crate::db::schema::users::username.eq(&username))
                 .first(&mut conn)
                 .optional()
                 .map_err(|e| AppError::DatabaseError(format!("Failed to get user: {}", e)))?;
