@@ -6,7 +6,7 @@ use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
 use webauthn_rs::prelude::*;
 
 use crate::{
-    error::{AppError, AppResult},
+    error::AppError,
     models::{
         AssertionOptionsRequest, AssertionOptionsResponse,
         ServerPublicKeyCredential, ServerPublicKeyCredentialDescriptor,
