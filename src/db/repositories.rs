@@ -1,295 +1,357 @@
-//! Database repository traits and implementations
+//! Database repositories
 
 use async_trait::async_trait;
+use chrono::Utc;
 use diesel::prelude::*;
+use diesel::r2d2::{self, ConnectionManager};
 use std::sync::Arc;
-use uuid::Uuid;
-use chrono::{DateTime, Utc, Duration};
+
 use crate::error::{AppError, Result};
-use crate::db::models::*;
-use crate::db::DbPool;
+use crate::webauthn::service::{ChallengeStore, UserRepository, CredentialRepository, User as WebAuthnUser, NewUser as WebAuthnNewUser, Credential as WebAuthnCredential, NewCredential as WebAuthnNewCredential};
+use super::models::*;
+use super::schema::*;
 
 /// Type alias for database connection pool
-pub type Pool = Arc<DbPool>;
+pub type DbPool = r2d2::Pool<ConnectionManager<diesel::PgConnection>>;
 
-/// Repository trait for user operations
-#[async_trait::async_trait]
-pub trait UserRepository: Send + Sync {
-    async fn create_user(&self, user: NewUser) -> Result<User>;
-    async fn get_user_by_username(&self, username: &str) -> Result<Option<User>>;
-    async fn get_user_by_id(&self, user_id: &Uuid) -> Result<Option<User>>;
-    async fn update_user(&self, user_id: &Uuid, user: NewUser) -> Result<User>;
-    async fn delete_user(&self, user_id: &Uuid) -> Result<bool>;
+/// PostgreSQL challenge store
+#[derive(Debug, Clone)]
+pub struct PostgresChallengeStore {
+    pool: Arc<DbPool>,
 }
 
-/// Repository trait for credential operations
-#[async_trait::async_trait]
-pub trait CredentialRepository: Send + Sync {
-    async fn create_credential(&self, credential: NewCredential) -> Result<Credential>;
-    async fn get_credential_by_id(&self, credential_id: &str) -> Result<Option<Credential>>;
-    async fn get_credentials_by_user_id(&self, user_id: &Uuid) -> Result<Vec<Credential>>;
-    async fn update_sign_count(&self, credential_id: &str, sign_count: i32) -> Result<bool>;
-    async fn update_last_used(&self, credential_id: &str) -> Result<bool>;
-    async fn delete_credential(&self, credential_id: &str) -> Result<bool>;
+impl PostgresChallengeStore {
+    pub fn new(pool: Arc<DbPool>) -> Self {
+        Self { pool }
+    }
 }
 
-/// Repository trait for challenge operations
-#[async_trait::async_trait]
-pub trait ChallengeRepository: Send + Sync {
-    async fn create_challenge(&self, challenge: NewChallenge) -> Result<Challenge>;
-    async fn get_challenge_by_value(&self, challenge: &str) -> Result<Option<Challenge>>;
-    async fn consume_challenge(&self, challenge: &str) -> Result<Option<Challenge>>;
-    async fn cleanup_expired_challenges(&self) -> Result<usize>;
+#[async_trait]
+impl ChallengeStore for PostgresChallengeStore {
+    async fn store_challenge(&self, challenge: &str, username: &str, expires_at: chrono::DateTime<Utc>) -> Result<()> {
+        let pool = self.pool.clone();
+        let challenge = challenge.to_string();
+        let username = username.to_string();
+        
+        tokio::task::spawn_blocking(move || {
+            let mut conn = pool.get()
+                .map_err(|e| AppError::DatabaseError(format!("Connection error: {}", e)))?;
+            
+            let new_challenge = NewChallenge {
+                id: uuid::Uuid::new_v4().to_string(),
+                challenge,
+                username,
+                expires_at,
+                created_at: Utc::now(),
+            };
+            
+            diesel::insert_into(challenges::table)
+                .values(&new_challenge)
+                .execute(&mut conn)
+                .map_err(|e| AppError::DatabaseError(format!("Failed to store challenge: {}", e)))?;
+            
+            Ok::<(), AppError>(())
+        }).await.map_err(|e| AppError::InternalError(format!("Task join error: {}", e)))?
+    }
+
+    async fn validate_and_consume_challenge(&self, challenge: &str, username: &str) -> Result<bool> {
+        let pool = self.pool.clone();
+        let challenge = challenge.to_string();
+        let username = username.to_string();
+        
+        tokio::task::spawn_blocking(move || {
+            let mut conn = pool.get()
+                .map_err(|e| AppError::DatabaseError(format!("Connection error: {}", e)))?;
+            
+            let now = Utc::now();
+            
+            // Find and delete the challenge
+            let deleted_count = diesel::delete(
+                challenges::table.filter(
+                    challenges::challenge.eq(&challenge)
+                        .and(challenges::username.eq(&username))
+                        .and(challenges::expires_at.gt(now))
+                )
+            ).execute(&mut conn)
+            .map_err(|e| AppError::DatabaseError(format!("Failed to validate challenge: {}", e)))?;
+            
+            Ok(deleted_count > 0)
+        }).await.map_err(|e| AppError::InternalError(format!("Task join error: {}", e)))?
+    }
+
+    async fn cleanup_expired_challenges(&self) -> Result<()> {
+        let pool = self.pool.clone();
+        
+        tokio::task::spawn_blocking(move || {
+            let mut conn = pool.get()
+                .map_err(|e| AppError::DatabaseError(format!("Connection error: {}", e)))?;
+            
+            let now = Utc::now();
+            
+            diesel::delete(challenges::table.filter(challenges::expires_at.lt(now)))
+                .execute(&mut conn)
+                .map_err(|e| AppError::DatabaseError(format!("Failed to cleanup challenges: {}", e)))?;
+            
+            Ok::<(), AppError>(())
+        }).await.map_err(|e| AppError::InternalError(format!("Task join error: {}", e)))?
+    }
 }
 
-/// PostgreSQL implementation of UserRepository
+/// PostgreSQL user repository
+#[derive(Debug, Clone)]
 pub struct PostgresUserRepository {
-    pool: Pool,
+    pool: Arc<DbPool>,
 }
 
 impl PostgresUserRepository {
-    pub fn new(pool: Pool) -> Self {
+    pub fn new(pool: Arc<DbPool>) -> Self {
         Self { pool }
     }
 }
 
-#[async_trait::async_trait]
+#[async_trait]
 impl UserRepository for PostgresUserRepository {
-    async fn create_user(&self, user: NewUser) -> Result<crate::db::models::User> {
-        let mut conn = self.pool.get()
-            .map_err(|e| AppError::DatabaseError(format!("Connection error: {}", e)))?;
-
-        let user: crate::db::models::User = diesel::insert_into(crate::db::schema::users::table)
-            .values(&user)
-            .get_result(&mut conn)
-            .map_err(|e| AppError::DatabaseError(format!("Failed to create user: {}", e)))?;
-
-        Ok(user)
+    async fn create_user(&self, new_user: WebAuthnNewUser) -> Result<WebAuthnUser> {
+        let pool = self.pool.clone();
+        
+        tokio::task::spawn_blocking(move || {
+            let mut conn = pool.get()
+                .map_err(|e| AppError::DatabaseError(format!("Connection error: {}", e)))?;
+            
+            let db_new_user = NewUser {
+                id: new_user.id,
+                username: new_user.username,
+                display_name: new_user.display_name,
+                created_at: new_user.created_at,
+                updated_at: Utc::now(),
+            };
+            
+            diesel::insert_into(users::table)
+                .values(&db_new_user)
+                .execute(&mut conn)
+                .map_err(|e| AppError::DatabaseError(format!("Failed to create user: {}", e)))?;
+            
+            let user: User = users::table
+                .filter(users::id.eq(&db_new_user.id))
+                .first(&mut conn)
+                .map_err(|e| AppError::DatabaseError(format!("Failed to retrieve created user: {}", e)))?;
+            
+            Ok(WebAuthnUser {
+                id: user.id,
+                username: user.username,
+                display_name: user.display_name,
+                created_at: user.created_at,
+                updated_at: user.updated_at,
+            })
+        }).await.map_err(|e| AppError::InternalError(format!("Task join error: {}", e)))?
     }
 
-    async fn get_user_by_username(&self, username: &str) -> Result<Option<crate::db::models::User>> {
-        let mut conn = self.pool.get()
-            .map_err(|e| AppError::DatabaseError(format!("Connection error: {}", e)))?;
-
-        let user = crate::db::schema::users::table
-            .filter(crate::db::schema::users::username.eq(username))
-            .first::<crate::db::models::User>(&mut conn)
-            .optional()
-            .map_err(|e| AppError::DatabaseError(format!("Failed to get user: {}", e)))?;
-
-        Ok(user)
+    async fn get_user_by_username(&self, username: &str) -> Result<Option<WebAuthnUser>> {
+        let pool = self.pool.clone();
+        let username = username.to_string();
+        
+        tokio::task::spawn_blocking(move || {
+            let mut conn = pool.get()
+                .map_err(|e| AppError::DatabaseError(format!("Connection error: {}", e)))?;
+            
+            let user: Option<User> = users::table
+                .filter(users::username.eq(&username))
+                .first(&mut conn)
+                .optional()
+                .map_err(|e| AppError::DatabaseError(format!("Failed to get user: {}", e)))?;
+            
+            Ok(user.map(|u| WebAuthnUser {
+                id: u.id,
+                username: u.username,
+                display_name: u.display_name,
+                created_at: u.created_at,
+                updated_at: u.updated_at,
+            }))
+        }).await.map_err(|e| AppError::InternalError(format!("Task join error: {}", e)))?
     }
 
-    async fn get_user_by_id(&self, user_id: &Uuid) -> Result<Option<crate::db::models::User>> {
-        let mut conn = self.pool.get()
-            .map_err(|e| AppError::DatabaseError(format!("Connection error: {}", e)))?;
-
-        let user = crate::db::schema::users::table
-            .filter(crate::db::schema::users::id.eq(user_id))
-            .first::<crate::db::models::User>(&mut conn)
-            .optional()
-            .map_err(|e| AppError::DatabaseError(format!("Failed to get user: {}", e)))?;
-
-        Ok(user)
+    async fn update_user(&self, user: WebAuthnUser) -> Result<WebAuthnUser> {
+        let pool = self.pool.clone();
+        
+        tokio::task::spawn_blocking(move || {
+            let mut conn = pool.get()
+                .map_err(|e| AppError::DatabaseError(format!("Connection error: {}", e)))?;
+            
+            diesel::update(users::table.filter(users::id.eq(&user.id)))
+                .((
+                    users::username.eq(&user.username),
+                    users::display_name.eq(&user.display_name),
+                    users::updated_at.eq(Utc::now()),
+                ))
+                .execute(&mut conn)
+                .map_err(|e| AppError::DatabaseError(format!("Failed to update user: {}", e)))?;
+            
+            let updated_user: User = users::table
+                .filter(users::id.eq(&user.id))
+                .first(&mut conn)
+                .map_err(|e| AppError::DatabaseError(format!("Failed to retrieve updated user: {}", e)))?;
+            
+            Ok(WebAuthnUser {
+                id: updated_user.id,
+                username: updated_user.username,
+                display_name: updated_user.display_name,
+                created_at: updated_user.created_at,
+                updated_at: updated_user.updated_at,
+            })
+        }).await.map_err(|e| AppError::InternalError(format!("Task join error: {}", e)))?
     }
 
-    async fn update_user(&self, user_id: &Uuid, user: NewUser) -> Result<crate::db::models::User> {
-        let mut conn = self.pool.get()
-            .map_err(|e| AppError::DatabaseError(format!("Connection error: {}", e)))?;
-
-        let user = diesel::update(crate::db::schema::users::table.filter(crate::db::schema::users::id.eq(user_id)))
-            .set((
-                crate::db::schema::users::username.eq(user.username),
-                crate::db::schema::users::display_name.eq(user.display_name),
-            ))
-            .get_result::<crate::db::models::User>(&mut conn)
-            .map_err(|e| AppError::DatabaseError(format!("Failed to update user: {}", e)))?;
-
-        Ok(user)
-    }
-
-    async fn delete_user(&self, user_id: &Uuid) -> Result<bool> {
-        let mut conn = self.pool.get()
-            .map_err(|e| AppError::DatabaseError(format!("Connection error: {}", e)))?;
-
-        let rows_affected = diesel::delete(crate::db::schema::users::table.filter(crate::db::schema::users::id.eq(user_id)))
-            .execute(&mut conn)
-            .map_err(|e| AppError::DatabaseError(format!("Failed to delete user: {}", e)))?;
-
-        Ok(rows_affected > 0)
+    async fn delete_user(&self, user_id: &str) -> Result<()> {
+        let pool = self.pool.clone();
+        let user_id = user_id.to_string();
+        
+        tokio::task::spawn_blocking(move || {
+            let mut conn = pool.get()
+                .map_err(|e| AppError::DatabaseError(format!("Connection error: {}", e)))?;
+            
+            diesel::delete(users::table.filter(users::id.eq(&user_id)))
+                .execute(&mut conn)
+                .map_err(|e| AppError::DatabaseError(format!("Failed to delete user: {}", e)))?;
+            
+            Ok::<(), AppError>(())
+        }).await.map_err(|e| AppError::InternalError(format!("Task join error: {}", e)))?
     }
 }
 
-/// PostgreSQL implementation of CredentialRepository
+/// PostgreSQL credential repository
+#[derive(Debug, Clone)]
 pub struct PostgresCredentialRepository {
-    pool: Pool,
+    pool: Arc<DbPool>,
 }
 
 impl PostgresCredentialRepository {
-    pub fn new(pool: Pool) -> Self {
+    pub fn new(pool: Arc<DbPool>) -> Self {
         Self { pool }
     }
 }
 
-#[async_trait::async_trait]
+#[async_trait]
 impl CredentialRepository for PostgresCredentialRepository {
-    async fn create_credential(&self, credential: NewCredential) -> Result<crate::db::models::Credential> {
-        let mut conn = self.pool.get()
-            .map_err(|e| AppError::DatabaseError(format!("Connection error: {}", e)))?;
-
-        let credential: crate::db::models::Credential = diesel::insert_into(crate::db::schema::credentials::table)
-            .values(&credential)
-            .get_result(&mut conn)
-            .map_err(|e| AppError::DatabaseError(format!("Failed to create credential: {}", e)))?;
-
-        Ok(credential)
+    async fn store_credential(&self, new_credential: WebAuthnNewCredential) -> Result<WebAuthnCredential> {
+        let pool = self.pool.clone();
+        
+        tokio::task::spawn_blocking(move || {
+            let mut conn = pool.get()
+                .map_err(|e| AppError::DatabaseError(format!("Connection error: {}", e)))?;
+            
+            let db_new_credential = NewCredential {
+                id: new_credential.id,
+                user_id: new_credential.user_id,
+                public_key: new_credential.public_key,
+                sign_count: new_credential.sign_count as i32,
+                created_at: new_credential.created_at,
+                attestation_format: new_credential.attestation_format,
+                aaguid: new_credential.aaguid,
+            };
+            
+            diesel::insert_into(credentials::table)
+                .values(&db_new_credential)
+                .execute(&mut conn)
+                .map_err(|e| AppError::DatabaseError(format!("Failed to store credential: {}", e)))?;
+            
+            let credential: Credential = credentials::table
+                .filter(credentials::id.eq(&db_new_credential.id))
+                .first(&mut conn)
+                .map_err(|e| AppError::DatabaseError(format!("Failed to retrieve stored credential: {}", e)))?;
+            
+            Ok(WebAuthnCredential {
+                id: credential.id,
+                user_id: credential.user_id,
+                public_key: credential.public_key,
+                sign_count: credential.sign_count as u32,
+                created_at: credential.created_at,
+                attestation_format: credential.attestation_format,
+                aaguid: credential.aaguid,
+            })
+        }).await.map_err(|e| AppError::InternalError(format!("Task join error: {}", e)))?
     }
 
-    async fn get_credential_by_id(&self, credential_id: &str) -> Result<Option<crate::db::models::Credential>> {
-        let mut conn = self.pool.get()
-            .map_err(|e| AppError::DatabaseError(format!("Connection error: {}", e)))?;
-
-        let credential = crate::db::schema::credentials::table
-            .filter(crate::db::schema::credentials::credential_id.eq(credential_id))
-            .first::<crate::db::models::Credential>(&mut conn)
-            .optional()
-            .map_err(|e| AppError::DatabaseError(format!("Failed to get credential: {}", e)))?;
-
-        Ok(credential)
+    async fn get_credential_by_id(&self, id: &str) -> Result<Option<WebAuthnCredential>> {
+        let pool = self.pool.clone();
+        let id = id.to_string();
+        
+        tokio::task::spawn_blocking(move || {
+            let mut conn = pool.get()
+                .map_err(|e| AppError::DatabaseError(format!("Connection error: {}", e)))?;
+            
+            let credential: Option<Credential> = credentials::table
+                .filter(credentials::id.eq(&id))
+                .first(&mut conn)
+                .optional()
+                .map_err(|e| AppError::DatabaseError(format!("Failed to get credential: {}", e)))?;
+            
+            Ok(credential.map(|c| WebAuthnCredential {
+                id: c.id,
+                user_id: c.user_id,
+                public_key: c.public_key,
+                sign_count: c.sign_count as u32,
+                created_at: c.created_at,
+                attestation_format: c.attestation_format,
+                aaguid: c.aaguid,
+            }))
+        }).await.map_err(|e| AppError::InternalError(format!("Task join error: {}", e)))?
     }
 
-    async fn get_credentials_by_user_id(&self, user_id: &Uuid) -> Result<Vec<crate::db::models::Credential>> {
-        let mut conn = self.pool.get()
-            .map_err(|e| AppError::DatabaseError(format!("Connection error: {}", e)))?;
-
-        let credentials = crate::db::schema::credentials::table
-            .filter(crate::db::schema::credentials::user_id.eq(user_id))
-            .load::<crate::db::models::Credential>(&mut conn)
-            .map_err(|e| AppError::DatabaseError(format!("Failed to get credentials: {}", e)))?;
-
-        Ok(credentials)
+    async fn get_credentials_by_user(&self, user_id: &str) -> Result<Vec<WebAuthnCredential>> {
+        let pool = self.pool.clone();
+        let user_id = user_id.to_string();
+        
+        tokio::task::spawn_blocking(move || {
+            let mut conn = pool.get()
+                .map_err(|e| AppError::DatabaseError(format!("Connection error: {}", e)))?;
+            
+            let credentials: Vec<Credential> = credentials::table
+                .filter(credentials::user_id.eq(&user_id))
+                .load(&mut conn)
+                .map_err(|e| AppError::DatabaseError(format!("Failed to get credentials: {}", e)))?;
+            
+            Ok(credentials.into_iter().map(|c| WebAuthnCredential {
+                id: c.id,
+                user_id: c.user_id,
+                public_key: c.public_key,
+                sign_count: c.sign_count as u32,
+                created_at: c.created_at,
+                attestation_format: c.attestation_format,
+                aaguid: c.aaguid,
+            }).collect())
+        }).await.map_err(|e| AppError::InternalError(format!("Task join error: {}", e)))?
     }
 
-    async fn update_sign_count(&self, credential_id: &str, sign_count: i32) -> Result<bool> {
-        let mut conn = self.pool.get()
-            .map_err(|e| AppError::DatabaseError(format!("Connection error: {}", e)))?;
-
-        let rows_affected = diesel::update(
-            crate::db::schema::credentials::table
-                .filter(crate::db::schema::credentials::credential_id.eq(credential_id))
-        )
-        .set((
-            crate::db::schema::credentials::sign_count.eq(sign_count),
-            crate::db::schema::credentials::last_used_at.eq(Utc::now()),
-        ))
-        .execute(&mut conn)
-        .map_err(|e| AppError::DatabaseError(format!("Failed to update sign count: {}", e)))?;
-
-        Ok(rows_affected > 0)
+    async fn update_sign_count(&self, credential_id: &str, count: u32) -> Result<()> {
+        let pool = self.pool.clone();
+        let credential_id = credential_id.to_string();
+        
+        tokio::task::spawn_blocking(move || {
+            let mut conn = pool.get()
+                .map_err(|e| AppError::DatabaseError(format!("Connection error: {}", e)))?;
+            
+            diesel::update(credentials::table.filter(credentials::id.eq(&credential_id)))
+                .credentials::sign_count.eq(count as i32)
+                .execute(&mut conn)
+                .map_err(|e| AppError::DatabaseError(format!("Failed to update sign count: {}", e)))?;
+            
+            Ok::<(), AppError>(())
+        }).await.map_err(|e| AppError::InternalError(format!("Task join error: {}", e)))?
     }
 
-    async fn update_last_used(&self, credential_id: &str) -> Result<bool> {
-        let mut conn = self.pool.get()
-            .map_err(|e| AppError::DatabaseError(format!("Connection error: {}", e)))?;
-
-        let rows_affected = diesel::update(
-            crate::db::schema::credentials::table
-                .filter(crate::db::schema::credentials::credential_id.eq(credential_id))
-        )
-        .set(crate::db::schema::credentials::last_used_at.eq(Utc::now()))
-        .execute(&mut conn)
-        .map_err(|e| AppError::DatabaseError(format!("Failed to update last used: {}", e)))?;
-
-        Ok(rows_affected > 0)
-    }
-
-    async fn delete_credential(&self, credential_id: &str) -> Result<bool> {
-        let mut conn = self.pool.get()
-            .map_err(|e| AppError::DatabaseError(format!("Connection error: {}", e)))?;
-
-        let rows_affected = diesel::delete(
-            crate::db::schema::credentials::table
-                .filter(crate::db::schema::credentials::credential_id.eq(credential_id))
-        )
-        .execute(&mut conn)
-        .map_err(|e| AppError::DatabaseError(format!("Failed to delete credential: {}", e)))?;
-
-        Ok(rows_affected > 0)
-    }
-}
-
-/// PostgreSQL implementation of ChallengeRepository
-pub struct PostgresChallengeRepository {
-    pool: Pool,
-}
-
-impl PostgresChallengeRepository {
-    pub fn new(pool: Pool) -> Self {
-        Self { pool }
-    }
-}
-
-#[async_trait::async_trait]
-impl ChallengeRepository for PostgresChallengeRepository {
-    async fn create_challenge(&self, challenge: NewChallenge) -> Result<crate::db::models::Challenge> {
-        let mut conn = self.pool.get()
-            .map_err(|e| AppError::DatabaseError(format!("Connection error: {}", e)))?;
-
-        let challenge: crate::db::models::Challenge = diesel::insert_into(crate::db::schema::challenges::table)
-            .values(&challenge)
-            .get_result(&mut conn)
-            .map_err(|e| AppError::DatabaseError(format!("Failed to create challenge: {}", e)))?;
-
-        Ok(challenge)
-    }
-
-    async fn get_challenge_by_value(&self, challenge: &str) -> Result<Option<crate::db::models::Challenge>> {
-        let mut conn = self.pool.get()
-            .map_err(|e| AppError::DatabaseError(format!("Connection error: {}", e)))?;
-
-        let challenge = crate::db::schema::challenges::table
-            .filter(crate::db::schema::challenges::challenge.eq(challenge))
-            .first::<crate::db::models::Challenge>(&mut conn)
-            .optional()
-            .map_err(|e| AppError::DatabaseError(format!("Failed to get challenge: {}", e)))?;
-
-        Ok(challenge)
-    }
-
-    async fn consume_challenge(&self, challenge: &str) -> Result<Option<crate::db::models::Challenge>> {
-        let mut conn = self.pool.get()
-            .map_err(|e| AppError::DatabaseError(format!("Connection error: {}", e)))?;
-
-        conn.transaction::<_, diesel::result::Error, _>(|conn| {
-            let challenge = crate::db::schema::challenges::table
-                .filter(crate::db::schema::challenges::challenge.eq(challenge))
-                .first::<crate::db::models::Challenge>(conn)
-                .optional()?;
-
-            if challenge.is_some() {
-                diesel::delete(
-                    crate::db::schema::challenges::table
-                        .filter(crate::db::schema::challenges::challenge.eq(challenge))
-                )
-                .execute(conn)?;
-            }
-
-            Ok(challenge)
-        })
-        .map_err(|e| AppError::DatabaseError(format!("Failed to consume challenge: {}", e)))
-    }
-
-    async fn cleanup_expired_challenges(&self) -> Result<usize> {
-        let mut conn = self.pool.get()
-            .map_err(|e| AppError::DatabaseError(format!("Connection error: {}", e)))?;
-
-        let rows_affected = diesel::delete(
-            crate::db::schema::challenges::table
-                .filter(crate::db::schema::challenges::expires_at.lt(Utc::now()))
-        )
-        .execute(&mut conn)
-        .map_err(|e| AppError::DatabaseError(format!("Failed to cleanup challenges: {}", e)))?;
-
-        Ok(rows_affected)
+    async fn delete_credential(&self, credential_id: &str) -> Result<()> {
+        let pool = self.pool.clone();
+        let credential_id = credential_id.to_string();
+        
+        tokio::task::spawn_blocking(move || {
+            let mut conn = pool.get()
+                .map_err(|e| AppError::DatabaseError(format!("Connection error: {}", e)))?;
+            
+            diesel::delete(credentials::table.filter(credentials::id.eq(&credential_id)))
+                .execute(&mut conn)
+                .map_err(|e| AppError::DatabaseError(format!("Failed to delete credential: {}", e)))?;
+            
+            Ok::<(), AppError>(())
+        }).await.map_err(|e| AppError::InternalError(format!("Task join error: {}", e)))?
     }
 }
