@@ -113,21 +113,23 @@ pub async fn post_attestation_result(
 ) -> Result<Json<ServerResponse>> {
     tracing::info!("Processing attestation result for credential: {}", credential.id);
 
-    // Extract challenge from clientDataJSON to find the stored challenge
-    let challenge_id = extract_challenge_from_credential(&credential)?;
-
-    // We need to extract user information from the credential response
-    // In the WebAuthn spec, the user is identified by the challenge state
-    
-    // For now, we'll extract the challenge and try to match it against stored challenges
-    // This is a bit complex because we need to decode the clientDataJSON
+    // Extract challenge from clientDataJSON
     let client_data = extract_client_data_json(&credential)?;
-    let stored_challenge = find_registration_challenge(&state, &client_data.challenge).await?;
+    
+    // Generate challenge ID from challenge value (consistent with storage)
+    let challenge_id = generate_challenge_id_from_value(&client_data.challenge);
+
+    // Try to find the challenge by searching for it
+    // Since we don't have the user_id at this point, we'll need to search through challenges
+    let challenge = state
+        .challenge_service
+        .find_registration_challenge_by_value(&client_data.challenge)
+        .await?;
 
     // Retrieve and remove challenge state
     let registration_state = state
         .challenge_service
-        .retrieve_and_remove_registration_challenge(&stored_challenge.id, stored_challenge.user_id)
+        .retrieve_and_remove_registration_challenge(&challenge.id, challenge.user_id)
         .await?;
 
     // Complete WebAuthn registration
@@ -139,13 +141,13 @@ pub async fn post_attestation_result(
     // Store the new credential
     let _credential_id = state
         .credential_service
-        .create_credential(stored_challenge.user_id, passkey)
+        .create_credential(challenge.user_id, passkey)
         .await?;
 
     tracing::info!(
         "Successfully registered credential: {} for user_id: {}",
         credential.id,
-        stored_challenge.user_id
+        challenge.user_id
     );
 
     Ok(Json(ServerResponse::ok()))
