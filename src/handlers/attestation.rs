@@ -19,17 +19,13 @@ use crate::{
 pub async fn options(
     State(state): State<AppState>,
     Json(req): Json<AttestationOptionsRequest>,
-) -> impl axum::response::IntoResponse {
-    async fn inner(
-        state: AppState, 
-        req: AttestationOptionsRequest
-    ) -> Result<Json<AttestationOptionsResponse>, AppError> {
-        tracing::info!("Registration options request for user: {}", req.username);
+) -> Result<Json<AttestationOptionsResponse>, AppError> {
+    tracing::info!("Registration options request for user: {}", req.username);
 
-        // Get or create user
-        let user = state.user_service
-            .get_or_create_user(&req.username, &req.display_name)
-            .await?;
+    // Get or create user
+    let user = state.user_service
+        .get_or_create_user(&req.username, &req.display_name)
+        .await?;
 
     // Get existing credentials for exclude list
     let exclude_credentials = state.credential_service
