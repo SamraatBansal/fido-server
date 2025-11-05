@@ -19,7 +19,7 @@ use crate::{
 pub async fn options(
     State(state): State<AppState>,
     Json(req): Json<AttestationOptionsRequest>,
-) -> Result<Json<AttestationOptionsResponse>, (axum::http::StatusCode, Json<serde_json::Value>)> {
+) -> impl axum::response::IntoResponse {
     tracing::info!("Registration options request for user: {}", req.username);
 
     // Get or create user
