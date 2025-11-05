@@ -1,48 +1,39 @@
-// @generated automatically by Diesel CLI.
+//! Database schema using Diesel
 
-diesel::table! {
-    challenges (id) {
-        id -> Uuid,
-        challenge -> Varchar,
-        #[max_length = 255]
-        username -> Nullable<Varchar>,
-        challenge_type -> Varchar,
-        expires_at -> Timestamptz,
-        created_at -> Timestamptz,
+table! {
+    users (id) {
+        id -> Text,
+        username -> Text,
+        display_name -> Text,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
     }
 }
 
-diesel::table! {
+table! {
     credentials (id) {
-        id -> Uuid,
-        user_id -> Uuid,
-        credential_id -> Varchar,
+        id -> Text,
+        user_id -> Text,
         public_key -> Bytea,
         sign_count -> Int4,
-        #[max_length = 50]
-        attestation_type -> Nullable<Varchar>,
+        created_at -> Timestamp,
+        attestation_format -> Text,
         aaguid -> Nullable<Bytea>,
-        transports -> Nullable<Jsonb>,
-        created_at -> Timestamptz,
-        updated_at -> Timestamptz,
-        last_used_at -> Nullable<Timestamptz>,
     }
 }
 
-diesel::table! {
-    users (id) {
-        id -> Uuid,
-        username -> Varchar,
-        display_name -> Varchar,
-        created_at -> Timestamptz,
-        updated_at -> Timestamptz,
+table! {
+    challenges (id) {
+        id -> Text,
+        challenge -> Text,
+        username -> Text,
+        expires_at -> Timestamp,
+        created_at -> Timestamp,
     }
 }
 
-diesel::joinable!(credentials -> users (user_id));
-
-diesel::allow_tables_to_appear_in_same_query!(
-    challenges,
-    credentials,
+allow_tables_to_appear_in_same_query!(
     users,
+    credentials,
+    challenges,
 );
