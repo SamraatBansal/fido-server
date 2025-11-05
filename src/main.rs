@@ -1,17 +1,13 @@
 use axum::{
-    extract::State,
-    http::StatusCode,
-    response::{IntoResponse, Json, Response},
+    response::Json,
     routing::post,
     Router,
 };
-use chrono::{DateTime, Duration, Utc};
-use serde::{Deserialize, Serialize};
+use chrono::Utc;
 use std::sync::Arc;
 use tokio::signal;
 use tower_http::cors::CorsLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-use uuid::Uuid;
 
 mod config;
 mod error;
