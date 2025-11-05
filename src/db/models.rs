@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 /// User model
 #[derive(Debug, Clone, Queryable, Selectable, Serialize, Deserialize)]
-#[diesel(table_name = users)]
+#[diesel(table_name = crate::db::schema::users)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct User {
     pub id: String,
@@ -18,7 +18,7 @@ pub struct User {
 
 /// New user model for insertion
 #[derive(Debug, Clone, Insertable, Serialize, Deserialize)]
-#[diesel(table_name = users)]
+#[diesel(table_name = crate::db::schema::users)]
 pub struct NewUser {
     pub id: String,
     pub username: String,
@@ -29,7 +29,7 @@ pub struct NewUser {
 
 /// Credential model
 #[derive(Debug, Clone, Queryable, Selectable, Serialize, Deserialize)]
-#[diesel(table_name = credentials)]
+#[diesel(table_name = crate::db::schema::credentials)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Credential {
     pub id: String,
@@ -43,7 +43,7 @@ pub struct Credential {
 
 /// New credential model for insertion
 #[derive(Debug, Clone, Insertable, Serialize, Deserialize)]
-#[diesel(table_name = credentials)]
+#[diesel(table_name = crate::db::schema::credentials)]
 pub struct NewCredential {
     pub id: String,
     pub user_id: String,
@@ -56,7 +56,7 @@ pub struct NewCredential {
 
 /// Challenge model
 #[derive(Debug, Clone, Queryable, Selectable, Serialize, Deserialize)]
-#[diesel(table_name = challenges)]
+#[diesel(table_name = crate::db::schema::challenges)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Challenge {
     pub id: String,
@@ -68,7 +68,7 @@ pub struct Challenge {
 
 /// New challenge model for insertion
 #[derive(Debug, Clone, Insertable, Serialize, Deserialize)]
-#[diesel(table_name = challenges)]
+#[diesel(table_name = crate::db::schema::challenges)]
 pub struct NewChallenge {
     pub id: String,
     pub challenge: String,
