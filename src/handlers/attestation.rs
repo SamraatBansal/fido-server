@@ -105,7 +105,7 @@ async fn options_inner(
     tracing::info!("Registration options created for user: {}, challenge stored with ID: {}", 
                    req.username, challenge_id);
 
-    Json(response)
+    Ok(Json(response))
 }
 
 pub async fn result(
