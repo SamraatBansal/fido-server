@@ -101,9 +101,9 @@ async fn options_inner(
             .collect(),
         authenticator_selection: req.authenticator_selection,
         attestation: req.attestation,
-        extensions: Some(serde_json::json!({
+        extensions: serde_json::json!({
             "example.extension": true
-        })),
+        }),
     };
 
     tracing::info!("Registration options created for user: {}, challenge stored with ID: {}", 
