@@ -19,7 +19,7 @@ use crate::{
 pub async fn options(
     State(state): State<AppState>,
     Json(req): Json<AttestationOptionsRequest>,
-) -> impl IntoResponse {
+) -> axum::response::Response {
     match options_inner(state, req).await {
         Ok(response) => response.into_response(),
         Err(e) => e.into_response(),
