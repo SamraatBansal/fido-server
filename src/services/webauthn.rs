@@ -116,6 +116,7 @@ impl WebAuthnService {
                     attestation_object,
                 },
                 type_: "public-key".to_string(),
+                extensions: serde_json::Map::new(),
             })
         } else {
             Err(AppError::validation("Expected attestation response for registration"))
