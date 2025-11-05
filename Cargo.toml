@@ -51,6 +51,9 @@ governor = "0.6"
 # Environment variables
 dotenvy = "0.15"
 
+# URL parsing
+url = "2.5"
+
 [dev-dependencies]
 # Testing
 tokio-test = "0.4"
