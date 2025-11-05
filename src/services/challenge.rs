@@ -142,8 +142,8 @@ impl ChallengeService {
         &self,
         challenge_value: &str,
     ) -> Result<crate::db::models::Challenge> {
-        // Generate the expected challenge ID from the value
-        let challenge_id = self.generate_challenge_id_from_value(challenge_value);
+        // Convert challenge value to the stored ID format
+        let challenge_id = base64::encode_config(challenge_value.as_bytes(), base64::URL_SAFE_NO_PAD);
         
         self.repository
             .get_challenge(&challenge_id)
