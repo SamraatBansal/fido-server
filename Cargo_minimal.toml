@@ -1,0 +1,50 @@
+[package]
+name = "fido2-minimal"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "fido2-minimal"
+path = "src/main_minimal.rs"
+
+[dependencies]
+# WebAuthn
+webauthn-rs = { version = "0.5", features = ["danger-allow-state-serialisation"] }
+
+# Web framework
+axum = { version = "0.7", features = ["macros"] }
+tower = { version = "0.4", features = ["util"] }
+tower-http = { version = "0.5", features = ["cors", "trace"] }
+
+# Async runtime
+tokio = { version = "1.0", features = ["full"] }
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Time handling
+chrono = { version = "0.4", features = ["serde"] }
+
+# UUID
+uuid = { version = "1.0", features = ["v4", "serde"] }
+
+# Error handling
+thiserror = "1.0"
+anyhow = "1.0"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Base64
+base64 = "0.21"
+
+# Cryptographic utilities
+rand = "0.8"
+
+# URL parsing
+url = "2.5"
+
+# Collections
+dashmap = "5.5"
