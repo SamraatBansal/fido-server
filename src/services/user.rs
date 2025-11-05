@@ -3,7 +3,7 @@ use rand::Rng;
 use std::sync::Arc;
 use uuid::Uuid;
 
-use crate::error::{AppError, AppResult};
+use crate::error::AppResult;
 use crate::models::User;
 use crate::storage::Storage;
 
