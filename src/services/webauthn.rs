@@ -27,12 +27,9 @@ impl WebAuthnService {
         user: &User,
         exclude_credentials: Option<Vec<CredentialID>>,
     ) -> AppResult<(CreationChallengeResponse, PasskeyRegistration)> {
+        // Convert user_id Vec<u8> to Uuid - use the internal UUID, not the WebAuthn user_id
         let result = self.webauthn.start_passkey_registration(
-            Uuid::from_bytes(user.user_id.as_slice().try_into().map_err(|_| {
-                AppError::Internal {
-                    message: "Invalid user ID format".to_string(),
-                }
-            })?),
+            user.id,  // Use internal UUID directly
             &user.username,
             &user.display_name,
             exclude_credentials,
