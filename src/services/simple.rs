@@ -372,8 +372,8 @@ impl SimpleWebAuthnService {
         let challenges = &self.store.challenges.read().unwrap();
         for challenge in challenges.values() {
             if challenge.challenge_type == "registration" && challenge.expires_at > Utc::now() {
-                if let Ok(stored_reg): Result<StoredRegistrationChallenge, _> =
-                    serde_json::from_value(challenge.challenge_data.clone())
+                if let Ok(stored_reg) =
+                    serde_json::from_value::<StoredRegistrationChallenge>(challenge.challenge_data.clone())
                 {
                     if stored_reg.state.challenge == challenge_value {
                         return Ok(challenge.clone());
