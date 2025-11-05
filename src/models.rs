@@ -113,12 +113,13 @@ pub struct ServerAuthenticatorAttestationResponse {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase")]
 pub struct ServerAuthenticatorAssertionResponse {
+    #[serde(rename = "authenticatorData")]
     pub authenticator_data: String, // base64url encoded
+    #[serde(rename = "clientDataJSON")]
     pub client_data_json: String, // base64url encoded
     pub signature: String, // base64url encoded
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "userHandle", skip_serializing_if = "Option::is_none")]
     pub user_handle: Option<String>, // base64url encoded
 }
 
