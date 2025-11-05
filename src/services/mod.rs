@@ -3,7 +3,6 @@
 use crate::config::Settings;
 use crate::webauthn::{WebAuthnService, WebAuthnConfig, WebAuthnServiceImpl};
 use crate::webauthn::memory_store::{InMemoryChallengeStore, InMemoryUserRepository, InMemoryCredentialRepository};
-use crate::db::{PostgresChallengeStore, PostgresUserRepository, PostgresCredentialRepository, DbPool};
 use std::sync::Arc;
 
 /// Service factory for creating WebAuthn services
