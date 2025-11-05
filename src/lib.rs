@@ -6,6 +6,7 @@ pub mod schema;
 pub mod services;
 pub mod controllers;
 pub mod utils;
+pub mod storage;
 
 pub use error::{AppError, Result};
 pub use config::AppConfig;
