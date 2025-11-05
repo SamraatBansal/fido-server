@@ -32,9 +32,9 @@ pub struct AttestationOptionsResponse {
     #[serde(rename = "excludeCredentials", default)]
     pub exclude_credentials: Vec<ServerPublicKeyCredentialDescriptor>,
     #[serde(rename = "authenticatorSelection", skip_serializing_if = "Option::is_none")]
-    pub authenticator_selection: Option<AuthenticatorSelectionCriteria>,
+    pub authenticator_selection: Option<webauthn_rs::prelude::AuthenticatorSelectionCriteria>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub attestation: Option<AttestationConveyancePreference>,
+    pub attestation: Option<webauthn_rs::prelude::AttestationConveyancePreference>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
