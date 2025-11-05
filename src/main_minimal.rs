@@ -18,7 +18,7 @@ use webauthn_rs::prelude::*;
 #[derive(Debug, thiserror::Error)]
 pub enum AppError {
     #[error("WebAuthn error: {0}")]
-    WebAuthn(#[from] webauthn_rs::error::WebauthnError),
+    WebAuthn(#[from] webauthn_rs::WebauthnError),
     
     #[error("Serialization error: {0}")]
     Serde(#[from] serde_json::Error),
