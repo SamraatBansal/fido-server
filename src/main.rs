@@ -1,24 +1,30 @@
 use axum::{
-    routing::{get, post},
+    extract::State,
+    http::StatusCode,
+    response::{IntoResponse, Json, Response},
+    routing::post,
     Router,
 };
-use fido2_relying_party::{
-    config::AppConfig,
-    controllers::{
-        attestation::{get_attestation_options, post_attestation_result, AppState as AttestationState},
-        assertion::{get_assertion_options, post_assertion_result, AppState as AssertionState},
-    },
-    db::Database,
-    db::repositories::{ChallengeRepository, CredentialRepository, UserRepository},
-    middleware::{cors_layer, logging_layer, security_headers},
-    services::{ChallengeService, CredentialService, UserService, WebAuthnService},
-    AppError,
-};
+use chrono::{DateTime, Duration, Utc};
+use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::signal;
-use tower::ServiceBuilder;
-use tower_http::timeout::TimeoutLayer;
+use tower_http::cors::CorsLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+use uuid::Uuid;
+
+mod config;
+mod error;
+mod handlers;
+mod models;
+mod services;
+mod storage;
+
+use config::AppConfig;
+use error::AppResult;
+use handlers::{attestation, assertion};
+use services::{challenge::ChallengeService, credential::CredentialService, user::UserService, webauthn::WebAuthnService};
+use storage::memory::MemoryStorage;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -28,96 +34,65 @@ pub struct AppState {
     pub challenge_service: Arc<ChallengeService>,
 }
 
+async fn health_check() -> impl IntoResponse {
+    Json(serde_json::json!({
+        "status": "ok",
+        "timestamp": Utc::now().to_rfc3339()
+    }))
+}
+
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> AppResult<()> {
     // Initialize tracing
     tracing_subscriber::registry()
         .with(
             tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "fido2_relying_party=debug,tower_http=debug".into()),
+                .unwrap_or_else(|_| "fido2_minimal=debug,tower_http=debug,webauthn_rs=debug".into()),
         )
         .with(tracing_subscriber::fmt::layer())
         .init();
 
     // Load configuration
     let config = AppConfig::load()?;
-    tracing::info!("Loaded configuration for RP: {}", config.webauthn.rp_name);
+    tracing::info!("Starting FIDO2 WebAuthn Relying Party server on port {}", config.server.port);
 
-    // Initialize database
-    let database = Database::new(&config.database).await?;
-    tracing::info!("Database connected and migrations applied");
-
-    // Initialize repositories
-    let user_repo = UserRepository::new(database.pool().clone());
-    let credential_repo = CredentialRepository::new(database.pool().clone());
-    let challenge_repo = ChallengeRepository::new(database.pool().clone());
+    // Initialize storage (using in-memory for now, can be swapped for PostgreSQL)
+    let storage = Arc::new(MemoryStorage::new());
 
     // Initialize services
-    let webauthn_service = Arc::new(WebAuthnService::new(&config.webauthn)?);
-    let user_service = Arc::new(UserService::new(user_repo));
-    let credential_service = Arc::new(CredentialService::new(credential_repo));
-    let challenge_service = Arc::new(ChallengeService::new(challenge_repo, 5)); // 5 minute TTL
+    let webauthn_service = Arc::new(WebAuthnService::new(&config)?);
+    let user_service = Arc::new(UserService::new(storage.clone()));
+    let credential_service = Arc::new(CredentialService::new(storage.clone()));
+    let challenge_service = Arc::new(ChallengeService::new(storage.clone()));
 
-    // Create application state
     let app_state = AppState {
-        webauthn_service: webauthn_service.clone(),
-        user_service: user_service.clone(),
-        credential_service: credential_service.clone(),
-        challenge_service: challenge_service.clone(),
+        webauthn_service,
+        user_service,
+        credential_service,
+        challenge_service,
     };
 
-    // Build the application router
+    // Build application
     let app = Router::new()
-        // Registration endpoints
-        .route("/attestation/options", post(get_attestation_options))
-        .route("/attestation/result", post(post_attestation_result))
-        // Authentication endpoints
-        .route("/assertion/options", post(get_assertion_options))
-        .route("/assertion/result", post(post_assertion_result))
-        // Health check
-        .route("/health", get(health_check))
-        // State
-        .with_state(app_state)
-        // Middleware layers
-        .layer(
-            ServiceBuilder::new()
-                .layer(TimeoutLayer::new(std::time::Duration::from_secs(30)))
-                .layer(cors_layer(&config.security))
-                .layer(logging_layer())
-                .map_response(security_headers),
-        );
+        .route("/health", axum::routing::get(health_check))
+        .route("/attestation/options", post(attestation::options))
+        .route("/attestation/result", post(attestation::result))
+        .route("/assertion/options", post(assertion::options))
+        .route("/assertion/result", post(assertion::result))
+        .layer(CorsLayer::permissive())
+        .with_state(app_state);
 
     // Start server
-    let addr = format!("{}:{}", config.server.host, config.server.port);
-    let listener = tokio::net::TcpListener::bind(&addr).await?;
-    tracing::info!("FIDO2 Relying Party server listening on {}", addr);
-
-    // Start background cleanup task
-    let cleanup_service = challenge_service.clone();
-    tokio::spawn(async move {
-        let mut interval = tokio::time::interval(std::time::Duration::from_secs(300)); // 5 minutes
-        loop {
-            interval.tick().await;
-            if let Err(e) = cleanup_service.cleanup_expired_challenges().await {
-                tracing::error!("Failed to cleanup expired challenges: {}", e);
-            }
-        }
-    });
-
-    // Start server with graceful shutdown
+    let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", config.server.port))
+        .await?;
+    
+    tracing::info!("Server listening on http://0.0.0.0:{}", config.server.port);
+    
     axum::serve(listener, app)
         .with_graceful_shutdown(shutdown_signal())
         .await?;
 
     Ok(())
-}
-
-async fn health_check() -> Result<axum::Json<serde_json::Value>, AppError> {
-    Ok(axum::Json(serde_json::json!({
-        "status": "ok",
-        "service": "fido2-relying-party",
-        "timestamp": chrono::Utc::now().to_rfc3339()
-    })))
 }
 
 async fn shutdown_signal() {
@@ -143,5 +118,5 @@ async fn shutdown_signal() {
         _ = terminate => {},
     }
 
-    tracing::info!("Shutdown signal received, starting graceful shutdown");
+    tracing::info!("Shutdown signal received");
 }
