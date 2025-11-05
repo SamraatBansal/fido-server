@@ -79,7 +79,7 @@ pub async fn options(
         timeout: Some(state.webauthn_service.timeout_ms()),
         rp_id: Some(state.webauthn_service.rp_id().to_string()),
         allow_credentials: request_challenge.public_key.allow_credentials
-            .unwrap_or_default()
+            .unwrap_or_else(Vec::new)
             .into_iter()
             .map(|cred| ServerPublicKeyCredentialDescriptor {
                 type_: "public-key".to_string(),
