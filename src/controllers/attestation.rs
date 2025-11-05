@@ -173,19 +173,3 @@ fn extract_client_data_json(credential: &ServerPublicKeyCredential) -> Result<Cl
     }
 }
 
-#[derive(Debug)]
-struct StoredChallengeInfo {
-    id: String,
-    user_id: uuid::Uuid,
-}
-
-fn generate_challenge_id_from_value(challenge: &str) -> String {
-    use std::collections::hash_map::DefaultHasher;
-    use std::hash::{Hash, Hasher};
-    
-    let mut hasher = DefaultHasher::new();
-    challenge.hash(&mut hasher);
-    let hash = hasher.finish();
-    
-    format!("chal_{:x}", hash)
-}
