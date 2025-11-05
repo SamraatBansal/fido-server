@@ -75,7 +75,10 @@ pub async fn get_attestation_options(
         })
         .collect();
 
-    // Build response
+    // Build response with challenge ID embedded in extensions
+    let mut extensions = serde_json::Map::new();
+    extensions.insert("challengeId".to_string(), serde_json::Value::String(challenge_id.clone()));
+
     let response = ServerPublicKeyCredentialCreationOptionsResponse {
         status: "ok".to_string(),
         error_message: String::new(),
@@ -91,7 +94,7 @@ pub async fn get_attestation_options(
         exclude_credentials,
         authenticator_selection: request.authenticator_selection,
         attestation: request.attestation,
-        extensions: None,
+        extensions: Some(serde_json::Value::Object(extensions)),
     };
 
     tracing::info!(
