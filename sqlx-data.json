@@ -1,0 +1,13 @@
+{
+  "db": "PostgreSQL",
+  "d6f51c0b5c7b0e8f0c6b1f5f8f8f0c6b": {
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": []
+      },
+      "nullable": []
+    },
+    "query": "SELECT 1"
+  }
+}
