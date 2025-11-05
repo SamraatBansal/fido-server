@@ -40,6 +40,12 @@ pub async fn begin_registration(
                 error_message: msg,
             }))
         }
+        Err(AppError::ValidationError(msg)) => {
+            Ok(HttpResponse::BadRequest().json(ServerResponse {
+                status: "failed".to_string(),
+                error_message: msg,
+            }))
+        }
         Err(_) => {
             Ok(HttpResponse::InternalServerError().json(ServerResponse {
                 status: "failed".to_string(),
@@ -55,7 +61,7 @@ pub async fn finish_registration(
     controller: web::Data<Arc<WebAuthnController>>,
     request: web::Json<ServerPublicKeyCredential>,
 ) -> ActixResult<HttpResponse> {
-    match controller.webauthn_service.finish_registration(request.into_inner(), "").await {
+    match controller.webauthn_service.finish_registration(request.into_inner()).await {
         Ok(response) => Ok(HttpResponse::Ok().json(response)),
         Err(AppError::BadRequest(msg)) => {
             Ok(HttpResponse::BadRequest().json(ServerResponse {
@@ -65,6 +71,12 @@ pub async fn finish_registration(
         }
         Err(AppError::NotFound(msg)) => {
             Ok(HttpResponse::NotFound().json(ServerResponse {
+                status: "failed".to_string(),
+                error_message: msg,
+            }))
+        }
+        Err(AppError::ValidationError(msg)) => {
+            Ok(HttpResponse::BadRequest().json(ServerResponse {
                 status: "failed".to_string(),
                 error_message: msg,
             }))
@@ -98,6 +110,12 @@ pub async fn begin_authentication(
                 error_message: msg,
             }))
         }
+        Err(AppError::ValidationError(msg)) => {
+            Ok(HttpResponse::BadRequest().json(ServerResponse {
+                status: "failed".to_string(),
+                error_message: msg,
+            }))
+        }
         Err(_) => {
             Ok(HttpResponse::InternalServerError().json(ServerResponse {
                 status: "failed".to_string(),
@@ -111,7 +129,7 @@ pub async fn begin_authentication(
 /// POST /assertion/result
 pub async fn finish_authentication(
     controller: web::Data<Arc<WebAuthnController>>,
-    request: web::Json<ServerAssertionPublicKeyCredential>,
+    request: web::Json<ServerPublicKeyCredential>,
 ) -> ActixResult<HttpResponse> {
     match controller.webauthn_service.finish_authentication(request.into_inner()).await {
         Ok(response) => Ok(HttpResponse::Ok().json(response)),
@@ -123,6 +141,12 @@ pub async fn finish_authentication(
         }
         Err(AppError::NotFound(msg)) => {
             Ok(HttpResponse::NotFound().json(ServerResponse {
+                status: "failed".to_string(),
+                error_message: msg,
+            }))
+        }
+        Err(AppError::ValidationError(msg)) => {
+            Ok(HttpResponse::BadRequest().json(ServerResponse {
                 status: "failed".to_string(),
                 error_message: msg,
             }))
