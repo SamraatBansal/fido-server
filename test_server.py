@@ -25,7 +25,7 @@ def test_fido_endpoints():
     
     try:
         response = requests.post(
-            "http://localhost:3000/attestation/options",
+            "http://localhost:8080/attestation/options",
             json=attestation_request,
             headers={"Content-Type": "application/json"},
             timeout=10
