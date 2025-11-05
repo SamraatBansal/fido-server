@@ -108,7 +108,7 @@ async fn options_inner(
 pub async fn result(
     State(state): State<AppState>,
     Json(credential): Json<ServerPublicKeyCredential>,
-) -> impl IntoResponse {
+) -> axum::response::Response {
     match result_inner(state, credential).await {
         Ok(response) => response.into_response(),
         Err(e) => e.into_response(),
