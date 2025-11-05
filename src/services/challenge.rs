@@ -64,7 +64,9 @@ impl ChallengeService {
         username: String,
         state: PasskeyAuthentication,
     ) -> Result<String> {
-        let challenge_id = self.generate_challenge_id();
+        // Use the actual challenge value as the ID for easier lookup
+        let challenge_value = &state.challenge;
+        let challenge_id = base64::encode_config(challenge_value, base64::URL_SAFE_NO_PAD);
         let expires_at = Utc::now() + Duration::minutes(self.ttl_minutes);
 
         let stored_challenge = StoredAuthenticationChallenge { state, username };
