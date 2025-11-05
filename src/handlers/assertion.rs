@@ -10,7 +10,7 @@ use crate::{
     models::{
         AssertionOptionsRequest, AssertionOptionsResponse,
         ServerPublicKeyCredential, ServerPublicKeyCredentialDescriptor,
-        ServerResponse, ServerAuthenticatorResponse, ServerAuthenticatorAssertionResponse,
+        ServerResponse, ServerAuthenticatorResponse,
     },
     AppState,
 };
