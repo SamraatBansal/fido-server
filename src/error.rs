@@ -55,7 +55,7 @@ impl IntoResponse for AppError {
             AppError::UserNotFound { .. } => (StatusCode::NOT_FOUND, "User not found"),
             AppError::ChallengeNotFound => (StatusCode::BAD_REQUEST, "Invalid or expired challenge"),
             AppError::CredentialNotFound => (StatusCode::NOT_FOUND, "Credential not found"),
-            AppError::MissingField { field } => (StatusCode::BAD_REQUEST, "Missing required field"),
+            AppError::MissingField { field: _ } => (StatusCode::BAD_REQUEST, "Missing required field"),
             _ => (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error"),
         };
 
