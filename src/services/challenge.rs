@@ -9,7 +9,7 @@ use crate::models::{StoredChallenge, ChallengeType};
 use crate::storage::Storage;
 
 pub struct ChallengeService {
-    storage: Arc<dyn Storage>,
+    pub storage: Arc<dyn Storage>,
 }
 
 impl ChallengeService {
