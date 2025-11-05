@@ -18,6 +18,16 @@ use crate::{
 pub async fn options(
     State(state): State<AppState>,
     Json(req): Json<AssertionOptionsRequest>,
+) -> impl IntoResponse {
+    match options_inner(state, req).await {
+        Ok(response) => response.into_response(),
+        Err(e) => e.into_response(),
+    }
+}
+
+async fn options_inner(
+    state: AppState,
+    req: AssertionOptionsRequest,
 ) -> Result<Json<AssertionOptionsResponse>, AppError> {
     tracing::info!("Authentication options request for user: {}", req.username);
 
