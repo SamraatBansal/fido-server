@@ -22,7 +22,7 @@ pub struct AttestationOptionsResponse {
     pub status: String,
     #[serde(rename = "errorMessage")]
     pub error_message: String,
-    pub rp: PublicKeyCredentialRpEntity,
+    pub rp: webauthn_rs::prelude::PublicKeyCredentialRpEntity,
     pub user: ServerPublicKeyCredentialUserEntity,
     pub challenge: String,
     #[serde(rename = "pubKeyCredParams")]
