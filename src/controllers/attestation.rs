@@ -150,23 +150,6 @@ pub async fn post_attestation_result(
 }
 
 // Helper functions
-fn extract_challenge_from_credential(credential: &ServerPublicKeyCredential) -> Result<String> {
-    if let crate::schema::ServerAuthenticatorResponse::Attestation(response) = &credential.response {
-        let client_data_bytes = base64::decode_config(&response.client_data_json, base64::URL_SAFE_NO_PAD)
-            .map_err(|_| AppError::validation("Invalid clientDataJSON encoding"))?;
-        
-        let client_data: serde_json::Value = serde_json::from_slice(&client_data_bytes)
-            .map_err(|_| AppError::validation("Invalid clientDataJSON format"))?;
-        
-        client_data
-            .get("challenge")
-            .and_then(|c| c.as_str())
-            .map(|s| s.to_string())
-            .ok_or_else(|| AppError::validation("Missing challenge in clientDataJSON"))
-    } else {
-        Err(AppError::validation("Expected attestation response"))
-    }
-}
 
 #[derive(serde::Deserialize)]
 struct ClientData {
