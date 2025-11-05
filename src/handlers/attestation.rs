@@ -146,11 +146,6 @@ pub async fn result(
             message: "Invalid challenge encoding".to_string(),
         })?;
 
-    // Find user by attempting to parse all stored challenges
-    // In a production system, you'd want a more efficient lookup mechanism
-    let mut found_user_id = None;
-    let mut challenge_id = None;
-
     // Look up user by challenge value
     let user_id = state.challenge_service
         .get_user_by_challenge_value(challenge_b64)
