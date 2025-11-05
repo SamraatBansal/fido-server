@@ -248,13 +248,13 @@ impl CredentialRepository for PostgresCredentialRepository {
                 aaguid: new_credential.aaguid,
             };
             
-            diesel::insert_into(credentials::table)
+            diesel::insert_into(crate::db::schema::credentials::table)
                 .values(&db_new_credential)
                 .execute(&mut conn)
                 .map_err(|e| AppError::DatabaseError(format!("Failed to store credential: {}", e)))?;
             
-            let credential: Credential = credentials::table
-                .filter(credentials::id.eq(&db_new_credential.id))
+            let credential: Credential = crate::db::schema::credentials::table
+                .filter(crate::db::schema::credentials::id.eq(&db_new_credential.id))
                 .first(&mut conn)
                 .map_err(|e| AppError::DatabaseError(format!("Failed to retrieve stored credential: {}", e)))?;
             
