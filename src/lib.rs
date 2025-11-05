@@ -1,9 +1,11 @@
 pub mod config;
+#[cfg(feature = "database")]
 pub mod db;
 pub mod error;
 pub mod middleware;
 pub mod schema;
 pub mod services;
+#[cfg(feature = "database")]
 pub mod controllers;
 pub mod utils;
 pub mod storage;
