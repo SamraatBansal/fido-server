@@ -37,9 +37,16 @@ pub async fn options(
         .start_passkey_registration(&user, Some(exclude_credentials))
         .await?;
 
-    // Store challenge state
+    // Store challenge state with challenge value as lookup key
     let challenge_id = state.challenge_service
         .store_registration_challenge(user.id, reg_state)
+        .await?;
+    
+    // Also store a mapping from challenge value to user for result lookup
+    let challenge_bytes = &creation_challenge.public_key.challenge;
+    let challenge_key = URL_SAFE_NO_PAD.encode(challenge_bytes);
+    state.challenge_service
+        .store_challenge_to_user_mapping(&challenge_key, user.id)
         .await?;
 
     // Convert to FIDO conformance format
