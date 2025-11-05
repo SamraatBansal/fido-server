@@ -3,6 +3,10 @@ name = "fido2-minimal"
 version = "0.1.0"
 edition = "2021"
 
+[lib]
+name = "fido2_minimal"
+path = "src/lib_minimal.rs"
+
 [[bin]]
 name = "fido2-minimal"
 path = "src/main_minimal.rs"
