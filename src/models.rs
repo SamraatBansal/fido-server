@@ -92,6 +92,29 @@ pub struct ServerPublicKeyCredential {
     pub type_: String,
 }
 
+// Specific structures for each endpoint to avoid untagged enum confusion
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AttestationCredential {
+    pub id: String, // base64url encoded
+    pub response: ServerAuthenticatorAttestationResponse,
+    #[serde(rename = "getClientExtensionResults", default)]
+    pub get_client_extension_results: serde_json::Value,
+    #[serde(rename = "type")]
+    pub type_: String,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AssertionCredential {
+    pub id: String, // base64url encoded
+    pub response: ServerAuthenticatorAssertionResponse,
+    #[serde(rename = "getClientExtensionResults", default)]
+    pub get_client_extension_results: serde_json::Value,
+    #[serde(rename = "type")]
+    pub type_: String,
+}
+
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(untagged)]
 pub enum ServerAuthenticatorResponse {
