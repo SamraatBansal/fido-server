@@ -3,7 +3,7 @@ use std::sync::Arc;
 use uuid::Uuid;
 use webauthn_rs::prelude::*;
 
-use crate::error::{AppError, AppResult};
+use crate::error::AppResult;
 use crate::models::StoredCredential;
 use crate::storage::Storage;
 
