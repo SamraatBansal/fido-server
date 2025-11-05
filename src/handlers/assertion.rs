@@ -78,7 +78,7 @@ pub async fn options(
         challenge: challenge_b64,
         timeout: Some(state.webauthn_service.timeout_ms()),
         rp_id: Some(state.webauthn_service.rp_id().to_string()),
-        allow_credentials: request_challenge.public_key.allow_credentials.unwrap_or_default()
+        allow_credentials: request_challenge.public_key.allow_credentials
             .into_iter()
             .map(|cred| ServerPublicKeyCredentialDescriptor {
                 type_: "public-key".to_string(),
