@@ -171,7 +171,7 @@ pub async fn result(
             user_handle,
         },
         type_: credential.type_.clone(),
-        extensions: None,
+        extensions: Default::default(),
     };
 
     // Get the challenge ID from our mapping
