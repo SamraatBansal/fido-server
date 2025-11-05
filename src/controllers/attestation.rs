@@ -115,12 +115,8 @@ pub async fn post_attestation_result(
 
     // Extract challenge from clientDataJSON
     let client_data = extract_client_data_json(&credential)?;
-    
-    // Generate challenge ID from challenge value (consistent with storage)
-    let challenge_id = generate_challenge_id_from_value(&client_data.challenge);
 
-    // Try to find the challenge by searching for it
-    // Since we don't have the user_id at this point, we'll need to search through challenges
+    // Find the challenge by its value
     let challenge = state
         .challenge_service
         .find_registration_challenge_by_value(&client_data.challenge)
