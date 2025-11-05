@@ -1,7 +1,4 @@
-//! WebAuthn data structures and types
-//! 
-//! This module contains all the data structures needed for FIDO2/WebAuthn implementation
-//! following the specification provided.
+//! FIDO2/WebAuthn data structures
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -10,7 +7,6 @@ use std::collections::HashMap;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ServerResponse {
     pub status: String,
-    #[serde(rename = "errorMessage")]
     pub error_message: String,
 }
 
@@ -30,236 +26,186 @@ impl ServerResponse {
     }
 }
 
-/// Registration: ServerPublicKeyCredentialCreationOptionsRequest
+/// Registration request structure
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ServerPublicKeyCredentialCreationOptionsRequest {
     pub username: String,
-    #[serde(rename = "displayName")]
     pub display_name: String,
-    #[serde(default, skip_serializing_if = "Option::is_none", rename = "authenticatorSelection")]
     pub authenticator_selection: Option<AuthenticatorSelectionCriteria>,
-    #[serde(default = "default_attestation")]
-    pub attestation: String,
+    pub attestation: Option<String>,
+    pub extensions: Option<AuthenticationExtensionsClientInputs>,
 }
 
-fn default_attestation() -> String {
-    "none".to_string()
-}
-
-/// AuthenticatorSelectionCriteria from WebAuthn spec
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct AuthenticatorSelectionCriteria {
-    #[serde(default, skip_serializing_if = "Option::is_none", rename = "requireResidentKey")]
-    pub require_resident_key: Option<bool>,
-    #[serde(default, skip_serializing_if = "Option::is_none", rename = "authenticatorAttachment")]
-    pub authenticator_attachment: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none", rename = "userVerification")]
-    pub user_verification: Option<String>,
-}
-
-/// Registration: ServerPublicKeyCredentialCreationOptionsResponse
+/// Registration response structure
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ServerPublicKeyCredentialCreationOptionsResponse {
     pub status: String,
-    #[serde(rename = "errorMessage")]
     pub error_message: String,
     pub rp: PublicKeyCredentialRpEntity,
     pub user: ServerPublicKeyCredentialUserEntity,
     pub challenge: String,
-    #[serde(rename = "pubKeyCredParams")]
     pub pub_key_cred_params: Vec<PublicKeyCredentialParameters>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub timeout: Option<u64>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty", rename = "excludeCredentials")]
-    pub exclude_credentials: Vec<ServerPublicKeyCredentialDescriptor>,
-    #[serde(default, skip_serializing_if = "Option::is_none", rename = "authenticatorSelection")]
+    pub exclude_credentials: Option<Vec<ServerPublicKeyCredentialDescriptor>>,
     pub authenticator_selection: Option<AuthenticatorSelectionCriteria>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub attestation: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub extensions: Option<AuthenticationExtensionsClientInputs>,
 }
 
-/// PublicKeyCredentialRpEntity from WebAuthn spec
+/// Authentication request structure
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct PublicKeyCredentialRpEntity {
-    pub name: String,
+pub struct ServerPublicKeyCredentialGetOptionsRequest {
+    pub username: String,
+    pub user_verification: Option<String>,
+    pub extensions: Option<AuthenticationExtensionsClientInputs>,
 }
 
-/// ServerPublicKeyCredentialUserEntity
+/// Authentication response structure
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ServerPublicKeyCredentialUserEntity {
-    pub id: String,
-    pub name: String,
-    #[serde(rename = "displayName")]
-    pub display_name: String,
+pub struct ServerPublicKeyCredentialGetOptionsResponse {
+    pub status: String,
+    pub error_message: String,
+    pub challenge: String,
+    pub timeout: Option<u64>,
+    pub rp_id: String,
+    pub allow_credentials: Vec<ServerPublicKeyCredentialDescriptor>,
+    pub user_verification: Option<String>,
+    pub extensions: Option<AuthenticationExtensionsClientInputs>,
 }
 
-/// PublicKeyCredentialParameters from WebAuthn spec
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct PublicKeyCredentialParameters {
-    #[serde(rename = "type")]
-    pub cred_type: String,
-    pub alg: i64,
-}
-
-/// ServerPublicKeyCredentialDescriptor
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ServerPublicKeyCredentialDescriptor {
-    #[serde(rename = "type")]
-    pub cred_type: String,
-    pub id: String,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub transports: Vec<String>,
-}
-
-/// AuthenticationExtensionsClientInputs
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct AuthenticationExtensionsClientInputs {
-    #[serde(flatten)]
-    pub extensions: HashMap<String, serde_json::Value>,
-}
-
-/// Registration: ServerPublicKeyCredential
+/// Server public key credential
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ServerPublicKeyCredential {
     pub id: String,
-    #[serde(rename = "type")]
-    pub cred_type: String,
-    pub response: ServerAuthenticatorAttestationResponse,
-    #[serde(default, skip_serializing_if = "HashMap::is_empty", rename = "getClientExtensionResults")]
-    pub get_client_extension_results: HashMap<String, serde_json::Value>,
+    pub r#type: String,
+    pub response: ServerAuthenticatorResponse,
+    #[serde(rename = "getClientExtensionResults")]
+    pub get_client_extension_results: Option<AuthenticationExtensionsClientOutputs>,
 }
 
-/// ServerAuthenticatorAttestationResponse
+/// Server authenticator response (enum for attestation and assertion)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum ServerAuthenticatorResponse {
+    Attestation(ServerAuthenticatorAttestationResponse),
+    Assertion(ServerAuthenticatorAssertionResponse),
+}
+
+/// Server authenticator attestation response
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ServerAuthenticatorAttestationResponse {
     #[serde(rename = "clientDataJSON")]
     pub client_data_json: String,
-    #[serde(rename = "attestationObject")]
     pub attestation_object: String,
 }
 
-/// Authentication: ServerPublicKeyCredentialGetOptionsRequest
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ServerPublicKeyCredentialGetOptionsRequest {
-    pub username: String,
-    #[serde(default, skip_serializing_if = "Option::is_none", rename = "userVerification")]
-    pub user_verification: Option<String>,
-}
-
-/// Authentication: ServerPublicKeyCredentialGetOptionsResponse
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ServerPublicKeyCredentialGetOptionsResponse {
-    pub status: String,
-    #[serde(rename = "errorMessage")]
-    pub error_message: String,
-    pub challenge: String,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub timeout: Option<u64>,
-    #[serde(rename = "rpId")]
-    pub rp_id: String,
-    #[serde(default, rename = "allowCredentials")]
-    pub allow_credentials: Vec<ServerPublicKeyCredentialDescriptor>,
-    #[serde(default, skip_serializing_if = "Option::is_none", rename = "userVerification")]
-    pub user_verification: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub extensions: Option<AuthenticationExtensionsClientInputs>,
-}
-
-/// Authentication: ServerAuthenticatorAssertionResponse
+/// Server authenticator assertion response
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ServerAuthenticatorAssertionResponse {
     #[serde(rename = "authenticatorData")]
     pub authenticator_data: String,
     pub signature: String,
     #[serde(rename = "userHandle")]
-    pub user_handle: String,
+    pub user_handle: Option<String>,
     #[serde(rename = "clientDataJSON")]
     pub client_data_json: String,
 }
 
-/// Authentication assertion credential
+/// Server public key credential user entity
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ServerAssertionPublicKeyCredential {
+pub struct ServerPublicKeyCredentialUserEntity {
     pub id: String,
-    #[serde(rename = "type")]
-    pub cred_type: String,
-    pub response: ServerAuthenticatorAssertionResponse,
-    #[serde(default, skip_serializing_if = "HashMap::is_empty", rename = "getClientExtensionResults")]
-    pub get_client_extension_results: HashMap<String, serde_json::Value>,
+    pub name: String,
+    pub display_name: String,
 }
 
-/// Convert ServerPublicKeyCredential to assertion version
-impl From<ServerPublicKeyCredential> for ServerAssertionPublicKeyCredential {
-    fn from(cred: ServerPublicKeyCredential) -> Self {
-        // This is a simplified conversion - in practice, you'd need to handle
-        // the different response types properly
-        Self {
-            id: cred.id,
-            cred_type: cred.cred_type,
-            response: ServerAuthenticatorAssertionResponse {
-                authenticator_data: String::new(),
-                signature: String::new(),
-                user_handle: String::new(),
-                client_data_json: String::new(),
-            },
-            get_client_extension_results: cred.get_client_extension_results,
-        }
-    }
+/// Server public key credential descriptor
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ServerPublicKeyCredentialDescriptor {
+    pub r#type: String,
+    pub id: String,
+    pub transports: Option<Vec<String>>,
 }
 
-/// WebAuthn configuration
-#[derive(Debug, Clone)]
-pub struct WebAuthnConfig {
-    pub rp_name: String,
-    pub rp_id: String,
-    pub rp_origin: String,
-    pub timeout: u64,
+/// Public key credential RP entity
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PublicKeyCredentialRpEntity {
+    pub name: String,
+    pub id: Option<String>,
 }
 
-impl Default for WebAuthnConfig {
+/// Public key credential parameters
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PublicKeyCredentialParameters {
+    pub r#type: String,
+    pub alg: i32,
+}
+
+/// Authenticator selection criteria
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AuthenticatorSelectionCriteria {
+    #[serde(rename = "requireResidentKey")]
+    pub require_resident_key: Option<bool>,
+    #[serde(rename = "authenticatorAttachment")]
+    pub authenticator_attachment: Option<String>,
+    #[serde(rename = "userVerification")]
+    pub user_verification: Option<String>,
+}
+
+/// Authentication extensions client inputs
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AuthenticationExtensionsClientInputs {
+    #[serde(flatten)]
+    pub extensions: HashMap<String, serde_json::Value>,
+}
+
+/// Authentication extensions client outputs
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AuthenticationExtensionsClientOutputs {
+    #[serde(flatten)]
+    pub extensions: HashMap<String, serde_json::Value>,
+}
+
+/// Attestation conveyance preference values
+pub const ATTESTATION_NONE: &str = "none";
+pub const ATTESTATION_INDIRECT: &str = "indirect";
+pub const ATTESTATION_DIRECT: &str = "direct";
+
+/// User verification values
+pub const USER_VERIFICATION_REQUIRED: &str = "required";
+pub const USER_VERIFICATION_PREFERRED: &str = "preferred";
+pub const USER_VERIFICATION_DISCOURAGED: &str = "discouraged";
+
+/// Authenticator attachment values
+pub const AUTHENTICATOR_ATTACHMENT_PLATFORM: &str = "platform";
+pub const AUTHENTICATOR_ATTACHMENT_CROSS_PLATFORM: &str = "cross-platform";
+
+/// Public key credential type
+pub const PUBLIC_KEY_CREDENTIAL_TYPE: &str = "public-key";
+
+/// Supported algorithms
+pub const ALG_ES256: i32 = -7;
+pub const ALG_RS256: i32 = -257;
+pub const ALG_EDDSA: i32 = -8;
+
+impl Default for ServerPublicKeyCredentialCreationOptionsRequest {
     fn default() -> Self {
         Self {
-            rp_name: "Example Corporation".to_string(),
-            rp_id: "localhost".to_string(),
-            rp_origin: "http://localhost:3000".to_string(),
-            timeout: 60000,
+            username: String::new(),
+            display_name: String::new(),
+            authenticator_selection: None,
+            attestation: Some(ATTESTATION_NONE.to_string()),
+            extensions: None,
         }
     }
 }
 
-/// Challenge data for storing challenges
-#[derive(Debug, Clone)]
-pub struct ChallengeData {
-    pub challenge: String,
-    pub username: Option<String>,
-    pub timestamp: chrono::DateTime<chrono::Utc>,
-    pub challenge_type: ChallengeType,
-}
-
-#[derive(Debug, Clone)]
-pub enum ChallengeType {
-    Registration,
-    Authentication,
-}
-
-/// User data structure
-#[derive(Debug, Clone)]
-pub struct User {
-    pub id: String,
-    pub username: String,
-    pub display_name: String,
-    pub created_at: chrono::DateTime<chrono::Utc>,
-}
-
-/// Credential data structure
-#[derive(Debug, Clone)]
-pub struct Credential {
-    pub id: String,
-    pub user_id: String,
-    pub public_key: Vec<u8>,
-    pub sign_count: u32,
-    pub created_at: chrono::DateTime<chrono::Utc>,
-    pub last_used_at: Option<chrono::DateTime<chrono::Utc>>,
+impl Default for ServerPublicKeyCredentialGetOptionsRequest {
+    fn default() -> Self {
+        Self {
+            username: String::new(),
+            user_verification: Some(USER_VERIFICATION_PREFERRED.to_string()),
+            extensions: None,
+        }
+    }
 }
