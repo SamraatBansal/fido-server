@@ -41,12 +41,15 @@ pub struct ServerPublicKeyCredentialCreationOptionsRequest {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ServerPublicKeyCredentialCreationOptionsResponse {
     pub status: String,
+    #[serde(rename = "errorMessage")]
     pub error_message: String,
     pub rp: PublicKeyCredentialRpEntity,
     pub user: ServerPublicKeyCredentialUserEntity,
     pub challenge: String,
+    #[serde(rename = "pubKeyCredParams")]
     pub pub_key_cred_params: Vec<PublicKeyCredentialParameters>,
     pub timeout: Option<u64>,
+    #[serde(rename = "excludeCredentials")]
     pub exclude_credentials: Option<Vec<ServerPublicKeyCredentialDescriptor>>,
     pub authenticator_selection: Option<AuthenticatorSelectionCriteria>,
     pub attestation: Option<String>,
