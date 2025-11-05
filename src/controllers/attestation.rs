@@ -200,22 +200,13 @@ struct StoredChallengeInfo {
     user_id: uuid::Uuid,
 }
 
-async fn find_registration_challenge(
-    state: &AppState,
-    challenge: &str,
-) -> Result<StoredChallengeInfo> {
-    // This is a simplified approach. In a production system, you'd want to:
-    // 1. Store a mapping of challenge values to challenge IDs
-    // 2. Or implement a more efficient search mechanism
+fn generate_challenge_id_from_value(challenge: &str) -> String {
+    use std::collections::hash_map::DefaultHasher;
+    use std::hash::{Hash, Hasher};
     
-    // For now, we'll generate a challenge ID based on the challenge value
-    // This is not ideal but works for this implementation
-    let challenge_id = format!("challenge_{}", 
-        base64::encode_config(challenge.as_bytes(), base64::URL_SAFE_NO_PAD));
+    let mut hasher = DefaultHasher::new();
+    challenge.hash(&mut hasher);
+    let hash = hasher.finish();
     
-    // In a real implementation, you'd look up the challenge ID properly
-    // For now, we'll return an error asking for proper challenge handling
-    Err(AppError::validation(
-        "Challenge lookup not implemented. In production, store challenge ID separately."
-    ))
+    format!("chal_{:x}", hash)
 }
