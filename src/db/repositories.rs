@@ -7,7 +7,7 @@ use diesel::r2d2::{self, ConnectionManager};
 use std::sync::Arc;
 
 use crate::error::{AppError, Result};
-use crate::webauthn::service::{ChallengeStore, UserRepository, CredentialRepository};
+use crate::webauthn::service::{ChallengeStore, UserRepository, CredentialRepository, User as WebAuthnUser, NewUser as WebAuthnNewUser, Credential as WebAuthnCredential, NewCredential as WebAuthnNewCredential};
 use super::models::*;
 
 /// Type alias for database connection pool
