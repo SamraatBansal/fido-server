@@ -130,6 +130,7 @@ impl ServerResponse {
         }
     }
     
+    #[allow(dead_code)]
     pub fn error(message: &str) -> Self {
         Self {
             status: "failed".to_string(),
