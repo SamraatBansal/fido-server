@@ -346,7 +346,7 @@ impl CredentialRepository for PostgresCredentialRepository {
             let mut conn = pool.get()
                 .map_err(|e| AppError::DatabaseError(format!("Connection error: {}", e)))?;
             
-            diesel::delete(credentials::table.filter(credentials::id.eq(&credential_id)))
+            diesel::delete(crate::db::schema::credentials::table.filter(crate::db::schema::credentials::id.eq(&credential_id)))
                 .execute(&mut conn)
                 .map_err(|e| AppError::DatabaseError(format!("Failed to delete credential: {}", e)))?;
             
