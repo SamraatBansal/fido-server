@@ -86,10 +86,11 @@ impl ConformanceWebAuthnService {
         // Prepare extensions - FIDO conformance requires "example.extension" key
         let mut extensions = HashMap::new();
         if let Some(req_ext) = &request.extensions {
+            // Only include the exact extensions that were requested
             extensions = req_ext.clone();
+        } else {
+            // If no extensions were requested, don't include any
         }
-        // Add required extension for conformance test
-        extensions.insert("example.extension".to_string(), serde_json::Value::Bool(true));
 
         // Create comprehensive algorithm support for FIDO conformance
         let pub_key_cred_params = vec![
