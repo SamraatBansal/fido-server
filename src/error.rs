@@ -48,8 +48,8 @@ impl fmt::Display for WebAuthnError {
 
 impl std::error::Error for WebAuthnError {}
 
-impl From<webauthn_rs::WebauthnError> for WebAuthnError {
-    fn from(err: webauthn_rs::WebauthnError) -> Self {
+impl From<webauthn_rs_core::error::WebauthnError> for WebAuthnError {
+    fn from(err: webauthn_rs_core::error::WebauthnError) -> Self {
         WebAuthnError::WebAuthn(err)
     }
 }
