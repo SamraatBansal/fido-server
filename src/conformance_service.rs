@@ -847,9 +847,10 @@ impl ConformanceWebAuthnService {
         let leaf_cert = &certs[0];
         self.validate_certificate_basic(leaf_cert)?;
         
-        // Validate algorithm matches certificate
+        // Validate algorithm matches certificate and metadata
         if let Some(alg) = alg_value {
             self.validate_certificate_algorithm(leaf_cert, *alg)?;
+            self.validate_algorithm_against_metadata(*alg)?;
         }
         
         // Validate signature can be verified with leaf certificate
