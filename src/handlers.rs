@@ -303,15 +303,15 @@ pub async fn authentication_result(
     // Convert to webauthn-rs format
     let auth_cred = PublicKeyCredential {
         id: request.credential.id.clone(),
-        raw_id: crate::utils::base64url_decode(&request.credential.id)?,
+        raw_id: base64url_decode_safe(&request.credential.id)?,
         response: AuthenticatorAssertionResponseRaw {
-            authenticator_data: crate::utils::base64url_decode(&assertion_response.authenticator_data)?,
-            client_data_json: crate::utils::base64url_decode(&assertion_response.client_data_json)?,
-            signature: crate::utils::base64url_decode(&assertion_response.signature)?,
+            authenticator_data: base64url_decode_safe(&assertion_response.authenticator_data)?,
+            client_data_json: base64url_decode_safe(&assertion_response.client_data_json)?,
+            signature: base64url_decode_safe(&assertion_response.signature)?,
             user_handle: if assertion_response.user_handle.is_empty() {
                 None
             } else {
-                Some(crate::utils::base64url_decode(&assertion_response.user_handle)?)
+                Some(base64url_decode_safe(&assertion_response.user_handle)?)
             },
         },
         type_: "public-key".to_string(),
