@@ -2,12 +2,13 @@ use crate::api::*;
 use crate::error::{AppError, Result};
 use crate::models::*;
 use crate::schema::*;
-use chrono::{DateTime, Duration, Utc};
+use chrono::{Duration, Utc};
 use diesel::prelude::*;
 use std::collections::HashMap;
 use std::sync::Arc;
 use uuid::Uuid;
 use webauthn_rs::prelude::*;
+use base64::prelude::*;
 
 #[derive(Clone)]
 pub struct WebAuthnService {
