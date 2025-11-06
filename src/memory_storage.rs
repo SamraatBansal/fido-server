@@ -46,6 +46,11 @@ impl MemoryStorage {
 
     pub fn store_user(&self, username: &str, display_name: &str) -> Result<Uuid> {
         let user_id = Uuid::new_v4();
+        self.store_user_with_id(user_id, username, display_name)?;
+        Ok(user_id)
+    }
+
+    pub fn store_user_with_id(&self, user_id: Uuid, username: &str, display_name: &str) -> Result<()> {
         let user = MemoryUser {
             id: user_id,
             username: username.to_string(),
@@ -58,7 +63,7 @@ impl MemoryStorage {
         users.insert(user_id, user);
         users_by_username.insert(username.to_string(), user_id);
 
-        Ok(user_id)
+        Ok(())
     }
 
     pub fn get_user_by_username(&self, username: &str) -> Result<Option<MemoryUser>> {
