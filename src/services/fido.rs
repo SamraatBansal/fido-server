@@ -203,8 +203,8 @@ impl FidoService {
             id: Uuid::new_v4(),
             user_id: reg_state.user_id,
             credential_id: passkey.cred_id().as_ref().to_vec(),
-            public_key: serde_json::to_vec(passkey.cred())
-                .map_err(|e| AppError::InternalError(format!("Failed to serialize public key: {}", e)))?,
+            public_key: serde_json::to_vec(&passkey)
+                .map_err(|e| AppError::InternalError(format!("Failed to serialize passkey: {}", e)))?,
             sign_count: passkey.counter() as i32,
             transports: passkey.transports().map(|t| serde_json::to_string(t).ok()).flatten(),
         };
