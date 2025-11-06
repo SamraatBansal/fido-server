@@ -8,7 +8,7 @@ pub enum AppError {
     DatabaseError(#[from] diesel::result::Error),
 
     #[error("WebAuthn error: {0}")]
-    WebAuthnError(#[from] webauthn_rs::error::WebauthnError),
+    WebAuthnError(#[from] webauthn_rs::WebauthnError),
 
     #[error("Validation error: {0}")]
     ValidationError(String),
