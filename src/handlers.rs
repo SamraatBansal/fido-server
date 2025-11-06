@@ -10,6 +10,7 @@ use webauthn_rs_proto::{
     AuthenticationExtensionsClientOutputs,
 };
 use std::sync::Arc;
+use uuid::Uuid;
 
 /// Application state containing WebAuthn instance and storage
 #[derive(Clone)]
