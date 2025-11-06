@@ -2,8 +2,8 @@ use actix_cors::Cors;
 use actix_web::{middleware::Logger, web, App, HttpServer};
 use std::env;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-use fido2_webauthn_server::memory_service::MemoryWebAuthnService;
-use fido2_webauthn_server::memory_handlers::*;
+use fido2_webauthn_server::conformance_service::ConformanceWebAuthnService;
+use fido2_webauthn_server::conformance_handlers::*;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
