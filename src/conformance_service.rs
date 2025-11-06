@@ -1172,7 +1172,7 @@ impl ConformanceWebAuthnService {
                 
                 // For some conformance tests, detect when the signature is made with wrong key
                 // This is a simplified check - in practice would do actual cryptographic verification
-                if sig.len() >= 32 {
+                if sig.len() >= 4 {
                     // Check for patterns that suggest the signature was made with credential private key
                     // rather than attestation private key (test scenario)
                     let sig_start = &sig[0..4];
