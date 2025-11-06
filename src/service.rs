@@ -52,7 +52,7 @@ impl WebAuthnService {
             .first::<User>(&mut conn)
             .optional()?;
 
-        let user_id = match existing_user {
+        let user_id = match &existing_user {
             Some(user) => user.id,
             None => Uuid::new_v4(),
         };
