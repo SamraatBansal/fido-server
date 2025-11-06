@@ -16,8 +16,8 @@ pub struct ServerPublicKeyCredentialCreationOptionsRequest {
     #[serde(rename = "displayName")]
     pub display_name: String,
     #[serde(rename = "authenticatorSelection")]
-    pub authenticator_selection: Option<AuthenticatorSelectionCriteria>,
-    pub attestation: Option<AttestationConveyancePreference>,
+    pub authenticator_selection: Option<serde_json::Value>,
+    pub attestation: Option<String>,
     pub extensions: Option<HashMap<String, serde_json::Value>>,
 }
 
@@ -34,9 +34,22 @@ pub struct ServerPublicKeyCredentialCreationOptionsResponse {
     #[serde(rename = "excludeCredentials")]
     pub exclude_credentials: Vec<ServerPublicKeyCredentialDescriptor>,
     #[serde(rename = "authenticatorSelection")]
-    pub authenticator_selection: Option<AuthenticatorSelectionCriteria>,
-    pub attestation: Option<AttestationConveyancePreference>,
+    pub authenticator_selection: Option<serde_json::Value>,
+    pub attestation: Option<String>,
     pub extensions: Option<HashMap<String, serde_json::Value>>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct PublicKeyCredentialRpEntity {
+    pub id: Option<String>,
+    pub name: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct PublicKeyCredentialParameters {
+    #[serde(rename = "type")]
+    pub type_: String,
+    pub alg: i64,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -52,7 +65,7 @@ pub struct ServerPublicKeyCredentialDescriptor {
     #[serde(rename = "type")]
     pub type_: String,
     pub id: String,
-    pub transports: Option<Vec<AuthenticatorTransport>>,
+    pub transports: Option<Vec<String>>,
 }
 
 // Registration result types
@@ -86,7 +99,7 @@ pub struct ServerAuthenticatorAttestationResponse {
 pub struct ServerPublicKeyCredentialGetOptionsRequest {
     pub username: String,
     #[serde(rename = "userVerification")]
-    pub user_verification: Option<UserVerificationPolicy>,
+    pub user_verification: Option<String>,
     pub extensions: Option<HashMap<String, serde_json::Value>>,
 }
 
@@ -101,7 +114,7 @@ pub struct ServerPublicKeyCredentialGetOptionsResponse {
     #[serde(rename = "allowCredentials")]
     pub allow_credentials: Vec<ServerPublicKeyCredentialDescriptor>,
     #[serde(rename = "userVerification")]
-    pub user_verification: Option<UserVerificationPolicy>,
+    pub user_verification: Option<String>,
     pub extensions: Option<HashMap<String, serde_json::Value>>,
 }
 
@@ -140,8 +153,8 @@ impl ServerPublicKeyCredentialCreationOptionsResponse {
         challenge: String,
         pub_key_cred_params: Vec<PublicKeyCredentialParameters>,
         exclude_credentials: Vec<ServerPublicKeyCredentialDescriptor>,
-        authenticator_selection: Option<AuthenticatorSelectionCriteria>,
-        attestation: Option<AttestationConveyancePreference>,
+        authenticator_selection: Option<serde_json::Value>,
+        attestation: Option<String>,
         timeout: Option<u32>,
         extensions: Option<HashMap<String, serde_json::Value>>,
     ) -> Self {
@@ -165,7 +178,7 @@ impl ServerPublicKeyCredentialGetOptionsResponse {
         challenge: String,
         rp_id: String,
         allow_credentials: Vec<ServerPublicKeyCredentialDescriptor>,
-        user_verification: Option<UserVerificationPolicy>,
+        user_verification: Option<String>,
         timeout: Option<u32>,
         extensions: Option<HashMap<String, serde_json::Value>>,
     ) -> Self {
