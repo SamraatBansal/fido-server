@@ -13,10 +13,10 @@ pub async fn start_registration(
 }
 
 pub async fn finish_registration(
-    credential: web::Json<ServerPublicKeyCredential>,
+    credential: JsonExtractor<ServerPublicKeyCredential>,
     service: web::Data<ConformanceWebAuthnService>,
 ) -> Result<HttpResponse> {
-    let response = service.finish_registration(&credential).await?;
+    let response = service.finish_registration(&*credential).await?;
     Ok(HttpResponse::Ok().json(response))
 }
 
