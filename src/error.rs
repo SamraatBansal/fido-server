@@ -69,7 +69,7 @@ impl ResponseError for WebAuthnError {
             ),
             WebAuthnError::WebAuthn(_) => (
                 actix_web::http::StatusCode::BAD_REQUEST,
-                &self.to_string()
+                "WebAuthn operation failed"
             ),
             WebAuthnError::Storage(_) => (
                 actix_web::http::StatusCode::INTERNAL_SERVER_ERROR,
