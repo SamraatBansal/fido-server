@@ -132,3 +132,42 @@ impl ResponseError for AppError {
 }
 
 pub type Result<T> = std::result::Result<T, AppError>;
+
+// Validation helper functions
+pub fn validate_string_not_empty(value: &str, field_name: &str) -> Result<()> {
+    if value.is_empty() {
+        return Err(AppError::MissingField(field_name.to_string()));
+    }
+    Ok(())
+}
+
+pub fn validate_credential_type(type_: &str) -> Result<()> {
+    if type_ != "public-key" {
+        return Err(AppError::InvalidField("type must be 'public-key'".to_string()));
+    }
+    Ok(())
+}
+
+pub fn validate_base64url(value: &str, field_name: &str) -> Result<Vec<u8>> {
+    if value.is_empty() {
+        return Err(AppError::MissingField(field_name.to_string()));
+    }
+    
+    // Check for valid base64url characters
+    if !value.chars().all(|c| matches!(c, 'A'..='Z' | 'a'..='z' | '0'..='9' | '-' | '_')) {
+        return Err(AppError::InvalidField(format!("{} is not valid base64url", field_name)));
+    }
+    
+    base64::prelude::BASE64_URL_SAFE_NO_PAD.decode(value)
+        .map_err(|_| AppError::InvalidField(format!("{} is not valid base64url", field_name)))
+}
+
+pub fn validate_challenge_length(challenge: &[u8]) -> Result<()> {
+    if challenge.len() < 16 {
+        return Err(AppError::InvalidField("Challenge too short (minimum 16 bytes)".to_string()));
+    }
+    if challenge.len() > 64 {
+        return Err(AppError::InvalidField("Challenge too long (maximum 64 bytes)".to_string()));
+    }
+    Ok(())
+}
