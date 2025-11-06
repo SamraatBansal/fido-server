@@ -165,7 +165,7 @@ pub async fn registration_result(
     }
 
     // Convert to webauthn-rs format
-    let reg_cred = RegisterPublicKeyCredential {
+    let _reg_cred = RegisterPublicKeyCredential {
         id: request.credential.id.clone(),
         raw_id: base64url_decode_safe(&request.credential.id)?,
         response: AuthenticatorAttestationResponseRaw {
