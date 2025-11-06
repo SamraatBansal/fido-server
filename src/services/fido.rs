@@ -23,18 +23,12 @@ pub struct FidoService {
     user_service: UserService,
 }
 
-/// Stored challenge state for registration
+/// Stored challenge data for registration
 #[derive(Debug, Serialize, Deserialize)]
-pub struct RegistrationState {
-    pub reg_state: PasskeyRegistration,
+pub struct StoredChallenge {
+    pub challenge: Vec<u8>,
     pub user_id: Uuid,
-}
-
-/// Stored challenge state for authentication
-#[derive(Debug, Serialize, Deserialize)]
-pub struct AuthenticationState {
-    pub auth_state: PasskeyAuthentication,
-    pub user_id: Uuid,
+    pub challenge_type: String,
 }
 
 impl FidoService {
