@@ -97,7 +97,7 @@ impl ResponseError for WebAuthnError {
             ),
             WebAuthnError::InvalidInput(msg) => (
                 actix_web::http::StatusCode::BAD_REQUEST,
-                msg
+                msg.as_str()
             ),
             WebAuthnError::Serialization(_) => (
                 actix_web::http::StatusCode::BAD_REQUEST,
