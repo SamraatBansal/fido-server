@@ -377,7 +377,7 @@ impl WebAuthnService {
         }
 
         // Find credential
-        let credential_id_bytes = Base64UrlSafeData::try_from(credential.id.as_str())
+        let credential_id_bytes = base64::decode_config(&credential.id, base64::URL_SAFE_NO_PAD)
             .map_err(|_| AppError::InvalidFormat("Invalid credential ID format".to_string()))?;
         
         let stored_credential = self
