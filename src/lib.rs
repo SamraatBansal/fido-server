@@ -8,6 +8,8 @@ pub mod memory_storage;
 pub mod models;
 pub mod schema;
 pub mod service;
+pub mod webauthn_service;
+pub mod webauthn_handlers;
 
 pub use api::*;
 pub use database::*;
