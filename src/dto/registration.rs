@@ -1,7 +1,10 @@
 //! Registration DTO types
 
 use serde::{Deserialize, Serialize};
-use webauthn_rs::prelude::*;
+use webauthn_rs_proto::{
+    AttestationConveyancePreference, AuthenticatorSelectionCriteria,
+    PublicKeyCredentialParameters, PublicKeyCredentialRpEntity,
+};
 use super::common::*;
 
 /// Server public key credential creation options request
