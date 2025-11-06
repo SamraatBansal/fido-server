@@ -520,6 +520,8 @@ impl ConformanceWebAuthnService {
         let mut has_fmt = false;
         let mut has_att_stmt = false;
         let mut has_auth_data = false;
+        let mut fmt_value = None;
+        let mut att_stmt_value = None;
 
         for (key, value) in map.iter() {
             match key {
@@ -530,12 +532,14 @@ impl ConformanceWebAuthnService {
                             if !matches!(value, serde_cbor::Value::Text(_)) {
                                 return Err(AppError::InvalidField("attestationObject.fmt must be a string".to_string()));
                             }
+                            fmt_value = value.as_text().map(|s| s.to_string());
                         },
                         "attStmt" => {
                             has_att_stmt = true;
                             if !matches!(value, serde_cbor::Value::Map(_)) {
                                 return Err(AppError::InvalidField("attestationObject.attStmt must be a map".to_string()));
                             }
+                            att_stmt_value = value.as_map().cloned();
                         },
                         "authData" => {
                             has_auth_data = true;
@@ -563,6 +567,18 @@ impl ConformanceWebAuthnService {
         }
         if !has_auth_data {
             return Err(AppError::MissingField("attestationObject.authData".to_string()));
+        }
+
+        // Additional validation for packed format
+        if let Some(fmt) = fmt_value {
+            if fmt == "packed" {
+                if let Some(att_stmt) = att_stmt_value {
+                    self.validate_packed_attestation_statement(&att_stmt)?;
+                }
+            } else if fmt != "none" && fmt != "fido-u2f" {
+                // Unknown attestation format should fail
+                return Err(AppError::InvalidField(format!("Unknown attestation format: {}", fmt)));
+            }
         }
 
         Ok(())
@@ -640,6 +656,58 @@ impl ConformanceWebAuthnService {
                     }
                 }
             }
+        }
+
+        Ok(())
+    }
+
+    fn validate_packed_attestation_statement(&self, att_stmt: &std::collections::BTreeMap<serde_cbor::Value, serde_cbor::Value>) -> Result<()> {
+        // For packed format, validate required fields
+        let mut has_alg = false;
+        let mut has_sig = false;
+
+        for (key, value) in att_stmt.iter() {
+            if let serde_cbor::Value::Text(key_str) = key {
+                match key_str.as_str() {
+                    "alg" => {
+                        has_alg = true;
+                        if !matches!(value, serde_cbor::Value::Integer(_)) {
+                            return Err(AppError::InvalidField("attestationObject.attStmt.alg must be a number".to_string()));
+                        }
+                    },
+                    "sig" => {
+                        has_sig = true;
+                        if !matches!(value, serde_cbor::Value::Bytes(_)) {
+                            return Err(AppError::InvalidField("attestationObject.attStmt.sig must be bytes".to_string()));
+                        }
+                        if let serde_cbor::Value::Bytes(sig_bytes) = value {
+                            if sig_bytes.is_empty() {
+                                return Err(AppError::InvalidField("attestationObject.attStmt.sig cannot be empty".to_string()));
+                            }
+                        }
+                    },
+                    "x5c" => {
+                        // x5c is optional for self-attestation
+                        if !matches!(value, serde_cbor::Value::Array(_)) {
+                            return Err(AppError::InvalidField("attestationObject.attStmt.x5c must be an array".to_string()));
+                        }
+                        if let serde_cbor::Value::Array(x5c_array) = value {
+                            if x5c_array.is_empty() {
+                                return Err(AppError::InvalidField("attestationObject.attStmt.x5c cannot be empty".to_string()));
+                            }
+                        }
+                    },
+                    _ => {} // Ignore unknown attestation statement fields
+                }
+            }
+        }
+
+        // For packed format, both alg and sig are required
+        if !has_alg {
+            return Err(AppError::MissingField("attestationObject.attStmt.alg".to_string()));
+        }
+        if !has_sig {
+            return Err(AppError::MissingField("attestationObject.attStmt.sig".to_string()));
         }
 
         Ok(())
