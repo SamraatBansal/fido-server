@@ -599,21 +599,8 @@ impl ConformanceWebAuthnService {
                 if fmt == "unknown-test-format" || fmt.starts_with("test-") {
                     return Err(AppError::InvalidField(format!("Unknown attestation format: {}", fmt)));
                 } else {
-                    // For other unknown formats, be more permissive initially
-                    tracing::warn!("Unknown attestation format '{}', attempting basic validation", fmt);
-                    
-                    // Try to validate as if it were packed format
-                    if let Some(att_stmt) = att_stmt_value {
-                        // Don't fail on unknown formats during development
-                        match self.validate_packed_attestation_statement(&att_stmt) {
-                            Ok(_) => {
-                                tracing::info!("Unknown format '{}' passed packed validation", fmt);
-                            },
-                            Err(_) => {
-                                return Err(AppError::InvalidField(format!("Unknown attestation format: {}", fmt)));
-                            }
-                        }
-                    }
+                    // For FIDO conformance F-1: Unknown attestation formats must be rejected
+                    return Err(AppError::InvalidField(format!("Unknown attestation format: {}", fmt)));
                 }
             }
         }
@@ -755,18 +742,8 @@ impl ConformanceWebAuthnService {
                         }
                     },
                     Err(e) => {
-                        // For FIDO conformance P-1: be more permissive with CBOR parsing errors
-                        // Log the error but don't fail the validation entirely
-                        tracing::warn!("Credential public key CBOR parsing warning: {:?}", e);
-                        
-                        // Check if this might be a test case with intentionally malformed data
-                        if remaining_data.len() < 10 {
-                            return Err(AppError::InvalidField("authData credential public key is too short".to_string()));
-                        }
-                        
-                        // For larger data that fails CBOR parsing, be more lenient
-                        // This allows conformance tests with complex structures to pass
-                        tracing::info!("Allowing non-standard credential public key structure for conformance");
+                        // FIDO F-12: If CBOR parsing fails, this indicates invalid structure
+                        return Err(AppError::InvalidField("authData credential public key is not valid CBOR".to_string()));
                     }
                 }
             }
