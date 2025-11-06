@@ -1,25 +1,10 @@
-//! Registration DTO types
+//! Registration DTO types for FIDO2/WebAuthn compliance
 
 use serde::{Deserialize, Serialize};
 use webauthn_rs_proto::{
     AttestationConveyancePreference, AuthenticatorSelectionCriteria,
 };
 use super::common::*;
-
-/// Public key credential parameters
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct PublicKeyCredentialParameters {
-    #[serde(rename = "type")]
-    pub type_: String,
-    pub alg: i32,
-}
-
-/// Relying party entity
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct PublicKeyCredentialRpEntity {
-    pub id: Option<String>,
-    pub name: String,
-}
 
 /// Server public key credential creation options request
 #[derive(Debug, Serialize, Deserialize)]
@@ -31,6 +16,8 @@ pub struct ServerPublicKeyCredentialCreationOptionsRequest {
     pub authenticator_selection: Option<AuthenticatorSelectionCriteria>,
     #[serde(default)]
     pub attestation: AttestationConveyancePreference,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub extensions: Option<serde_json::Value>,
 }
 
 /// Server public key credential creation options response
@@ -45,7 +32,7 @@ pub struct ServerPublicKeyCredentialCreationOptionsResponse {
     pub pub_key_cred_params: Vec<PublicKeyCredentialParameters>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timeout: Option<u32>,
-    #[serde(rename = "excludeCredentials", default)]
+    #[serde(rename = "excludeCredentials")]
     pub exclude_credentials: Vec<ServerPublicKeyCredentialDescriptor>,
     #[serde(rename = "authenticatorSelection", skip_serializing_if = "Option::is_none")]
     pub authenticator_selection: Option<AuthenticatorSelectionCriteria>,
