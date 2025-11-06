@@ -80,7 +80,6 @@ pub struct ServerPublicKeyCredential {
     pub id: String, // base64url encoded
     #[serde(rename = "type")]
     pub credential_type: String,
-    #[serde(untagged)]
     pub response: ServerCredentialResponse,
     #[serde(rename = "getClientExtensionResults")]
     pub get_client_extension_results: serde_json::Value,
