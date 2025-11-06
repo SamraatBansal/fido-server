@@ -1,11 +1,9 @@
-//! Database schema
-
 // @generated automatically by Diesel CLI.
 
 diesel::table! {
     challenges (id) {
         id -> Uuid,
-        user_id -> Uuid,
+        user_id -> Nullable<Uuid>,
         challenge_type -> Varchar,
         challenge_data -> Bytea,
         expires_at -> Timestamptz,
@@ -19,7 +17,7 @@ diesel::table! {
         user_id -> Uuid,
         credential_id -> Bytea,
         public_key -> Bytea,
-        sign_count -> Int4,
+        sign_count -> Int8,
         transports -> Nullable<Text>,
         created_at -> Timestamptz,
         last_used -> Nullable<Timestamptz>,
