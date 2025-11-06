@@ -3,6 +3,10 @@ name = "fido2-webauthn-server"
 version = "0.1.0"
 edition = "2021"
 
+[[bin]]
+name = "main_memory"
+path = "src/main_memory.rs"
+
 [dependencies]
 # Web framework
 actix-web = "4.4"
