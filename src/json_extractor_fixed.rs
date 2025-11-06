@@ -1,5 +1,5 @@
 use actix_web::{web, HttpRequest, HttpResponse, Result, FromRequest, dev::Payload, Error};
-use futures::future::{Ready, ready, LocalBoxFuture};
+use futures::future::LocalBoxFuture;
 use serde::de::DeserializeOwned;
 use crate::api::ServerResponse;
 
