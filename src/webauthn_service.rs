@@ -1,6 +1,8 @@
 use base64urlsafedata::Base64UrlSafeData;
 use chrono::{Duration, Utc};
 use std::collections::HashMap;
+use std::sync::Arc;
+use tokio::sync::RwLock;
 use uuid::Uuid;
 use webauthn_rs::prelude::*;
 
@@ -9,15 +11,24 @@ use crate::database::DatabaseService;
 use crate::error::{AppError, Result};
 use crate::models::{NewCredential, User};
 
+// Session store to handle the challenge-to-user mapping
+// This is needed because the FIDO conformance test API doesn't provide user context in finish operations
+type SessionStore = Arc<RwLock<HashMap<String, (Uuid, String)>>>; // challenge -> (user_id, state_type)
+
 #[derive(Clone)]
 pub struct WebAuthnService {
     webauthn: Webauthn,
     database: DatabaseService,
+    sessions: SessionStore,
 }
 
 impl WebAuthnService {
     pub fn new(webauthn: Webauthn, database: DatabaseService) -> Self {
-        Self { webauthn, database }
+        Self {
+            webauthn,
+            database,
+            sessions: Arc::new(RwLock::new(HashMap::new())),
+        }
     }
 
     // Registration flow
@@ -50,20 +61,20 @@ impl WebAuthnService {
             .map(|cred| CredentialID::try_from(cred.credential_id.as_slice()).unwrap())
             .collect();
 
-        // Convert user ID to bytes
-        let user_id_bytes = user.id.as_bytes().to_vec();
+        // Convert user ID to bytes for webauthn-rs
+        let user_uuid = user.id;
 
         // Start registration with webauthn-rs
         let (ccr, reg_state) = self
             .webauthn
             .start_passkey_registration(
-                Uuid::try_from(user_id_bytes.as_slice()).unwrap(),
+                user_uuid,
                 &request.username,
                 &request.display_name,
                 Some(exclude_credentials),
             )?;
 
-        // Store challenge state
+        // Store challenge state in database
         let challenge_bytes = ccr.public_key.challenge.as_ref();
         let state_data = serde_json::to_vec(&reg_state)?;
         let expires_at = Utc::now() + Duration::minutes(5);
@@ -71,6 +82,10 @@ impl WebAuthnService {
         self.database
             .store_registration_challenge(user.id, challenge_bytes, &state_data, expires_at)
             .await?;
+
+        // Store challenge-to-user mapping in session store
+        let challenge_str = ccr.public_key.challenge.to_string();
+        self.sessions.write().await.insert(challenge_str.clone(), (user.id, "registration".to_string()));
 
         // Build exclude credentials for response
         let exclude_creds: Vec<ServerPublicKeyCredentialDescriptor> = existing_credentials
@@ -86,13 +101,13 @@ impl WebAuthnService {
             })
             .collect();
 
-        // Create response - FIDO conformance requires specific format
-        let mut response = ServerPublicKeyCredentialCreationOptionsResponse {
+        // Create response that matches FIDO conformance requirements
+        let response = ServerPublicKeyCredentialCreationOptionsResponse {
             status: "ok".to_string(),
             error_message: "".to_string(),
             rp: ccr.public_key.rp.clone(),
             user: ServerPublicKeyCredentialUserEntity {
-                id: Base64UrlSafeData::from(user_id_bytes).to_string(),
+                id: Base64UrlSafeData::from(user_uuid.as_bytes().to_vec()).to_string(),
                 name: request.username,
                 display_name: request.display_name,
                 icon: None,
@@ -103,16 +118,13 @@ impl WebAuthnService {
             exclude_credentials: exclude_creds,
             authenticator_selection: request.authenticator_selection,
             attestation: request.attestation,
-            extensions: request.extensions,
+            extensions: request.extensions.or_else(|| {
+                // Add default extension for conformance tests
+                let mut ext = RequestRegistrationExtensions::default();
+                ext.uvm = Some(true);
+                Some(ext)
+            }),
         };
-
-        // Ensure extensions field is included if example.extension is expected
-        if response.extensions.is_none() {
-            let mut extensions = RequestRegistrationExtensions::default();
-            // Add example extension as required by conformance tests
-            extensions.uvm = Some(true);
-            response.extensions = Some(extensions);
-        }
 
         Ok(response)
     }
@@ -121,7 +133,7 @@ impl WebAuthnService {
         &self,
         credential: ServerPublicKeyCredential,
     ) -> Result<ServerResponse> {
-        // Validate credential structure
+        // Validate credential structure first - critical for conformance tests
         credential.validate_basic_structure()?;
 
         let attestation_response = match credential.response {
@@ -133,93 +145,107 @@ impl WebAuthnService {
             }
         };
 
-        // Validate attestation response structure
+        // Validate attestation response structure - critical for failing tests
         attestation_response.validate_structure()?;
 
-        // Decode client data to get challenge
-        let client_data_bytes = Base64UrlSafeData::try_from(attestation_response.client_data_json.as_str())?;
-        let client_data: CollectedClientData = serde_json::from_slice(&client_data_bytes)?;
+        // Additional validation checks required by FIDO conformance tests
+        if attestation_response.client_data_json.is_empty() {
+            return Err(AppError::MissingField("clientDataJSON".to_string()));
+        }
+
+        if attestation_response.attestation_object.is_empty() {
+            return Err(AppError::MissingField("attestationObject".to_string()));
+        }
+
+        // Decode and validate client data
+        let client_data_bytes = Base64UrlSafeData::try_from(attestation_response.client_data_json.as_str())
+            .map_err(|_| AppError::InvalidFormat("clientDataJSON must be base64url encoded".to_string()))?;
+        
+        let client_data: CollectedClientData = serde_json::from_slice(&client_data_bytes)
+            .map_err(|_| AppError::InvalidFormat("Invalid clientDataJSON format".to_string()))?;
 
         // Validate client data type
         if client_data.type_ != "webauthn.create" {
             return Err(AppError::ValidationError(
-                "Invalid client data type for registration".to_string(),
+                "clientDataJSON type must be 'webauthn.create'".to_string(),
             ));
         }
 
-        // Find challenge in database
-        let challenge_bytes = client_data.challenge.as_ref();
-        
-        // We need to find which user this challenge belongs to
-        // Since we don't have user info in the request, we'll search through all recent challenges
-        let mut found_challenge = None;
-        let mut found_user = None;
+        // Validate origin
+        if client_data.origin.is_empty() {
+            return Err(AppError::MissingField("origin in clientDataJSON".to_string()));
+        }
 
-        // This is not ideal but matches the conformance test expectations
-        // In production, you might want to include user info in the request
-        let recent_time = Utc::now() - Duration::minutes(10);
-        
-        // For now, we'll extract user info from the credential if possible
-        // or look up by challenge across all users
-        
-        // First, try to decode the attestation object to get user info
-        let attestation_object_bytes = Base64UrlSafeData::try_from(attestation_response.attestation_object.as_str())?;
-        
-        // Parse the attestation object to extract user information
-        // This is a simplified approach - in reality you'd parse the CBOR
-        
-        // For the conformance tests, we'll try a different approach:
-        // Look through recent challenges to find a match
-        // This is a workaround since the test doesn't provide user context
-        
+        // Find user by challenge using our session store
+        let challenge_str = client_data.challenge.to_string();
+        let (user_id, session_type) = {
+            let sessions = self.sessions.read().await;
+            sessions.get(&challenge_str)
+                .cloned()
+                .ok_or(AppError::ChallengeExpired)?
+        };
+
+        if session_type != "registration" {
+            return Err(AppError::ValidationError("Invalid challenge type".to_string()));
+        }
+
+        // Get user
+        let user = self.database.get_user_by_id(user_id).await?
+            .ok_or(AppError::UserNotFound)?;
+
+        // Get challenge state from database
+        let challenge_bytes = client_data.challenge.as_ref();
+        let challenge_record = self
+            .database
+            .get_registration_challenge(user.id, challenge_bytes)
+            .await?
+            .ok_or(AppError::ChallengeExpired)?;
+
+        let reg_state: PasskeyRegistration = serde_json::from_slice(&challenge_record.state_data)
+            .map_err(|_| AppError::InternalServerError)?;
+
         // Convert credential to webauthn-rs format
         let reg_credential = RegisterPublicKeyCredential {
             id: credential.id.clone(),
-            raw_id: Base64UrlSafeData::try_from(credential.id.as_str())?,
+            raw_id: Base64UrlSafeData::try_from(credential.id.as_str())
+                .map_err(|_| AppError::InvalidFormat("Invalid credential ID format".to_string()))?,
             response: webauthn_rs::prelude::AuthenticatorAttestationResponseRaw {
-                client_data_json: Base64UrlSafeData::try_from(attestation_response.client_data_json.as_str())?,
-                attestation_object: Base64UrlSafeData::try_from(attestation_response.attestation_object.as_str())?,
+                client_data_json: Base64UrlSafeData::try_from(attestation_response.client_data_json.as_str())
+                    .map_err(|_| AppError::InvalidFormat("Invalid clientDataJSON format".to_string()))?,
+                attestation_object: Base64UrlSafeData::try_from(attestation_response.attestation_object.as_str())
+                    .map_err(|_| AppError::InvalidFormat("Invalid attestationObject format".to_string()))?,
             },
             type_: credential.type_.clone(),
         };
 
-        // We need to find the registration state somehow
-        // This is a limitation of the current API design
-        // For conformance tests, we'll implement a search mechanism
+        // Finish registration with webauthn-rs - this will perform all security validations
+        let passkey = self.webauthn.finish_passkey_registration(&reg_credential, &reg_state)
+            .map_err(|e| AppError::AttestationFailed(e.to_string()))?;
+
+        // Store credential in database
+        let new_credential = NewCredential {
+            id: Uuid::new_v4(),
+            user_id: user.id,
+            credential_id: passkey.cred_id().to_vec(),
+            public_key: passkey.cred().cose_key.to_vec().unwrap_or_default(),
+            sign_count: passkey.counter(),
+            transports: attestation_response.transports.as_ref().map(|t| {
+                t.iter().map(|transport| transport.to_string()).collect()
+            }),
+            backup_eligible: false,
+            backup_state: false,
+        };
+
+        self.database.store_credential(new_credential).await?;
+
+        // Clean up the challenge and session
+        self.database
+            .delete_registration_challenge(user.id, challenge_bytes)
+            .await?;
         
-        // Try to find a user with a matching challenge
-        // This is inefficient but needed for the test format
-        let found_data = self.find_registration_challenge_for_client_data(&client_data).await?;
-        
-        if let Some((user, reg_state)) = found_data {
-            // Finish registration with webauthn-rs
-            let passkey = self.webauthn.finish_passkey_registration(&reg_credential, &reg_state)?;
+        self.sessions.write().await.remove(&challenge_str);
 
-            // Store credential in database
-            let new_credential = NewCredential {
-                id: Uuid::new_v4(),
-                user_id: user.id,
-                credential_id: passkey.cred_id().to_vec(),
-                public_key: passkey.cred().cose_key.to_vec().unwrap_or_default(),
-                sign_count: passkey.counter(),
-                transports: attestation_response.transports.as_ref().map(|t| {
-                    t.iter().map(|transport| transport.to_string()).collect()
-                }),
-                backup_eligible: false,
-                backup_state: false,
-            };
-
-            self.database.store_credential(new_credential).await?;
-
-            // Clean up the challenge
-            self.database
-                .delete_registration_challenge(user.id, challenge_bytes)
-                .await?;
-
-            Ok(ServerResponse::ok())
-        } else {
-            Err(AppError::ChallengeExpired)
-        }
+        Ok(ServerResponse::ok())
     }
 
     // Authentication flow
@@ -247,16 +273,6 @@ impl WebAuthnService {
         }
 
         // Convert to webauthn-rs format
-        let passkeys: Vec<Passkey> = credentials
-            .iter()
-            .filter_map(|cred| {
-                // Reconstruct passkey from stored data
-                // This is simplified - you'd need to properly reconstruct the full passkey
-                None // Placeholder for now
-            })
-            .collect();
-
-        // For the conformance tests, we'll use a simpler approach
         let allow_credentials: Vec<CredentialID> = credentials
             .iter()
             .map(|cred| CredentialID::try_from(cred.credential_id.as_slice()).unwrap())
@@ -265,7 +281,7 @@ impl WebAuthnService {
         // Start authentication
         let (rcr, auth_state) = self.webauthn.start_passkey_authentication(&allow_credentials)?;
 
-        // Store challenge state
+        // Store challenge state in database
         let challenge_bytes = rcr.public_key.challenge.as_ref();
         let state_data = serde_json::to_vec(&auth_state)?;
         let expires_at = Utc::now() + Duration::minutes(5);
@@ -273,6 +289,10 @@ impl WebAuthnService {
         self.database
             .store_authentication_challenge(user.id, challenge_bytes, &state_data, expires_at)
             .await?;
+
+        // Store challenge-to-user mapping in session store
+        let challenge_str = rcr.public_key.challenge.to_string();
+        self.sessions.write().await.insert(challenge_str.clone(), (user.id, "authentication".to_string()));
 
         // Build allow credentials for response
         let allow_creds: Vec<ServerPublicKeyCredentialDescriptor> = credentials
@@ -321,24 +341,47 @@ impl WebAuthnService {
         // Validate assertion response structure
         assertion_response.validate_structure()?;
 
-        // Decode client data to get challenge
-        let client_data_bytes = Base64UrlSafeData::try_from(assertion_response.client_data_json.as_str())?;
-        let client_data: CollectedClientData = serde_json::from_slice(&client_data_bytes)?;
+        // Decode and validate client data
+        let client_data_bytes = Base64UrlSafeData::try_from(assertion_response.client_data_json.as_str())
+            .map_err(|_| AppError::InvalidFormat("clientDataJSON must be base64url encoded".to_string()))?;
+        
+        let client_data: CollectedClientData = serde_json::from_slice(&client_data_bytes)
+            .map_err(|_| AppError::InvalidFormat("Invalid clientDataJSON format".to_string()))?;
 
         // Validate client data type
         if client_data.type_ != "webauthn.get" {
             return Err(AppError::ValidationError(
-                "Invalid client data type for authentication".to_string(),
+                "clientDataJSON type must be 'webauthn.get'".to_string(),
             ));
         }
 
+        // Find user by challenge using our session store
+        let challenge_str = client_data.challenge.to_string();
+        let (user_id, session_type) = {
+            let sessions = self.sessions.read().await;
+            sessions.get(&challenge_str)
+                .cloned()
+                .ok_or(AppError::ChallengeExpired)?
+        };
+
+        if session_type != "authentication" {
+            return Err(AppError::ValidationError("Invalid challenge type".to_string()));
+        }
+
         // Find credential
-        let credential_id_bytes = Base64UrlSafeData::try_from(credential.id.as_str())?;
+        let credential_id_bytes = Base64UrlSafeData::try_from(credential.id.as_str())
+            .map_err(|_| AppError::InvalidFormat("Invalid credential ID format".to_string()))?;
+        
         let stored_credential = self
             .database
             .get_credential_by_id(&credential_id_bytes)
             .await?
             .ok_or(AppError::CredentialNotFound)?;
+
+        // Verify user matches
+        if stored_credential.user_id != user_id {
+            return Err(AppError::AuthenticationFailed);
+        }
 
         // Find authentication challenge and state
         let challenge_bytes = client_data.challenge.as_ref();
@@ -348,16 +391,21 @@ impl WebAuthnService {
             .await?
             .ok_or(AppError::ChallengeExpired)?;
 
-        let auth_state: PasskeyAuthentication = serde_json::from_slice(&challenge_record.state_data)?;
+        let auth_state: PasskeyAuthentication = serde_json::from_slice(&challenge_record.state_data)
+            .map_err(|_| AppError::InternalServerError)?;
 
         // Convert to webauthn-rs format
         let auth_credential = PublicKeyCredential {
             id: credential.id.clone(),
-            raw_id: Base64UrlSafeData::try_from(credential.id.as_str())?,
+            raw_id: Base64UrlSafeData::try_from(credential.id.as_str())
+                .map_err(|_| AppError::InvalidFormat("Invalid credential ID format".to_string()))?,
             response: webauthn_rs::prelude::AuthenticatorAssertionResponseRaw {
-                client_data_json: Base64UrlSafeData::try_from(assertion_response.client_data_json.as_str())?,
-                authenticator_data: Base64UrlSafeData::try_from(assertion_response.authenticator_data.as_str())?,
-                signature: Base64UrlSafeData::try_from(assertion_response.signature.as_str())?,
+                client_data_json: Base64UrlSafeData::try_from(assertion_response.client_data_json.as_str())
+                    .map_err(|_| AppError::InvalidFormat("Invalid clientDataJSON format".to_string()))?,
+                authenticator_data: Base64UrlSafeData::try_from(assertion_response.authenticator_data.as_str())
+                    .map_err(|_| AppError::InvalidFormat("Invalid authenticatorData format".to_string()))?,
+                signature: Base64UrlSafeData::try_from(assertion_response.signature.as_str())
+                    .map_err(|_| AppError::InvalidFormat("Invalid signature format".to_string()))?,
                 user_handle: assertion_response.user_handle.as_ref().map(|uh| {
                     Base64UrlSafeData::try_from(uh.as_str()).unwrap_or_default()
                 }),
@@ -365,44 +413,22 @@ impl WebAuthnService {
             type_: credential.type_.clone(),
         };
 
-        // Finish authentication
-        let auth_result = self.webauthn.finish_passkey_authentication(&auth_credential, &auth_state)?;
+        // Finish authentication with webauthn-rs - this performs all security validations
+        let auth_result = self.webauthn.finish_passkey_authentication(&auth_credential, &auth_state)
+            .map_err(|e| AppError::AuthenticationFailed)?;
 
         // Update credential sign count
         self.database
             .update_credential_sign_count(&credential_id_bytes, auth_result.counter())
             .await?;
 
-        // Clean up challenge
+        // Clean up challenge and session
         self.database
             .delete_authentication_challenge(stored_credential.user_id, challenge_bytes)
             .await?;
+        
+        self.sessions.write().await.remove(&challenge_str);
 
         Ok(ServerResponse::ok())
-    }
-
-    // Helper method to find registration challenge by client data
-    async fn find_registration_challenge_for_client_data(
-        &self,
-        client_data: &CollectedClientData,
-    ) -> Result<Option<(User, PasskeyRegistration)>> {
-        let challenge_bytes = client_data.challenge.as_ref();
-        
-        // Search through all recent registration challenges to find a match
-        // This is inefficient but required given the conformance test API design
-        
-        // We need to implement a brute force search since the finish_registration
-        // endpoint doesn't provide user context
-        
-        // For now, we'll implement a session-based approach using a simple in-memory store
-        // In production, you'd want a more sophisticated session management system
-        
-        // This implementation searches all active challenges
-        // and tries to deserialize the state data to find a match
-        
-        // Since we can't easily query across all users efficiently with our current schema,
-        // we'll implement a basic approach that works for the conformance tests
-        
-        Ok(None) // Simplified for now - this needs proper implementation
     }
 }
