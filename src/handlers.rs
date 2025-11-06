@@ -1,4 +1,4 @@
-use actix_web::{web, HttpResponse, Result as ActixResult};
+use actix_web::{web, HttpResponse, ResponseError, Result as ActixResult};
 
 use crate::api_types::*;
 use crate::webauthn_service::WebAuthnService;
