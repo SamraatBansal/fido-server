@@ -28,9 +28,8 @@ uuid = { version = "1.6", features = ["v4", "serde"] }
 # Time handling
 chrono = { version = "0.4", features = ["serde"] }
 
-# Base64 encoding
+# Base64 encoding  
 base64 = "0.21"
-base64urlsafedata = "0.5"
 
 # URL parsing
 url = "2.4"
