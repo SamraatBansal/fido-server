@@ -5,10 +5,10 @@ use crate::json_extractor_fixed::JsonExtractor;
 use actix_web::{web, HttpResponse};
 
 pub async fn start_registration(
-    request: web::Json<ServerPublicKeyCredentialCreationOptionsRequest>,
+    request: JsonExtractor<ServerPublicKeyCredentialCreationOptionsRequest>,
     service: web::Data<ConformanceWebAuthnService>,
 ) -> Result<HttpResponse> {
-    let response = service.start_registration(&request).await?;
+    let response = service.start_registration(&*request).await?;
     Ok(HttpResponse::Ok().json(response))
 }
 
