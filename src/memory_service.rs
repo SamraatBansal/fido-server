@@ -176,16 +176,17 @@ impl MemoryWebAuthnService {
         let stored_challenge = self.storage.get_challenge("registration")?
             .ok_or(AppError::ChallengeExpired)?;
 
-        // Deserialize stored user ID
-        let user_id: Uuid = serde_json::from_slice(&stored_challenge.challenge_data)?;
+        // Deserialize stored challenge context
+        let challenge_context: serde_json::Value = serde_json::from_slice(&stored_challenge.challenge_data)?;
+        let user_id: Uuid = serde_json::from_value(challenge_context["user_id"].clone())?;
+        let username = challenge_context["username"].as_str().unwrap_or("unknown");
+        let display_name = challenge_context["display_name"].as_str().unwrap_or("Unknown User");
 
         // Store or update user 
         let existing_user = self.storage.get_user_by_id(user_id)?;
         if existing_user.is_none() {
-            // Extract username and display name from the request flow
-            // In a real implementation, this would be stored during start_registration
-            // For now, we'll extract from the user_id that was stored
-            self.storage.store_user("johndoe@example.com", "John Doe")?;
+            // Create the user with the stored information
+            let _actual_user_id = self.storage.store_user(username, display_name)?;
         }
 
         // Store credential (simplified - would normally parse attestation object)
