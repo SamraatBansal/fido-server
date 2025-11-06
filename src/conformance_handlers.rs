@@ -29,10 +29,10 @@ pub async fn start_authentication(
 }
 
 pub async fn finish_authentication(
-    credential: web::Json<ServerPublicKeyCredential>,
+    credential: JsonExtractor<ServerPublicKeyCredential>,
     service: web::Data<ConformanceWebAuthnService>,
 ) -> Result<HttpResponse> {
-    let response = service.finish_authentication(&credential).await?;
+    let response = service.finish_authentication(&*credential).await?;
     Ok(HttpResponse::Ok().json(response))
 }
 
