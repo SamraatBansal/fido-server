@@ -619,7 +619,7 @@ impl ConformanceWebAuthnService {
         Err(AppError::MissingField("attestationObject.authData".to_string()))
     }
 
-    fn enforce_user_verification_if_required(&self, auth_data: &[u8], _username: &str) -> Result<()> {
+    fn enforce_user_verification_from_selection(&self, auth_data: &[u8], authenticator_selection: Option<&serde_json::Value>) -> Result<()> {
         if auth_data.len() < 33 {
             return Err(AppError::InvalidField("authData too short to check flags".to_string()));
         }
@@ -627,30 +627,18 @@ impl ConformanceWebAuthnService {
         let flags = auth_data[32];
         let user_verified = (flags & 0x04) != 0;
 
-        // For FIDO conformance test F-15: if userVerification was set to 'required' 
-        // and the UV flag in authData is false, we must reject the registration
-        // 
-        // This is a simplified check - in a real implementation, we would store
-        // the userVerification requirement from the original request and check it here
-        // For now, we'll implement a basic check that looks for patterns indicating
-        // the test expects UV to be enforced
-        
-        // The conformance test F-15 specifically tests this case:
-        // "Send ServerAuthenticatorAttestationResponse with authenticatorData.flags.uv set to false 
-        // when userVerification is set to 'required' and check that server returns an error"
-        
-        // We need to detect when UV is required and UV flag is false
-        // This would typically be done by storing the authenticatorSelection from the original request
-        // For conformance testing, we can implement a simple detection mechanism
-        
-        // If this is a test scenario where UV should be required but is false, reject it
-        if !user_verified {
-            // This could be a case where userVerification was required but not provided
-            // For strict FIDO conformance, we should reject this
-            // However, we need more context about the original request to be sure
-            
-            // For now, we'll be permissive unless we can detect it's a conformance test
-            // that specifically requires UV enforcement
+        // Check if userVerification was set to 'required' in the original request
+        if let Some(auth_sel) = authenticator_selection {
+            if let Some(auth_sel_obj) = auth_sel.as_object() {
+                if let Some(user_verification) = auth_sel_obj.get("userVerification") {
+                    if let Some(uv_str) = user_verification.as_str() {
+                        if uv_str == "required" && !user_verified {
+                            // FIDO conformance test F-15: reject if UV was required but not provided
+                            return Err(AppError::AuthenticationFailed);
+                        }
+                    }
+                }
+            }
         }
 
         Ok(())
