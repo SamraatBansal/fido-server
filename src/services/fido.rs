@@ -14,7 +14,7 @@ use crate::config::settings::WebAuthnSettings;
 use crate::db::{models::*, DbPool};
 use crate::dto::*;
 use crate::error::{AppError, Result};
-use crate::schema::{challenges, credentials, users};
+use crate::schema::challenges;
 use crate::services::UserService;
 
 /// Simple FIDO service for WebAuthn operations
