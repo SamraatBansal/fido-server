@@ -4,7 +4,7 @@ use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
 use chrono::{Duration, Utc};
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+
 use uuid::Uuid;
 use url::Url;
 use webauthn_rs::prelude::*;
