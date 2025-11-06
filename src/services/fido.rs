@@ -8,7 +8,7 @@ use std::collections::HashMap;
 use uuid::Uuid;
 use webauthn_rs::prelude::*;
 
-use crate::config::WebAuthnSettings;
+use crate::config::settings::WebAuthnSettings;
 use crate::db::{models::*, DbPool};
 use crate::dto::*;
 use crate::error::{AppError, Result};
