@@ -105,8 +105,9 @@ def test_registration_scenarios():
         client_data_json = json.dumps(client_data)
         client_data_b64 = base64.urlsafe_b64encode(client_data_json.encode()).decode().rstrip('=')
         
+        credential_id2 = base64.urlsafe_b64encode(b"test-credential-id-456").decode().rstrip('=')
         finish_req = {
-            "id": "test-credential-id-456",
+            "id": credential_id2,
             "type": "public-key",
             "response": {
                 "clientDataJSON": client_data_b64,
