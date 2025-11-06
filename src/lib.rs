@@ -8,7 +8,8 @@ pub mod db;
 pub mod error;
 pub mod middleware;
 pub mod routes;
-pub mod schema;\npub mod dto;
+pub mod schema;
+pub mod dto;
 pub mod services;
 pub mod utils;
 
