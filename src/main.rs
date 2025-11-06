@@ -27,13 +27,7 @@ use async_trait::async_trait;
 use error::WebAuthnError;
 use storage::{InMemoryStorage, Storage};
 use dto::common::ServerResponse;
-
-/// Application state containing WebAuthn instance and storage
-#[derive(Clone)]
-pub struct AppState {
-    pub webauthn: Arc<Webauthn>,
-    pub storage: Arc<dyn Storage>,
-}
+use handlers::AppState;
 
 /// Health check endpoint
 async fn health_check() -> ActixResult<HttpResponse> {
