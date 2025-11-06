@@ -267,7 +267,7 @@ pub async fn authentication_options(
 
 /// POST /assertion/result - Complete authentication process
 pub async fn authentication_result(
-    app_state: web::Data<AppState>,
+    _app_state: web::Data<AppState>,
     request: web::Json<AuthenticationResultRequest>,
     _http_req: HttpRequest,
 ) -> Result<HttpResponse, WebAuthnError> {
