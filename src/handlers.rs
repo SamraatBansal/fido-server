@@ -251,13 +251,6 @@ pub async fn authentication_options(
         &challenge_string,
         auth_state,
     ).await?;
-        .iter()
-        .map(|cred| ServerPublicKeyCredentialDescriptor {
-            credential_type: "public-key".to_string(),
-            id: base64url_encode(&cred.credential_id),
-            transports: None,
-        })
-        .collect();
 
     let response = ServerPublicKeyCredentialGetOptionsResponse {
         server_response: ServerResponse::ok(),
