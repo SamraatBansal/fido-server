@@ -1,0 +1,187 @@
+use actix_web::{HttpResponse, ResponseError};
+use chrono::{DateTime, Utc};
+use serde::Serialize;
+use thiserror::Error;
+
+#[derive(Debug, Error)]
+pub enum AppError {
+    #[error("Database error: {0}")]
+    DatabaseError(#[from] diesel::result::Error),
+    
+    #[error("WebAuthn error: {0}")]
+    WebAuthnError(String),
+    
+    #[error("Validation error: {0}")]
+    ValidationError(String),
+    
+    #[error("Challenge expired or invalid")]
+    ChallengeExpired,
+    
+    #[error("User not found")]
+    UserNotFound,
+    
+    #[error("Credential not found")]
+    CredentialNotFound,
+    
+    #[error("Authentication failed")]
+    AuthenticationFailed,
+    
+    #[error("Registration failed: {0}")]
+    RegistrationFailed(String),
+    
+    #[error("Invalid input: {0}")]
+    InvalidInput(String),
+    
+    #[error("Missing field: {0}")]
+    MissingField(String),
+    
+    #[error("Invalid format: {0}")]
+    InvalidFormat(String),
+    
+    #[error("Attestation verification failed: {0}")]
+    AttestationFailed(String),
+    
+    #[error("Internal server error")]
+    InternalServerError,
+    
+    #[error("Serialization error: {0}")]
+    SerializationError(#[from] serde_json::Error),
+    
+    #[error("Base64 decode error: {0}")]
+    Base64Error(#[from] base64::DecodeError),
+    
+    #[error("Invalid request: {0}")]
+    InvalidRequest(String),
+    
+    #[error("Invalid field: {0}")]
+    InvalidField(String),
+}
+
+#[derive(Debug, Serialize)]
+pub struct ErrorResponse {
+    pub status: String,
+    #[serde(rename = "errorMessage")]
+    pub error_message: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub timestamp: Option<DateTime<Utc>>,
+}
+
+impl ErrorResponse {
+    pub fn new(message: impl Into<String>) -> Self {
+        Self {
+            status: "failed".to_string(),
+            error_message: message.into(),
+            timestamp: Some(Utc::now()),
+        }
+    }
+}
+
+impl ResponseError for AppError {
+    fn error_response(&self) -> HttpResponse {
+        let (status_code, error_message) = match self {
+            Self::ValidationError(msg) => (
+                actix_web::http::StatusCode::BAD_REQUEST,
+                msg.clone()
+            ),
+            Self::InvalidInput(msg) => (
+                actix_web::http::StatusCode::BAD_REQUEST,
+                msg.clone()
+            ),
+            Self::MissingField(field) => (
+                actix_web::http::StatusCode::BAD_REQUEST,
+                format!("Missing required field: {}", field)
+            ),
+            Self::InvalidFormat(msg) => (
+                actix_web::http::StatusCode::BAD_REQUEST,
+                msg.clone()
+            ),
+            Self::ChallengeExpired => (
+                actix_web::http::StatusCode::BAD_REQUEST,
+                "Challenge has expired or is invalid".to_string()
+            ),
+            Self::UserNotFound => (
+                actix_web::http::StatusCode::NOT_FOUND,
+                "User not found".to_string()
+            ),
+            Self::CredentialNotFound => (
+                actix_web::http::StatusCode::NOT_FOUND,
+                "Credential not found".to_string()
+            ),
+            Self::AuthenticationFailed => (
+                actix_web::http::StatusCode::UNAUTHORIZED,
+                "Authentication failed".to_string()
+            ),
+            Self::RegistrationFailed(msg) => (
+                actix_web::http::StatusCode::BAD_REQUEST,
+                format!("Registration failed: {}", msg)
+            ),
+            Self::AttestationFailed(msg) => (
+                actix_web::http::StatusCode::BAD_REQUEST,
+                format!("Attestation verification failed: {}", msg)
+            ),
+            Self::WebAuthnError(err) => (
+                actix_web::http::StatusCode::BAD_REQUEST,
+                format!("WebAuthn error: {}", err)
+            ),
+            Self::DatabaseError(_) => (
+                actix_web::http::StatusCode::INTERNAL_SERVER_ERROR,
+                "Database error occurred".to_string()
+            ),
+            Self::InvalidRequest(msg) => (
+                actix_web::http::StatusCode::BAD_REQUEST,
+                msg.clone()
+            ),
+            Self::InvalidField(msg) => (
+                actix_web::http::StatusCode::BAD_REQUEST,
+                msg.clone()
+            ),
+            _ => (
+                actix_web::http::StatusCode::INTERNAL_SERVER_ERROR,
+                "Internal server error".to_string()
+            ),
+        };
+
+        HttpResponse::build(status_code).json(ErrorResponse::new(error_message))
+    }
+}
+
+pub type Result<T> = std::result::Result<T, AppError>;
+
+// Validation helper functions
+pub fn validate_string_not_empty(value: &str, field_name: &str) -> Result<()> {
+    if value.is_empty() {
+        return Err(AppError::MissingField(field_name.to_string()));
+    }
+    Ok(())
+}
+
+pub fn validate_credential_type(type_: &str) -> Result<()> {
+    if type_ != "public-key" {
+        return Err(AppError::InvalidField("type must be 'public-key'".to_string()));
+    }
+    Ok(())
+}
+
+pub fn validate_base64url(value: &str, field_name: &str) -> Result<Vec<u8>> {
+    if value.is_empty() {
+        return Err(AppError::MissingField(field_name.to_string()));
+    }
+    
+    // Check for valid base64url characters
+    if !value.chars().all(|c| matches!(c, 'A'..='Z' | 'a'..='z' | '0'..='9' | '-' | '_')) {
+        return Err(AppError::InvalidField(format!("{} is not valid base64url", field_name)));
+    }
+    
+    base64::prelude::BASE64_URL_SAFE_NO_PAD.decode(value)
+        .map_err(|_| AppError::InvalidField(format!("{} is not valid base64url", field_name)))
+}
+
+pub fn validate_challenge_length(challenge: &[u8]) -> Result<()> {
+    if challenge.len() < 16 {
+        return Err(AppError::InvalidField("Challenge too short (minimum 16 bytes)".to_string()));
+    }
+    if challenge.len() > 64 {
+        return Err(AppError::InvalidField("Challenge too long (maximum 64 bytes)".to_string()));
+    }
+    Ok(())
+}
