@@ -229,17 +229,23 @@ impl WebAuthnService {
             .decode(&attestation_response.attestation_object)
             .map_err(|_| AppError::InvalidFormat("Invalid attestationObject format".to_string()))?;
 
-        let reg_credential = RegisterPublicKeyCredential {
-            id: credential.id.clone(),
-            raw_id: credential_id_bytes.into(),
-            response: AuthenticatorAttestationResponseRaw {
-                client_data_json: client_data_json_bytes.into(),
-                attestation_object: attestation_object_bytes.into(),
-                transports: None,
+        // For now, let's create a simplified credential structure
+        // This is a workaround until we get the exact types right
+        let raw_id_b64 = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(&credential_id_bytes);
+        
+        // Use serde_json to construct the credential format expected by webauthn-rs
+        let reg_credential_json = serde_json::json!({
+            "id": credential.id,
+            "rawId": raw_id_b64,
+            "response": {
+                "clientDataJSON": attestation_response.client_data_json,
+                "attestationObject": attestation_response.attestation_object
             },
-            type_: credential.type_.clone(),
-            extensions: Default::default(),
-        };
+            "type": credential.type_
+        });
+        
+        let reg_credential: RegisterPublicKeyCredential = serde_json::from_value(reg_credential_json)
+            .map_err(|_| AppError::InvalidFormat("Failed to parse credential".to_string()))?;
 
         // Finish registration with webauthn-rs - this will perform all security validations
         let passkey = self.webauthn.finish_passkey_registration(&reg_credential, &reg_state)
