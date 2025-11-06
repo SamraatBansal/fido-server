@@ -82,9 +82,11 @@ impl WebAuthnService {
         let user_name = request.username.clone();
         let user_display_name = request.display_name.clone();
 
-        let webauthn_user = PasskeyRegistration::new(user_unique_id)
-            .username(user_name.clone())
-            .display_name(user_display_name.clone());
+        let webauthn_user = CreationChallengeResponseBuilder::new(
+            user_unique_id.as_bytes(),
+            user_name.clone(),
+            user_display_name.clone(),
+        );
 
         // Start registration
         let (ccr, reg_state) = self
