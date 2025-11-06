@@ -1,7 +1,10 @@
 //! Custom error types for the FIDO server
 
 use actix_web::{error::ResponseError, http::StatusCode, HttpResponse};
+use serde_json::json;
 use std::fmt;
+
+use crate::dto::ServerResponse;
 
 /// Application result type
 pub type Result<T> = std::result::Result<T, AppError>;
@@ -39,12 +42,9 @@ impl fmt::Display for AppError {
 impl ResponseError for AppError {
     fn error_response(&self) -> HttpResponse {
         let status_code = self.status_code();
-        let error_message = self.to_string();
+        let server_response = ServerResponse::failed(&self.to_string());
 
-        HttpResponse::build(status_code).json(serde_json::json!({
-            "error": error_message,
-            "status": status_code.as_u16()
-        }))
+        HttpResponse::build(status_code).json(server_response)
     }
 
     fn status_code(&self) -> StatusCode {
