@@ -49,74 +49,85 @@ impl DatabaseService {
     }
 
     pub async fn get_user_by_username(&self, username: &str) -> Result<Option<User>> {
-        let mut conn = self.pool.get().await?;
+        let conn = self.pool.get().await?;
+        let username = username.to_string();
         
-        let user = users::table
-            .filter(users::username.eq(username))
-            .first::<User>(&mut conn)
-            .await
-            .optional()?;
+        let user = conn.interact(move |conn| {
+            users::table
+                .filter(users::username.eq(username))
+                .first::<User>(conn)
+                .optional()
+        }).await??;
 
         Ok(user)
     }
 
     pub async fn get_user_by_id(&self, user_id: Uuid) -> Result<Option<User>> {
-        let mut conn = self.pool.get().await?;
+        let conn = self.pool.get().await?;
         
-        let user = users::table
-            .find(user_id)
-            .first::<User>(&mut conn)
-            .await
-            .optional()?;
+        let user = conn.interact(move |conn| {
+            users::table
+                .find(user_id)
+                .first::<User>(conn)
+                .optional()
+        }).await??;
 
         Ok(user)
     }
 
     // Credential operations
     pub async fn store_credential(&self, new_credential: NewCredential) -> Result<Credential> {
-        let mut conn = self.pool.get().await?;
+        let conn = self.pool.get().await?;
         
-        let credential = diesel::insert_into(credentials::table)
-            .values(&new_credential)
-            .get_result::<Credential>(&mut conn)
-            .await?;
+        let credential = conn.interact(move |conn| {
+            diesel::insert_into(credentials::table)
+                .values(&new_credential)
+                .get_result::<Credential>(conn)
+        }).await??;
 
         Ok(credential)
     }
 
     pub async fn get_credentials_for_user(&self, user_id: Uuid) -> Result<Vec<Credential>> {
-        let mut conn = self.pool.get().await?;
+        let conn = self.pool.get().await?;
         
-        let credentials = credentials::table
-            .filter(credentials::user_id.eq(user_id))
-            .load::<Credential>(&mut conn)
-            .await?;
+        let credentials = conn.interact(move |conn| {
+            credentials::table
+                .filter(credentials::user_id.eq(user_id))
+                .load::<Credential>(conn)
+        }).await??;
 
         Ok(credentials)
     }
 
     pub async fn get_credential_by_id(&self, credential_id: &[u8]) -> Result<Option<Credential>> {
-        let mut conn = self.pool.get().await?;
+        let conn = self.pool.get().await?;
+        let credential_id = credential_id.to_vec();
         
-        let credential = credentials::table
-            .filter(credentials::credential_id.eq(credential_id))
-            .first::<Credential>(&mut conn)
-            .await
-            .optional()?;
+        let credential = conn.interact(move |conn| {
+            credentials::table
+                .filter(credentials::credential_id.eq(credential_id))
+                .first::<Credential>(conn)
+                .optional()
+        }).await??;
 
         Ok(credential)
     }
 
     pub async fn update_credential_sign_count(&self, credential_id: &[u8], new_count: u32) -> Result<()> {
-        let mut conn = self.pool.get().await?;
+        let conn = self.pool.get().await?;
+        let credential_id = credential_id.to_vec();
+        let count = new_count as i64;
+        let now = Utc::now();
         
-        diesel::update(credentials::table.filter(credentials::credential_id.eq(credential_id)))
-            .set((
-                credentials::sign_count.eq(new_count as i64),
-                credentials::last_used.eq(Some(Utc::now())),
-            ))
-            .execute(&mut conn)
-            .await?;
+        conn.interact(move |conn| {
+            diesel::update(credentials::table.filter(credentials::credential_id.eq(credential_id)))
+                .set((
+                    credentials::sign_count.eq(count),
+                    credentials::last_used.eq(Some(now)),
+                ))
+                .execute(conn)
+        }).await??;
 
         Ok(())
     }
@@ -129,10 +140,7 @@ impl DatabaseService {
         state_data: &[u8],
         expires_at: DateTime<Utc>,
     ) -> Result<RegistrationChallenge> {
-        let mut conn = self.pool.get().await?;
-        
-        // Clean up expired challenges first
-        self.cleanup_expired_registration_challenges().await?;
+        let conn = self.pool.get().await?;
         
         let new_challenge = NewRegistrationChallenge {
             user_id,
@@ -141,10 +149,11 @@ impl DatabaseService {
             expires_at,
         };
 
-        let challenge = diesel::insert_into(registration_challenges::table)
-            .values(&new_challenge)
-            .get_result::<RegistrationChallenge>(&mut conn)
-            .await?;
+        let challenge = conn.interact(move |conn| {
+            diesel::insert_into(registration_challenges::table)
+                .values(&new_challenge)
+                .get_result::<RegistrationChallenge>(conn)
+        }).await??;
 
         Ok(challenge)
     }
@@ -154,35 +163,39 @@ impl DatabaseService {
         user_id: Uuid,
         challenge: &[u8],
     ) -> Result<Option<RegistrationChallenge>> {
-        let mut conn = self.pool.get().await?;
-        
+        let conn = self.pool.get().await?;
+        let challenge = challenge.to_vec();
         let now = Utc::now();
-        let challenge_record = registration_challenges::table
-            .filter(
-                registration_challenges::user_id
-                    .eq(user_id)
-                    .and(registration_challenges::challenge.eq(challenge))
-                    .and(registration_challenges::expires_at.gt(now)),
-            )
-            .first::<RegistrationChallenge>(&mut conn)
-            .await
-            .optional()?;
+        
+        let challenge_record = conn.interact(move |conn| {
+            registration_challenges::table
+                .filter(
+                    registration_challenges::user_id
+                        .eq(user_id)
+                        .and(registration_challenges::challenge.eq(challenge))
+                        .and(registration_challenges::expires_at.gt(now)),
+                )
+                .first::<RegistrationChallenge>(conn)
+                .optional()
+        }).await??;
 
         Ok(challenge_record)
     }
 
     pub async fn delete_registration_challenge(&self, user_id: Uuid, challenge: &[u8]) -> Result<()> {
-        let mut conn = self.pool.get().await?;
+        let conn = self.pool.get().await?;
+        let challenge = challenge.to_vec();
         
-        diesel::delete(
-            registration_challenges::table.filter(
-                registration_challenges::user_id
-                    .eq(user_id)
-                    .and(registration_challenges::challenge.eq(challenge)),
-            ),
-        )
-        .execute(&mut conn)
-        .await?;
+        conn.interact(move |conn| {
+            diesel::delete(
+                registration_challenges::table.filter(
+                    registration_challenges::user_id
+                        .eq(user_id)
+                        .and(registration_challenges::challenge.eq(challenge)),
+                ),
+            )
+            .execute(conn)
+        }).await??;
 
         Ok(())
     }
@@ -195,10 +208,7 @@ impl DatabaseService {
         state_data: &[u8],
         expires_at: DateTime<Utc>,
     ) -> Result<AuthenticationChallenge> {
-        let mut conn = self.pool.get().await?;
-        
-        // Clean up expired challenges first
-        self.cleanup_expired_authentication_challenges().await?;
+        let conn = self.pool.get().await?;
         
         let new_challenge = NewAuthenticationChallenge {
             user_id,
@@ -207,10 +217,11 @@ impl DatabaseService {
             expires_at,
         };
 
-        let challenge = diesel::insert_into(authentication_challenges::table)
-            .values(&new_challenge)
-            .get_result::<AuthenticationChallenge>(&mut conn)
-            .await?;
+        let challenge = conn.interact(move |conn| {
+            diesel::insert_into(authentication_challenges::table)
+                .values(&new_challenge)
+                .get_result::<AuthenticationChallenge>(conn)
+        }).await??;
 
         Ok(challenge)
     }
@@ -220,62 +231,68 @@ impl DatabaseService {
         user_id: Uuid,
         challenge: &[u8],
     ) -> Result<Option<AuthenticationChallenge>> {
-        let mut conn = self.pool.get().await?;
-        
+        let conn = self.pool.get().await?;
+        let challenge = challenge.to_vec();
         let now = Utc::now();
-        let challenge_record = authentication_challenges::table
-            .filter(
-                authentication_challenges::user_id
-                    .eq(user_id)
-                    .and(authentication_challenges::challenge.eq(challenge))
-                    .and(authentication_challenges::expires_at.gt(now)),
-            )
-            .first::<AuthenticationChallenge>(&mut conn)
-            .await
-            .optional()?;
+        
+        let challenge_record = conn.interact(move |conn| {
+            authentication_challenges::table
+                .filter(
+                    authentication_challenges::user_id
+                        .eq(user_id)
+                        .and(authentication_challenges::challenge.eq(challenge))
+                        .and(authentication_challenges::expires_at.gt(now)),
+                )
+                .first::<AuthenticationChallenge>(conn)
+                .optional()
+        }).await??;
 
         Ok(challenge_record)
     }
 
     pub async fn delete_authentication_challenge(&self, user_id: Uuid, challenge: &[u8]) -> Result<()> {
-        let mut conn = self.pool.get().await?;
+        let conn = self.pool.get().await?;
+        let challenge = challenge.to_vec();
         
-        diesel::delete(
-            authentication_challenges::table.filter(
-                authentication_challenges::user_id
-                    .eq(user_id)
-                    .and(authentication_challenges::challenge.eq(challenge)),
-            ),
-        )
-        .execute(&mut conn)
-        .await?;
+        conn.interact(move |conn| {
+            diesel::delete(
+                authentication_challenges::table.filter(
+                    authentication_challenges::user_id
+                        .eq(user_id)
+                        .and(authentication_challenges::challenge.eq(challenge)),
+                ),
+            )
+            .execute(conn)
+        }).await??;
 
         Ok(())
     }
 
     // Cleanup operations
     pub async fn cleanup_expired_registration_challenges(&self) -> Result<()> {
-        let mut conn = self.pool.get().await?;
-        
+        let conn = self.pool.get().await?;
         let now = Utc::now();
-        diesel::delete(
-            registration_challenges::table.filter(registration_challenges::expires_at.lt(now)),
-        )
-        .execute(&mut conn)
-        .await?;
+        
+        conn.interact(move |conn| {
+            diesel::delete(
+                registration_challenges::table.filter(registration_challenges::expires_at.lt(now)),
+            )
+            .execute(conn)
+        }).await??;
 
         Ok(())
     }
 
     pub async fn cleanup_expired_authentication_challenges(&self) -> Result<()> {
-        let mut conn = self.pool.get().await?;
-        
+        let conn = self.pool.get().await?;
         let now = Utc::now();
-        diesel::delete(
-            authentication_challenges::table.filter(authentication_challenges::expires_at.lt(now)),
-        )
-        .execute(&mut conn)
-        .await?;
+        
+        conn.interact(move |conn| {
+            diesel::delete(
+                authentication_challenges::table.filter(authentication_challenges::expires_at.lt(now)),
+            )
+            .execute(conn)
+        }).await??;
 
         Ok(())
     }
