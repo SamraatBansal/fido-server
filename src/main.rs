@@ -1,38 +1,118 @@
-//! FIDO Server Main Entry Point
+use axum::{
+    response::{IntoResponse, Json},
+    routing::post,
+    Router,
+};
+use chrono::Utc;
+use std::sync::Arc;
+use tokio::signal;
+use tower_http::cors::CorsLayer;
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-use actix_cors::Cors;
-use actix_web::{middleware::Logger, App, HttpServer};
-use std::io;
+mod config;
+mod error;
+mod handlers;
+mod models;
+mod services;
+mod storage;
 
-#[actix_web::main]
-async fn main() -> io::Result<()> {
-    // Initialize logger
-    env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
+use config::AppConfig;
+use error::AppResult;
+use handlers::{attestation, assertion};
+use services::{challenge::ChallengeService, credential::CredentialService, user::UserService, webauthn::WebAuthnService};
+use storage::memory::MemoryStorage;
 
-    log::info!("Starting FIDO Server...");
+#[derive(Clone)]
+pub struct AppState {
+    pub webauthn_service: Arc<WebAuthnService>,
+    pub user_service: Arc<UserService>,
+    pub credential_service: Arc<CredentialService>,
+    pub challenge_service: Arc<ChallengeService>,
+}
 
-    // TODO: Load configuration from config file
-    let host = "127.0.0.1";
-    let port = 8080;
+async fn health_check() -> impl IntoResponse {
+    Json(serde_json::json!({
+        "status": "ok",
+        "timestamp": Utc::now().to_rfc3339()
+    }))
+}
 
-    // TODO: Initialize database connection pool
+#[tokio::main]
+async fn main() -> AppResult<()> {
+    // Initialize tracing
+    tracing_subscriber::registry()
+        .with(
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| "fido2_minimal=debug,tower_http=debug,webauthn_rs=debug".into()),
+        )
+        .with(tracing_subscriber::fmt::layer())
+        .init();
 
-    log::info!("Server running at http://{}:{}", host, port);
+    // Load configuration
+    let config = AppConfig::load()?;
+    tracing::info!("Starting FIDO2 WebAuthn Relying Party server on port {}", config.server.port);
 
-    HttpServer::new(move || {
-        // Configure CORS
-        let cors = Cors::default()
-            .allow_any_origin()
-            .allow_any_method()
-            .allow_any_header()
-            .max_age(3600);
+    // Initialize storage (using in-memory for now, can be swapped for PostgreSQL)
+    let storage = Arc::new(MemoryStorage::new());
 
-        App::new()
-            .wrap(Logger::default())
-            .wrap(cors)
-            .configure(fido_server::routes::api::configure)
-    })
-    .bind((host, port))?
-    .run()
-    .await
+    // Initialize services
+    let webauthn_service = Arc::new(WebAuthnService::new(&config)?);
+    let user_service = Arc::new(UserService::new(storage.clone()));
+    let credential_service = Arc::new(CredentialService::new(storage.clone()));
+    let challenge_service = Arc::new(ChallengeService::new(storage.clone()));
+
+    let app_state = AppState {
+        webauthn_service,
+        user_service,
+        credential_service,
+        challenge_service,
+    };
+
+    // Build application
+    let app = Router::new()
+        .route("/health", axum::routing::get(health_check))
+        .route("/attestation/options", post(attestation::options))
+        .route("/attestation/result", post(attestation::result))
+        .route("/assertion/options", post(assertion::options))
+        .route("/assertion/result", post(assertion::result))
+        .layer(CorsLayer::permissive())
+        .with_state(app_state);
+
+    // Start server
+    let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", config.server.port))
+        .await?;
+    
+    tracing::info!("Server listening on http://0.0.0.0:{}", config.server.port);
+    
+    axum::serve(listener, app)
+        .with_graceful_shutdown(shutdown_signal())
+        .await?;
+
+    Ok(())
+}
+
+async fn shutdown_signal() {
+    let ctrl_c = async {
+        signal::ctrl_c()
+            .await
+            .expect("failed to install Ctrl+C handler");
+    };
+
+    #[cfg(unix)]
+    let terminate = async {
+        signal::unix::signal(signal::unix::SignalKind::terminate())
+            .expect("failed to install signal handler")
+            .recv()
+            .await;
+    };
+
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
+
+    tokio::select! {
+        _ = ctrl_c => {},
+        _ = terminate => {},
+    }
+
+    tracing::info!("Shutdown signal received");
 }
