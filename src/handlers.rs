@@ -82,7 +82,7 @@ pub async fn finish_registration(
     if credential.id.is_empty() {
         return Err(AppError::MissingField("id".to_string()));
     }
-    if let Err(_) = base64::decode_config(&credential.id, base64::URL_SAFE_NO_PAD) {
+    if let Err(_) = BASE64_URL_SAFE_NO_PAD.decode(&credential.id) {
         return Err(AppError::InvalidField("id is not valid base64url".to_string()));
     }
 
@@ -165,7 +165,7 @@ pub async fn finish_authentication(
     if credential.id.is_empty() {
         return Err(AppError::MissingField("id".to_string()));
     }
-    if let Err(_) = base64::decode_config(&credential.id, base64::URL_SAFE_NO_PAD) {
+    if let Err(_) = BASE64_URL_SAFE_NO_PAD.decode(&credential.id) {
         return Err(AppError::InvalidField("id is not valid base64url".to_string()));
     }
 
