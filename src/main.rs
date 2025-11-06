@@ -22,6 +22,8 @@ mod handlers;
 mod dto;
 mod utils;
 
+use async_trait::async_trait;
+
 use error::WebAuthnError;
 use storage::{InMemoryStorage, Storage};
 use dto::common::ServerResponse;
