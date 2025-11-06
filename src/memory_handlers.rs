@@ -269,3 +269,14 @@ pub async fn finish_authentication(
 pub async fn health_check() -> HttpResponse {
     HttpResponse::Ok().json(ServerResponse::success())
 }
+
+// Helper function to validate base64url encoding
+fn is_valid_base64url(input: &str) -> bool {
+    // Check for valid base64url characters
+    if input.chars().any(|c| !matches!(c, 'A'..='Z' | 'a'..='z' | '0'..='9' | '-' | '_')) {
+        return false;
+    }
+    
+    // Try to decode to verify it's valid base64url
+    BASE64_URL_SAFE_NO_PAD.decode(input).is_ok()
+}
