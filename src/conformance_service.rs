@@ -204,6 +204,21 @@ impl ConformanceWebAuthnService {
         // Validate attestation object CBOR structure
         self.validate_attestation_object_cbor(&attestation_object)?;
 
+        // Extract and validate authenticator data for user verification
+        let auth_data = self.extract_auth_data_from_attestation_object(&attestation_object)?;
+        
+        // Check user verification requirement based on authenticatorSelection
+        if let Some(stored_challenge) = self.storage.get_challenge("registration")? {
+            let challenge_context: serde_json::Value = serde_json::from_slice(&stored_challenge.challenge_data)?;
+            
+            // Get the original request parameters to check user verification requirements
+            let original_username = challenge_context["username"].as_str().unwrap_or("");
+            
+            // For FIDO conformance test F-15, we need to check if userVerification was required
+            // and enforce it by checking the UV flag in authData
+            self.enforce_user_verification_if_required(&auth_data, original_username)?;
+        }
+
         // Get challenge from client data and verify
         let challenge_b64 = client_data
             .get("challenge")
