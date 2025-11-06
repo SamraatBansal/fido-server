@@ -13,7 +13,6 @@ pub use api::*;
 pub use database::*;
 pub use error::*;
 pub use handlers::*;
-pub use memory_handlers;
 pub use memory_service::*;
 pub use memory_storage::*;
 pub use models::*;
