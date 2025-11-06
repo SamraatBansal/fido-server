@@ -915,7 +915,7 @@ impl ConformanceWebAuthnService {
                     // For most cases, allow self-attestation without x5c
                     // Only enforce x5c requirement for specific full attestation test scenarios
                     if let Some(attestation_type) = challenge_context.get("attestation") {
-                        if let Some(att_str) = attestation_type.as_str() {
+                        if let Some(_att_str) = attestation_type.as_str() {
                             // Allow both FULL and SELF attestation without x5c by default
                             // This enables P-1 test (SELF attestation) to pass
                             // F-3 test should be handled by specific test markers above
