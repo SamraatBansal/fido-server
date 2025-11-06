@@ -56,7 +56,7 @@ impl AppConfig {
 }
 
 impl WebAuthnConfig {
-    pub fn build_webauthn(&self) -> Result<Webauthn, WebauthnError> {
+    pub fn build_webauthn(&self) -> Result<Webauthn, webauthn_rs::WebauthnError> {
         let rp_origin = Url::parse(&self.rp_origin)
             .map_err(|e| WebauthnError::Configuration(format!("Invalid RP origin: {}", e)))?;
         
