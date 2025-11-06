@@ -116,8 +116,8 @@ fn test_registration_options_basic_skip() {
     println!("  - Username: {}", body.user.name);
 }
 
-#[actix_web::test] 
-async fn test_data_structures() {
+#[test] 
+fn test_data_structures() {
     // Test that our data structures can be serialized/deserialized properly
     let request = ServerPublicKeyCredentialCreationOptionsRequest {
         username: "test@example.com".to_string(),
