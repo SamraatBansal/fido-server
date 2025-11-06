@@ -19,3 +19,5 @@ pub use memory_service::*;
 pub use memory_storage::*;
 pub use models::*;
 pub use service::*;
+pub use webauthn_service::*;
+pub use webauthn_handlers::*;
