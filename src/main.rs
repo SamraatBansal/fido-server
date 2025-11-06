@@ -20,7 +20,13 @@ async fn main() -> std::io::Result<()> {
     dotenv::dotenv().ok();
 
     // Establish database connection
-    let db_pool = Arc::new(establish_connection_pool());
+    let db_pool = Arc::new(match establish_connection_pool() {
+        Ok(pool) => pool,
+        Err(e) => {
+            tracing::error!("Failed to establish database connection: {}", e);
+            std::process::exit(1);
+        }
+    });
     
     // Run migrations
     if let Err(e) = run_migrations(&db_pool) {
