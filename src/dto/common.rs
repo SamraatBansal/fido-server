@@ -1,7 +1,7 @@
 //! Common DTO types
 
 use serde::{Deserialize, Serialize};
-use webauthn_rs::prelude::*;
+use webauthn_rs_proto::AuthenticatorTransport;
 
 /// Standard server response format
 #[derive(Debug, Serialize, Deserialize)]
