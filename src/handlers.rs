@@ -358,13 +358,20 @@ pub async fn authentication_result(
 ) -> Result<HttpResponse, WebAuthnError> {
     log::info!("Authentication result received for credential: {}", request.credential.id);
 
-    // Validate basic credential structure
-    if request.credential.credential_type != "public-key" {
-        return Err(WebAuthnError::Validation("Invalid credential type".to_string()));
+    // Comprehensive validation for FIDO conformance
+
+    // Validate credential ID
+    if request.credential.id.is_empty() {
+        return Err(WebAuthnError::Validation("Missing or empty credential id field".to_string()));
     }
 
-    if request.credential.id.is_empty() {
-        return Err(WebAuthnError::Validation("Credential ID cannot be empty".to_string()));
+    if let Err(_) = crate::utils::validate_base64url(&request.credential.id) {
+        return Err(WebAuthnError::Validation("Invalid base64url encoding for credential id".to_string()));
+    }
+
+    // Validate credential type
+    if request.credential.credential_type != "public-key" {
+        return Err(WebAuthnError::Validation("Invalid credential type, must be 'public-key'".to_string()));
     }
 
     // Extract assertion response
