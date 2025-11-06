@@ -3,7 +3,6 @@
 use serde::{Deserialize, Serialize};
 use webauthn_rs_proto::{
     AttestationConveyancePreference, AuthenticatorSelectionCriteria,
-    PublicKeyCredentialParameters, PublicKeyCredentialRpEntity,
 };
 use super::common::*;
 
