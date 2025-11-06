@@ -909,9 +909,9 @@ impl ConformanceWebAuthnService {
         if has_x5c {
             let certs = x5c_certs.unwrap();
             
-            // For F-3 test: Check if x5c is missing when it should be present
+            // For F-5 test: Check if x5c is empty when it should contain certificates
             if certs.is_empty() {
-                return Err(AppError::MissingField("attestationObject.attStmt.x5c".to_string()));
+                return Err(AppError::InvalidField("attestationObject.attStmt.x5c cannot be empty".to_string()));
             }
             
             self.validate_x5c_certificate_chain(&certs, &alg_value, &sig_bytes)?;
