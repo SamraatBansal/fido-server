@@ -34,8 +34,8 @@ pub fn base64url_decode(data: &str) -> Result<Vec<u8>, WebAuthnError> {
 
 /// Decode base64url string to Base64UrlSafeData for webauthn-rs
 pub fn base64url_decode_safe(data: &str) -> Result<Base64UrlSafeData, WebAuthnError> {
-    Base64UrlSafeData::from_string(data)
-        .map_err(|e| WebAuthnError::InvalidInput(format!("Invalid base64url: {}", e)))
+    let bytes = base64url_decode(data)?;
+    Ok(Base64UrlSafeData::from(bytes))
 }
 
 /// Validate that a string is properly base64url encoded
