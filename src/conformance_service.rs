@@ -731,8 +731,10 @@ impl ConformanceWebAuthnService {
                             match serde_cbor::to_vec(&cbor_value) {
                                 Ok(re_encoded) => {
                                     if re_encoded.len() != remaining_data.len() {
-                                        // For conformance, log warning but don't fail
-                                        tracing::warn!("authData contains extra bytes after credential public key (expected {} bytes, got {})", re_encoded.len(), remaining_data.len());
+                                        // FIDO F-12: AttestationData contains leftover bytes - must fail
+                                        return Err(AppError::InvalidField(
+                                            "attestationObject.authData contains leftover bytes after credential public key".to_string()
+                                        ));
                                     }
                                 },
                                 Err(_) => {
