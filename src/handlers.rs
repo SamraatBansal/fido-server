@@ -224,14 +224,14 @@ pub async fn authentication_options(
         return Err(WebAuthnError::CredentialNotFound);
     }
 
-    // Convert credentials to passkey references
-    let passkeys: Vec<&Passkey> = credentials
-        .iter()
-        .map(|cred| &cred.passkey)
+    // Convert credentials to passkeys
+    let passkeys: Vec<Passkey> = credentials
+        .into_iter()
+        .map(|cred| cred.passkey)
         .collect();
 
     // Start authentication with webauthn-rs
-    let (rcr, auth_state) = app_state.webauthn.start_passkey_authentication(passkeys.as_slice())?;
+    let (rcr, auth_state) = app_state.webauthn.start_passkey_authentication(&passkeys)?;
 
     // Store the authentication challenge
     let challenge_string = base64url_encode(&rcr.public_key.challenge);
