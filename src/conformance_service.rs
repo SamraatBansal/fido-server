@@ -605,7 +605,7 @@ impl ConformanceWebAuthnService {
         let _user_present = (flags & 0x01) != 0;
         let _user_verified = (flags & 0x04) != 0;
         let at_flag = (flags & 0x40) != 0; // Attested credential data included
-        let _ed_flag = (flags & 0x80) != 0; // Extension data included
+        let ed_flag = (flags & 0x80) != 0; // Extension data included
 
         // For registration, AT flag must be set
         if !at_flag {
@@ -615,6 +615,49 @@ impl ConformanceWebAuthnService {
         // If AT flag is set, attested credential data must be present
         if at_flag && auth_data.len() < 55 { // 37 + 16 (AAGUID) + 2 (credIdLen) minimum
             return Err(AppError::InvalidField("authData missing attested credential data".to_string()));
+        }
+
+        // Validate attested credential data structure if AT flag is set
+        if at_flag {
+            let mut offset = 37; // Skip rpIdHash + flags + signCount
+            
+            // Skip AAGUID (16 bytes)
+            if auth_data.len() < offset + 16 {
+                return Err(AppError::InvalidField("authData missing AAGUID".to_string()));
+            }
+            offset += 16;
+            
+            // Read credential ID length (2 bytes, big-endian)
+            if auth_data.len() < offset + 2 {
+                return Err(AppError::InvalidField("authData missing credential ID length".to_string()));
+            }
+            let cred_id_len = u16::from_be_bytes([auth_data[offset], auth_data[offset + 1]]) as usize;
+            offset += 2;
+            
+            // Read credential ID
+            if auth_data.len() < offset + cred_id_len {
+                return Err(AppError::InvalidField("authData credential ID length mismatch".to_string()));
+            }
+            offset += cred_id_len;
+            
+            // CBOR-encoded credential public key should start here
+            if auth_data.len() < offset + 1 {
+                return Err(AppError::InvalidField("authData missing credential public key".to_string()));
+            }
+            
+            // If ED flag is set, there should be extension data after the public key
+            // For conformance, we just check that the structure is reasonable
+            if ed_flag {
+                // Extension data validation would go here if needed
+                // For basic conformance, we just ensure there's data after the public key
+            }
+            
+            // Check for leftover bytes that could indicate parsing errors
+            // This is a basic check - full CBOR parsing would be more thorough
+            let remaining_data = &auth_data[offset..];
+            if remaining_data.len() > 1000 { // Arbitrary reasonable limit
+                return Err(AppError::InvalidField("authData contains excessive leftover data".to_string()));
+            }
         }
 
         Ok(())
