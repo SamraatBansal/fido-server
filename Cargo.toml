@@ -58,6 +58,7 @@ anyhow = "1.0"
 
 # Time
 chrono = { version = "0.4", features = ["serde"] }
+url = "2.5"
 
 [dev-dependencies]
 actix-test = "0.1"
