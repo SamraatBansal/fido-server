@@ -41,6 +41,7 @@ async-trait = "0.1"
 
 # Cryptography
 base64 = "0.22"
+base64urlsafedata = "0.5"
 uuid = { version = "1.10", features = ["v4", "serde"] }
 rand = "0.8"
 sha2 = "0.10"
