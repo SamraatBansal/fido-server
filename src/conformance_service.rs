@@ -581,7 +581,19 @@ impl ConformanceWebAuthnService {
                 if let Some(att_stmt) = att_stmt_value {
                     self.validate_packed_attestation_statement(&att_stmt)?;
                 }
-            } else if fmt != "none" && fmt != "fido-u2f" {
+            } else if fmt == "none" {
+                // For "none" attestation, attStmt should be empty
+                if let Some(att_stmt) = att_stmt_value {
+                    if !att_stmt.is_empty() {
+                        return Err(AppError::InvalidField("attestationObject.attStmt must be empty for 'none' format".to_string()));
+                    }
+                }
+            } else if fmt == "fido-u2f" {
+                // Basic validation for fido-u2f format
+                if let Some(att_stmt) = att_stmt_value {
+                    self.validate_fido_u2f_attestation_statement(&att_stmt)?;
+                }
+            } else {
                 // Unknown attestation format should fail
                 return Err(AppError::InvalidField(format!("Unknown attestation format: {}", fmt)));
             }
