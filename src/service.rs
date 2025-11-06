@@ -72,7 +72,7 @@ impl WebAuthnService {
             .iter()
             .map(|cred| ServerPublicKeyCredentialDescriptor {
                 type_: "public-key".to_string(),
-                id: base64::encode_config(&cred.credential_id, base64::URL_SAFE_NO_PAD),
+                id: BASE64_URL_SAFE_NO_PAD.encode(&cred.credential_id),
                 transports: cred.transports.as_ref().and_then(|t| serde_json::from_str(t).ok()),
             })
             .collect();
@@ -82,19 +82,19 @@ impl WebAuthnService {
         let user_name = request.username.clone();
         let user_display_name = request.display_name.clone();
 
-        let webauthn_user = CreationChallengeResponseBuilder::new(
-            user_unique_id.as_bytes(),
-            user_name.clone(),
-            user_display_name.clone(),
-        );
+        // Start registration with webauthn-rs
+        let exclude_creds: Vec<CredentialID> = existing_credentials
+            .iter()
+            .map(|cred| CredentialID::from(cred.credential_id.clone()))
+            .collect();
 
-        // Start registration
         let (ccr, reg_state) = self
             .webauthn
             .start_passkey_registration(
-                webauthn_user,
-                request.authenticator_selection.clone(),
-                request.attestation.unwrap_or(AttestationConveyancePreference::None),
+                user_unique_id,
+                &user_name,
+                &user_display_name,
+                Some(exclude_creds),
             )
             .map_err(|e| AppError::WebAuthnError(e))?;
 
@@ -125,11 +125,11 @@ impl WebAuthnService {
         let response = ServerPublicKeyCredentialCreationOptionsResponse::new(
             ccr.public_key.rp.clone(),
             ServerPublicKeyCredentialUserEntity {
-                id: base64::encode_config(user_unique_id.as_bytes(), base64::URL_SAFE_NO_PAD),
+                id: BASE64_URL_SAFE_NO_PAD.encode(user_unique_id.as_bytes()),
                 name: user_name,
                 display_name: user_display_name,
             },
-            base64::encode_config(&ccr.public_key.challenge, base64::URL_SAFE_NO_PAD),
+            BASE64_URL_SAFE_NO_PAD.encode(&ccr.public_key.challenge),
             ccr.public_key.pub_key_cred_params,
             exclude_credentials,
             request.authenticator_selection.clone(),
@@ -206,13 +206,12 @@ impl WebAuthnService {
         // Create RegisterPublicKeyCredential for webauthn-rs
         let pkc = RegisterPublicKeyCredential {
             id: credential.id.clone(),
-            raw_id: credential_id.clone(),
+            raw_id: credential_id.clone().into(),
             response: AuthenticatorAttestationResponseRaw {
-                attestation_object: attestation_object,
-                client_data_json: client_data_json,
+                attestation_object: attestation_object.into(),
+                client_data_json: client_data_json.into(),
             },
-            type_: PublicKeyCredentialType::PublicKey,
-            extensions: credential.get_client_extension_results.clone().unwrap_or_default(),
+            type_: "public-key".to_string(),
         };
 
         // Finish registration with webauthn-rs
@@ -247,16 +246,12 @@ impl WebAuthnService {
         }
 
         // Store credential
-        let cred_transports = passkey.transports()
-            .map(|t| serde_json::to_string(t).ok())
-            .flatten();
-
         let new_credential = NewCredential {
             user_id,
             credential_id: credential_id,
-            public_key: passkey.cred().cose_key.to_vec()?,
-            sign_count: passkey.counter() as i64,
-            transports: cred_transports,
+            public_key: serde_json::to_vec(&passkey)?,
+            sign_count: 0,
+            transports: None,
         };
 
         diesel::insert_into(credentials::table)
@@ -298,8 +293,6 @@ impl WebAuthnService {
         let passkeys: Vec<Passkey> = user_credentials
             .iter()
             .map(|cred| {
-                // This is a simplified conversion - in a real implementation,
-                // you'd need to properly reconstruct the Passkey from stored data
                 serde_json::from_slice(&cred.public_key)
                     .map_err(|e| AppError::ValidationError(format!("Invalid credential data: {}", e)))
             })
@@ -331,13 +324,13 @@ impl WebAuthnService {
             .iter()
             .map(|cred| ServerPublicKeyCredentialDescriptor {
                 type_: "public-key".to_string(),
-                id: base64::encode_config(&cred.credential_id, base64::URL_SAFE_NO_PAD),
+                id: BASE64_URL_SAFE_NO_PAD.encode(&cred.credential_id),
                 transports: cred.transports.as_ref().and_then(|t| serde_json::from_str(t).ok()),
             })
             .collect();
 
         let response = ServerPublicKeyCredentialGetOptionsResponse::new(
-            base64::encode_config(&rcr.public_key.challenge, base64::URL_SAFE_NO_PAD),
+            BASE64_URL_SAFE_NO_PAD.encode(&rcr.public_key.challenge),
             rcr.public_key.rp_id.unwrap_or_else(|| "localhost".to_string()),
             allow_credentials,
             request.user_verification,
@@ -386,21 +379,22 @@ impl WebAuthnService {
         let auth_state: PasskeyAuthentication = serde_json::from_slice(&stored_challenge.challenge_data)?;
 
         // Create PublicKeyCredential for webauthn-rs
+        let user_handle = if response.user_handle.is_empty() {
+            None
+        } else {
+            Some(crate::error::validate_base64url(&response.user_handle, "userHandle")?.into())
+        };
+
         let pkc = PublicKeyCredential {
             id: credential.id.clone(),
-            raw_id: credential_id.clone(),
+            raw_id: credential_id.clone().into(),
             response: AuthenticatorAssertionResponseRaw {
-                authenticator_data,
-                client_data_json,
-                signature,
-                user_handle: if response.user_handle.is_empty() {
-                    None
-                } else {
-                    Some(crate::error::validate_base64url(&response.user_handle, "userHandle")?)
-                },
+                authenticator_data: authenticator_data.into(),
+                client_data_json: client_data_json.into(),
+                signature: signature.into(),
+                user_handle,
             },
-            type_: PublicKeyCredentialType::PublicKey,
-            extensions: credential.get_client_extension_results.clone().unwrap_or_default(),
+            type_: "public-key".to_string(),
         };
 
         // Finish authentication with webauthn-rs
