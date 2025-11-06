@@ -104,7 +104,25 @@ class FIDOConformanceTest:
                     "sig": b'\x30\x45\x02\x21\x00\xD7\x9A\x84\x3B\x5F\x2E\xC7\x13\x8A\x15\x43\x67\x9B\xF2\x8E\x5D\x1A\x4F\x72\x91\xB6\x3C\x8E\x47\xA2\x95\xD3\x58\x7F\x1B\x84\x02\x20\x4A\x68\x93\x5F\x2B\x7E\x59\x1D\x32\x8F\x4E\x6A\x71\x85\x9C\x2F\x3B\x6E\x47\x5A\x8B\x1D\x4C\x7E\x92\x38\x5F\x6A\x9C\x3E\x4B\x1F'
                 },
                 "authData": self.create_valid_authdata()
-            }\n            \n            finish_response = self.finish_registration(challenge_response, "p1-credential", mock_attestation_obj)\n            \n            if finish_response.status_code == 200:\n                result = finish_response.json()\n                if result.get("status") == "ok":\n                    self.log_result("P-1", True, "Self-attestation accepted")\n                else:\n                    self.log_result("P-1", False, f"Unexpected response: {result}")\n            else:\n                self.log_result("P-1", False, f"Expected success but got: {finish_response.json()}")\n                \n        except Exception as e:\n            self.log_result("P-1", False, f"Exception: {e}")\n            \n    def test_f2_unverifiable_signature(self):\n        """F-2: Send packed attestation with signature that can not be verified"""\n        print("\\n📋 Running F-2: Unverifiable signature...")
+            }
+            
+            finish_response = self.finish_registration(challenge_response, "p1-credential", mock_attestation_obj)
+            
+            if finish_response.status_code == 200:
+                result = finish_response.json()
+                if result.get("status") == "ok":
+                    self.log_result("P-1", True, "Self-attestation accepted")
+                else:
+                    self.log_result("P-1", False, f"Unexpected response: {result}")
+            else:
+                self.log_result("P-1", False, f"Expected success but got: {finish_response.json()}")
+                
+        except Exception as e:
+            self.log_result("P-1", False, f"Exception: {e}")
+            
+    def test_f2_unverifiable_signature(self):
+        """F-2: Send packed attestation with signature that can not be verified"""
+        print("\n📋 Running F-2: Unverifiable signature...")
         
         try:
             response = self.start_registration("f2testuser", "F2 Test User")
@@ -136,7 +154,7 @@ class FIDOConformanceTest:
             
     def test_f3_missing_x5c(self):
         """F-3: Send packed attestation with missing x5c field"""
-        print("\\n📋 Running F-3: Missing x5c field...")
+        print("\n📋 Running F-3: Missing x5c field...")
         
         try:
             response = self.start_registration("f3testuser", "F3 Test User", attestation="direct")
@@ -169,7 +187,7 @@ class FIDOConformanceTest:
             
     def test_attestation_options_response_format(self):
         """Test that attestation options response has correct format"""
-        print("\\n📋 Running: Attestation options response format...")
+        print("\n📋 Running: Attestation options response format...")
         
         try:
             response = self.start_registration("formattest", "Format Test", extensions={"example.extension": True})
@@ -199,7 +217,7 @@ class FIDOConformanceTest:
             
     def test_challenge_uniqueness(self):
         """Test that challenges are unique between requests"""
-        print("\\n📋 Running: Challenge uniqueness...")
+        print("\n📋 Running: Challenge uniqueness...")
         
         try:
             response1 = self.start_registration("unique1", "Unique 1")
@@ -233,7 +251,7 @@ class FIDOConformanceTest:
         self.test_f2_unverifiable_signature()
         self.test_f3_missing_x5c()
         
-        print("\\n" + "=" * 60)
+        print("\n" + "=" * 60)
         print(f"📊 Test Results: {self.passed} passed, {self.failed} failed")
         
         if self.failed == 0:
