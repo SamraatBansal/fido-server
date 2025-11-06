@@ -1,21 +1,13 @@
 use actix_cors::Cors;
 use actix_web::{middleware::Logger, web, App, HttpServer};
 use std::env;
-use env_logger;
 use fido2_webauthn_server::memory_service::MemoryWebAuthnService;
 use fido2_webauthn_server::memory_handlers::*;
 
-
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    // Initialize tracing
-    tracing_subscriber::registry()
-        .with(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "info".into()),
-        )
-        .with(tracing_subscriber::fmt::layer())
-        .init();
+    // Initialize logging
+    env_logger::init();
 
     // Load environment variables
     dotenvy::dotenv().ok();
@@ -28,17 +20,17 @@ async fn main() -> std::io::Result<()> {
     let webauthn_service = match MemoryWebAuthnService::new(&rp_id, &rp_name, &rp_origin) {
         Ok(service) => service,
         Err(e) => {
-            tracing::error!("Failed to initialize WebAuthn service: {}", e);
+            log::error!("Failed to initialize WebAuthn service: {}", e);
             std::process::exit(1);
         }
     };
 
     let bind_address = env::var("BIND_ADDRESS").unwrap_or_else(|_| "0.0.0.0:8080".to_string());
     
-    tracing::info!("Starting FIDO2 WebAuthn server on {}", bind_address);
-    tracing::info!("RP ID: {}", rp_id);
-    tracing::info!("RP Origin: {}", rp_origin);
-    tracing::info!("Using in-memory storage for testing");
+    log::info!("Starting FIDO2 WebAuthn server on {}", bind_address);
+    log::info!("RP ID: {}", rp_id);
+    log::info!("RP Origin: {}", rp_origin);
+    log::info!("Using in-memory storage for testing");
 
     HttpServer::new(move || {
         let cors = Cors::default()
