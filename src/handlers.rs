@@ -2,6 +2,7 @@ use crate::api::*;
 use crate::error::{AppError, Result};
 use crate::service::WebAuthnService;
 use actix_web::{web, HttpResponse};
+use base64::prelude::*;
 
 pub async fn start_registration(
     request: web::Json<ServerPublicKeyCredentialCreationOptionsRequest>,
