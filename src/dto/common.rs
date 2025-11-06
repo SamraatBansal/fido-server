@@ -86,6 +86,7 @@ pub struct ServerPublicKeyCredential {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(untagged)]
 pub enum ServerCredentialResponse {
     Attestation(ServerAuthenticatorAttestationResponse),
     Assertion(ServerAuthenticatorAssertionResponse),
