@@ -13,7 +13,7 @@ use webauthn_rs::prelude::{
 use crate::api_types::*;
 use crate::database::DatabaseService;
 use crate::error::{AppError, Result};
-use crate::models::{NewCredential, User};
+use crate::models::NewCredential;
 
 // Session store to handle the challenge-to-user mapping
 // This is needed because the FIDO conformance test API doesn't provide user context in finish operations
