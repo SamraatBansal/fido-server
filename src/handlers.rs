@@ -166,10 +166,11 @@ pub async fn registration_result(
     // Convert to webauthn-rs format
     let reg_cred = RegisterPublicKeyCredential {
         id: request.credential.id.clone(),
-        raw_id: crate::utils::base64url_decode(&request.credential.id)?,
+        raw_id: base64url_decode_safe(&request.credential.id)?,
         response: AuthenticatorAttestationResponseRaw {
-            attestation_object: crate::utils::base64url_decode(&attestation_response.attestation_object)?,
-            client_data_json: crate::utils::base64url_decode(&attestation_response.client_data_json)?,
+            attestation_object: base64url_decode_safe(&attestation_response.attestation_object)?,
+            client_data_json: base64url_decode_safe(&attestation_response.client_data_json)?,
+            transports: None, // Add the missing field
         },
         type_: "public-key".to_string(),
         extensions: RegistrationExtensionsClientOutputs::default(),
