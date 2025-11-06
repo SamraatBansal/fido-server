@@ -251,8 +251,8 @@ impl WebAuthnService {
         let passkey = self.webauthn.finish_passkey_registration(&reg_credential, &reg_state)
             .map_err(|e| AppError::AttestationFailed(e.to_string()))?;
 
-        // Store credential in database
-        let cred_id = Vec::from(passkey.cred_id());
+        // Store credential in database  
+        let cred_id = passkey.cred_id().to_vec();
 
         let new_credential = NewCredential {
             id: Uuid::new_v4(),
