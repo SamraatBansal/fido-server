@@ -74,8 +74,8 @@ impl From<r2d2::PoolError> for AppError {
     }
 }
 
-impl From<webauthn_rs::error::WebauthnError> for AppError {
-    fn from(err: webauthn_rs::error::WebauthnError) -> Self {
+impl From<webauthn_rs::WebauthnError> for AppError {
+    fn from(err: webauthn_rs::WebauthnError) -> Self {
         Self::WebAuthnError(err.to_string())
     }
 }
