@@ -909,7 +909,7 @@ impl ConformanceWebAuthnService {
         Ok(())
     }
     
-    fn validate_certificate_algorithm(&self, cert_bytes: &[u8], expected_alg: i64) -> Result<()> {
+    fn validate_certificate_algorithm(&self, cert_bytes: &[u8], _expected_alg: i64) -> Result<()> {
         // For FIDO conformance, be more lenient with certificate algorithm validation
         // The test is primarily checking the attestation statement structure, not strict algorithm matching
         match x509_parser::parse_x509_certificate(cert_bytes) {
