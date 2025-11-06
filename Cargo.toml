@@ -8,6 +8,10 @@ default-run = "fido2-webauthn-server"
 name = "main_memory"
 path = "src/main_memory.rs"
 
+[[bin]]
+name = "main_webauthn"
+path = "src/main_webauthn.rs"
+
 [dependencies]
 # Web framework
 actix-web = "4.4"
