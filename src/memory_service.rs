@@ -68,8 +68,13 @@ impl MemoryWebAuthnService {
         use rand::RngCore;
         rand::thread_rng().fill_bytes(&mut challenge);
 
-        // Store challenge state
-        let challenge_data = serde_json::to_vec(&user_id)?;
+        // Store challenge state with username and display name for later user creation
+        let challenge_context = serde_json::json!({
+            "user_id": user_id,
+            "username": request.username,
+            "display_name": request.display_name
+        });
+        let challenge_data = serde_json::to_vec(&challenge_context)?;
         let _challenge_id = self.storage.store_challenge(user_id, "registration", &challenge_data)?;
 
         // Prepare extensions
