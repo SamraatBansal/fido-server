@@ -179,7 +179,7 @@ impl ConformanceWebAuthnService {
             auth_selection,
             request.attestation.clone(),
             Some(60000), // 60 seconds timeout
-            if extensions.is_empty() { None } else { Some(extensions) },
+            if request.extensions.is_some() { Some(extensions) } else { None },
         );
 
         Ok(response)
