@@ -2,8 +2,16 @@ use diesel::prelude::*;
 use diesel::r2d2::{self, ConnectionManager};
 use std::env;
 
+// Support both SQLite and PostgreSQL
+#[cfg(feature = "sqlite")]
+pub type DbConnection = SqliteConnection;
+#[cfg(feature = "sqlite")]
+pub type DbPool = r2d2::Pool<ConnectionManager<SqliteConnection>>;
+
+#[cfg(not(feature = "sqlite"))]
+pub type DbConnection = PgConnection;
+#[cfg(not(feature = "sqlite"))]
 pub type DbPool = r2d2::Pool<ConnectionManager<PgConnection>>;
-pub type DbConnection = r2d2::PooledConnection<ConnectionManager<PgConnection>>;
 
 pub fn establish_connection_pool() -> Result<DbPool, Box<dyn std::error::Error>> {
     let database_url = env::var("DATABASE_URL")
