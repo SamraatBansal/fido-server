@@ -668,7 +668,11 @@ impl ConformanceWebAuthnService {
     }
 
     fn validate_packed_attestation_statement(&self, att_stmt: &std::collections::BTreeMap<serde_cbor::Value, serde_cbor::Value>) -> Result<()> {
-        // For packed format, validate required fields
+        // For FIDO conformance, empty attestation statement should fail 
+        if att_stmt.is_empty() {
+            return Err(AppError::InvalidField("attestationObject.attStmt cannot be empty for packed format".to_string()));
+        }
+
         let mut has_alg = false;
         let mut has_sig = false;
 
@@ -693,13 +697,19 @@ impl ConformanceWebAuthnService {
                         }
                     },
                     "x5c" => {
-                        // x5c is optional for self-attestation
+                        // x5c is optional for self-attestation but if present must be valid
                         if !matches!(value, serde_cbor::Value::Array(_)) {
                             return Err(AppError::InvalidField("attestationObject.attStmt.x5c must be an array".to_string()));
                         }
                         if let serde_cbor::Value::Array(x5c_array) = value {
                             if x5c_array.is_empty() {
                                 return Err(AppError::InvalidField("attestationObject.attStmt.x5c cannot be empty".to_string()));
+                            }
+                            // Validate each certificate in the chain
+                            for cert in x5c_array {
+                                if !matches!(cert, serde_cbor::Value::Bytes(_)) {
+                                    return Err(AppError::InvalidField("attestationObject.attStmt.x5c certificates must be bytes".to_string()));
+                                }
                             }
                         }
                     },
