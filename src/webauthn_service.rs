@@ -209,15 +209,19 @@ impl WebAuthnService {
             .map_err(|_| AppError::InternalServerError)?;
 
         // Convert credential to webauthn-rs format
+        let credential_id_bytes = base64::decode_config(&credential.id, base64::URL_SAFE_NO_PAD)
+            .map_err(|_| AppError::InvalidFormat("Invalid credential ID format".to_string()))?;
+        let client_data_json_bytes = base64::decode_config(&attestation_response.client_data_json, base64::URL_SAFE_NO_PAD)
+            .map_err(|_| AppError::InvalidFormat("Invalid clientDataJSON format".to_string()))?;
+        let attestation_object_bytes = base64::decode_config(&attestation_response.attestation_object, base64::URL_SAFE_NO_PAD)
+            .map_err(|_| AppError::InvalidFormat("Invalid attestationObject format".to_string()))?;
+
         let reg_credential = RegisterPublicKeyCredential {
             id: credential.id.clone(),
-            raw_id: Base64UrlSafeData::try_from(credential.id.as_str())
-                .map_err(|_| AppError::InvalidFormat("Invalid credential ID format".to_string()))?,
-            response: webauthn_rs::prelude::AuthenticatorAttestationResponseRaw {
-                client_data_json: Base64UrlSafeData::try_from(attestation_response.client_data_json.as_str())
-                    .map_err(|_| AppError::InvalidFormat("Invalid clientDataJSON format".to_string()))?,
-                attestation_object: Base64UrlSafeData::try_from(attestation_response.attestation_object.as_str())
-                    .map_err(|_| AppError::InvalidFormat("Invalid attestationObject format".to_string()))?,
+            raw_id: Base64UrlSafeData::from(credential_id_bytes),
+            response: webauthn_rs::AuthenticatorAttestationResponseRaw {
+                client_data_json: Base64UrlSafeData::from(client_data_json_bytes),
+                attestation_object: Base64UrlSafeData::from(attestation_object_bytes),
             },
             type_: credential.type_.clone(),
         };
