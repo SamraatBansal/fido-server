@@ -99,6 +99,18 @@ def test_registration_options_basic():
                 all_passed = False
                 continue
         
+        if field_path == "extensions":
+            if not isinstance(current_data, dict):
+                print(f"❌ extensions is not a dict: {type(current_data)}")
+                all_passed = False
+                continue
+            # Should contain example.extension
+            if "example.extension" not in current_data:
+                print(f"❌ extensions missing 'example.extension' key")
+                print(f"   Available extension keys: {list(current_data.keys())}")
+                all_passed = False
+                continue
+        
         print(f"✅ {field_path}: OK")
     
     if all_passed:
