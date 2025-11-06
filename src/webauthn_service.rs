@@ -349,8 +349,8 @@ impl WebAuthnService {
         // Validate assertion response structure
         assertion_response.validate_structure()?;
 
-        // Decode and validate client data
-        let client_data_bytes = Base64UrlSafeData::try_from(assertion_response.client_data_json.as_str())
+        // Decode and validate client data  
+        let client_data_bytes = base64::decode_config(&assertion_response.client_data_json, base64::URL_SAFE_NO_PAD)
             .map_err(|_| AppError::InvalidFormat("clientDataJSON must be base64url encoded".to_string()))?;
         
         let client_data: CollectedClientData = serde_json::from_slice(&client_data_bytes)
