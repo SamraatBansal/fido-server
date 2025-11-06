@@ -119,7 +119,7 @@ def create_attestation_object_with_test_pattern_signature(challenge: str, rp_id:
     
     return cbor2.dumps(attestation_object)
 
-def create_attestation_object_with_wrong_key_signature(challenge: str, rp_id: str = "localhost") -> bytes:
+def create_attestation_object_with_wrong_key_signature_full(challenge: str, rp_id: str = "localhost") -> bytes:
     """Create an attestation object with signature made with wrong key."""
     import cbor2
     
