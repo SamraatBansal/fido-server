@@ -151,7 +151,8 @@ impl Storage for InMemoryStorage {
         let credentials = self.credentials.read().unwrap();
         let credentials_by_user = self.credentials_by_user.read().unwrap();
         
-        let credential_ids = credentials_by_user.get(&user_id).unwrap_or(&vec![]);
+        let empty_vec = vec![];
+        let credential_ids = credentials_by_user.get(&user_id).unwrap_or(&empty_vec);
         let mut user_credentials = Vec::new();
         
         for credential_id in credential_ids {
