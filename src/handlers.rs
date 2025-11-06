@@ -176,7 +176,7 @@ pub async fn registration_result(
             client_data_json: crate::utils::base64url_decode(&attestation_response.client_data_json)?,
         },
         type_: "public-key".to_string(),
-        extensions: request.credential.get_client_extension_results.clone(),
+        extensions: RegistrationExtensionsClientOutputs::default(),
     };
 
     // Parse client data to find the challenge and determine the user
@@ -318,7 +318,7 @@ pub async fn authentication_result(
             },
         },
         type_: "public-key".to_string(),
-        extensions: request.credential.get_client_extension_results.clone(),
+        extensions: AuthenticationExtensionsClientOutputs::default(),
     };
 
     // For demo purposes, we'll accept any valid assertion response
