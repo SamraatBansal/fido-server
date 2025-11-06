@@ -6,6 +6,21 @@ use webauthn_rs_proto::{
 };
 use super::common::*;
 
+/// Public key credential parameters
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct PublicKeyCredentialParameters {
+    #[serde(rename = "type")]
+    pub type_: String,
+    pub alg: i32,
+}
+
+/// Relying party entity
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct PublicKeyCredentialRpEntity {
+    pub id: Option<String>,
+    pub name: String,
+}
+
 /// Server public key credential creation options request
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ServerPublicKeyCredentialCreationOptionsRequest {
