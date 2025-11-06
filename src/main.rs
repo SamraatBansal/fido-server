@@ -1,113 +1,76 @@
-//! FIDO2/WebAuthn Relying Party Server
-//! 
-//! A production-ready FIDO2/WebAuthn server that passes FIDO Alliance conformance tests.
-
 use actix_cors::Cors;
-use actix_web::{
-    middleware::Logger, 
-    web, 
-    App, 
-    HttpServer, 
-    HttpResponse, 
-    Result as ActixResult
-};
-use std::io;
+use actix_web::{middleware::Logger, web, App, HttpServer};
+use fido2_webauthn_server::*;
+use std::env;
 use std::sync::Arc;
-use webauthn_rs::{Webauthn, WebauthnBuilder};
-use url::Url;
-
-mod error;
-mod storage;
-mod handlers;
-mod dto;
-mod utils;
-
-use async_trait::async_trait;
-
-use error::WebAuthnError;
-use storage::{InMemoryStorage, Storage};
-use dto::common::ServerResponse;
-use handlers::AppState;
-
-/// Health check endpoint
-async fn health_check() -> ActixResult<HttpResponse> {
-    Ok(HttpResponse::Ok().json(serde_json::json!({
-        "status": "ok",
-        "service": "FIDO Server",
-        "timestamp": chrono::Utc::now().to_rfc3339()
-    })))
-}
-
-/// Initialize WebAuthn instance with proper configuration
-fn init_webauthn() -> Result<Webauthn, WebAuthnError> {
-    let rp_id = "localhost";
-    let rp_origin = Url::parse("http://localhost:8080")
-        .map_err(|e| WebAuthnError::Configuration(format!("Invalid origin URL: {}", e)))?;
-    
-    let builder = WebauthnBuilder::new(rp_id, &rp_origin)
-        .map_err(|e| WebAuthnError::Configuration(format!("Failed to create WebAuthn builder: {}", e)))?
-        .rp_name("Example Corporation");
-    
-    builder.build()
-        .map_err(|e| WebAuthnError::Configuration(format!("Failed to build WebAuthn: {}", e)))
-}
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[actix_web::main]
-async fn main() -> io::Result<()> {
-    // Initialize logger
-    env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
-    
-    log::info!("Starting FIDO2/WebAuthn Relying Party Server...");
+async fn main() -> std::io::Result<()> {
+    // Initialize tracing
+    tracing_subscriber::registry()
+        .with(
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| "info".into()),
+        )
+        .with(tracing_subscriber::fmt::layer())
+        .init();
 
-    // Initialize WebAuthn
-    let webauthn = match init_webauthn() {
-        Ok(w) => Arc::new(w),
+    // Load environment variables
+    dotenv::dotenv().ok();
+
+    // Establish database connection
+    let db_pool = Arc::new(establish_connection_pool());
+    
+    // Run migrations
+    if let Err(e) = run_migrations(&db_pool) {
+        tracing::error!("Failed to run migrations: {}", e);
+        std::process::exit(1);
+    }
+
+    // Initialize WebAuthn service
+    let rp_id = env::var("RP_ID").unwrap_or_else(|_| "localhost".to_string());
+    let rp_name = env::var("RP_NAME").unwrap_or_else(|_| "FIDO2 WebAuthn Server".to_string());
+    let rp_origin = env::var("RP_ORIGIN").unwrap_or_else(|_| "http://localhost:8080".to_string());
+
+    let webauthn_service = match WebAuthnService::new(&rp_id, &rp_name, &rp_origin, db_pool.clone()) {
+        Ok(service) => service,
         Err(e) => {
-            log::error!("Failed to initialize WebAuthn: {}", e);
-            return Err(io::Error::new(io::ErrorKind::Other, e.to_string()));
+            tracing::error!("Failed to initialize WebAuthn service: {}", e);
+            std::process::exit(1);
         }
     };
 
-    // Initialize storage (in-memory for this implementation)
-    let storage: Arc<dyn Storage> = Arc::new(InMemoryStorage::new());
-
-    let app_state = AppState {
-        webauthn,
-        storage,
-    };
-
-    let host = "127.0.0.1";
-    let port = 8080;
-
-    log::info!("Server running at http://{}:{}", host, port);
-    log::info!("FIDO2/WebAuthn endpoints:");
-    log::info!("  POST /attestation/options  - Registration challenge");
-    log::info!("  POST /attestation/result   - Registration verification"); 
-    log::info!("  POST /assertion/options    - Authentication challenge");
-    log::info!("  POST /assertion/result     - Authentication verification");
+    let bind_address = env::var("BIND_ADDRESS").unwrap_or_else(|_| "0.0.0.0:8080".to_string());
+    
+    tracing::info!("Starting FIDO2 WebAuthn server on {}", bind_address);
+    tracing::info!("RP ID: {}", rp_id);
+    tracing::info!("RP Origin: {}", rp_origin);
 
     HttpServer::new(move || {
-        // Configure CORS for FIDO compliance
         let cors = Cors::default()
-            .allowed_origin("http://localhost:8080")
-            .allowed_origin("https://localhost:8080") 
-            .allowed_methods(vec!["GET", "POST", "OPTIONS"])
-            .allowed_headers(vec!["Content-Type", "Authorization"])
-            .supports_credentials()
-            .max_age(3600);
+            .allow_any_origin()
+            .allow_any_method()
+            .allow_any_header()
+            .supports_credentials();
 
         App::new()
-            .app_data(web::Data::new(app_state.clone()))
-            .wrap(Logger::default())
+            .app_data(web::Data::new(webauthn_service.clone()))
             .wrap(cors)
+            .wrap(Logger::default())
+            .service(
+                web::scope("/attestation")
+                    .route("/options", web::post().to(start_registration))
+                    .route("/result", web::post().to(finish_registration)),
+            )
+            .service(
+                web::scope("/assertion")
+                    .route("/options", web::post().to(start_authentication))
+                    .route("/result", web::post().to(finish_authentication)),
+            )
             .route("/health", web::get().to(health_check))
-            // FIDO2/WebAuthn endpoints - exact paths required for conformance
-            .route("/attestation/options", web::post().to(handlers::registration_options))
-            .route("/attestation/result", web::post().to(handlers::registration_result))
-            .route("/assertion/options", web::post().to(handlers::authentication_options))
-            .route("/assertion/result", web::post().to(handlers::authentication_result))
     })
-    .bind((host, port))?
+    .bind(&bind_address)?
     .run()
     .await
 }
