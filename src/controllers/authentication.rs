@@ -21,8 +21,7 @@ pub async fn start_authentication(
         }
         Err(e) => {
             log::error!("Failed to start authentication for user {}: {}", request.username, e);
-            let error_response = ServerResponse::failed(&e.to_string());
-            Ok(HttpResponse::from(e).json(error_response))
+            Ok(e.error_response())
         }
     }
 }
@@ -42,8 +41,7 @@ pub async fn finish_authentication(
         }
         Err(e) => {
             log::error!("Failed to complete authentication for credential {}: {}", request.credential.id, e);
-            let error_response = ServerResponse::failed(&e.to_string());
-            Ok(HttpResponse::from(e).json(error_response))
+            Ok(e.error_response())
         }
     }
 }
