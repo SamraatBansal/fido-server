@@ -374,22 +374,89 @@ pub async fn authentication_result(
         return Err(WebAuthnError::Validation("Invalid credential type, must be 'public-key'".to_string()));
     }
 
-    // Extract assertion response
+    // Extract and validate assertion response
     let assertion_response = match &request.credential.response {
         ServerCredentialResponse::Assertion(resp) => resp,
-        _ => return Err(WebAuthnError::Validation("Expected assertion response".to_string())),
+        _ => return Err(WebAuthnError::Validation("Missing or invalid response field".to_string())),
     };
 
+    // Validate clientDataJSON
     if assertion_response.client_data_json.is_empty() {
-        return Err(WebAuthnError::Validation("Client data JSON cannot be empty".to_string()));
+        return Err(WebAuthnError::Validation("Missing or empty clientDataJSON field".to_string()));
     }
 
+    if let Err(_) = crate::utils::validate_base64url(&assertion_response.client_data_json) {
+        return Err(WebAuthnError::Validation("Invalid base64url encoding for clientDataJSON".to_string()));
+    }
+
+    // Validate authenticatorData
     if assertion_response.authenticator_data.is_empty() {
-        return Err(WebAuthnError::Validation("Authenticator data cannot be empty".to_string()));
+        return Err(WebAuthnError::Validation("Missing or empty authenticatorData field".to_string()));
     }
 
+    if let Err(_) = crate::utils::validate_base64url(&assertion_response.authenticator_data) {
+        return Err(WebAuthnError::Validation("Invalid base64url encoding for authenticatorData".to_string()));
+    }
+
+    // Validate signature
     if assertion_response.signature.is_empty() {
-        return Err(WebAuthnError::Validation("Signature cannot be empty".to_string()));
+        return Err(WebAuthnError::Validation("Missing or empty signature field".to_string()));
+    }
+
+    if let Err(_) = crate::utils::validate_base64url(&assertion_response.signature) {
+        return Err(WebAuthnError::Validation("Invalid base64url encoding for signature".to_string()));
+    }
+
+    // Validate userHandle (can be empty, but if present must be valid base64url)
+    if !assertion_response.user_handle.is_empty() {
+        if let Err(_) = crate::utils::validate_base64url(&assertion_response.user_handle) {
+            return Err(WebAuthnError::Validation("Invalid base64url encoding for userHandle".to_string()));
+        }
+    }
+
+    // Validate clientDataJSON structure for authentication
+    let client_data_json_bytes = crate::utils::base64url_decode(&assertion_response.client_data_json)?;
+    let client_data: serde_json::Value = serde_json::from_slice(&client_data_json_bytes)
+        .map_err(|_| WebAuthnError::Validation("Invalid JSON in clientDataJSON".to_string()))?;
+
+    // Validate type field must be "webauthn.get" for authentication
+    let client_type = client_data["type"]
+        .as_str()
+        .ok_or_else(|| WebAuthnError::Validation("Missing or invalid 'type' field in clientDataJSON".to_string()))?;
+    
+    if client_type.is_empty() {
+        return Err(WebAuthnError::Validation("Empty 'type' field in clientDataJSON".to_string()));
+    }
+    
+    if client_type != "webauthn.get" {
+        return Err(WebAuthnError::Validation("Invalid 'type' field in clientDataJSON, must be 'webauthn.get'".to_string()));
+    }
+
+    // Validate challenge field
+    let client_challenge = client_data["challenge"]
+        .as_str()
+        .ok_or_else(|| WebAuthnError::Validation("Missing or invalid 'challenge' field in clientDataJSON".to_string()))?;
+    
+    if client_challenge.is_empty() {
+        return Err(WebAuthnError::Validation("Empty 'challenge' field in clientDataJSON".to_string()));
+    }
+    
+    if let Err(_) = crate::utils::validate_base64url(client_challenge) {
+        return Err(WebAuthnError::Validation("Invalid base64url encoding for challenge in clientDataJSON".to_string()));
+    }
+
+    // Validate origin field
+    let client_origin = client_data["origin"]
+        .as_str()
+        .ok_or_else(|| WebAuthnError::Validation("Missing or invalid 'origin' field in clientDataJSON".to_string()))?;
+    
+    if client_origin.is_empty() {
+        return Err(WebAuthnError::Validation("Empty 'origin' field in clientDataJSON".to_string()));
+    }
+    
+    // For this demo, we'll accept localhost origins
+    if !client_origin.starts_with("http://localhost") && !client_origin.starts_with("https://localhost") {
+        return Err(WebAuthnError::Validation("Invalid origin in clientDataJSON".to_string()));
     }
 
     // Convert to webauthn-rs format
