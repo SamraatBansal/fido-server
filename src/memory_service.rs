@@ -5,6 +5,7 @@ use base64::prelude::*;
 use std::collections::HashMap;
 use std::sync::Arc;
 use uuid::Uuid;
+use serde_cbor;
 
 #[derive(Clone)]
 pub struct MemoryWebAuthnService {
@@ -233,6 +234,164 @@ impl MemoryWebAuthnService {
         self.storage.remove_challenge(stored_challenge.id)?;
 
         Ok(ServerResponse::success())
+    }
+
+    // Comprehensive validation for FIDO conformance
+    fn validate_registration_credential_comprehensive(&self, credential: &ServerPublicKeyCredential) -> Result<()> {
+        // Validate id field
+        if credential.id.is_empty() {
+            return Err(AppError::MissingField("id".to_string()));
+        }
+        
+        // Validate id is valid base64url
+        if !Self::is_valid_base64url(&credential.id) {
+            return Err(AppError::InvalidField("id is not valid base64url".to_string()));
+        }
+
+        // Validate type field
+        if credential.type_.is_empty() {
+            return Err(AppError::MissingField("type".to_string()));
+        }
+        if credential.type_ != "public-key" {
+            return Err(AppError::InvalidField("type must be 'public-key'".to_string()));
+        }
+
+        // Validate response field exists
+        let response = match &credential.response {
+            ServerAuthenticatorResponse::Attestation(response) => response,
+            _ => return Err(AppError::MissingField("response".to_string())),
+        };
+
+        // Validate clientDataJSON
+        if response.client_data_json.is_empty() {
+            return Err(AppError::MissingField("clientDataJSON".to_string()));
+        }
+        if !Self::is_valid_base64url(&response.client_data_json) {
+            return Err(AppError::InvalidField("clientDataJSON is not valid base64url".to_string()));
+        }
+
+        // Validate attestationObject
+        if response.attestation_object.is_empty() {
+            return Err(AppError::MissingField("attestationObject".to_string()));
+        }
+        if !Self::is_valid_base64url(&response.attestation_object) {
+            return Err(AppError::InvalidField("attestationObject is not valid base64url".to_string()));
+        }
+
+        Ok(())
+    }
+
+    fn validate_attestation_object(&self, attestation_object: &[u8]) -> Result<()> {
+        // Parse CBOR to validate structure
+        let cbor_value: serde_cbor::Value = serde_cbor::from_slice(attestation_object)
+            .map_err(|_| AppError::InvalidField("attestationObject is not valid CBOR".to_string()))?;
+
+        let map = match cbor_value {
+            serde_cbor::Value::Map(map) => map,
+            _ => return Err(AppError::InvalidField("attestationObject must be a CBOR map".to_string())),
+        };
+
+        // Check required fields
+        let mut has_fmt = false;
+        let mut has_att_stmt = false;
+        let mut has_auth_data = false;
+
+        for (key, value) in map.iter() {
+            match key {
+                serde_cbor::Value::Text(key_str) => {
+                    match key_str.as_str() {
+                        "fmt" => {
+                            has_fmt = true;
+                            if !matches!(value, serde_cbor::Value::Text(_)) {
+                                return Err(AppError::InvalidField("attestationObject.fmt must be a string".to_string()));
+                            }
+                        },
+                        "attStmt" => {
+                            has_att_stmt = true;
+                            if !matches!(value, serde_cbor::Value::Map(_)) {
+                                return Err(AppError::InvalidField("attestationObject.attStmt must be a map".to_string()));
+                            }
+                        },
+                        "authData" => {
+                            has_auth_data = true;
+                            if !matches!(value, serde_cbor::Value::Bytes(_)) {
+                                return Err(AppError::InvalidField("attestationObject.authData must be bytes".to_string()));
+                            }
+                            
+                            // Validate authData structure
+                            if let serde_cbor::Value::Bytes(auth_data_bytes) = value {
+                                self.validate_authenticator_data(auth_data_bytes)?;
+                            }
+                        },
+                        _ => {} // Ignore unknown fields
+                    }
+                },
+                _ => return Err(AppError::InvalidField("attestationObject keys must be strings".to_string())),
+            }
+        }
+
+        if !has_fmt {
+            return Err(AppError::MissingField("attestationObject.fmt".to_string()));
+        }
+        if !has_att_stmt {
+            return Err(AppError::MissingField("attestationObject.attStmt".to_string()));
+        }
+        if !has_auth_data {
+            return Err(AppError::MissingField("attestationObject.authData".to_string()));
+        }
+
+        Ok(())
+    }
+
+    fn validate_authenticator_data(&self, auth_data: &[u8]) -> Result<()> {
+        if auth_data.is_empty() {
+            return Err(AppError::InvalidField("authData cannot be empty".to_string()));
+        }
+        
+        // AuthData minimum length: 32 (rpIdHash) + 1 (flags) + 4 (signCount) = 37 bytes
+        if auth_data.len() < 37 {
+            return Err(AppError::InvalidField("authData is too short".to_string()));
+        }
+
+        // Parse flags (byte 32)
+        let flags = auth_data[32];
+        let _user_present = (flags & 0x01) != 0;
+        let _user_verified = (flags & 0x04) != 0;
+        let at_flag = (flags & 0x40) != 0; // Attested credential data included
+        let ed_flag = (flags & 0x80) != 0; // Extension data included
+
+        // For registration, AT flag must be set
+        if !at_flag {
+            return Err(AppError::InvalidField("authData.flags.AT must be set for registration".to_string()));
+        }
+
+        // If AT flag is set, attested credential data must be present
+        if at_flag && auth_data.len() < 55 { // 37 + 16 (AAGUID) + 2 (credIdLen) minimum
+            return Err(AppError::InvalidField("authData missing attested credential data".to_string()));
+        }
+
+        Ok(())
+    }
+
+    fn is_valid_base64url(value: &str) -> bool {
+        // Check for valid base64url characters
+        value.chars().all(|c| matches!(c, 'A'..='Z' | 'a'..='z' | '0'..='9' | '-' | '_'))
+    }
+
+    // Enhanced validation for user verification requirements
+    fn validate_user_verification_requirement(&self, auth_data: &[u8], required: bool) -> Result<()> {
+        if auth_data.len() < 33 {
+            return Err(AppError::InvalidField("authData too short to check flags".to_string()));
+        }
+
+        let flags = auth_data[32];
+        let user_verified = (flags & 0x04) != 0;
+
+        if required && !user_verified {
+            return Err(AppError::AuthenticationFailed);
+        }
+
+        Ok(())
     }
 
     pub async fn start_authentication(
