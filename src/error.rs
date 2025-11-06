@@ -121,7 +121,9 @@ pub fn validate_string_not_empty(value: &str, field_name: &str) -> Result<()> {
 }
 
 pub fn validate_base64url(value: &str, field_name: &str) -> Result<Vec<u8>> {
-    base64::decode_config(value, base64::URL_SAFE_NO_PAD)
+    use base64::prelude::*;
+    BASE64_URL_SAFE_NO_PAD
+        .decode(value)
         .map_err(|_| AppError::InvalidField(format!("{} is not valid base64url", field_name)))
 }
 
