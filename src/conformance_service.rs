@@ -83,18 +83,13 @@ impl ConformanceWebAuthnService {
         let challenge_data = serde_json::to_vec(&challenge_context)?;
         let _challenge_id = self.storage.store_challenge(user_id, "registration", &challenge_data)?;
 
-        // Prepare extensions - FIDO conformance test P-1 requires "example.extension" key
-        let mut extensions = HashMap::new();
-        if let Some(req_ext) = &request.extensions {
-            // Include all requested extensions
-            extensions = req_ext.clone();
-        }
-        
-        // FIDO conformance test P-1 specifically checks for "example.extension" key
-        // If extensions were requested, ensure we include example.extension
-        if request.extensions.is_some() {
-            extensions.entry("example.extension".to_string()).or_insert(serde_json::Value::Bool(true));
-        }
+        // Prepare extensions - FIDO conformance test P-1 requires exact extension match
+        let extensions = if let Some(req_ext) = &request.extensions {
+            // Return exactly what was requested, no additions
+            req_ext.clone()
+        } else {
+            HashMap::new()
+        };
 
         // Create comprehensive algorithm support for FIDO conformance
         let pub_key_cred_params = vec![
