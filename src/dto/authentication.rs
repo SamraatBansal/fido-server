@@ -1,7 +1,7 @@
 //! Authentication DTO types
 
 use serde::{Deserialize, Serialize};
-use webauthn_rs::prelude::*;
+use webauthn_rs_proto::UserVerificationPolicy;
 use super::common::*;
 
 /// Server public key credential get options request
