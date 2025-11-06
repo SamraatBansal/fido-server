@@ -1,7 +1,6 @@
 use actix_web::{web, HttpResponse, Result as ActixResult};
 
 use crate::api_types::*;
-use crate::error::{AppError, Result};
 use crate::webauthn_service::WebAuthnService;
 
 pub async fn start_registration(
