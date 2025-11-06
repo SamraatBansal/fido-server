@@ -1,6 +1,5 @@
 use actix_web::{HttpResponse, ResponseError};
 use serde_json::json;
-use std::fmt;
 
 #[derive(Debug, thiserror::Error)]
 pub enum AppError {
