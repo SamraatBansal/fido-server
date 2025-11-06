@@ -49,6 +49,12 @@ pub enum AppError {
     
     #[error("Base64 decode error: {0}")]
     Base64Error(#[from] base64::DecodeError),
+    
+    #[error(\"Invalid request: {0}\")]
+    InvalidRequest(String),
+    
+    #[error(\"Invalid field: {0}\")]
+    InvalidField(String),
 }
 
 #[derive(Debug, Serialize)]
