@@ -27,7 +27,7 @@ where
     type Future = LocalBoxFuture<'static, Result<Self, Error>>;
 
     fn from_request(req: &HttpRequest, payload: &mut Payload) -> Self::Future {
-        let json_config = req
+        let _json_config = req
             .app_data::<web::JsonConfig>()
             .map(|c| c.clone())
             .unwrap_or_default();
