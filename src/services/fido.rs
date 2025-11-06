@@ -244,10 +244,9 @@ impl FidoService {
         let passkeys: Result<Vec<Passkey>> = user_creds
             .iter()
             .map(|cred| {
-                let cred_data: serde_json::Value = serde_json::from_slice(&cred.public_key)
+                let passkey: Passkey = serde_json::from_slice(&cred.public_key)
                     .map_err(|e| AppError::InternalError(format!("Failed to deserialize credential: {}", e)))?;
-                // This is a simplified conversion - in a real implementation, you'd need proper Passkey deserialization
-                Ok(Passkey::from(cred_data))
+                Ok(passkey)
             })
             .collect();
         let passkeys = passkeys?;
