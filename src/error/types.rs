@@ -1,6 +1,7 @@
 //! Custom error types for the FIDO server
 
 use actix_web::{error::ResponseError, http::StatusCode, HttpResponse};
+use diesel::r2d2;
 use serde_json::json;
 use std::fmt;
 
