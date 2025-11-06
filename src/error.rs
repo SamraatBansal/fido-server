@@ -50,10 +50,10 @@ pub enum AppError {
     #[error("Base64 decode error: {0}")]
     Base64Error(#[from] base64::DecodeError),
     
-    #[error(\"Invalid request: {0}\")]
+    #[error("Invalid request: {0}")]
     InvalidRequest(String),
     
-    #[error(\"Invalid field: {0}\")]
+    #[error("Invalid field: {0}")]
     InvalidField(String),
 }
 
@@ -126,6 +126,14 @@ impl ResponseError for AppError {
             Self::DatabaseError(_) => (
                 actix_web::http::StatusCode::INTERNAL_SERVER_ERROR,
                 "Database error occurred".to_string()
+            ),
+            Self::InvalidRequest(msg) => (
+                actix_web::http::StatusCode::BAD_REQUEST,
+                msg.clone()
+            ),
+            Self::InvalidField(msg) => (
+                actix_web::http::StatusCode::BAD_REQUEST,
+                msg.clone()
             ),
             _ => (
                 actix_web::http::StatusCode::INTERNAL_SERVER_ERROR,
