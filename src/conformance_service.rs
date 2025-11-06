@@ -594,7 +594,7 @@ impl ConformanceWebAuthnService {
                     self.validate_packed_attestation_statement(&att_stmt)?;
                 }
             } else {
-                // Unknown attestation format should fail
+                // Unknown attestation format should fail for FIDO conformance
                 return Err(AppError::InvalidField(format!("Unknown attestation format: {}", fmt)));
             }
         }
