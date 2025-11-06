@@ -31,7 +31,7 @@ impl DatabaseService {
 
     // User operations
     pub async fn create_user(&self, username: &str, display_name: &str) -> Result<User> {
-        let mut conn = self.pool.get().await?;
+        let conn = self.pool.get().await?;
         
         let new_user = NewUser {
             id: Uuid::new_v4(),
@@ -39,10 +39,11 @@ impl DatabaseService {
             display_name: display_name.to_string(),
         };
 
-        let user = diesel::insert_into(users::table)
-            .values(&new_user)
-            .get_result::<User>(&mut conn)
-            .await?;
+        let user = conn.interact(move |conn| {
+            diesel::insert_into(users::table)
+                .values(&new_user)
+                .get_result::<User>(conn)
+        }).await??;
 
         Ok(user)
     }
