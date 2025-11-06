@@ -37,15 +37,6 @@ use crate::{
     utils::{generate_user_id, base64url_encode, get_supported_algorithms},
 };
 
-use std::sync::Arc;
-
-/// Application state containing WebAuthn instance and storage
-#[derive(Clone)]
-pub struct AppState {
-    pub webauthn: Arc<webauthn_rs::Webauthn>,
-    pub storage: Arc<dyn crate::storage::Storage>,
-}
-
 /// POST /attestation/options - Start registration process
 pub async fn registration_options(
     app_state: web::Data<AppState>,
