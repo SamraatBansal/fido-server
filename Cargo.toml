@@ -62,5 +62,8 @@ futures = "0.3"
 # CBOR parsing for attestation objects
 serde_cbor = "0.11"
 
+# X.509 certificate parsing
+x509-parser = "0.16"
+
 [dev-dependencies]
 actix-rt = "2.9"
