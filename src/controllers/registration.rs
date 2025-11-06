@@ -1,9 +1,8 @@
 //! Registration controller
 
-use actix_web::{web, HttpResponse, Result as ActixResult};
+use actix_web::{error::ResponseError, web, HttpResponse, Result as ActixResult};
 
 use crate::dto::*;
-use crate::error::{AppError, Result};
 use crate::services::FidoService;
 
 /// Start registration endpoint
