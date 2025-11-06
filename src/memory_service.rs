@@ -5,7 +5,7 @@ use base64::prelude::*;
 use std::collections::HashMap;
 use std::sync::Arc;
 use uuid::Uuid;
-use serde_cbor;
+use serde_cbor_2 as serde_cbor;
 
 #[derive(Clone)]
 pub struct MemoryWebAuthnService {
