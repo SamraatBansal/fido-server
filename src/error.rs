@@ -77,7 +77,7 @@ impl ResponseError for WebAuthnError {
             ),
             WebAuthnError::Validation(msg) => (
                 actix_web::http::StatusCode::BAD_REQUEST,
-                msg
+                msg.as_str()
             ),
             WebAuthnError::AuthenticationFailed(msg) => (
                 actix_web::http::StatusCode::UNAUTHORIZED,
