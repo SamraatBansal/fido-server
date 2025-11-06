@@ -1,9 +1,9 @@
 use actix_cors::Cors;
 use actix_web::{middleware::Logger, web, App, HttpServer};
-use fido2_webauthn_server::*;
 use std::env;
-use std::sync::Arc;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+use fido2_webauthn_server::memory_service::MemoryWebAuthnService;
+use fido2_webauthn_server::memory_handlers::*;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -19,27 +19,12 @@ async fn main() -> std::io::Result<()> {
     // Load environment variables
     dotenv::dotenv().ok();
 
-    // Establish database connection
-    let db_pool = Arc::new(match establish_connection_pool() {
-        Ok(pool) => pool,
-        Err(e) => {
-            tracing::error!("Failed to establish database connection: {}", e);
-            std::process::exit(1);
-        }
-    });
-    
-    // Run migrations
-    if let Err(e) = run_migrations(&db_pool) {
-        tracing::error!("Failed to run migrations: {}", e);
-        std::process::exit(1);
-    }
-
-    // Initialize WebAuthn service
+    // Initialize WebAuthn service with memory storage
     let rp_id = env::var("RP_ID").unwrap_or_else(|_| "localhost".to_string());
     let rp_name = env::var("RP_NAME").unwrap_or_else(|_| "FIDO2 WebAuthn Server".to_string());
     let rp_origin = env::var("RP_ORIGIN").unwrap_or_else(|_| "http://localhost:8080".to_string());
 
-    let webauthn_service = match WebAuthnService::new(&rp_id, &rp_name, &rp_origin, db_pool.clone()) {
+    let webauthn_service = match MemoryWebAuthnService::new(&rp_id, &rp_name, &rp_origin) {
         Ok(service) => service,
         Err(e) => {
             tracing::error!("Failed to initialize WebAuthn service: {}", e);
@@ -52,6 +37,7 @@ async fn main() -> std::io::Result<()> {
     tracing::info!("Starting FIDO2 WebAuthn server on {}", bind_address);
     tracing::info!("RP ID: {}", rp_id);
     tracing::info!("RP Origin: {}", rp_origin);
+    tracing::info!("Using in-memory storage - no database required");
 
     HttpServer::new(move || {
         let cors = Cors::default()
