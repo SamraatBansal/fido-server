@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use url::Url;
 use webauthn_rs::prelude::*;
-// We'll define our own types for now
+use crate::dto::registration::{PublicKeyCredentialParameters, PublicKeyCredentialRpEntity};
 
 use crate::config::settings::WebAuthnSettings;
 use crate::db::{models::*, DbPool};
