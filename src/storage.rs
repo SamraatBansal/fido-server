@@ -168,7 +168,7 @@ impl Storage for InMemoryStorage {
         Ok(credentials.get(credential_id).cloned())
     }
 
-    async fn update_credential_counter(&self, credential_id: &[u8], counter: u32) -> Result<(), WebAuthnError> {
+    async fn update_credential_counter(&self, credential_id: &[u8], _counter: u32) -> Result<(), WebAuthnError> {
         let mut credentials = self.credentials.write().unwrap();
         if let Some(credential_info) = credentials.get_mut(credential_id) {
             // Note: webauthn-rs handles counter internally, this is just for demonstration
