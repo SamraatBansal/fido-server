@@ -18,7 +18,7 @@ async fn main() -> std::io::Result<()> {
         .init();
 
     // Load environment variables
-    dotenv::dotenv().ok();
+    dotenvy::dotenv().ok();
 
     // Initialize WebAuthn service with memory storage
     let rp_id = env::var("RP_ID").unwrap_or_else(|_| "localhost".to_string());
