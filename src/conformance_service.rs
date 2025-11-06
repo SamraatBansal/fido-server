@@ -652,11 +652,28 @@ impl ConformanceWebAuthnService {
                 // For basic conformance, we just ensure there's data after the public key
             }
             
-            // Check for leftover bytes that could indicate parsing errors
-            // This is a basic check - full CBOR parsing would be more thorough
+            // Parse the credential public key as CBOR to ensure no leftover bytes
             let remaining_data = &auth_data[offset..];
-            if remaining_data.len() > 1000 { // Arbitrary reasonable limit
-                return Err(AppError::InvalidField("authData contains excessive leftover data".to_string()));
+            if !remaining_data.is_empty() {
+                // Try to parse the remaining data as CBOR (should be the credential public key)
+                match serde_cbor::from_slice::<serde_cbor::Value>(remaining_data) {
+                    Ok(cbor_value) => {
+                        // Re-encode to check for leftover bytes
+                        match serde_cbor::to_vec(&cbor_value) {
+                            Ok(re_encoded) => {
+                                if re_encoded.len() != remaining_data.len() {
+                                    return Err(AppError::InvalidField("authData contains leftover bytes after credential public key".to_string()));
+                                }
+                            },
+                            Err(_) => {
+                                return Err(AppError::InvalidField("Cannot re-encode credential public key".to_string()));
+                            }
+                        }
+                    },
+                    Err(_) => {
+                        return Err(AppError::InvalidField("authData credential public key is not valid CBOR".to_string()));
+                    }
+                }
             }
         }
 
