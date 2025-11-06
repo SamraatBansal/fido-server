@@ -184,8 +184,8 @@ pub async fn registration_result(
         .ok_or_else(|| WebAuthnError::Validation("Challenge not found in client data".to_string()))?;
 
     // Find the user with this challenge
-    let mut user_id = None;
-    let mut reg_state = None;
+    let mut user_id: Option<uuid::Uuid> = None;
+    let mut reg_state: Option<PasskeyRegistration> = None;
 
     // Since we don't have direct challenge->user mapping, we need to iterate
     // In production, you'd store challenge->user mapping
