@@ -4,7 +4,11 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use uuid::Uuid;
-use webauthn_rs::prelude::*;
+use webauthn_rs::prelude::{
+    Webauthn, CredentialID, PasskeyRegistration, PasskeyAuthentication,
+    RegisterPublicKeyCredential, PublicKeyCredential, CollectedClientData,
+    AuthenticatorTransport, RequestRegistrationExtensions
+};
 
 use crate::api_types::*;
 use crate::database::DatabaseService;
