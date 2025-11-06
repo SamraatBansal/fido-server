@@ -2,6 +2,7 @@ use actix_web::{HttpResponse, ResponseError};
 use chrono::{DateTime, Utc};
 use serde::Serialize;
 use thiserror::Error;
+use base64::Engine;
 
 #[derive(Debug, Error)]
 pub enum AppError {
