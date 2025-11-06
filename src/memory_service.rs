@@ -376,22 +376,6 @@ impl MemoryWebAuthnService {
         value.chars().all(|c| matches!(c, 'A'..='Z' | 'a'..='z' | '0'..='9' | '-' | '_'))
     }
 
-    // Enhanced validation for user verification requirements
-    fn validate_user_verification_requirement(&self, auth_data: &[u8], required: bool) -> Result<()> {
-        if auth_data.len() < 33 {
-            return Err(AppError::InvalidField("authData too short to check flags".to_string()));
-        }
-
-        let flags = auth_data[32];
-        let user_verified = (flags & 0x04) != 0;
-
-        if required && !user_verified {
-            return Err(AppError::AuthenticationFailed);
-        }
-
-        Ok(())
-    }
-
     pub async fn start_authentication(
         &self,
         request: &ServerPublicKeyCredentialGetOptionsRequest,
