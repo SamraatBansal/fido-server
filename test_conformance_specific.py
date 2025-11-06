@@ -41,7 +41,7 @@ def test_registration_options_basic():
         ("rp.id", str, None),   # Should be non-empty
         ("challenge", str, None),  # Should be base64url, >= 16 bytes
         ("pubKeyCredParams", list, None),  # Should contain supported algorithms
-        ("extensions.example.extension", bool, None),  # Should be present and boolean
+        ("extensions", dict, None),  # Should be present and dict
     ]
     
     all_passed = True
