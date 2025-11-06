@@ -252,10 +252,7 @@ impl WebAuthnService {
             .map_err(|e| AppError::AttestationFailed(e.to_string()))?;
 
         // Store credential in database
-        let cred_id = match passkey.cred_id().try_into() {
-            Ok(bytes) => bytes,
-            Err(_) => return Err(AppError::InternalServerError),
-        };
+        let cred_id = Vec::from(passkey.cred_id());
 
         let new_credential = NewCredential {
             id: Uuid::new_v4(),
