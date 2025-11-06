@@ -2,6 +2,7 @@
 
 use base64::{Engine as _, engine::general_purpose::URL_SAFE_NO_PAD};
 use uuid::Uuid;
+use base64urlsafedata::Base64UrlSafeData;
 use crate::error::WebAuthnError;
 
 /// Generate a cryptographically secure random challenge
