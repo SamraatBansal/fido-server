@@ -1,5 +1,5 @@
 use crate::api::*;
-use crate::error::{AppError, Result};
+use crate::error::Result;
 use crate::memory_service::MemoryWebAuthnService;
 use crate::validation::*;
 use actix_web::{web, HttpResponse};
