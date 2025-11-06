@@ -4,7 +4,7 @@ use std::env;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use fido2_webauthn_server::memory_service::MemoryWebAuthnService;
 use fido2_webauthn_server::memory_handlers::*;
-use fido2_webauthn_server::ServerResponse;
+
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
