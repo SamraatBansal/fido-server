@@ -34,7 +34,7 @@ use crate::{
         ServerCredentialResponse,
     },
     error::WebAuthnError,
-    utils::{generate_user_id, base64url_encode, get_supported_algorithms},
+    utils::{generate_user_id, base64url_encode, base64url_decode_safe, get_supported_algorithms},
 };
 
 /// POST /attestation/options - Start registration process
