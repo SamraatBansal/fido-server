@@ -60,3 +60,39 @@ impl ResponseError for AppError {
 }
 
 impl std::error::Error for AppError {}
+
+impl From<diesel::result::Error> for AppError {
+    fn from(err: diesel::result::Error) -> Self {
+        Self::DatabaseError(err.to_string())
+    }
+}
+
+impl From<r2d2::PoolError> for AppError {
+    fn from(err: r2d2::PoolError) -> Self {
+        Self::DatabaseError(err.to_string())
+    }
+}
+
+impl From<webauthn_rs::error::WebauthnError> for AppError {
+    fn from(err: webauthn_rs::error::WebauthnError) -> Self {
+        Self::WebAuthnError(err.to_string())
+    }
+}
+
+impl From<serde_json::Error> for AppError {
+    fn from(err: serde_json::Error) -> Self {
+        Self::InternalError(format!("JSON error: {}", err))
+    }
+}
+
+impl From<base64::DecodeError> for AppError {
+    fn from(err: base64::DecodeError) -> Self {
+        Self::ValidationError(format!("Base64 decode error: {}", err))
+    }
+}
+
+impl From<url::ParseError> for AppError {
+    fn from(err: url::ParseError) -> Self {
+        Self::ValidationError(format!("URL parse error: {}", err))
+    }
+}
