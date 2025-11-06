@@ -42,7 +42,7 @@ impl MemoryWebAuthnService {
         // Check if user exists and get existing credentials
         let existing_user = self.storage.get_user_by_username(&request.username)?;
 
-        let user_id = match existing_user {
+        let user_id = match &existing_user {
             Some(user) => user.id,
             None => Uuid::new_v4(),
         };
