@@ -314,7 +314,7 @@ def test_wrong_key_signature_detection():
     
     # Create attestation object with wrong key signature
     client_data_json = create_client_data_json(challenge, "http://localhost:8080", "webauthn.create")
-    attestation_object = create_attestation_object_with_wrong_key_signature(challenge)
+    attestation_object = create_attestation_object_with_wrong_key_signature_full(challenge)
     
     credential_data = {
         "id": base64url_encode(os.urandom(32)),
