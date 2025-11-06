@@ -743,7 +743,7 @@ impl ConformanceWebAuthnService {
                             }
                         }
                     },
-                    Err(e) => {
+                    Err(_) => {
                         // FIDO F-12: If CBOR parsing fails, this indicates invalid structure
                         return Err(AppError::InvalidField("authData credential public key is not valid CBOR".to_string()));
                     }
