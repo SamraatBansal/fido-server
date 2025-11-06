@@ -2,11 +2,18 @@
 
 use actix_web::{web, HttpRequest, HttpResponse, Result};
 use serde_json::json;
-use uuid::Uuid;
 use webauthn_rs::prelude::*;
+use webauthn_rs_proto::{AuthenticatorAttestationResponseRaw, AuthenticatorAssertionResponseRaw};
+use std::sync::Arc;
+
+/// Application state containing WebAuthn instance and storage
+#[derive(Clone)]
+pub struct AppState {
+    pub webauthn: Arc<webauthn_rs::Webauthn>,
+    pub storage: Arc<dyn crate::storage::Storage>,
+}
 
 use crate::{
-    AppState,
     dto::{
         ServerPublicKeyCredentialCreationOptionsRequest,
         ServerPublicKeyCredentialCreationOptionsResponse,
