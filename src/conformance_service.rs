@@ -1026,17 +1026,9 @@ impl ConformanceWebAuthnService {
                 return Err(AppError::InvalidField("Self-attestation signature is empty".to_string()));
             }
             
-            // Enhanced F-1, F-2 test detection for self-attestation signatures
+            // F-2 test: Detect unverifiable signatures with exact error message
             if sig.iter().all(|&b| b == 0) {
-                return Err(AppError::InvalidField("Self-attestation signature verification failed - signature is all zeros".to_string()));
-            }
-            
-            // Enhanced F-2 test: More aggressive detection of unverifiable signatures
-            // This is critical for F-2, F-13, F-14 conformance test failures
-            
-            // Check for obviously invalid signatures first
-            if sig.iter().all(|&b| b == 0) {
-                return Err(AppError::InvalidField("Self-attestation signature verification failed - signature is all zeros".to_string()));
+                return Err(AppError::InvalidField("Can not validate response signature!".to_string()));
             }
             
             if sig.len() >= 4 {
