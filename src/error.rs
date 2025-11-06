@@ -1,107 +1,98 @@
-//! Error handling for FIDO2/WebAuthn server
-
 use actix_web::{HttpResponse, ResponseError};
 use serde_json::json;
 use std::fmt;
 
-/// Custom error types for WebAuthn operations
-#[derive(Debug)]
-pub enum WebAuthnError {
-    /// Configuration errors
-    Configuration(String),
-    /// WebAuthn library errors  
-    WebAuthn(webauthn_rs_core::error::WebauthnError),
-    /// Storage errors
-    Storage(String),
-    /// Validation errors
-    Validation(String),
-    /// Authentication/Registration failures
-    AuthenticationFailed(String),
-    /// Challenge not found or expired
-    ChallengeNotFound,
-    /// User not found
+#[derive(Debug, thiserror::Error)]
+pub enum AppError {
+    #[error("Database error: {0}")]
+    DatabaseError(#[from] diesel::result::Error),
+
+    #[error("WebAuthn error: {0}")]
+    WebAuthnError(#[from] webauthn_rs::error::WebauthnError),
+
+    #[error("Validation error: {0}")]
+    ValidationError(String),
+
+    #[error("Challenge expired or invalid")]
+    ChallengeExpired,
+
+    #[error("User not found")]
     UserNotFound,
-    /// Credential not found
+
+    #[error("Credential not found")]
     CredentialNotFound,
-    /// Invalid input data
-    InvalidInput(String),
-    /// Serialization errors
-    Serialization(String),
+
+    #[error("Authentication failed")]
+    AuthenticationFailed,
+
+    #[error("Registration failed: {0}")]
+    RegistrationFailed(String),
+
+    #[error("Invalid request: {0}")]
+    InvalidRequest(String),
+
+    #[error("Missing field: {0}")]
+    MissingField(String),
+
+    #[error("Invalid field: {0}")]
+    InvalidField(String),
+
+    #[error("Base64 decode error: {0}")]
+    Base64Error(#[from] base64::DecodeError),
+
+    #[error("JSON error: {0}")]
+    JsonError(#[from] serde_json::Error),
+
+    #[error("Internal server error: {0}")]
+    InternalError(String),
+
+    #[error("Connection pool error: {0}")]
+    PoolError(#[from] r2d2::Error),
 }
 
-impl fmt::Display for WebAuthnError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            WebAuthnError::Configuration(msg) => write!(f, "Configuration error: {}", msg),
-            WebAuthnError::WebAuthn(err) => write!(f, "WebAuthn error: {}", err),
-            WebAuthnError::Storage(msg) => write!(f, "Storage error: {}", msg),
-            WebAuthnError::Validation(msg) => write!(f, "Validation error: {}", msg),
-            WebAuthnError::AuthenticationFailed(msg) => write!(f, "Authentication failed: {}", msg),
-            WebAuthnError::ChallengeNotFound => write!(f, "Challenge not found or expired"),
-            WebAuthnError::UserNotFound => write!(f, "User not found"),
-            WebAuthnError::CredentialNotFound => write!(f, "Credential not found"),
-            WebAuthnError::InvalidInput(msg) => write!(f, "Invalid input: {}", msg),
-            WebAuthnError::Serialization(msg) => write!(f, "Serialization error: {}", msg),
-        }
-    }
-}
-
-impl std::error::Error for WebAuthnError {}
-
-impl From<webauthn_rs_core::error::WebauthnError> for WebAuthnError {
-    fn from(err: webauthn_rs_core::error::WebauthnError) -> Self {
-        WebAuthnError::WebAuthn(err)
-    }
-}
-
-impl From<serde_json::Error> for WebAuthnError {
-    fn from(err: serde_json::Error) -> Self {
-        WebAuthnError::Serialization(err.to_string())
-    }
-}
-
-impl ResponseError for WebAuthnError {
+impl ResponseError for AppError {
     fn error_response(&self) -> HttpResponse {
         let (status_code, error_message) = match self {
-            WebAuthnError::Configuration(_) => (
-                actix_web::http::StatusCode::INTERNAL_SERVER_ERROR,
-                "Internal server error"
-            ),
-            WebAuthnError::WebAuthn(_) => (
-                actix_web::http::StatusCode::BAD_REQUEST,
-                "WebAuthn operation failed"
-            ),
-            WebAuthnError::Storage(_) => (
-                actix_web::http::StatusCode::INTERNAL_SERVER_ERROR,
-                "Storage error"
-            ),
-            WebAuthnError::Validation(msg) => (
-                actix_web::http::StatusCode::BAD_REQUEST,
-                msg.as_str()
-            ),
-            WebAuthnError::AuthenticationFailed(msg) => (
+            Self::ValidationError(msg) => (actix_web::http::StatusCode::BAD_REQUEST, msg.clone()),
+            Self::ChallengeExpired => (
                 actix_web::http::StatusCode::UNAUTHORIZED,
-                msg.as_str()
+                "Challenge has expired or is invalid".to_string(),
             ),
-            WebAuthnError::ChallengeNotFound => (
-                actix_web::http::StatusCode::BAD_REQUEST,
-                "Challenge not found or expired"
-            ),
-            WebAuthnError::UserNotFound => (
+            Self::UserNotFound => (
                 actix_web::http::StatusCode::NOT_FOUND,
-                "User not found"
+                "User not found".to_string(),
             ),
-            WebAuthnError::CredentialNotFound => (
+            Self::CredentialNotFound => (
                 actix_web::http::StatusCode::NOT_FOUND,
-                "Credential not found"
+                "Credential not found".to_string(),
             ),
-            WebAuthnError::InvalidInput(msg) => (
-                actix_web::http::StatusCode::BAD_REQUEST,
-                msg.as_str()
+            Self::AuthenticationFailed => (
+                actix_web::http::StatusCode::UNAUTHORIZED,
+                "Authentication failed".to_string(),
             ),
-            WebAuthnError::Serialization(_) => (
+            Self::RegistrationFailed(msg) => (
                 actix_web::http::StatusCode::BAD_REQUEST,
-                "Invalid request format"
+                format!("Registration failed: {}", msg),
+            ),
+            Self::InvalidRequest(msg) => (
+                actix_web::http::StatusCode::BAD_REQUEST,
+                format!("Invalid request: {}", msg),
+            ),
+            Self::MissingField(field) => (
+                actix_web::http::StatusCode::BAD_REQUEST,
+                format!("Missing required field: {}", field),
+            ),
+            Self::InvalidField(field) => (
+                actix_web::http::StatusCode::BAD_REQUEST,
+                format!("Invalid field: {}", field),
+            ),
+            Self::WebAuthnError(_) => (
+                actix_web::http::StatusCode::BAD_REQUEST,
+                "WebAuthn validation failed".to_string(),
+            ),
+            _ => (
+                actix_web::http::StatusCode::INTERNAL_SERVER_ERROR,
+                "Internal server error".to_string(),
             ),
         };
 
@@ -110,4 +101,64 @@ impl ResponseError for WebAuthnError {
             "errorMessage": error_message
         }))
     }
+}
+
+pub type Result<T> = std::result::Result<T, AppError>;
+
+// Validation helpers
+pub fn validate_required_field<T>(field: &Option<T>, field_name: &str) -> Result<()> {
+    if field.is_none() {
+        return Err(AppError::MissingField(field_name.to_string()));
+    }
+    Ok(())
+}
+
+pub fn validate_string_not_empty(value: &str, field_name: &str) -> Result<()> {
+    if value.is_empty() {
+        return Err(AppError::InvalidField(format!("{} cannot be empty", field_name)));
+    }
+    Ok(())
+}
+
+pub fn validate_base64url(value: &str, field_name: &str) -> Result<Vec<u8>> {
+    base64::decode_config(value, base64::URL_SAFE_NO_PAD)
+        .map_err(|_| AppError::InvalidField(format!("{} is not valid base64url", field_name)))
+}
+
+pub fn validate_credential_type(type_: &str) -> Result<()> {
+    if type_ != "public-key" {
+        return Err(AppError::InvalidField(format!(
+            "Invalid credential type: {}. Expected 'public-key'", 
+            type_
+        )));
+    }
+    Ok(())
+}
+
+pub fn validate_challenge_length(challenge: &[u8]) -> Result<()> {
+    if challenge.len() < 16 {
+        return Err(AppError::ValidationError(
+            "Challenge must be at least 16 bytes".to_string(),
+        ));
+    }
+    if challenge.len() > 64 {
+        return Err(AppError::ValidationError(
+            "Challenge must be at most 64 bytes".to_string(),
+        ));
+    }
+    Ok(())
+}
+
+pub fn validate_user_id_length(user_id: &[u8]) -> Result<()> {
+    if user_id.is_empty() {
+        return Err(AppError::ValidationError(
+            "User ID cannot be empty".to_string(),
+        ));
+    }
+    if user_id.len() > 64 {
+        return Err(AppError::ValidationError(
+            "User ID must be at most 64 bytes".to_string(),
+        ));
+    }
+    Ok(())
 }
