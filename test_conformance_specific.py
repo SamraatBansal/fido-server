@@ -53,9 +53,12 @@ def test_registration_options_basic():
         field_parts = field_path.split(".")
         try:
             for part in field_parts:
+                if current_data is None:
+                    raise KeyError(f"Parent is None for {field_path}")
                 current_data = current_data[part]
-        except (KeyError, TypeError):
-            print(f"❌ Missing field: {field_path}")
+        except (KeyError, TypeError) as e:
+            print(f"❌ Missing field: {field_path} - {e}")
+            print(f"   Available data structure: {json.dumps(data, indent=2)[:500]}...")
             all_passed = False
             continue
         
