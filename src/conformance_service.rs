@@ -532,14 +532,20 @@ impl ConformanceWebAuthnService {
                             if !matches!(value, serde_cbor::Value::Text(_)) {
                                 return Err(AppError::InvalidField("attestationObject.fmt must be a string".to_string()));
                             }
-                            fmt_value = value.as_text().map(|s| s.to_string());
+                            fmt_value = match value {
+                                serde_cbor::Value::Text(s) => Some(s.clone()),
+                                _ => None,
+                            };
                         },
                         "attStmt" => {
                             has_att_stmt = true;
                             if !matches!(value, serde_cbor::Value::Map(_)) {
                                 return Err(AppError::InvalidField("attestationObject.attStmt must be a map".to_string()));
                             }
-                            att_stmt_value = value.as_map().cloned();
+                            att_stmt_value = match value {
+                                serde_cbor::Value::Map(m) => Some(m.clone()),
+                                _ => None,
+                            };
                         },
                         "authData" => {
                             has_auth_data = true;
