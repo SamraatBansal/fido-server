@@ -231,7 +231,7 @@ pub async fn authentication_options(
         .collect();
 
     // Start authentication with webauthn-rs
-    let (rcr, auth_state) = app_state.webauthn.start_passkey_authentication(&passkeys)?;
+    let (rcr, auth_state) = app_state.webauthn.start_passkey_authentication(passkeys.as_slice())?;
 
     // Store the authentication challenge
     let challenge_string = base64url_encode(&rcr.public_key.challenge);
