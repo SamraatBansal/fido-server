@@ -1,7 +1,6 @@
 use actix_web::{HttpResponse, ResponseError};
 use chrono::{DateTime, Utc};
 use serde::Serialize;
-use std::fmt;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
