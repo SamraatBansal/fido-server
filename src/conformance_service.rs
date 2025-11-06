@@ -76,7 +76,9 @@ impl ConformanceWebAuthnService {
             "user_id": user_id,
             "username": request.username,
             "display_name": request.display_name,
-            "challenge": BASE64_URL_SAFE_NO_PAD.encode(&challenge)
+            "challenge": BASE64_URL_SAFE_NO_PAD.encode(&challenge),
+            "authenticatorSelection": request.authenticator_selection,
+            "attestation": request.attestation
         });
         let challenge_data = serde_json::to_vec(&challenge_context)?;
         let _challenge_id = self.storage.store_challenge(user_id, "registration", &challenge_data)?;
