@@ -159,18 +159,93 @@ pub async fn registration_result(
         return Err(WebAuthnError::Validation("Invalid credential type, must be 'public-key'".to_string()));
     }
 
-    // Extract attestation response
+    // F-7: Check if response field is missing (should be caught by serde)
+    // Extract and validate attestation response
     let attestation_response = match &request.credential.response {
         ServerCredentialResponse::Attestation(resp) => resp,
-        _ => return Err(WebAuthnError::Validation("Expected attestation response".to_string())),
+        _ => return Err(WebAuthnError::Validation("Missing or invalid response field".to_string())),
     };
 
+    // F-9: Check clientDataJSON field
     if attestation_response.client_data_json.is_empty() {
-        return Err(WebAuthnError::Validation("Client data JSON cannot be empty".to_string()));
+        return Err(WebAuthnError::Validation("Missing or empty clientDataJSON field".to_string()));
     }
 
+    // Validate clientDataJSON is valid base64url
+    if let Err(_) = crate::utils::validate_base64url(&attestation_response.client_data_json) {
+        return Err(WebAuthnError::Validation("Invalid base64url encoding for clientDataJSON".to_string()));
+    }
+
+    // F-12: Check attestationObject field
     if attestation_response.attestation_object.is_empty() {
-        return Err(WebAuthnError::Validation("Attestation object cannot be empty".to_string()));
+        return Err(WebAuthnError::Validation("Missing or empty attestationObject field".to_string()));
+    }
+
+    // Validate attestationObject is valid base64url
+    if let Err(_) = crate::utils::validate_base64url(&attestation_response.attestation_object) {
+        return Err(WebAuthnError::Validation("Invalid base64url encoding for attestationObject".to_string()));
+    }
+
+    // Validate clientDataJSON structure
+    let client_data_json_bytes = crate::utils::base64url_decode(&attestation_response.client_data_json)?;
+    let client_data: serde_json::Value = serde_json::from_slice(&client_data_json_bytes)
+        .map_err(|_| WebAuthnError::Validation("Invalid JSON in clientDataJSON".to_string()))?;
+
+    // ClientData validation for FIDO conformance
+    
+    // F-1 through F-5: Validate type field in clientDataJSON
+    let client_type = client_data["type"]
+        .as_str()
+        .ok_or_else(|| WebAuthnError::Validation("Missing or invalid 'type' field in clientDataJSON".to_string()))?;
+    
+    if client_type.is_empty() {
+        return Err(WebAuthnError::Validation("Empty 'type' field in clientDataJSON".to_string()));
+    }
+    
+    if client_type != "webauthn.create" {
+        return Err(WebAuthnError::Validation("Invalid 'type' field in clientDataJSON, must be 'webauthn.create'".to_string()));
+    }
+
+    // F-6 through F-10: Validate challenge field in clientDataJSON
+    let client_challenge = client_data["challenge"]
+        .as_str()
+        .ok_or_else(|| WebAuthnError::Validation("Missing or invalid 'challenge' field in clientDataJSON".to_string()))?;
+    
+    if client_challenge.is_empty() {
+        return Err(WebAuthnError::Validation("Empty 'challenge' field in clientDataJSON".to_string()));
+    }
+    
+    if let Err(_) = crate::utils::validate_base64url(client_challenge) {
+        return Err(WebAuthnError::Validation("Invalid base64url encoding for challenge in clientDataJSON".to_string()));
+    }
+
+    // F-11 through F-14: Validate origin field in clientDataJSON
+    let client_origin = client_data["origin"]
+        .as_str()
+        .ok_or_else(|| WebAuthnError::Validation("Missing or invalid 'origin' field in clientDataJSON".to_string()))?;
+    
+    if client_origin.is_empty() {
+        return Err(WebAuthnError::Validation("Empty 'origin' field in clientDataJSON".to_string()));
+    }
+    
+    // For this demo, we'll accept localhost origins
+    if !client_origin.starts_with("http://localhost") && !client_origin.starts_with("https://localhost") {
+        return Err(WebAuthnError::Validation("Invalid origin in clientDataJSON".to_string()));
+    }
+
+    // F-15 through F-17: Validate tokenBinding field if present
+    if let Some(token_binding) = client_data.get("tokenBinding") {
+        if !token_binding.is_object() {
+            return Err(WebAuthnError::Validation("Invalid tokenBinding field, must be an object".to_string()));
+        }
+        
+        let status = token_binding["status"]
+            .as_str()
+            .ok_or_else(|| WebAuthnError::Validation("Missing 'status' field in tokenBinding".to_string()))?;
+        
+        if !["present", "supported", "not-supported"].contains(&status) {
+            return Err(WebAuthnError::Validation("Invalid tokenBinding status".to_string()));
+        }
     }
 
     // Convert to webauthn-rs format
