@@ -6,7 +6,7 @@ use std::io;
 
 use fido_server::{
     config::Settings,
-    db::{connection::establish_connection, models::*},
+    db::connection::establish_connection,
     services::{FidoService, UserService},
 };
 
