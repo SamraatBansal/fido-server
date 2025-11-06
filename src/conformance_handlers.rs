@@ -1,7 +1,6 @@
 use crate::api::*;
 use crate::error::Result;
 use crate::conformance_service::ConformanceWebAuthnService;
-use crate::json_extractor_fixed::JsonExtractor;
 use actix_web::{web, HttpResponse};
 
 pub async fn start_registration(
