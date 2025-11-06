@@ -222,12 +222,6 @@ impl WebAuthnService {
         let credential_id_bytes = base64::engine::general_purpose::URL_SAFE_NO_PAD
             .decode(&credential.id)
             .map_err(|_| AppError::InvalidFormat("Invalid credential ID format".to_string()))?;
-        let client_data_json_bytes = base64::engine::general_purpose::URL_SAFE_NO_PAD
-            .decode(&attestation_response.client_data_json)
-            .map_err(|_| AppError::InvalidFormat("Invalid clientDataJSON format".to_string()))?;
-        let attestation_object_bytes = base64::engine::general_purpose::URL_SAFE_NO_PAD
-            .decode(&attestation_response.attestation_object)
-            .map_err(|_| AppError::InvalidFormat("Invalid attestationObject format".to_string()))?;
 
         // For now, let's create a simplified credential structure
         // This is a workaround until we get the exact types right
