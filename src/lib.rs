@@ -9,6 +9,8 @@ pub mod models;
 pub mod schema;
 pub mod service;
 pub mod validation;
+pub mod conformance_service;
+pub mod conformance_handlers;
 
 pub use api::*;
 pub use database::*;
