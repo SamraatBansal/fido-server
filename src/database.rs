@@ -7,10 +7,7 @@ pub type DbPool = r2d2::Pool<ConnectionManager<PgConnection>>;
 
 pub fn establish_connection_pool() -> Result<DbPool, Box<dyn std::error::Error>> {
     let database_url = env::var("DATABASE_URL")
-        .unwrap_or_else(|_| {
-            // Default to in-memory SQLite for testing
-            ":memory:".to_string()
-        });
+        .unwrap_or_else(|_| "postgres://postgres:password@localhost:5432/fido2_webauthn".to_string());
     
     tracing::info!("Connecting to database: {}", 
         if database_url.contains("password") { 
@@ -19,30 +16,6 @@ pub fn establish_connection_pool() -> Result<DbPool, Box<dyn std::error::Error>>
             database_url.clone() 
         }
     );
-    
-    // Try SQLite first for development/testing
-    if database_url.starts_with(":memory:") || database_url.ends_with(".db") || database_url.starts_with("sqlite:") {
-        use diesel::SqliteConnection;
-        let clean_url = if database_url.starts_with("sqlite:") {
-            database_url.replace("sqlite:", "")
-        } else {
-            database_url
-        };
-        
-        let manager = ConnectionManager::<SqliteConnection>::new(clean_url);
-        let pool = r2d2::Pool::builder()
-            .max_size(1) // SQLite doesn't support multiple writers
-            .connection_timeout(std::time::Duration::from_secs(30))
-            .build(manager)?;
-        
-        // Test connection
-        let _conn = pool.get()?;
-        tracing::info!("SQLite database connection established successfully");
-        return Ok(pool);
-    }
-    
-    // Fall back to PostgreSQL
-    use diesel::PgConnection;
     
     // Clean the URL to remove any problematic query parameters
     let clean_url = if database_url.contains('?') {
@@ -76,7 +49,7 @@ pub fn establish_connection_pool() -> Result<DbPool, Box<dyn std::error::Error>>
     let manager = ConnectionManager::<PgConnection>::new(clean_url);
     let pool = r2d2::Pool::builder()
         .max_size(10)
-        .connection_timeout(std::time::Duration::from_secs(5)) // Shorter timeout for faster fallback
+        .connection_timeout(std::time::Duration::from_secs(5))
         .build(manager)?;
     
     // Test connection
