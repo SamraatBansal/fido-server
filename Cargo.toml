@@ -1,92 +1,58 @@
 [package]
-name = "fido-server"
+name = "fido2-webauthn-server"
 version = "0.1.0"
 edition = "2021"
-authors = ["FIDO Server Team"]
-license = "MIT"
-repository = "https://github.com/yourorg/fido-server"
-readme = "README.md"
-
-[lib]
-name = "fido_server"
-path = "src/lib.rs"
-
-[[bin]]
-name = "fido-server"
-path = "src/main.rs"
 
 [dependencies]
-# Web Framework
-actix-web = "4.9"
+# Web framework
+actix-web = "4.4"
 actix-cors = "0.7"
-actix-rt = "2.10"
 
-# FIDO/WebAuthn
-webauthn-rs = "0.5"
-webauthn-rs-proto = "0.5"
-webauthn-rs-core = "0.5"
+# Async runtime
+tokio = { version = "1.35", features = ["full"] }
+
+# WebAuthn implementation
+webauthn-rs = { version = "0.5", features = ["danger-allow-state-serialisation"] }
+
+# Database
+diesel = { version = "2.1", features = ["postgres", "uuid", "chrono", "r2d2"] }
+diesel_migrations = "2.1"
 
 # Serialization
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 
-# Database
-diesel = { version = "2.1", features = ["postgres", "r2d2", "chrono", "uuid"] }
-diesel_migrations = "2.1"
-r2d2 = "0.8"
-
-# Async
-tokio = { version = "1.40", features = ["full"] }
-futures = "0.3"
-async-trait = "0.1"
+# UUID and time
+uuid = { version = "1.6", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
 
 # Cryptography
-base64 = "0.22"
-base64urlsafedata = "0.5"
-uuid = { version = "1.10", features = ["v4", "serde"] }
+base64 = "0.21"
 rand = "0.8"
-sha2 = "0.10"
 
 # Configuration
 config = "0.14"
-dotenv = "0.15"
 
-# Logging
-log = "0.4"
-env_logger = "0.11"
-
-# Error Handling
+# Error handling
 thiserror = "1.0"
 anyhow = "1.0"
 
-# Time
-chrono = { version = "0.4", features = ["serde"] }
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Environment
+dotenv = "0.15"
+
+# URL parsing
 url = "2.5"
 
+# Database connection pooling
+r2d2 = "0.8"
+
+# Additional utilities
+bytes = "1.5"
+futures = "0.3"
+
 [dev-dependencies]
-actix-test = "0.1"
-mockall = "0.13"
-
-[profile.dev]
-opt-level = 0
-debug = true
-
-[profile.release]
-opt-level = 3
-lto = true
-codegen-units = 1
-panic = "abort"
-strip = true
-
-# Relaxed linting configuration for initial development
-[lints.rust]
-unused_must_use = "warn"
-missing_docs = "allow"
-unused_imports = "allow"
-dead_code = "allow"
-
-[lints.clippy]
-all = "warn"
-pedantic = "allow"
-nursery = "allow"
-cargo = "allow"
+actix-rt = "2.9"
