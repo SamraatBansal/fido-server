@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use webauthn_rs::prelude::*;
 
 // Base response type for all API responses
 #[derive(Debug, Serialize, Deserialize)]
@@ -25,16 +24,17 @@ impl ServerResponse {
     }
 }
 
-// Registration request/response types
+// Simplified request/response types for initial implementation
+
 #[derive(Debug, Deserialize)]
 pub struct ServerPublicKeyCredentialCreationOptionsRequest {
     pub username: String,
     #[serde(rename = "displayName")]
     pub display_name: String,
     #[serde(rename = "authenticatorSelection")]
-    pub authenticator_selection: Option<AuthenticatorSelectionCriteria>,
-    pub attestation: Option<AttestationConveyancePreference>,
-    pub extensions: Option<RequestRegistrationExtensions>,
+    pub authenticator_selection: Option<serde_json::Value>,
+    pub attestation: Option<String>,
+    pub extensions: Option<serde_json::Value>,
 }
 
 #[derive(Debug, Serialize)]
@@ -42,11 +42,11 @@ pub struct ServerPublicKeyCredentialCreationOptionsResponse {
     pub status: String,
     #[serde(rename = "errorMessage")]
     pub error_message: String,
-    pub rp: PublicKeyCredentialRpEntity,
+    pub rp: RpEntity,
     pub user: ServerPublicKeyCredentialUserEntity,
     pub challenge: String,
     #[serde(rename = "pubKeyCredParams")]
-    pub pub_key_cred_params: Vec<PublicKeyCredentialParameters>,
+    pub pub_key_cred_params: Vec<PubKeyCredParam>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timeout: Option<u32>,
     #[serde(rename = "excludeCredentials")]
@@ -54,11 +54,18 @@ pub struct ServerPublicKeyCredentialCreationOptionsResponse {
     pub exclude_credentials: Vec<ServerPublicKeyCredentialDescriptor>,
     #[serde(rename = "authenticatorSelection")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub authenticator_selection: Option<AuthenticatorSelectionCriteria>,
+    pub authenticator_selection: Option<serde_json::Value>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub attestation: Option<AttestationConveyancePreference>,
+    pub attestation: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub extensions: Option<RequestRegistrationExtensions>,
+    pub extensions: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct RpEntity {
+    pub name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub id: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -72,12 +79,19 @@ pub struct ServerPublicKeyCredentialUserEntity {
 }
 
 #[derive(Debug, Serialize)]
+pub struct PubKeyCredParam {
+    #[serde(rename = "type")]
+    pub type_: String,
+    pub alg: i64,
+}
+
+#[derive(Debug, Serialize)]
 pub struct ServerPublicKeyCredentialDescriptor {
     #[serde(rename = "type")]
     pub type_: String,
     pub id: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub transports: Option<Vec<AuthenticatorTransport>>,
+    pub transports: Option<Vec<String>>,
 }
 
 // Authentication request/response types
@@ -85,8 +99,8 @@ pub struct ServerPublicKeyCredentialDescriptor {
 pub struct ServerPublicKeyCredentialGetOptionsRequest {
     pub username: String,
     #[serde(rename = "userVerification")]
-    pub user_verification: Option<UserVerificationPolicy>,
-    pub extensions: Option<RequestAuthenticationExtensions>,
+    pub user_verification: Option<String>,
+    pub extensions: Option<serde_json::Value>,
 }
 
 #[derive(Debug, Serialize)]
@@ -105,9 +119,9 @@ pub struct ServerPublicKeyCredentialGetOptionsResponse {
     pub allow_credentials: Vec<ServerPublicKeyCredentialDescriptor>,
     #[serde(rename = "userVerification")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub user_verification: Option<UserVerificationPolicy>,
+    pub user_verification: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub extensions: Option<RequestAuthenticationExtensions>,
+    pub extensions: Option<serde_json::Value>,
 }
 
 // Server versions of WebAuthn credential types
@@ -118,7 +132,7 @@ pub struct ServerPublicKeyCredential {
     pub type_: String,
     pub response: ServerAuthenticatorResponse,
     #[serde(rename = "getClientExtensionResults")]
-    pub get_client_extension_results: Option<AuthenticationExtensionsClientOutputs>,
+    pub get_client_extension_results: Option<serde_json::Value>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -135,7 +149,7 @@ pub struct ServerAuthenticatorAttestationResponse {
     #[serde(rename = "attestationObject")]
     pub attestation_object: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub transports: Option<Vec<AuthenticatorTransport>>,
+    pub transports: Option<Vec<String>>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -147,6 +161,18 @@ pub struct ServerAuthenticatorAssertionResponse {
     pub signature: String,
     #[serde(rename = "userHandle")]
     pub user_handle: Option<String>,
+}
+
+// Client data structure for validation
+#[derive(Debug, Deserialize)]
+pub struct CollectedClientData {
+    #[serde(rename = "type")]
+    pub type_: String,
+    pub challenge: String,
+    pub origin: String,
+    #[serde(rename = "crossOrigin")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cross_origin: Option<bool>,
 }
 
 // Validation helpers
