@@ -225,6 +225,16 @@ pub async fn authentication_options(
         return Err(WebAuthnError::CredentialNotFound);
     }
 
+    // Convert to response format first
+    let allow_credentials_response: Vec<ServerPublicKeyCredentialDescriptor> = credentials
+        .iter()
+        .map(|cred| ServerPublicKeyCredentialDescriptor {
+            credential_type: "public-key".to_string(),
+            id: base64url_encode(&cred.credential_id),
+            transports: None,
+        })
+        .collect();
+
     // Convert credentials to passkeys
     let passkeys: Vec<Passkey> = credentials
         .into_iter()
@@ -241,9 +251,6 @@ pub async fn authentication_options(
         &challenge_string,
         auth_state,
     ).await?;
-
-    // Convert to response format
-    let allow_credentials_response: Vec<ServerPublicKeyCredentialDescriptor> = credentials
         .iter()
         .map(|cred| ServerPublicKeyCredentialDescriptor {
             credential_type: "public-key".to_string(),
