@@ -1,6 +1,10 @@
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use webauthn_rs::prelude::*;
+use webauthn_rs::prelude::{
+    AttestationConveyancePreference, AuthenticatorSelectionCriteria, AuthenticatorTransport,
+    PublicKeyCredentialParameters, PublicKeyCredentialRpEntity, UserVerificationPolicy,
+    RequestRegistrationExtensions, RequestAuthenticationExtensions,
+    AuthenticationExtensionsClientOutputs, CollectedClientData
+};
 
 // Base response type for all API responses
 #[derive(Debug, Serialize, Deserialize)]
