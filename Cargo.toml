@@ -2,6 +2,7 @@
 name = "fido2-webauthn-server"
 version = "0.1.0"
 edition = "2021"
+default-run = "fido2-webauthn-server"
 
 [dependencies]
 # Web framework
