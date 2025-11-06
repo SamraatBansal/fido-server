@@ -24,7 +24,7 @@ async fn main() -> std::io::Result<()> {
     let rp_name = env::var("RP_NAME").unwrap_or_else(|_| "FIDO2 WebAuthn Server".to_string());
     let rp_origin = env::var("RP_ORIGIN").unwrap_or_else(|_| "http://localhost:8080".to_string());
 
-    let webauthn_service = match MemoryWebAuthnService::new(&rp_id, &rp_name, &rp_origin) {
+    let webauthn_service = match ConformanceWebAuthnService::new(&rp_id, &rp_name, &rp_origin) {
         Ok(service) => service,
         Err(e) => {
             tracing::error!("Failed to initialize WebAuthn service: {}", e);
