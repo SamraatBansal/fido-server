@@ -159,23 +159,21 @@ impl MemoryWebAuthnService {
         &self,
         credential: &ServerPublicKeyCredential,
     ) -> Result<ServerResponse> {
-        // Validate input
-        crate::error::validate_credential_type(&credential.type_)?;
-        crate::error::validate_string_not_empty(&credential.id, "id")?;
+        // Comprehensive FIDO conformance validation
+        self.validate_registration_credential_comprehensive(credential)?;
 
         let response = match &credential.response {
             ServerAuthenticatorResponse::Attestation(response) => response,
             _ => return Err(AppError::InvalidRequest("Expected attestation response".to_string())),
         };
 
-        // Validate required fields
-        crate::error::validate_string_not_empty(&response.client_data_json, "clientDataJSON")?;
-        crate::error::validate_string_not_empty(&response.attestation_object, "attestationObject")?;
-
-        // Decode base64url fields
+        // Decode and validate all fields
         let credential_id = crate::error::validate_base64url(&credential.id, "id")?;
         let client_data_json = crate::error::validate_base64url(&response.client_data_json, "clientDataJSON")?;
-        let _attestation_object = crate::error::validate_base64url(&response.attestation_object, "attestationObject")?;
+        let attestation_object = crate::error::validate_base64url(&response.attestation_object, "attestationObject")?;
+
+        // Validate attestation object CBOR structure
+        self.validate_attestation_object(&attestation_object)?;
 
         // Parse client data to get challenge
         let client_data: serde_json::Value = serde_json::from_slice(&client_data_json)?;
