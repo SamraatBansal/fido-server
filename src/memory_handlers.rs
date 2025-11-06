@@ -8,7 +8,7 @@ pub async fn start_registration(
     request: web::Json<ServerPublicKeyCredentialCreationOptionsRequest>,
     service: web::Data<MemoryWebAuthnService>,
 ) -> Result<HttpResponse> {
-    let response = service.start_registration(&request).await?;
+    // Comprehensive validation for FIDO conformance\n    validate_registration_request(&request)?;\n    \n    let response = service.start_registration(&request).await?;
     Ok(HttpResponse::Ok().json(response))
 }
 
