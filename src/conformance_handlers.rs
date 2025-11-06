@@ -4,34 +4,34 @@ use crate::conformance_service::ConformanceWebAuthnService;
 use actix_web::{web, HttpResponse};
 
 pub async fn start_registration(
-    request: JsonExtractor<ServerPublicKeyCredentialCreationOptionsRequest>,
+    request: web::Json<ServerPublicKeyCredentialCreationOptionsRequest>,
     service: web::Data<ConformanceWebAuthnService>,
 ) -> Result<HttpResponse> {
-    let response = service.start_registration(&*request).await?;
+    let response = service.start_registration(&request).await?;
     Ok(HttpResponse::Ok().json(response))
 }
 
 pub async fn finish_registration(
-    credential: JsonExtractor<ServerPublicKeyCredential>,
+    credential: web::Json<ServerPublicKeyCredential>,
     service: web::Data<ConformanceWebAuthnService>,
 ) -> Result<HttpResponse> {
-    let response = service.finish_registration(&*credential).await?;
+    let response = service.finish_registration(&credential).await?;
     Ok(HttpResponse::Ok().json(response))
 }
 
 pub async fn start_authentication(
-    request: JsonExtractor<ServerPublicKeyCredentialGetOptionsRequest>,
+    request: web::Json<ServerPublicKeyCredentialGetOptionsRequest>,
     service: web::Data<ConformanceWebAuthnService>,
 ) -> Result<HttpResponse> {
-    let response = service.start_authentication(&*request).await?;
+    let response = service.start_authentication(&request).await?;
     Ok(HttpResponse::Ok().json(response))
 }
 
 pub async fn finish_authentication(
-    credential: JsonExtractor<ServerPublicKeyCredential>,
+    credential: web::Json<ServerPublicKeyCredential>,
     service: web::Data<ConformanceWebAuthnService>,
 ) -> Result<HttpResponse> {
-    let response = service.finish_authentication(&*credential).await?;
+    let response = service.finish_authentication(&credential).await?;
     Ok(HttpResponse::Ok().json(response))
 }
 
