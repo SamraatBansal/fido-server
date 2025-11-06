@@ -121,18 +121,19 @@ pub async fn finish_authentication(
         }
 
         // Validate base64url encoding
-        if let Err(_) = base64::decode_config(&response.client_data_json, base64::URL_SAFE_NO_PAD) {
+        use base64::prelude::*;
+        if let Err(_) = BASE64_URL_SAFE_NO_PAD.decode(&response.client_data_json) {
             return Err(AppError::InvalidField("clientDataJSON is not valid base64url".to_string()));
         }
-        if let Err(_) = base64::decode_config(&response.authenticator_data, base64::URL_SAFE_NO_PAD) {
+        if let Err(_) = BASE64_URL_SAFE_NO_PAD.decode(&response.authenticator_data) {
             return Err(AppError::InvalidField("authenticatorData is not valid base64url".to_string()));
         }
-        if let Err(_) = base64::decode_config(&response.signature, base64::URL_SAFE_NO_PAD) {
+        if let Err(_) = BASE64_URL_SAFE_NO_PAD.decode(&response.signature) {
             return Err(AppError::InvalidField("signature is not valid base64url".to_string()));
         }
 
         // Parse and validate client data JSON
-        let client_data_bytes = base64::decode_config(&response.client_data_json, base64::URL_SAFE_NO_PAD)?;
+        let client_data_bytes = BASE64_URL_SAFE_NO_PAD.decode(&response.client_data_json)?;
         let client_data: serde_json::Value = serde_json::from_slice(&client_data_bytes)?;
 
         // Validate client data structure
