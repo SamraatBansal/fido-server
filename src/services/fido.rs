@@ -6,6 +6,7 @@ use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use uuid::Uuid;
+use url::Url;
 use webauthn_rs::prelude::*;
 
 use crate::config::settings::WebAuthnSettings;
