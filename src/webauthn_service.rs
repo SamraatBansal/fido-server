@@ -403,22 +403,39 @@ impl WebAuthnService {
             .map_err(|_| AppError::InternalServerError)?;
 
         // Convert to webauthn-rs format
+        let credential_id_raw = base64::decode_config(&credential.id, base64::URL_SAFE_NO_PAD)
+            .map_err(|_| AppError::InvalidFormat("Invalid credential ID format".to_string()))?;
+        let client_data_json_raw = base64::decode_config(&assertion_response.client_data_json, base64::URL_SAFE_NO_PAD)
+            .map_err(|_| AppError::InvalidFormat("Invalid clientDataJSON format".to_string()))?;
+        let authenticator_data_raw = base64::decode_config(&assertion_response.authenticator_data, base64::URL_SAFE_NO_PAD)
+            .map_err(|_| AppError::InvalidFormat("Invalid authenticatorData format".to_string()))?;
+        let signature_raw = base64::decode_config(&assertion_response.signature, base64::URL_SAFE_NO_PAD)
+            .map_err(|_| AppError::InvalidFormat("Invalid signature format".to_string()))?;
+
+        let user_handle_raw = if let Some(uh) = &assertion_response.user_handle {
+            if !uh.is_empty() {
+                Some(Base64UrlSafeData::from(
+                    base64::decode_config(uh, base64::URL_SAFE_NO_PAD)
+                        .map_err(|_| AppError::InvalidFormat("Invalid userHandle format".to_string()))?
+                ))
+            } else {
+                None
+            }
+        } else {
+            None
+        };
+
         let auth_credential = PublicKeyCredential {
             id: credential.id.clone(),
-            raw_id: Base64UrlSafeData::try_from(credential.id.as_str())
-                .map_err(|_| AppError::InvalidFormat("Invalid credential ID format".to_string()))?,
-            response: webauthn_rs::prelude::AuthenticatorAssertionResponseRaw {
-                client_data_json: Base64UrlSafeData::try_from(assertion_response.client_data_json.as_str())
-                    .map_err(|_| AppError::InvalidFormat("Invalid clientDataJSON format".to_string()))?,
-                authenticator_data: Base64UrlSafeData::try_from(assertion_response.authenticator_data.as_str())
-                    .map_err(|_| AppError::InvalidFormat("Invalid authenticatorData format".to_string()))?,
-                signature: Base64UrlSafeData::try_from(assertion_response.signature.as_str())
-                    .map_err(|_| AppError::InvalidFormat("Invalid signature format".to_string()))?,
-                user_handle: assertion_response.user_handle.as_ref().map(|uh| {
-                    Base64UrlSafeData::try_from(uh.as_str()).unwrap_or_default()
-                }),
+            raw_id: Base64UrlSafeData::from(credential_id_raw),
+            response: webauthn_rs::AuthenticatorAssertionResponseRaw {
+                client_data_json: Base64UrlSafeData::from(client_data_json_raw),
+                authenticator_data: Base64UrlSafeData::from(authenticator_data_raw),
+                signature: Base64UrlSafeData::from(signature_raw),
+                user_handle: user_handle_raw,
             },
             type_: credential.type_.clone(),
+            extensions: Default::default(),
         };
 
         // Finish authentication with webauthn-rs - this performs all security validations
