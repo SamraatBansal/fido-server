@@ -180,7 +180,7 @@ pub async fn registration_result(
     // Parse client data to find the challenge and determine the user
     let client_data_json_bytes = crate::utils::base64url_decode(&attestation_response.client_data_json)?;
     let client_data: serde_json::Value = serde_json::from_slice(&client_data_json_bytes)?;
-    let challenge = client_data["challenge"]
+    let _challenge = client_data["challenge"]
         .as_str()
         .ok_or_else(|| WebAuthnError::Validation("Challenge not found in client data".to_string()))?;
 
