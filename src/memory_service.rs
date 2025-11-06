@@ -356,7 +356,7 @@ impl MemoryWebAuthnService {
         let _user_present = (flags & 0x01) != 0;
         let _user_verified = (flags & 0x04) != 0;
         let at_flag = (flags & 0x40) != 0; // Attested credential data included
-        let ed_flag = (flags & 0x80) != 0; // Extension data included
+        let _ed_flag = (flags & 0x80) != 0; // Extension data included
 
         // For registration, AT flag must be set
         if !at_flag {
