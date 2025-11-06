@@ -83,15 +83,51 @@ impl MemoryWebAuthnService {
             extensions = req_ext.clone();
         }
 
-        // Create supported algorithms
+        // Create supported algorithms - comprehensive list for FIDO conformance
         let pub_key_cred_params = vec![
             PublicKeyCredentialParameters {
                 type_: "public-key".to_string(),
-                alg: -7, // ES256
+                alg: -7, // ES256 - ECDSA w/ SHA-256
             },
             PublicKeyCredentialParameters {
                 type_: "public-key".to_string(),
-                alg: -257, // RS256
+                alg: -8, // Ed25519 - EdDSA signature algorithms
+            },
+            PublicKeyCredentialParameters {
+                type_: "public-key".to_string(),
+                alg: -35, // ES384 - ECDSA w/ SHA-384
+            },
+            PublicKeyCredentialParameters {
+                type_: "public-key".to_string(),
+                alg: -36, // ES512 - ECDSA w/ SHA-512
+            },
+            PublicKeyCredentialParameters {
+                type_: "public-key".to_string(),
+                alg: -37, // PS256 - RSASSA-PSS w/ SHA-256
+            },
+            PublicKeyCredentialParameters {
+                type_: "public-key".to_string(),
+                alg: -38, // PS384 - RSASSA-PSS w/ SHA-384
+            },
+            PublicKeyCredentialParameters {
+                type_: "public-key".to_string(),
+                alg: -39, // PS512 - RSASSA-PSS w/ SHA-512
+            },
+            PublicKeyCredentialParameters {
+                type_: "public-key".to_string(),
+                alg: -257, // RS256 - RSASSA-PKCS1-v1_5 w/ SHA-256
+            },
+            PublicKeyCredentialParameters {
+                type_: "public-key".to_string(),
+                alg: -258, // RS384 - RSASSA-PKCS1-v1_5 w/ SHA-384
+            },
+            PublicKeyCredentialParameters {
+                type_: "public-key".to_string(),
+                alg: -259, // RS512 - RSASSA-PKCS1-v1_5 w/ SHA-512
+            },
+            PublicKeyCredentialParameters {
+                type_: "public-key".to_string(),
+                alg: -65535, // RS1 - RSASSA-PKCS1-v1_5 w/ SHA-1 (legacy)
             },
         ];
 
