@@ -3,7 +3,12 @@
 use actix_web::{web, HttpRequest, HttpResponse, Result};
 use serde_json::json;
 use webauthn_rs::prelude::*;
-use webauthn_rs_proto::{AuthenticatorAttestationResponseRaw, AuthenticatorAssertionResponseRaw};
+use webauthn_rs_proto::{
+    AuthenticatorAttestationResponseRaw, 
+    AuthenticatorAssertionResponseRaw,
+    RegistrationExtensionsClientOutputs,
+    AuthenticationExtensionsClientOutputs,
+};
 use std::sync::Arc;
 
 /// Application state containing WebAuthn instance and storage
