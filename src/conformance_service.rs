@@ -213,12 +213,11 @@ impl ConformanceWebAuthnService {
         if let Some(stored_challenge) = self.storage.get_challenge("registration")? {
             let challenge_context: serde_json::Value = serde_json::from_slice(&stored_challenge.challenge_data)?;
             
-            // Get the original request parameters to check user verification requirements
-            let original_username = challenge_context["username"].as_str().unwrap_or("");
+            // Get the original authenticatorSelection to check user verification requirements
+            let authenticator_selection = challenge_context.get("authenticatorSelection");
             
-            // For FIDO conformance test F-15, we need to check if userVerification was required
-            // and enforce it by checking the UV flag in authData
-            self.enforce_user_verification_if_required(&auth_data, original_username)?;
+            // For FIDO conformance test F-15: enforce user verification if it was required
+            self.enforce_user_verification_from_selection(&auth_data, authenticator_selection)?;
         }
 
         // Get challenge from client data and verify
