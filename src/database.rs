@@ -9,7 +9,7 @@ use crate::schema::*;
 pub type DbPool = deadpool_diesel::postgres::Pool;
 
 pub async fn create_pool(database_url: &str) -> Result<DbPool> {
-    let mgr = deadpool_diesel::postgres::Manager::new(database_url, deadpool_diesel::postgres::RecyclingMethod::Fast);
+    let mgr = deadpool_diesel::postgres::Manager::new(database_url, deadpool_diesel::RecyclingMethod::Fast);
     let pool = deadpool_diesel::postgres::Pool::builder(mgr)
         .build()
         .map_err(|e| AppError::DatabaseError(diesel::result::Error::DatabaseError(
