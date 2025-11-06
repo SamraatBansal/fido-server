@@ -1,11 +1,11 @@
 // @generated automatically by Diesel CLI.
 
 diesel::table! {
-    challenges (id) {
+    authentication_challenges (id) {
         id -> Uuid,
-        user_id -> Nullable<Uuid>,
-        challenge_type -> Varchar,
-        challenge_data -> Bytea,
+        user_id -> Uuid,
+        challenge -> Bytea,
+        state_data -> Bytea,
         expires_at -> Timestamptz,
         created_at -> Timestamptz,
     }
@@ -18,9 +18,22 @@ diesel::table! {
         credential_id -> Bytea,
         public_key -> Bytea,
         sign_count -> Int8,
-        transports -> Nullable<Text>,
+        transports -> Nullable<Array<Text>>,
+        backup_eligible -> Bool,
+        backup_state -> Bool,
         created_at -> Timestamptz,
         last_used -> Nullable<Timestamptz>,
+    }
+}
+
+diesel::table! {
+    registration_challenges (id) {
+        id -> Uuid,
+        user_id -> Uuid,
+        challenge -> Bytea,
+        state_data -> Bytea,
+        expires_at -> Timestamptz,
+        created_at -> Timestamptz,
     }
 }
 
@@ -34,11 +47,13 @@ diesel::table! {
     }
 }
 
-diesel::joinable!(challenges -> users (user_id));
+diesel::joinable!(authentication_challenges -> users (user_id));
 diesel::joinable!(credentials -> users (user_id));
+diesel::joinable!(registration_challenges -> users (user_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
-    challenges,
+    authentication_challenges,
     credentials,
+    registration_challenges,
     users,
 );
