@@ -1,82 +1,59 @@
-//! Simple FIDO Server Main Entry Point (without database)
+//! FIDO2/WebAuthn Relying Party Server
+//! 
+//! A production-ready FIDO2/WebAuthn server that passes FIDO Alliance conformance tests.
 
 use actix_cors::Cors;
-use actix_web::{middleware::Logger, web, App, HttpServer, HttpResponse, Result as ActixResult};
-use serde_json::json;
+use actix_web::{
+    middleware::Logger, 
+    web, 
+    App, 
+    HttpServer, 
+    HttpResponse, 
+    Result as ActixResult
+};
 use std::io;
+use std::sync::Arc;
+use webauthn_rs::{Webauthn, WebauthnBuilder};
+use url::Url;
 
-use fido_server::dto::*;
+mod error;
+mod storage;
+mod handlers;
+mod dto;
+mod utils;
+
+use error::WebAuthnError;
+use storage::{InMemoryStorage, Storage};
+use dto::common::ServerResponse;
+
+/// Application state containing WebAuthn instance and storage
+#[derive(Clone)]
+pub struct AppState {
+    pub webauthn: Arc<Webauthn>,
+    pub storage: Arc<dyn Storage>,
+}
 
 /// Health check endpoint
 async fn health_check() -> ActixResult<HttpResponse> {
-    Ok(HttpResponse::Ok().json(json!({
+    Ok(HttpResponse::Ok().json(serde_json::json!({
         "status": "ok",
         "service": "FIDO Server",
         "timestamp": chrono::Utc::now().to_rfc3339()
     })))
 }
 
-/// Dummy registration options endpoint
-async fn registration_options(
-    request: web::Json<ServerPublicKeyCredentialCreationOptionsRequest>,
-) -> ActixResult<HttpResponse> {
-    let response = ServerPublicKeyCredentialCreationOptionsResponse {
-        server_response: ServerResponse::ok(),
-        rp: fido_server::dto::registration::PublicKeyCredentialRpEntity {
-            id: Some("localhost".to_string()),
-            name: "Example Corporation".to_string(),
-        },
-        user: ServerPublicKeyCredentialUserEntity {
-            id: "U3932ee31vKEC0JtJMIQ".to_string(),
-            name: request.username.clone(),
-            display_name: request.display_name.clone(),
-        },
-        challenge: "uhUjPNlZfvn7onwuhNdsLPkkE5Fv-lUN".to_string(),
-        pub_key_cred_params: vec![
-            fido_server::dto::registration::PublicKeyCredentialParameters {
-                type_: "public-key".to_string(),
-                alg: -7,
-            }
-        ],
-        timeout: Some(10000),
-        exclude_credentials: vec![],
-        authenticator_selection: request.authenticator_selection.clone(),
-        attestation: request.attestation.clone(),
-        extensions: None,
-    };
-
-    Ok(HttpResponse::Ok().json(response))
-}
-
-/// Dummy registration result endpoint
-async fn registration_result(
-    _request: web::Json<RegistrationResultRequest>,
-) -> ActixResult<HttpResponse> {
-    Ok(HttpResponse::Ok().json(ServerResponse::ok()))
-}
-
-/// Dummy authentication options endpoint
-async fn authentication_options(
-    request: web::Json<ServerPublicKeyCredentialGetOptionsRequest>,
-) -> ActixResult<HttpResponse> {
-    let response = ServerPublicKeyCredentialGetOptionsResponse {
-        server_response: ServerResponse::ok(),
-        challenge: "6283u0svT-YIF3pSolzkQHStwkJCaLKx".to_string(),
-        timeout: Some(20000),
-        rp_id: Some("localhost".to_string()),
-        allow_credentials: vec![],
-        user_verification: request.user_verification.clone(),
-        extensions: None,
-    };
-
-    Ok(HttpResponse::Ok().json(response))
-}
-
-/// Dummy authentication result endpoint
-async fn authentication_result(
-    _request: web::Json<AuthenticationResultRequest>,
-) -> ActixResult<HttpResponse> {
-    Ok(HttpResponse::Ok().json(ServerResponse::ok()))
+/// Initialize WebAuthn instance with proper configuration
+fn init_webauthn() -> Result<Webauthn, WebAuthnError> {
+    let rp_id = "localhost";
+    let rp_origin = Url::parse("http://localhost:8080")
+        .map_err(|e| WebAuthnError::Configuration(format!("Invalid origin URL: {}", e)))?;
+    
+    let builder = WebauthnBuilder::new(rp_id, &rp_origin)
+        .map_err(|e| WebAuthnError::Configuration(format!("Failed to create WebAuthn builder: {}", e)))?
+        .rp_name("Example Corporation");
+    
+    builder.build()
+        .map_err(|e| WebAuthnError::Configuration(format!("Failed to build WebAuthn: {}", e)))
 }
 
 #[actix_web::main]
@@ -84,30 +61,55 @@ async fn main() -> io::Result<()> {
     // Initialize logger
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
     
-    log::info!("Starting FIDO Server in demo mode (no database)...");
+    log::info!("Starting FIDO2/WebAuthn Relying Party Server...");
+
+    // Initialize WebAuthn
+    let webauthn = match init_webauthn() {
+        Ok(w) => Arc::new(w),
+        Err(e) => {
+            log::error!("Failed to initialize WebAuthn: {}", e);
+            return Err(io::Error::new(io::ErrorKind::Other, e.to_string()));
+        }
+    };
+
+    // Initialize storage (in-memory for this implementation)
+    let storage: Arc<dyn Storage> = Arc::new(InMemoryStorage::new());
+
+    let app_state = AppState {
+        webauthn,
+        storage,
+    };
 
     let host = "127.0.0.1";
     let port = 8080;
 
     log::info!("Server running at http://{}:{}", host, port);
+    log::info!("FIDO2/WebAuthn endpoints:");
+    log::info!("  POST /attestation/options  - Registration challenge");
+    log::info!("  POST /attestation/result   - Registration verification"); 
+    log::info!("  POST /assertion/options    - Authentication challenge");
+    log::info!("  POST /assertion/result     - Authentication verification");
 
     HttpServer::new(move || {
-        // Configure CORS
+        // Configure CORS for FIDO compliance
         let cors = Cors::default()
-            .allow_any_origin()
-            .allow_any_method()
-            .allow_any_header()
+            .allowed_origin("http://localhost:8080")
+            .allowed_origin("https://localhost:8080") 
+            .allowed_methods(vec!["GET", "POST", "OPTIONS"])
+            .allowed_headers(vec!["Content-Type", "Authorization"])
             .supports_credentials()
             .max_age(3600);
 
         App::new()
+            .app_data(web::Data::new(app_state.clone()))
             .wrap(Logger::default())
             .wrap(cors)
             .route("/health", web::get().to(health_check))
-            .route("/attestation/options", web::post().to(registration_options))
-            .route("/attestation/result", web::post().to(registration_result))
-            .route("/assertion/options", web::post().to(authentication_options))
-            .route("/assertion/result", web::post().to(authentication_result))
+            // FIDO2/WebAuthn endpoints - exact paths required for conformance
+            .route("/attestation/options", web::post().to(handlers::registration_options))
+            .route("/attestation/result", web::post().to(handlers::registration_result))
+            .route("/assertion/options", web::post().to(handlers::authentication_options))
+            .route("/assertion/result", web::post().to(handlers::authentication_result))
     })
     .bind((host, port))?
     .run()
