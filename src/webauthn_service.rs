@@ -71,8 +71,21 @@ impl WebAuthnService {
             )
             .map_err(|e| AppError::WebAuthnError(e.to_string()))?;
 
-        // Store challenge state in database
-        let challenge_bytes = ccr.public_key.challenge.0.clone();
+        // Extract challenge bytes safely
+        let challenge_bytes = {
+            // Get the challenge as bytes by serializing to JSON and extracting the challenge field
+            let ccr_json = serde_json::to_value(&ccr.public_key.challenge)
+                .map_err(|_| AppError::InternalServerError)?;
+            
+            if let Some(challenge_str) = ccr_json.as_str() {
+                base64::engine::general_purpose::URL_SAFE_NO_PAD
+                    .decode(challenge_str)
+                    .map_err(|_| AppError::InternalServerError)?
+            } else {
+                return Err(AppError::InternalServerError);
+            }
+        };
+
         let state_data = serde_json::to_vec(&reg_state)?;
         let expires_at = Utc::now() + Duration::minutes(5);
 
@@ -98,15 +111,24 @@ impl WebAuthnService {
         let response = ServerPublicKeyCredentialCreationOptionsResponse {
             status: "ok".to_string(),
             error_message: "".to_string(),
-            rp: ccr.public_key.rp.clone(),
+            rp: RpEntity {
+                name: ccr.public_key.rp.name.clone(),
+                id: Some(ccr.public_key.rp.id.clone()),
+            },
             user: ServerPublicKeyCredentialUserEntity {
                 id: base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(user.id.as_bytes()),
                 name: request.username,
                 display_name: request.display_name,
                 icon: None,
             },
-            challenge: base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(&challenge_bytes),
-            pub_key_cred_params: ccr.public_key.pub_key_cred_params,
+            challenge: challenge_str,
+            pub_key_cred_params: ccr.public_key.pub_key_cred_params
+                .iter()
+                .map(|param| PubKeyCredParam {
+                    type_: param.type_.clone(),
+                    alg: param.alg,
+                })
+                .collect(),
             timeout: ccr.public_key.timeout,
             exclude_credentials: exclude_creds,
             authenticator_selection: request.authenticator_selection,
@@ -166,7 +188,7 @@ impl WebAuthnService {
         }
 
         // Find user by challenge using our session store
-        let challenge_str = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(&client_data.challenge.0);
+        let challenge_str = client_data.challenge.clone();
         let (user_id, session_type) = {
             let sessions = self.sessions.read().await;
             sessions.get(&challenge_str)
@@ -183,10 +205,13 @@ impl WebAuthnService {
             .ok_or(AppError::UserNotFound)?;
 
         // Get challenge state from database
-        let challenge_bytes = &client_data.challenge.0;
+        let challenge_bytes = base64::engine::general_purpose::URL_SAFE_NO_PAD
+            .decode(&client_data.challenge)
+            .map_err(|_| AppError::InvalidFormat("Invalid challenge format".to_string()))?;
+        
         let challenge_record = self
             .database
-            .get_registration_challenge(user.id, challenge_bytes)
+            .get_registration_challenge(user.id, &challenge_bytes)
             .await?
             .ok_or(AppError::ChallengeExpired)?;
 
@@ -221,12 +246,17 @@ impl WebAuthnService {
             .map_err(|e| AppError::AttestationFailed(e.to_string()))?;
 
         // Store credential in database
+        let cred_id = match passkey.cred_id().try_into() {
+            Ok(bytes) => bytes,
+            Err(_) => return Err(AppError::InternalServerError),
+        };
+
         let new_credential = NewCredential {
             id: Uuid::new_v4(),
             user_id: user.id,
-            credential_id: passkey.cred_id().0.clone(),
+            credential_id: cred_id,
             public_key: serde_json::to_vec(&passkey).unwrap_or_default(), // Simplified storage
-            sign_count: passkey.counter() as i64,
+            sign_count: 0, // Initial sign count
             transports: None, // Simplified for conformance tests
             backup_eligible: false,
             backup_state: false,
@@ -236,7 +266,7 @@ impl WebAuthnService {
 
         // Clean up the challenge and session
         self.database
-            .delete_registration_challenge(user.id, challenge_bytes)
+            .delete_registration_challenge(user.id, &challenge_bytes)
             .await?;
         
         self.sessions.write().await.remove(&challenge_str);
