@@ -15,7 +15,7 @@ tokio = { version = "1.35", features = ["full"] }
 webauthn-rs = { version = "0.5", features = ["danger-allow-state-serialisation"] }
 
 # Database
-diesel = { version = "2.1", features = ["sqlite", "postgres", "uuid", "chrono", "r2d2"] }
+diesel = { version = "2.1", features = ["postgres", "uuid", "chrono", "r2d2"] }
 diesel_migrations = "2.1"
 
 # Serialization
