@@ -15,11 +15,11 @@ pub fn establish_connection_pool() -> DbPool {
         .expect("Failed to create pool.")
 }
 
-pub fn run_migrations(pool: &DbPool) -> Result<(), diesel_migrations::MigrationError> {
+pub fn run_migrations(pool: &DbPool) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
     
     const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
-    let mut conn = pool.get().expect("Failed to get database connection");
+    let mut conn = pool.get()?;
     conn.run_pending_migrations(MIGRATIONS)?;
     Ok(())
 }
