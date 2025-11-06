@@ -9,10 +9,10 @@ use serde_json::json;
 use fido_server::dto::*;
 
 /// Test helper to create a test app with all routes
-async fn create_test_app() -> actix_web::dev::Service<
+async fn create_test_app() -> impl actix_web::dev::Service<
     actix_web::dev::ServiceRequest,
-    impl actix_web::dev::ServiceResponse<impl actix_web::body::MessageBody>,
-    actix_web::Error,
+    Response = actix_web::dev::ServiceResponse,
+    Error = actix_web::Error,
 > {
     test::init_service(
         App::new().configure(|cfg| {
