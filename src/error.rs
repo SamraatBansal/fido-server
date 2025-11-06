@@ -10,7 +10,7 @@ pub enum WebAuthnError {
     /// Configuration errors
     Configuration(String),
     /// WebAuthn library errors  
-    WebAuthn(webauthn_rs::WebauthnError),
+    WebAuthn(webauthn_rs_core::error::WebauthnError),
     /// Storage errors
     Storage(String),
     /// Validation errors
