@@ -1,4 +1,4 @@
-use chrono::{DateTime, Duration, Utc};
+use chrono::{DateTime, Utc};
 use diesel::prelude::*;
 use uuid::Uuid;
 
@@ -7,17 +7,15 @@ use crate::models::*;
 use crate::schema::*;
 
 pub type DbPool = deadpool_diesel::postgres::Pool;
-pub type DbConnection = deadpool_diesel::postgres::Object;
 
 pub async fn create_pool(database_url: &str) -> Result<DbPool> {
-    let config = deadpool_diesel::postgres::Config::new(database_url);
-    let pool = config.create_pool(
-        Some(deadpool_diesel::Runtime::Tokio1),
-        deadpool_diesel::postgres::Manager::new(
-            database_url,
-            deadpool_diesel::postgres::RecyclingMethod::Fast,
-        ),
-    )?;
+    let mgr = deadpool_diesel::postgres::Manager::new(database_url, deadpool_diesel::postgres::RecyclingMethod::Fast);
+    let pool = deadpool_diesel::postgres::Pool::builder(mgr)
+        .build()
+        .map_err(|e| AppError::DatabaseError(diesel::result::Error::DatabaseError(
+            diesel::result::DatabaseErrorKind::Unknown,
+            Box::new(e.to_string()),
+        )))?;
     Ok(pool)
 }
 
