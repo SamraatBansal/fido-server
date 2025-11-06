@@ -135,7 +135,7 @@ pub async fn registration_options(
 
 /// POST /attestation/result - Complete registration process
 pub async fn registration_result(
-    app_state: web::Data<AppState>,
+    _app_state: web::Data<AppState>,
     request: web::Json<RegistrationResultRequest>,
     _http_req: HttpRequest,
 ) -> Result<HttpResponse, WebAuthnError> {
