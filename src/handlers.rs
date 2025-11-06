@@ -301,7 +301,7 @@ pub async fn authentication_result(
     }
 
     // Convert to webauthn-rs format
-    let auth_cred = PublicKeyCredential {
+    let _auth_cred = PublicKeyCredential {
         id: request.credential.id.clone(),
         raw_id: base64url_decode_safe(&request.credential.id)?,
         response: AuthenticatorAssertionResponseRaw {
