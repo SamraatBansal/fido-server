@@ -21,10 +21,10 @@ pub async fn finish_registration(
 }
 
 pub async fn start_authentication(
-    request: web::Json<ServerPublicKeyCredentialGetOptionsRequest>,
+    request: JsonExtractor<ServerPublicKeyCredentialGetOptionsRequest>,
     service: web::Data<ConformanceWebAuthnService>,
 ) -> Result<HttpResponse> {
-    let response = service.start_authentication(&request).await?;
+    let response = service.start_authentication(&*request).await?;
     Ok(HttpResponse::Ok().json(response))
 }
 
