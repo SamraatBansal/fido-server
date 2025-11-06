@@ -149,7 +149,7 @@ def create_attestation_object_with_wrong_key_signature(challenge: str, rp_id: st
     auth_data = rp_id_hash + struct.pack('B', flags) + sign_count + aaguid + cred_id_len + cred_id + cose_key_bytes
     
     # Create attestation statement with signature made with wrong key marker
-    wrong_key_sig = b'\\xDE\\xAD\\xBE\\xEF' + os.urandom(60)  # Test marker + random
+    wrong_key_sig = b'\xDE\xAD\xBE\xEF' + os.urandom(60)  # Test marker + random
     att_stmt = {
         "alg": -7,
         "sig": wrong_key_sig,
