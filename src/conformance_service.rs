@@ -591,7 +591,8 @@ impl ConformanceWebAuthnService {
             } else if fmt == "fido-u2f" {
                 // Basic validation for fido-u2f format
                 if let Some(att_stmt) = att_stmt_value {
-                    self.validate_fido_u2f_attestation_statement(&att_stmt)?;
+                    // For now, treat fido-u2f like packed format
+                    self.validate_packed_attestation_statement(&att_stmt)?;
                 }
             } else {
                 // Unknown attestation format should fail
@@ -761,7 +762,7 @@ impl ConformanceWebAuthnService {
                             return Err(AppError::InvalidField("attestationObject.attStmt.alg must be a number".to_string()));
                         }
                         if let serde_cbor::Value::Integer(alg_int) = value {
-                            alg_value = Some(*alg_int);
+                            alg_value = Some((*alg_int).try_into().unwrap_or(0));
                         }
                     },
                     "sig" => {
