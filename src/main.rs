@@ -46,8 +46,38 @@ async fn main() -> std::io::Result<()> {
             .allow_any_header()
             .supports_credentials();
 
+        // Configure JSON error handling for FIDO conformance
+        let json_config = web::JsonConfig::default()
+            .limit(4096)
+            .error_handler(|err, _req| {
+                let error_message = if err.to_string().contains("missing field") {
+                    let err_str = err.to_string();
+                    if let Some(start) = err_str.find("missing field `") {
+                        if let Some(end) = err_str[start + 15..].find("`") {
+                            let field_name = &err_str[start + 15..start + 15 + end];
+                            format!("Missing required field: {}", field_name)
+                        } else {
+                            "Missing required field".to_string()
+                        }
+                    } else {
+                        "Missing required field".to_string()
+                    }
+                } else {
+                    "Invalid JSON format".to_string()
+                };
+
+                let response = actix_web::HttpResponse::BadRequest().json(
+                    serde_json::json!({
+                        "status": "failed",
+                        "errorMessage": error_message
+                    })
+                );
+                actix_web::error::InternalError::from_response(err, response).into()
+            });
+
         App::new()
             .app_data(web::Data::new(webauthn_service.clone()))
+            .app_data(json_config)
             .wrap(cors)
             .wrap(Logger::default())
             .service(
