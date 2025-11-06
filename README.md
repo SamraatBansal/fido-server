@@ -1,207 +1,144 @@
 # FIDO2/WebAuthn Relying Party Server
 
-A production-ready FIDO2/WebAuthn Relying Party server implementation in Rust, designed to pass FIDO Alliance conformance tests.
+A production-ready FIDO2/WebAuthn Relying Party server implementation in Rust, designed to pass FIDO Alliance conformance testing.
 
 ## Features
 
-- ✅ Full FIDO2/WebAuthn specification compliance
-- ✅ Comprehensive input validation and error handling  
-- ✅ PostgreSQL database backend with migrations
-- ✅ RESTful API matching FIDO Alliance test requirements
-- ✅ Support for all FIDO2 cryptographic algorithms
-- ✅ Proper challenge management and replay protection
-- ✅ Attestation object validation and processing
-- ✅ Authentication assertion validation
-- ✅ Extensive test suite for conformance validation
+- Complete FIDO2/WebAuthn implementation using webauthn-rs
+- PostgreSQL database backend with Diesel ORM
+- Async/await support with Actix Web
+- Comprehensive error handling and validation
+- FIDO Alliance conformance test compatibility
+- Production-ready security practices
 
 ## API Endpoints
 
 ### Registration
-- `POST /attestation/options` - Start credential registration
-- `POST /attestation/result` - Complete credential registration
+- `POST /attestation/options` - Start registration
+- `POST /attestation/result` - Complete registration
 
 ### Authentication  
 - `POST /assertion/options` - Start authentication
 - `POST /assertion/result` - Complete authentication
 
-### Utilities
-- `GET /health` - Health check endpoint
+### Health Check
+- `GET /health` - Server health status
 
-## Quick Start
+## Setup
 
 ### Prerequisites
-
 - Rust 1.70+
 - PostgreSQL 12+
 - Diesel CLI: `cargo install diesel_cli --no-default-features --features postgres`
 
-### Setup
-
-1. **Clone and setup database:**
+### Database Setup
+1. Install PostgreSQL and create database:
 ```bash
-# Set up database
-createdb fido2_webauthn
-export DATABASE_URL="postgres://postgres:password@localhost/fido2_webauthn"
+sudo -u postgres psql -f setup_database.sql
+```
 
-# Run migrations
+2. Run migrations:
+```bash
 diesel migration run
 ```
 
-2. **Configure environment:**
-```bash
-cp .env.example .env
-# Edit .env with your settings
+### Environment Configuration
+Copy `.env.example` to `.env` and configure:
+```env
+DATABASE_URL=postgresql://fido_user:fido_password@localhost/fido_db
+RUST_LOG=debug
+WEBAUTHN_RP_ID=localhost
+WEBAUTHN_RP_NAME=FIDO2 Test Server
+WEBAUTHN_RP_ORIGIN=http://localhost:8080
+SERVER_HOST=127.0.0.1
+SERVER_PORT=8080
 ```
 
-3. **Build and run:**
+### Build and Run
 ```bash
 cargo build --release
 cargo run
 ```
 
-The server will start on `http://localhost:8080` by default.
+The server will start at `http://localhost:8080`.
 
-### Configuration
+## FIDO Conformance Testing
 
-Environment variables:
+This server is designed to pass FIDO Alliance conformance tests. Key features:
 
-- `DATABASE_URL` - PostgreSQL connection string
-- `RP_ID` - Relying Party identifier (default: localhost)
-- `RP_NAME` - Relying Party display name
-- `RP_ORIGIN` - Allowed origin URL (default: http://localhost:8080)
-- `BIND_ADDRESS` - Server bind address (default: 0.0.0.0:8080)
-- `RUST_LOG` - Log level (info, debug, etc.)
+- Strict validation of all input parameters
+- Proper error responses for invalid requests
+- Correct WebAuthn challenge/response handling
+- Support for multiple attestation formats
+- Proper credential lifecycle management
 
-## API Usage
+### Running Conformance Tests
 
-### Registration Flow
+1. Start the server: `cargo run`
+2. Configure FIDO conformance tool to test `http://localhost:8080`
+3. Run the conformance test suite
 
-1. **Start Registration:**
+## Security Features
+
+- Challenge uniqueness and expiration
+- Origin validation
+- Attestation verification
+- Sign count validation
+- CORS protection
+- Input sanitization and validation
+- Secure session management
+
+## API Examples
+
+### Registration
 ```bash
+# Start registration
 curl -X POST http://localhost:8080/attestation/options \
   -H "Content-Type: application/json" \
-  -d '{
-    "username": "user@example.com",
-    "displayName": "John Doe", 
-    "attestation": "direct"
-  }'
-```
+  -d '{"username":"test@example.com","displayName":"Test User"}'
 
-2. **Complete Registration:**
-```bash
+# Complete registration  
 curl -X POST http://localhost:8080/attestation/result \
   -H "Content-Type: application/json" \
-  -d '{
-    "id": "credential-id-base64url",
-    "type": "public-key",
-    "response": {
-      "clientDataJSON": "client-data-base64url",
-      "attestationObject": "attestation-object-base64url"
-    }
-  }'
+  -d '{"id":"credential_id","type":"public-key","response":{...}}'
 ```
 
-### Authentication Flow
-
-1. **Start Authentication:**
+### Authentication
 ```bash
+# Start authentication
 curl -X POST http://localhost:8080/assertion/options \
   -H "Content-Type: application/json" \
-  -d '{
-    "username": "user@example.com"
-  }'
-```
+  -d '{"username":"test@example.com"}'
 
-2. **Complete Authentication:**  
-```bash
+# Complete authentication
 curl -X POST http://localhost:8080/assertion/result \
   -H "Content-Type: application/json" \
-  -d '{
-    "id": "credential-id-base64url",
-    "type": "public-key", 
-    "response": {
-      "clientDataJSON": "client-data-base64url",
-      "authenticatorData": "authenticator-data-base64url",
-      "signature": "signature-base64url",
-      "userHandle": ""
-    }
-  }'
+  -d '{"id":"credential_id","type":"public-key","response":{...}}'
 ```
 
-## Testing
+## Architecture
 
-### Unit and Integration Tests
+- **Database Layer**: PostgreSQL with Diesel ORM
+- **Service Layer**: WebAuthn business logic with webauthn-rs
+- **API Layer**: Actix Web HTTP handlers
+- **Validation**: Comprehensive input validation
+- **Error Handling**: Structured error responses
+- **Security**: Production-ready security practices
+
+## Development
+
+### Adding Features
+1. Update database schema in `migrations/`
+2. Update models in `src/models.rs`
+3. Add business logic to `src/webauthn_service.rs`
+4. Add API endpoints to `src/handlers.rs`
+5. Update tests and documentation
+
+### Testing
 ```bash
 cargo test
 ```
 
-### FIDO Conformance Tests
-
-This server is designed to pass the official FIDO Alliance conformance test suite. The implementation includes:
-
-- Proper JSON response formatting with `status` and `errorMessage` fields
-- Comprehensive input validation matching FIDO test requirements
-- Support for `excludeCredentials` in registration responses  
-- Challenge generation and validation per FIDO specifications
-- Attestation object parsing and validation
-- All required cryptographic algorithm support
-- Proper error responses for all failure scenarios
-
-## Security Features
-
-- **Challenge Replay Protection** - Challenges expire after 5 minutes and are single-use
-- **Input Validation** - Comprehensive validation of all request fields
-- **Origin Validation** - Strict origin checking per WebAuthn specification  
-- **Attestation Verification** - Full attestation object validation
-- **Database Security** - Parameterized queries prevent SQL injection
-- **Error Handling** - No information leakage in error responses
-
-## Database Schema
-
-The server uses PostgreSQL with the following tables:
-
-- `users` - User accounts with username and display name
-- `credentials` - Stored FIDO2 credentials with public keys and metadata
-- `challenges` - Temporary challenge storage with expiration
-
-## Production Deployment
-
-### Docker
-
-```bash
-docker build -t fido2-server .
-docker run -p 8080:8080 --env-file .env fido2-server
-```
-
-### Performance Considerations
-
-- Connection pooling for database access
-- Async/await throughout for non-blocking I/O
-- Efficient base64url encoding/decoding
-- Minimal memory allocations in hot paths
-
-## Compliance
-
-This implementation follows:
-
-- FIDO2/WebAuthn Level 2 specification
-- W3C Credential Management API
-- FIDO Alliance conformance test requirements
-- RFC 8152 (CBOR Object Signing and Encryption)
-- RFC 8230 (Using RSA Algorithms with CBOR)
-
 ## License
 
 MIT License - see LICENSE file for details.
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Add tests for new functionality  
-4. Ensure all tests pass including conformance tests
-5. Submit a pull request
-
-## Support
-
-For issues, questions, or contributions, please use the GitHub issue tracker.
