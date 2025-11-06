@@ -185,8 +185,9 @@ impl MemoryWebAuthnService {
         // Store or update user 
         let existing_user = self.storage.get_user_by_id(user_id)?;
         if existing_user.is_none() {
-            // Create the user with the stored information
-            let _actual_user_id = self.storage.store_user(username, display_name)?;
+            // Create the user with the expected user_id
+            // This is a workaround for the memory storage - in real implementation, user would be created during start_registration
+            self.storage.store_user_with_id(user_id, username, display_name)?;
         }
 
         // Store credential (simplified - would normally parse attestation object)
