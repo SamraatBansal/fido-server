@@ -469,7 +469,7 @@ impl WebAuthnService {
         Ok(stored_challenge)
     }
 
-    fn credential_to_passkey(&self, credential: Credential) -> Result<Passkey> {
+    fn credential_to_passkey(&self, _credential: Credential) -> Result<Passkey> {
         // Convert credential data to passkey - this is a simplified approach
         // In production, you'd need to properly reconstruct all the passkey data
         
