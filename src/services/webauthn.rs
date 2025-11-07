@@ -224,7 +224,7 @@ impl WebAuthnService {
             credential_id: credential_id.clone(),
             public_key: serde_json::to_vec(&passkey)
                 .map_err(|e| AppError::ValidationError(format!("Failed to serialize passkey: {e}")))?,
-            counter: passkey.counter(),
+            counter: 0, // Initial counter value
             aaguid: None, // Could extract from passkey if needed
             credential_type: "public-key".to_string(),
             transports: None, // Could extract from passkey if needed
