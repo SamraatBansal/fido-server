@@ -1,0 +1,441 @@
+use std::sync::Arc;
+use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
+use chrono::{DateTime, Duration, Utc};
+use rand::RngCore;
+use uuid::Uuid;
+use webauthn_rs::{Webauthn, WebauthnBuilder};
+use webauthn_rs_proto::*;
+
+use crate::{
+    config::WebAuthnSettings,
+    db::DbPool,
+    error::{AppError, Result},
+    models::{Challenge, Credential, NewChallenge, NewCredential, NewUser, User},
+    schemas::{request::*, response::*},
+};
+use diesel::prelude::*;
+
+#[derive(Clone)]
+pub struct WebAuthnService {
+    webauthn: Arc<Webauthn>,
+    db_pool: Arc<DbPool>,
+}
+
+impl WebAuthnService {
+    pub fn new(config: &WebAuthnSettings, db_pool: Arc<DbPool>) -> Result<Self> {
+        let webauthn = WebauthnBuilder::new(&config.rp_id, &config.origin)
+            .map_err(|e| AppError::WebAuthnError(format!("Failed to create WebAuthn builder: {e}")))?
+            .rp_name(&config.rp_name)
+            .build()
+            .map_err(|e| AppError::WebAuthnError(format!("Failed to build WebAuthn: {e}")))?;
+
+        Ok(Self {
+            webauthn: Arc::new(webauthn),
+            db_pool,
+        })
+    }
+
+    pub async fn begin_registration(&self, req: RegistrationBeginRequest) -> Result<RegistrationBeginResponse> {
+        let mut conn = self.db_pool.get()
+            .map_err(|e| AppError::DatabaseError(format!("Failed to get database connection: {e}")))?;
+
+        // Check if user already exists
+        let existing_user = self.find_user_by_username(&mut conn, &req.username)?;
+        
+        // Generate or get user
+        let user = if let Some(user) = existing_user {
+            user
+        } else {
+            // Create new user
+            let user_id = self.generate_user_id();
+            let new_user = NewUser {
+                username: req.username.clone(),
+                display_name: req.display_name.clone(),
+                user_id: user_id.clone(),
+            };
+
+            diesel::insert_into(crate::schema::users::table)
+                .values(&new_user)
+                .get_result::<User>(&mut conn)
+                .map_err(|e| AppError::DatabaseError(format!("Failed to create user: {e}")))?
+        };
+
+        // Get existing credentials to exclude
+        let exclude_credentials = self.get_user_credentials(&mut conn, user.id)?;
+
+        // Build credential user entity
+        let user_entity = PasskeyUser::new(
+            user.user_id.clone(),
+            &user.username,
+            &user.display_name,
+        );
+
+        // Convert existing credentials to exclude list
+        let exclude_list: Vec<CredentialID> = exclude_credentials
+            .into_iter()
+            .map(|cred| cred.credential_id.into())
+            .collect();
+
+        // Generate registration challenge
+        let (ccr, reg_state) = self.webauthn
+            .start_passkey_registration(
+                user_entity,
+                Some(exclude_list),
+                req.authenticator_selection.clone(),
+                req.attestation.clone(),
+            )
+            .map_err(|e| AppError::WebAuthnError(format!("Failed to start registration: {e}")))?;
+
+        // Store challenge in database
+        self.store_challenge(
+            &mut conn,
+            &ccr.public_key.challenge,
+            Some(user.id),
+            "registration".to_string(),
+        )?;
+
+        // Convert to API response format
+        Ok(RegistrationBeginResponse {
+            status: "ok".to_string(),
+            error_message: String::new(),
+            rp: RelyingParty {
+                name: ccr.public_key.rp.name.clone(),
+                id: ccr.public_key.rp.id.clone(),
+            },
+            user: PublicKeyCredentialUserEntity {
+                id: URL_SAFE_NO_PAD.encode(&ccr.public_key.user.id),
+                name: ccr.public_key.user.name.clone(),
+                display_name: ccr.public_key.user.display_name.clone(),
+            },
+            challenge: URL_SAFE_NO_PAD.encode(&ccr.public_key.challenge),
+            pub_key_cred_params: ccr.public_key.pub_key_cred_params.clone(),
+            timeout: ccr.public_key.timeout,
+            exclude_credentials: ccr.public_key.exclude_credentials
+                .unwrap_or_default()
+                .into_iter()
+                .map(|desc| PublicKeyCredentialDescriptor {
+                    credential_type: "public-key".to_string(),
+                    id: URL_SAFE_NO_PAD.encode(&desc.id),
+                    transports: desc.transports.map(|t| {
+                        t.into_iter().map(|transport| format!("{transport:?}").to_lowercase()).collect()
+                    }),
+                })
+                .collect(),
+            authenticator_selection: ccr.public_key.authenticator_selection.clone(),
+            attestation: ccr.public_key.attestation.clone(),
+            extensions: ccr.public_key.extensions.clone(),
+        })
+    }
+
+    pub async fn complete_registration(&self, req: RegistrationCompleteRequest) -> Result<ServerResponse> {
+        let mut conn = self.db_pool.get()
+            .map_err(|e| AppError::DatabaseError(format!("Failed to get database connection: {e}")))?;
+
+        // Decode the credential ID
+        let credential_id = URL_SAFE_NO_PAD.decode(&req.id)
+            .map_err(|e| AppError::ValidationError(format!("Invalid credential ID: {e}")))?;
+
+        // Decode client data JSON
+        let client_data_json = URL_SAFE_NO_PAD.decode(&req.response.client_data_json)
+            .map_err(|e| AppError::ValidationError(format!("Invalid client data JSON: {e}")))?;
+
+        // Parse client data to get challenge
+        let client_data: CollectedClientData = serde_json::from_slice(&client_data_json)
+            .map_err(|e| AppError::ValidationError(format!("Invalid client data JSON format: {e}")))?;
+
+        // Decode challenge
+        let challenge_bytes = URL_SAFE_NO_PAD.decode(&client_data.challenge)
+            .map_err(|e| AppError::ValidationError(format!("Invalid challenge: {e}")))?;
+
+        // Find and consume challenge
+        let challenge = self.find_and_consume_challenge(&mut conn, &challenge_bytes, "registration")?;
+
+        // Get user
+        let user = if let Some(user_id) = challenge.user_id {
+            self.find_user_by_id(&mut conn, user_id)?
+                .ok_or_else(|| AppError::NotFound("User not found".to_string()))?
+        } else {
+            return Err(AppError::ValidationError("Invalid challenge state".to_string()));
+        };
+
+        // Build RegisterPublicKeyCredential for webauthn-rs
+        let reg_credential = RegisterPublicKeyCredential {
+            id: req.id.clone(),
+            raw_id: req.id.clone(),
+            response: AuthenticatorAttestationResponseRaw {
+                attestation_object: req.response.attestation_object.clone(),
+                client_data_json: req.response.client_data_json.clone(),
+            },
+            type_: "public-key".to_string(),
+            extensions: req.client_extension_results.clone(),
+        };
+
+        // Create passkey user entity
+        let user_entity = PasskeyUser::new(
+            user.user_id.clone(),
+            &user.username,
+            &user.display_name,
+        );
+
+        // Complete registration (we need to store the registration state somehow)
+        // For now, we'll use a simplified approach
+        let passkey = self.webauthn
+            .finish_passkey_registration(&reg_credential, &PasskeyRegistration::new(user_entity))
+            .map_err(|e| AppError::WebAuthnError(format!("Failed to complete registration: {e}")))?;
+
+        // Store credential in database
+        let new_credential = NewCredential {
+            user_id: user.id,
+            credential_id: credential_id.clone(),
+            public_key: passkey.cred().clone(),
+            counter: passkey.counter() as i64,
+            aaguid: Some(passkey.aaguid()),
+            credential_type: "public-key".to_string(),
+            transports: None, // TODO: Extract from attestation
+            backup_eligible: Some(passkey.backup_eligible()),
+            backup_state: Some(passkey.backup_state()),
+            attestation_type: None, // TODO: Extract from attestation
+        };
+
+        diesel::insert_into(crate::schema::credentials::table)
+            .values(&new_credential)
+            .execute(&mut conn)
+            .map_err(|e| AppError::DatabaseError(format!("Failed to store credential: {e}")))?;
+
+        Ok(ServerResponse::ok())
+    }
+
+    pub async fn begin_authentication(&self, req: AuthenticationBeginRequest) -> Result<AuthenticationBeginResponse> {
+        let mut conn = self.db_pool.get()
+            .map_err(|e| AppError::DatabaseError(format!("Failed to get database connection: {e}")))?;
+
+        // Find user
+        let user = self.find_user_by_username(&mut conn, &req.username)?
+            .ok_or_else(|| AppError::NotFound("User does not exist!".to_string()))?;
+
+        // Get user's credentials
+        let credentials = self.get_user_credentials(&mut conn, user.id)?;
+
+        if credentials.is_empty() {
+            return Err(AppError::NotFound("No credentials found for user".to_string()));
+        }
+
+        // Convert credentials to passkeys
+        let passkeys: Vec<Passkey> = credentials
+            .into_iter()
+            .map(|cred| self.credential_to_passkey(cred))
+            .collect::<Result<Vec<_>>>()?;
+
+        // Generate authentication challenge
+        let (request_challenge_response, auth_state) = self.webauthn
+            .start_passkey_authentication(&passkeys)
+            .map_err(|e| AppError::WebAuthnError(format!("Failed to start authentication: {e}")))?;
+
+        // Store challenge
+        self.store_challenge(
+            &mut conn,
+            &request_challenge_response.public_key.challenge,
+            Some(user.id),
+            "authentication".to_string(),
+        )?;
+
+        // Convert to API response format
+        Ok(AuthenticationBeginResponse {
+            status: "ok".to_string(),
+            error_message: String::new(),
+            challenge: URL_SAFE_NO_PAD.encode(&request_challenge_response.public_key.challenge),
+            timeout: request_challenge_response.public_key.timeout,
+            rp_id: request_challenge_response.public_key.rp_id.clone(),
+            allow_credentials: request_challenge_response.public_key.allow_credentials
+                .unwrap_or_default()
+                .into_iter()
+                .map(|desc| PublicKeyCredentialDescriptor {
+                    credential_type: "public-key".to_string(),
+                    id: URL_SAFE_NO_PAD.encode(&desc.id),
+                    transports: desc.transports.map(|t| {
+                        t.into_iter().map(|transport| format!("{transport:?}").to_lowercase()).collect()
+                    }),
+                })
+                .collect(),
+            user_verification: req.user_verification,
+            extensions: request_challenge_response.public_key.extensions.clone(),
+        })
+    }
+
+    pub async fn complete_authentication(&self, req: AuthenticationCompleteRequest) -> Result<ServerResponse> {
+        let mut conn = self.db_pool.get()
+            .map_err(|e| AppError::DatabaseError(format!("Failed to get database connection: {e}")))?;
+
+        // Decode client data JSON to get challenge
+        let client_data_json = URL_SAFE_NO_PAD.decode(&req.response.client_data_json)
+            .map_err(|e| AppError::ValidationError(format!("Invalid client data JSON: {e}")))?;
+
+        let client_data: CollectedClientData = serde_json::from_slice(&client_data_json)
+            .map_err(|e| AppError::ValidationError(format!("Invalid client data JSON format: {e}")))?;
+
+        let challenge_bytes = URL_SAFE_NO_PAD.decode(&client_data.challenge)
+            .map_err(|e| AppError::ValidationError(format!("Invalid challenge: {e}")))?;
+
+        // Find and consume challenge
+        let challenge = self.find_and_consume_challenge(&mut conn, &challenge_bytes, "authentication")?;
+
+        let user = if let Some(user_id) = challenge.user_id {
+            self.find_user_by_id(&mut conn, user_id)?
+                .ok_or_else(|| AppError::NotFound("User not found".to_string()))?
+        } else {
+            return Err(AppError::ValidationError("Invalid challenge state".to_string()));
+        };
+
+        // Get user's credentials and convert to passkeys
+        let credentials = self.get_user_credentials(&mut conn, user.id)?;
+        let passkeys: Vec<Passkey> = credentials
+            .into_iter()
+            .map(|cred| self.credential_to_passkey(cred))
+            .collect::<Result<Vec<_>>>()?;
+
+        // Build AuthenticatePublicKeyCredential
+        let auth_credential = AuthenticatePublicKeyCredential {
+            id: req.id.clone(),
+            raw_id: req.id.clone(),
+            response: AuthenticatorAssertionResponseRaw {
+                authenticator_data: req.response.authenticator_data.clone(),
+                client_data_json: req.response.client_data_json.clone(),
+                signature: req.response.signature.clone(),
+                user_handle: if req.response.user_handle.is_empty() {
+                    None
+                } else {
+                    Some(req.response.user_handle.clone())
+                },
+            },
+            type_: "public-key".to_string(),
+            extensions: req.client_extension_results.clone(),
+        };
+
+        // Complete authentication
+        let auth_result = self.webauthn
+            .finish_passkey_authentication(&auth_credential, &passkeys)
+            .map_err(|e| AppError::WebAuthnError(format!("Failed to complete authentication: {e}")))?;
+
+        // Update credential counter
+        let credential_id = URL_SAFE_NO_PAD.decode(&req.id)
+            .map_err(|e| AppError::ValidationError(format!("Invalid credential ID: {e}")))?;
+
+        diesel::update(crate::schema::credentials::table)
+            .filter(crate::schema::credentials::credential_id.eq(&credential_id))
+            .set((
+                crate::schema::credentials::counter.eq(auth_result.counter() as i64),
+                crate::schema::credentials::last_used.eq(Some(Utc::now())),
+            ))
+            .execute(&mut conn)
+            .map_err(|e| AppError::DatabaseError(format!("Failed to update credential: {e}")))?;
+
+        Ok(ServerResponse::ok())
+    }
+
+    // Helper methods
+    fn generate_user_id(&self) -> Vec<u8> {
+        let mut id = [0u8; 32];
+        rand::thread_rng().fill_bytes(&mut id);
+        id.to_vec()
+    }
+
+    fn find_user_by_username(&self, conn: &mut PgConnection, username: &str) -> Result<Option<User>> {
+        use crate::schema::users::dsl;
+        
+        dsl::users
+            .filter(dsl::username.eq(username))
+            .filter(dsl::active.eq(true))
+            .first::<User>(conn)
+            .optional()
+            .map_err(|e| AppError::DatabaseError(format!("Failed to find user: {e}")))
+    }
+
+    fn find_user_by_id(&self, conn: &mut PgConnection, user_id: Uuid) -> Result<Option<User>> {
+        use crate::schema::users::dsl;
+        
+        dsl::users
+            .filter(dsl::id.eq(user_id))
+            .filter(dsl::active.eq(true))
+            .first::<User>(conn)
+            .optional()
+            .map_err(|e| AppError::DatabaseError(format!("Failed to find user: {e}")))
+    }
+
+    fn get_user_credentials(&self, conn: &mut PgConnection, user_id: Uuid) -> Result<Vec<Credential>> {
+        use crate::schema::credentials::dsl;
+        
+        dsl::credentials
+            .filter(dsl::user_id.eq(user_id))
+            .filter(dsl::active.eq(true))
+            .load::<Credential>(conn)
+            .map_err(|e| AppError::DatabaseError(format!("Failed to get credentials: {e}")))
+    }
+
+    fn store_challenge(
+        &self,
+        conn: &mut PgConnection,
+        challenge: &Challenge,
+        user_id: Option<Uuid>,
+        challenge_type: String,
+    ) -> Result<()> {
+        let expires_at = Utc::now() + Duration::minutes(5); // 5 minute expiry
+        
+        let new_challenge = NewChallenge {
+            challenge: challenge.to_vec(),
+            user_id,
+            challenge_type,
+            session_id: None, // TODO: Implement session management
+            expires_at,
+        };
+
+        diesel::insert_into(crate::schema::challenges::table)
+            .values(&new_challenge)
+            .execute(conn)
+            .map_err(|e| AppError::DatabaseError(format!("Failed to store challenge: {e}")))?;
+
+        Ok(())
+    }
+
+    fn find_and_consume_challenge(
+        &self,
+        conn: &mut PgConnection,
+        challenge: &[u8],
+        challenge_type: &str,
+    ) -> Result<Challenge> {
+        use crate::schema::challenges::dsl;
+        
+        // Find the challenge
+        let stored_challenge = dsl::challenges
+            .filter(dsl::challenge.eq(challenge))
+            .filter(dsl::challenge_type.eq(challenge_type))
+            .filter(dsl::consumed.eq(false))
+            .filter(dsl::expires_at.gt(Utc::now()))
+            .first::<Challenge>(conn)
+            .map_err(|e| match e {
+                diesel::result::Error::NotFound => AppError::ValidationError("Invalid or expired challenge".to_string()),
+                _ => AppError::DatabaseError(format!("Failed to find challenge: {e}")),
+            })?;
+
+        // Mark as consumed
+        diesel::update(dsl::challenges.find(stored_challenge.id))
+            .set(dsl::consumed.eq(true))
+            .execute(conn)
+            .map_err(|e| AppError::DatabaseError(format!("Failed to consume challenge: {e}")))?;
+
+        Ok(stored_challenge)
+    }
+
+    fn credential_to_passkey(&self, credential: Credential) -> Result<Passkey> {
+        // This is a simplified conversion - in practice you'd need to properly
+        // reconstruct the Passkey from stored data
+        Passkey::try_from((
+            credential.credential_id.into(),
+            credential.public_key,
+            credential.counter as u32,
+            credential.aaguid.unwrap_or_default(),
+            credential.backup_eligible.unwrap_or(false),
+            credential.backup_state.unwrap_or(false),
+        ))
+        .map_err(|e| AppError::WebAuthnError(format!("Failed to convert credential to passkey: {e}")))
+    }
+}
