@@ -198,7 +198,7 @@ impl WebAuthnService {
         };
 
         // Convert user.user_id bytes to Uuid for registration state recreation
-        let user_uuid = if user.user_id.len() == 16 {
+        let _user_uuid = if user.user_id.len() == 16 {
             Uuid::from_slice(&user.user_id)
                 .map_err(|e| AppError::ValidationError(format!("Invalid user ID: {e}")))?
         } else {
