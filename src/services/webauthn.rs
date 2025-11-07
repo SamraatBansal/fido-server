@@ -205,16 +205,13 @@ impl WebAuthnService {
             Uuid::new_v4()
         };
 
-        // We need to simulate the registration state that was stored during begin_registration
-        // For simplicity, we'll create a new registration flow - in production you'd store this properly
-        let (_, reg_state) = self.webauthn
-            .start_passkey_registration(
-                user_uuid,
-                &user.username,
-                &user.display_name,
-                None, // No exclusions for recreated state
-            )
-            .map_err(|e| AppError::WebAuthnError(format!("Failed to recreate registration state: {e}")))?;
+        // Retrieve the stored registration state using challenge as key
+        let challenge_key = URL_SAFE_NO_PAD.encode(&challenge_bytes);
+        let reg_state = {
+            let mut states = self.registration_states.write().unwrap();
+            states.remove(&challenge_key)
+                .ok_or_else(|| AppError::ValidationError("Registration state not found".to_string()))?
+        };
 
         // Complete registration
         let passkey = self.webauthn
