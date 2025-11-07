@@ -25,6 +25,9 @@ use diesel::prelude::*;
 pub struct WebAuthnService {
     webauthn: Arc<Webauthn>,
     db_pool: Arc<DbPool>,
+    // Store registration and authentication states temporarily
+    registration_states: Arc<std::sync::RwLock<std::collections::HashMap<String, PasskeyRegistration>>>,
+    authentication_states: Arc<std::sync::RwLock<std::collections::HashMap<String, PasskeyAuthentication>>>,
 }
 
 impl WebAuthnService {
