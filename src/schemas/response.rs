@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use webauthn_rs_proto::{
-    AttestationConveyancePreference, AuthenticatorSelectionCriteria, PublicKeyCredentialParameters,
+    AttestationConveyancePreference, AuthenticatorSelectionCriteria, COSEContentType,
     UserVerificationPolicy,
 };
 
