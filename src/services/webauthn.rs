@@ -44,6 +44,8 @@ impl WebAuthnService {
         Ok(Self {
             webauthn: Arc::new(webauthn),
             db_pool,
+            registration_states: Arc::new(std::sync::RwLock::new(std::collections::HashMap::new())),
+            authentication_states: Arc::new(std::sync::RwLock::new(std::collections::HashMap::new())),
         })
     }
 
