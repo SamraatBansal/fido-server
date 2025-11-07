@@ -485,16 +485,9 @@ impl WebAuthnService {
         Ok(stored_challenge)
     }
 
-    fn credential_to_passkey(&self, _credential: Credential) -> Result<Passkey> {
-        // Convert credential data to passkey - this is a simplified approach
-        // In production, you'd need to properly reconstruct all the passkey data
-        
-        // For now, we'll create a minimal passkey that contains the essential data
-        // Note: This is not the complete implementation as Passkey constructor is complex
-        // You'd typically store more detailed credential data and reconstruct it properly
-        
-        // This is a placeholder - the actual implementation would require storing
-        // and reconstructing the complete credential/public key data
-        Err(AppError::WebAuthnError("Credential to passkey conversion not fully implemented".to_string()))
+    fn credential_to_passkey(&self, credential: Credential) -> Result<Passkey> {
+        // Deserialize the stored passkey data
+        serde_json::from_slice(&credential.public_key)
+            .map_err(|e| AppError::ValidationError(format!("Failed to deserialize passkey: {e}")))
     }
 }
