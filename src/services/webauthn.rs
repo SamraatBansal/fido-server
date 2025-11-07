@@ -364,10 +364,13 @@ impl WebAuthnService {
             extensions: Default::default(),
         };
 
-        // We need to recreate the authentication state - in production you'd store this
-        let (_, auth_state) = self.webauthn
-            .start_passkey_authentication(&passkeys)
-            .map_err(|e| AppError::WebAuthnError(format!("Failed to recreate auth state: {e}")))?;
+        // Retrieve the stored authentication state using challenge as key
+        let challenge_key = URL_SAFE_NO_PAD.encode(&challenge_bytes);
+        let auth_state = {
+            let mut states = self.authentication_states.write().unwrap();
+            states.remove(&challenge_key)
+                .ok_or_else(|| AppError::ValidationError("Authentication state not found".to_string()))?
+        };
 
         // Complete authentication
         let auth_result = self.webauthn
