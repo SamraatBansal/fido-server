@@ -9,6 +9,7 @@ use webauthn_rs_proto::{
     AttestationConveyancePreference, 
     CollectedClientData, RegisterPublicKeyCredential, PublicKeyCredential,
     AuthenticatorAttestationResponseRaw, AuthenticatorAssertionResponseRaw,
+    COSEAlgorithm, COSEKey, CredentialID, PublicKeyCredentialType,
 };
 
 use crate::{
