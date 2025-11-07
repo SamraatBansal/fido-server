@@ -6,7 +6,7 @@ use uuid::Uuid;
 use url::Url;
 use webauthn_rs::{prelude::*, Webauthn, WebauthnBuilder};
 use webauthn_rs_proto::{
-    AttestationConveyancePreference, AuthenticatorSelectionCriteria, 
+    AttestationConveyancePreference, 
     CollectedClientData, RegisterPublicKeyCredential, PublicKeyCredential,
     AuthenticatorAttestationResponseRaw, AuthenticatorAssertionResponseRaw,
 };
