@@ -264,7 +264,7 @@ impl WebAuthnService {
             .collect::<Result<Vec<_>>>()?;
 
         // Generate authentication challenge
-        let (request_challenge_response, _auth_state) = self.webauthn
+        let (request_challenge_response, auth_state) = self.webauthn
             .start_passkey_authentication(&passkeys)
             .map_err(|e| AppError::WebAuthnError(format!("Failed to start authentication: {e}")))?;
 
@@ -275,6 +275,13 @@ impl WebAuthnService {
             Some(user.id),
             "authentication".to_string(),
         )?;
+
+        // Store authentication state with challenge as key
+        let challenge_key = URL_SAFE_NO_PAD.encode(request_challenge_response.public_key.challenge.as_ref());
+        {
+            let mut states = self.authentication_states.write().unwrap();
+            states.insert(challenge_key.clone(), auth_state);
+        }
 
         // Convert to API response format
         Ok(AuthenticationBeginResponse {
