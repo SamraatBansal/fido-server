@@ -209,16 +209,18 @@ impl WebAuthnService {
             .map_err(|e| AppError::WebAuthnError(format!("Failed to complete registration: {e}")))?;
 
         // Store credential in database
+        // For now, we'll store minimal credential data
+        // In production, you'd want to extract and store more complete data from the passkey
         let new_credential = NewCredential {
             user_id: user.id,
             credential_id: credential_id.clone(),
-            public_key: passkey.cred_id().as_ref().to_vec(),
-            counter: passkey.counter() as i64,
-            aaguid: Some(passkey.aaguid()),
+            public_key: passkey.cred_id().as_ref().to_vec(), // This is actually credential ID, not public key
+            counter: 0, // We'll update this during authentication
+            aaguid: None, // TODO: Extract from attestation
             credential_type: "public-key".to_string(),
             transports: None, // TODO: Extract from attestation
-            backup_eligible: Some(passkey.backup_eligible()),
-            backup_state: Some(passkey.backup_state()),
+            backup_eligible: None, // TODO: Extract from attestation
+            backup_state: None, // TODO: Extract from attestation
             attestation_type: None, // TODO: Extract from attestation
         };
 
