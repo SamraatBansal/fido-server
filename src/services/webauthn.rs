@@ -337,7 +337,6 @@ impl WebAuthnService {
                     ))
                 },
             },
-            type_: "public-key".to_string(),
             extensions: Default::default(),
         };
 
