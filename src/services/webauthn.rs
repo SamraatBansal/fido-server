@@ -1,13 +1,18 @@
 use std::sync::Arc;
 use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
-use chrono::{DateTime, Duration, Utc};
+use chrono::{Duration, Utc};
 use rand::RngCore;
 use uuid::Uuid;
-use webauthn_rs::{Webauthn, WebauthnBuilder};
-use webauthn_rs_proto::*;
+use webauthn_rs::{prelude::*, Webauthn, WebauthnBuilder};
+use webauthn_rs_proto::{
+    AttestationConveyancePreference, AuthenticatorSelectionCriteria, 
+    CollectedClientData, RegisterPublicKeyCredential, 
+    AuthenticatorAttestationResponseRaw, PublicKeyCredentialCreationOptions,
+    PublicKeyCredentialRequestOptions,
+};
 
 use crate::{
-    config::WebAuthnSettings,
+    config::settings::WebAuthnSettings,
     db::DbPool,
     error::{AppError, Result},
     models::{Challenge, Credential, NewChallenge, NewCredential, NewUser, User},
