@@ -2,6 +2,8 @@
 //!
 //! A FIDO2/WebAuthn conformant server implementation in Rust.
 
+pub mod schema;
+
 pub mod config;
 pub mod controllers;
 pub mod db;
