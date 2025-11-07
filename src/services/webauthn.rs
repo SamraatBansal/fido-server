@@ -87,7 +87,7 @@ impl WebAuthnService {
         };
 
         // Generate registration challenge
-        let (ccr, reg_state) = self.webauthn
+        let (ccr, _reg_state) = self.webauthn
             .start_passkey_registration(
                 user_uuid,
                 &user.username,
