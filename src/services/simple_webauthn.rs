@@ -284,7 +284,7 @@ impl SimpleWebAuthnService {
 
         // Get user's credentials and convert to passkeys
         let credentials = self.storage.get_user_credentials(user.id);
-        let passkeys: Vec<Passkey> = credentials
+        let _passkeys: Vec<Passkey> = credentials
             .into_iter()
             .map(|cred| self.credential_to_passkey(cred))
             .collect::<Result<Vec<_>>>()?;
