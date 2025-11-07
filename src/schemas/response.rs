@@ -39,7 +39,7 @@ pub struct RegistrationBeginResponse {
     pub user: PublicKeyCredentialUserEntity,
     pub challenge: String, // base64url encoded
     #[serde(rename = "pubKeyCredParams")]
-    pub pub_key_cred_params: Vec<PubKeyCredParams>,
+    pub pub_key_cred_params: Vec<PubKeyCredParam>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub timeout: Option<u64>,
     #[serde(rename = "excludeCredentials")]
