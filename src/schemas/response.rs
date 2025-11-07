@@ -1,8 +1,8 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use webauthn_rs_proto::{
-    AttestationConveyancePreference, AuthenticatorSelectionCriteria, COSEContentType,
-    UserVerificationPolicy,
+    AttestationConveyancePreference, AuthenticatorSelectionCriteria,
+    UserVerificationPolicy, PubKeyCredParams,
 };
 
 // Base response schema
