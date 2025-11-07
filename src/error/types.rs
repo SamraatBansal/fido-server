@@ -41,9 +41,10 @@ impl ResponseError for AppError {
         let status_code = self.status_code();
         let error_message = self.to_string();
 
+        // Use FIDO2 conformance API error format
         HttpResponse::build(status_code).json(serde_json::json!({
-            "error": error_message,
-            "status": status_code.as_u16()
+            "status": "failed",
+            "errorMessage": error_message
         }))
     }
 
