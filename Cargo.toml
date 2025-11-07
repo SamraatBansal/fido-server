@@ -59,6 +59,9 @@ anyhow = "1.0"
 # Time
 chrono = { version = "0.4", features = ["serde"] }
 
+# URL parsing
+url = "2.5"
+
 [dev-dependencies]
 actix-test = "0.1"
 mockall = "0.13"
