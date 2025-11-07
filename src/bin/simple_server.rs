@@ -1,7 +1,7 @@
 //! Simple FIDO Server with in-memory storage
 
 use actix_cors::Cors;
-use actix_web::{middleware::Logger, web, App, HttpServer, HttpResponse, Result};
+use actix_web::{middleware::Logger, web, App, HttpServer, HttpResponse, Result, middleware::ErrorHandler, http::StatusCode};
 use std::sync::Arc;
 
 use fido_server::{
