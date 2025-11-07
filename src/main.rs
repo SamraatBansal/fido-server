@@ -56,7 +56,7 @@ async fn main() -> io::Result<()> {
             .wrap(cors)
             .configure(fido_server::routes::api::configure)
     })
-    .bind((host, port))?
+    .bind((host.as_str(), port))?
     .run()
     .await
 }
