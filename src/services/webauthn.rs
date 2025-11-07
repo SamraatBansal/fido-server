@@ -93,7 +93,7 @@ impl WebAuthnService {
         };
 
         // Generate registration challenge
-        let (ccr, _reg_state) = self.webauthn
+        let (ccr, reg_state) = self.webauthn
             .start_passkey_registration(
                 user_uuid,
                 &user.username,
@@ -109,6 +109,13 @@ impl WebAuthnService {
             Some(user.id),
             "registration".to_string(),
         )?;
+
+        // Store registration state with challenge as key
+        let challenge_key = URL_SAFE_NO_PAD.encode(ccr.public_key.challenge.as_ref());
+        {
+            let mut states = self.registration_states.write().unwrap();
+            states.insert(challenge_key.clone(), reg_state);
+        }
 
         // Convert to API response format
         Ok(RegistrationBeginResponse {
