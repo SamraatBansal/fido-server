@@ -8,8 +8,7 @@ use webauthn_rs_proto::{
     AttestationConveyancePreference, AuthenticatorSelectionCriteria, 
     CollectedClientData, RegisterPublicKeyCredential, 
     AuthenticatorAttestationResponseRaw, PublicKeyCredentialCreationOptions,
-    PublicKeyCredentialRequestOptions, AuthenticatePublicKeyCredential,
-    AuthenticatorAssertionResponseRaw,
+    PublicKeyCredentialRequestOptions, AuthenticatorAssertionResponseRaw,
 };
 
 use crate::{
