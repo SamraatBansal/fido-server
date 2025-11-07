@@ -273,8 +273,8 @@ impl WebAuthnService {
             challenge: URL_SAFE_NO_PAD.encode(request_challenge_response.public_key.challenge.as_ref()),
             timeout: request_challenge_response.public_key.timeout.map(|t| t as u64),
             rp_id: request_challenge_response.public_key.rp_id.clone(),
-            allow_credentials: request_challenge_response.public_key.allow_credentials
-                .map(|creds| creds.into_iter()
+            allow_credentials: if let Some(creds) = request_challenge_response.public_key.allow_credentials {
+                creds.into_iter()
                     .map(|desc| crate::schemas::response::PublicKeyCredentialDescriptor {
                         credential_type: "public-key".to_string(),
                         id: URL_SAFE_NO_PAD.encode(desc.id.as_ref()),
@@ -282,8 +282,10 @@ impl WebAuthnService {
                             t.into_iter().map(|transport| transport.to_string()).collect()
                         }),
                     })
-                    .collect())
-                .unwrap_or_default(),
+                    .collect()
+            } else {
+                Vec::new()
+            },
             user_verification: req.user_verification,
             extensions: None, // Simplified for now
         })
