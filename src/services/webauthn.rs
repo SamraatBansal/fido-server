@@ -313,8 +313,8 @@ impl WebAuthnService {
             .map(|cred| self.credential_to_passkey(cred))
             .collect::<Result<Vec<_>>>()?;
 
-        // Build AuthenticatePublicKeyCredential
-        let auth_credential = webauthn_rs_proto::AuthenticatePublicKeyCredential {
+        // Build PublicKeyCredential for authentication
+        let auth_credential = PublicKeyCredential {
             id: req.id.clone(),
             raw_id: Base64UrlSafeData::from(URL_SAFE_NO_PAD.decode(&req.id)
                 .map_err(|e| AppError::ValidationError(format!("Invalid credential ID: {e}")))?),
