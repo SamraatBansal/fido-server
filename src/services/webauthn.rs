@@ -218,20 +218,19 @@ impl WebAuthnService {
             .finish_passkey_registration(&reg_credential, &reg_state)
             .map_err(|e| AppError::WebAuthnError(format!("Failed to complete registration: {e}")))?;
 
-        // Store credential in database
-        // For now, we'll store minimal credential data
-        // In production, you'd want to extract and store more complete data from the passkey
+        // Store credential in database with proper passkey data
         let new_credential = NewCredential {
             user_id: user.id,
             credential_id: credential_id.clone(),
-            public_key: passkey.cred_id().as_ref().to_vec(), // This is actually credential ID, not public key
-            counter: 0, // We'll update this during authentication
-            aaguid: None, // TODO: Extract from attestation
+            public_key: serde_json::to_vec(&passkey)
+                .map_err(|e| AppError::ValidationError(format!("Failed to serialize passkey: {e}")))?,
+            counter: passkey.counter(),
+            aaguid: None, // Could extract from passkey if needed
             credential_type: "public-key".to_string(),
-            transports: None, // TODO: Extract from attestation
-            backup_eligible: None, // TODO: Extract from attestation
-            backup_state: None, // TODO: Extract from attestation
-            attestation_type: None, // TODO: Extract from attestation
+            transports: None, // Could extract from passkey if needed
+            backup_eligible: None,
+            backup_state: None,
+            attestation_type: None,
         };
 
         diesel::insert_into(crate::schema::credentials::table)
