@@ -254,7 +254,7 @@ impl WebAuthnService {
             .collect::<Result<Vec<_>>>()?;
 
         // Generate authentication challenge
-        let (request_challenge_response, auth_state) = self.webauthn
+        let (request_challenge_response, _auth_state) = self.webauthn
             .start_passkey_authentication(&passkeys)
             .map_err(|e| AppError::WebAuthnError(format!("Failed to start authentication: {e}")))?;
 
