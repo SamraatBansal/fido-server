@@ -8,6 +8,7 @@ use chrono::{Duration, Utc};
 use std::collections::HashMap;
 use uuid::Uuid;
 use webauthn_rs::{prelude::*, Webauthn, WebauthnBuilder};
+use webauthn_rs_proto::{AuthenticatorAttestationResponseRaw, AuthenticatorAssertionResponseRaw};
 use tracing::{info, debug, error, warn};
 
 #[derive(Clone)]
