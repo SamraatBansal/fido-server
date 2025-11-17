@@ -139,7 +139,7 @@ pub struct User {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, FromRow)]
+#[derive(Debug, Clone)]
 pub struct Credential {
     pub id: Uuid,
     pub user_id: Uuid,
