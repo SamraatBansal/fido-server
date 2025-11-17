@@ -12,11 +12,10 @@ use axum::{
     Router,
 };
 use fido_server::{
-    db::Database,
+    memory_db::MemoryDatabase,
     handlers::{self, AppState},
-    webauthn::WebAuthnService,
+    simple_webauthn::SimpleWebAuthnService,
 };
-use sqlx::postgres::PgPoolOptions;
 use std::{net::SocketAddr, time::Duration};
 use tokio::signal;
 use tower::ServiceBuilder;
