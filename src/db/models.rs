@@ -11,6 +11,7 @@ use uuid::Uuid;
 
 use super::{DbPool, PooledDbConnection};
 
+#[derive(Clone)]
 pub struct UserRepository {
     pool: DbPool,
 }
