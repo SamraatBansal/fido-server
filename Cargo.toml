@@ -7,9 +7,9 @@ license = "MIT"
 repository = "https://github.com/yourorg/fido-server"
 readme = "README.md"
 
-[lib]
-name = "fido_server"
-path = "src/lib.rs"
+# [lib]
+# name = "fido_server"
+# path = "src/lib.rs"
 
 [[bin]]
 name = "fido-server"
