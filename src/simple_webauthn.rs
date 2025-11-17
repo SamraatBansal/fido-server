@@ -72,7 +72,8 @@ impl SimpleWebAuthnService {
                 &user.username,
                 &user.display_name,
                 Some(exclude_credentials),
-            )?;
+            )
+            .map_err(|e| AppError::WebAuthn(e.to_string()))?;
 
         // Store challenge state in memory
         let challenge_b64 = BASE64_URL_SAFE_NO_PAD.encode(creation_challenge_response.public_key.challenge.as_ref());
