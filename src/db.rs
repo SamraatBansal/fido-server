@@ -5,7 +5,7 @@ use uuid::Uuid;
 
 #[derive(Clone)]
 pub struct Database {
-    pool: PgPool,
+    pub pool: PgPool,
 }
 
 impl Database {
