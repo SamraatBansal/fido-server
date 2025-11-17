@@ -57,11 +57,7 @@ impl fmt::Display for AppError {
 
 impl std::error::Error for AppError {}
 
-impl From<webauthn_rs::error::WebauthnError> for AppError {
-    fn from(err: webauthn_rs::error::WebauthnError) -> Self {
-        AppError::WebAuthn(err.to_string())
-    }
-}
+// WebAuthn errors will be converted manually in the code
 
 impl From<serde_json::Error> for AppError {
     fn from(err: serde_json::Error) -> Self {
