@@ -198,14 +198,14 @@ impl WebAuthnService {
         
         // For now, get the most recent user as a fallback (simplified for testing)
         // In a real implementation, you'd properly link the challenge state to the user
-        let recent_users = sqlx::query!(
+        let row = sqlx::query(
             "SELECT id FROM users ORDER BY created_at DESC LIMIT 1"
         )
         .fetch_optional(&self.db.pool)
         .await?;
         
-        let user_id = recent_users
-            .map(|u| u.id)
+        let user_id = row
+            .map(|r| r.get::<Uuid, _>("id"))
             .ok_or_else(|| AppError::Internal("No users found for credential registration".to_string()))?;
 
         let new_credential = NewCredential {
