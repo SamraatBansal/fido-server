@@ -180,7 +180,7 @@ impl WebAuthnService {
         };
 
         // Complete registration with webauthn-rs verification
-        let passkey = self.webauthn
+        let _passkey = self.webauthn
             .finish_passkey_registration(&reg_credential, &passkey_registration)
             .map_err(|e| {
                 error!("WebAuthn registration verification failed: {}", e);
