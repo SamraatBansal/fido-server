@@ -13,7 +13,7 @@ readme = "README.md"
 
 [[bin]]
 name = "fido-server"
-path = "src/simple_main.rs"
+path = "src/standalone.rs"
 
 [dependencies]
 # Web Framework
