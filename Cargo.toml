@@ -13,7 +13,7 @@ path = "src/lib.rs"
 
 [[bin]]
 name = "fido-server"
-path = "src/main.rs"
+path = "src/simple_main.rs"
 
 [dependencies]
 # Web Framework
