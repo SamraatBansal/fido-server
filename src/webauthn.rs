@@ -1,5 +1,5 @@
 use crate::{
-    memory_db::MemoryDatabase,
+    db::Database,
     error::{AppError, Result},
     types::*,
 };
