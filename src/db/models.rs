@@ -214,4 +214,18 @@ impl ChallengeRepository {
             
         Ok(())
     }
+    
+    pub fn find_registration_challenge_by_bytes(&self, challenge_bytes: &[u8]) -> Result<(RegistrationChallenge, Uuid)> {
+        use crate::schema::registration_challenges::dsl::*;
+        
+        let mut conn = self.get_connection()?;
+        let now = Utc::now().naive_utc();
+        
+        let challenge = registration_challenges
+            .filter(challenge.eq(challenge_bytes))
+            .filter(expires_at.gt(now))
+            .first::<RegistrationChallenge>(&mut conn)?;
+            
+        Ok((challenge.clone(), challenge.user_id))
+    }
 }
