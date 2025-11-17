@@ -7,6 +7,7 @@ use base64::{engine::general_purpose::URL_SAFE_NO_PAD as BASE64_URL_SAFE_NO_PAD,
 use chrono::{Duration, Utc};
 use std::collections::HashMap;
 use uuid::Uuid;
+use sqlx::Row;
 use webauthn_rs::{prelude::*, Webauthn, WebauthnBuilder};
 use webauthn_rs_proto::{AuthenticatorAttestationResponseRaw, AuthenticatorAssertionResponseRaw, UserVerificationPolicy, AttestationConveyancePreference, RegistrationExtensionsClientOutputs};
 use tracing::{info, debug, error, warn};
