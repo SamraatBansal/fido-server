@@ -1,20 +1,12 @@
 use crate::{
-    db::Database,
+    memory_db::MemoryDatabase,
     error::{AppError, Result},
     types::*,
 };
 use base64::{engine::general_purpose::URL_SAFE_NO_PAD as BASE64_URL_SAFE_NO_PAD, Engine};
 use chrono::{Duration, Utc};
-use std::collections::BTreeMap;
 use uuid::Uuid;
-use webauthn_rs::{
-    prelude::*,
-    proto::{
-        AuthenticatorAssertionResponseRaw, AuthenticatorAttestationResponseRaw,
-        CollectedClientData, PublicKeyCredentialRaw,
-    },
-    Webauthn, WebauthnBuilder,
-};
+use webauthn_rs::{prelude::*, Webauthn, WebauthnBuilder};
 
 #[derive(Clone)]
 pub struct WebAuthnService {
