@@ -77,6 +77,12 @@ impl From<sqlx::Error> for AppError {
     }
 }
 
+impl From<webauthn_rs::error::WebauthnError> for AppError {
+    fn from(err: webauthn_rs::error::WebauthnError) -> Self {
+        AppError::WebAuthn(err.to_string())
+    }
+}
+
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         let (status, error_message) = match &self {
