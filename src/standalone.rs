@@ -128,7 +128,7 @@ async fn attestation_options(
     let user_id = Uuid::new_v4();
     let user_id_bytes = user_id.as_bytes().to_vec();
 
-    let (ccr, reg_state) = data
+    let (ccr, _reg_state) = data
         .webauthn
         .start_passkey_registration(
             user_id,
