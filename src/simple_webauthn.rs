@@ -20,9 +20,11 @@ pub struct SimpleWebAuthnService {
 
 impl SimpleWebAuthnService {
     pub fn new(rp_id: &str, origin: &url::Url, rp_name: &str, db: MemoryDatabase) -> Result<Self> {
-        let webauthn = WebauthnBuilder::new(rp_id, origin)?
+        let webauthn = WebauthnBuilder::new(rp_id, origin)
+            .map_err(|e| AppError::WebAuthn(e.to_string()))?
             .rp_name(rp_name)
-            .build()?;
+            .build()
+            .map_err(|e| AppError::WebAuthn(e.to_string()))?;
 
         Ok(Self {
             webauthn,
