@@ -136,6 +136,7 @@ impl CredentialRepository {
     }
 }
 
+#[derive(Clone)]
 pub struct ChallengeRepository {
     pool: DbPool,
 }
