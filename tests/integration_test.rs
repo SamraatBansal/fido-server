@@ -103,7 +103,7 @@ async fn test_attestation_options() {
     assert_eq!(body.user.name, "testuser@example.com");
     assert_eq!(body.user.display_name, "Test User");
     assert!(!body.challenge.is_empty());
-    assert_eq!(body.timeout, 10000);
+    assert_eq!(body.timeout, 300000); // webauthn-rs default timeout
 }
 
 #[tokio::test]
