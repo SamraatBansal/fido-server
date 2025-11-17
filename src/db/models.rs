@@ -70,6 +70,7 @@ impl UserRepository {
     }
 }
 
+#[derive(Clone)]
 pub struct CredentialRepository {
     pool: DbPool,
 }
