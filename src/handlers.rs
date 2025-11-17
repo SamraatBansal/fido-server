@@ -13,7 +13,7 @@ use tracing::{info, warn};
 
 #[derive(Clone)]
 pub struct AppState {
-    pub webauthn: WebAuthnService,
+    pub webauthn: SimpleWebAuthnService,
 }
 
 // Registration endpoints
