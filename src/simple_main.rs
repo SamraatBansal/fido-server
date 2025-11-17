@@ -7,6 +7,7 @@ use std::sync::Mutex;
 use base64::prelude::*;
 use webauthn_rs::prelude::*;
 use uuid::Uuid;
+use url::Url;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct AttestationOptionsRequest {
