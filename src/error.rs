@@ -8,8 +8,7 @@ use std::fmt;
 
 #[derive(Debug)]
 pub enum AppError {
-    Database(sqlx::Error),
-    WebAuthn(webauthn_rs::error::WebauthnError),
+    WebAuthn(String),
     Serialization(serde_json::Error),
     Base64Decode(base64::DecodeError),
     InvalidInput(String),
