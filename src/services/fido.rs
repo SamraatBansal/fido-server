@@ -8,6 +8,11 @@ use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use uuid::Uuid;
 use webauthn_rs::prelude::*;
+use webauthn_rs::{
+    AuthenticatorSelectionCriteria, AttestationConveyancePreference,
+    PublicKeyCredentialRpEntity, PublicKeyCredentialParameters,
+    AuthenticatorTransport, UserVerificationPolicy,
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ServerPublicKeyCredentialCreationOptionsRequest {
