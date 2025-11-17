@@ -8,13 +8,16 @@ use chrono::{Duration, Utc};
 use std::collections::HashMap;
 use uuid::Uuid;
 use webauthn_rs::{prelude::*, Webauthn, WebauthnBuilder};
+use tracing::{info, debug, error, warn};
 
 #[derive(Clone)]
 pub struct WebAuthnService {
     webauthn: Webauthn,
     db: Database,
-    // Store challenge states in memory for simplicity (production should use Redis)
-    challenge_store: std::sync::Arc<std::sync::RwLock<HashMap<String, serde_json::Value>>>,
+    rp_id: String,
+    // Store challenge states in memory with proper typed data
+    registration_challenges: std::sync::Arc<std::sync::RwLock<HashMap<String, PasskeyRegistration>>>,
+    authentication_challenges: std::sync::Arc<std::sync::RwLock<HashMap<String, PasskeyAuthentication>>>,
 }
 
 impl WebAuthnService {
@@ -26,7 +29,9 @@ impl WebAuthnService {
         Ok(Self { 
             webauthn, 
             db,
-            challenge_store: std::sync::Arc::new(std::sync::RwLock::new(HashMap::new())),
+            rp_id: rp_id.to_string(),
+            registration_challenges: std::sync::Arc::new(std::sync::RwLock::new(HashMap::new())),
+            authentication_challenges: std::sync::Arc::new(std::sync::RwLock::new(HashMap::new())),
         })
     }
 
@@ -62,8 +67,8 @@ impl WebAuthnService {
         let user_uuid = Uuid::from_slice(&user.user_handle)
             .map_err(|e| AppError::Internal(format!("Invalid user handle UUID: {}", e)))?;
 
-        // Start registration - using simplified approach for conformance testing
-        let (creation_challenge_response, _passkey_registration) = self
+        // Start registration with proper webauthn-rs integration
+        let (creation_challenge_response, passkey_registration) = self
             .webauthn
             .start_passkey_registration(
                 user_uuid,
@@ -72,21 +77,24 @@ impl WebAuthnService {
                 Some(exclude_credentials),
             )?;
 
-        // Store challenge state in memory
+        // Store challenge state with actual webauthn state
         let challenge_b64 = BASE64_URL_SAFE_NO_PAD.encode(creation_challenge_response.public_key.challenge.as_ref());
-        let challenge_state = serde_json::json!({
-            "user_id": user.id.to_string(),
-            "username": user.username,
-            "display_name": user.display_name,
-            "user_handle": BASE64_URL_SAFE_NO_PAD.encode(&user.user_handle),
-            "created_at": Utc::now().to_rfc3339(),
-            "expires_at": (Utc::now() + Duration::seconds(30)).to_rfc3339()
-        });
+        
+        debug!("Storing registration challenge for user: {} with challenge: {}", user.username, &challenge_b64[..8]);
 
         {
-            let mut store = self.challenge_store.write().unwrap();
-            store.insert(format!("reg:{}", challenge_b64), challenge_state);
+            let mut store = self.registration_challenges.write().unwrap();
+            store.insert(challenge_b64.clone(), passkey_registration);
         }
+
+        // Set expiry in 30 seconds and schedule cleanup
+        let rp_challenges = self.registration_challenges.clone();
+        let challenge_key = challenge_b64.clone();
+        tokio::spawn(async move {
+            tokio::time::sleep(tokio::time::Duration::from_secs(30)).await;
+            let mut store = rp_challenges.write().unwrap();
+            store.remove(&challenge_key);
+        });
 
         let user_id_b64 = BASE64_URL_SAFE_NO_PAD.encode(&user.user_handle);
 
@@ -132,68 +140,68 @@ impl WebAuthnService {
         &self,
         credential: &ServerPublicKeyCredential,
     ) -> Result<ServerResponse> {
-        // Decode client data to get challenge
-        let client_data_bytes = BASE64_URL_SAFE_NO_PAD.decode(&credential.response.client_data_json)?;
-        let client_data: serde_json::Value = serde_json::from_slice(&client_data_bytes)?;
+        // Convert ServerPublicKeyCredential to RegisterPublicKeyCredential
+        let client_data_bytes = BASE64_URL_SAFE_NO_PAD.decode(&credential.response.client_data_json)
+            .map_err(|_| AppError::AttestationVerificationFailed)?;
+        let attestation_object_bytes = BASE64_URL_SAFE_NO_PAD.decode(&credential.response.attestation_object)
+            .map_err(|_| AppError::AttestationVerificationFailed)?;
+        
+        // Parse client data to get challenge
+        let client_data: serde_json::Value = serde_json::from_slice(&client_data_bytes)
+            .map_err(|_| AppError::AttestationVerificationFailed)?;
 
         let challenge_b64 = client_data
             .get("challenge")
             .and_then(|c| c.as_str())
             .ok_or_else(|| AppError::InvalidInput("Missing challenge in clientDataJSON".to_string()))?;
 
-        // Get and validate challenge state
-        let challenge_state = {
-            let store = self.challenge_store.read().unwrap();
-            store.get(&format!("reg:{}", challenge_b64)).cloned()
+        debug!("Finishing registration with challenge: {}", &challenge_b64[..8]);
+
+        // Get and remove challenge state (single use)
+        let passkey_registration = {
+            let mut store = self.registration_challenges.write().unwrap();
+            store.remove(challenge_b64)
         }.ok_or(AppError::ChallengeNotFound)?;
 
-        // Check if challenge is expired
-        let expires_at_str = challenge_state.get("expires_at")
-            .and_then(|e| e.as_str())
-            .ok_or_else(|| AppError::Internal("Invalid challenge state".to_string()))?;
-        
-        let expires_at = chrono::DateTime::parse_from_rfc3339(expires_at_str)
-            .map_err(|_| AppError::Internal("Invalid expires_at format".to_string()))?
-            .with_timezone(&chrono::Utc);
+        // Create RegisterPublicKeyCredential for webauthn-rs
+        let reg_credential = RegisterPublicKeyCredential {
+            id: credential.id.clone(),
+            raw_id: BASE64_URL_SAFE_NO_PAD.decode(&credential.id)?
+                .into(),
+            response: AuthenticatorAttestationResponseRaw {
+                attestation_object: attestation_object_bytes.into(),
+                client_data_json: client_data_bytes.into(),
+            },
+            type_: "public-key".to_string(),
+        };
 
-        if expires_at < Utc::now() {
-            return Err(AppError::ChallengeExpired);
-        }
+        // Complete registration with webauthn-rs verification
+        let passkey = self.webauthn
+            .finish_passkey_registration(&reg_credential, &passkey_registration)
+            .map_err(|e| {
+                error!("WebAuthn registration verification failed: {}", e);
+                AppError::AttestationVerificationFailed
+            })?;
 
-        // Validate that required fields are present
-        if credential.response.attestation_object.is_empty() {
-            return Err(AppError::AttestationVerificationFailed);
-        }
+        info!("Successfully verified registration for credential: {}", credential.id);
 
-        // Get user from challenge state
-        let user_id_str = challenge_state.get("user_id")
-            .and_then(|u| u.as_str())
-            .ok_or_else(|| AppError::Internal("Invalid challenge state".to_string()))?;
-        
-        let user_id = Uuid::parse_str(user_id_str)
-            .map_err(|_| AppError::Internal("Invalid user ID".to_string()))?;
-
-        // For conformance testing, we'll store a simplified credential
-        // In production, you would use the full WebAuthn verification flow
-        let credential_id_bytes = BASE64_URL_SAFE_NO_PAD.decode(&credential.id)?;
-        
+        // Store credential in database
         let new_credential = NewCredential {
-            user_id,
-            credential_id: credential_id_bytes,
-            public_key: credential.response.attestation_object.as_bytes().to_vec(), // Simplified for testing
-            sign_count: 0,
-            backup_eligible: false,
-            backup_state: false,
+            user_id: passkey.user_uuid(),
+            credential_id: passkey.cred_id().to_vec(),
+            public_key: serde_json::to_vec(&passkey.cred())
+                .map_err(|e| AppError::Internal(format!("Failed to serialize credential: {}", e)))?,
+            sign_count: passkey.counter() as i64,
+            backup_eligible: passkey.backup_eligible(),
+            backup_state: passkey.backup_state(),
             attestation_format: Some("none".to_string()),
         };
 
-        self.db.create_credential(new_credential).await?;
-
-        // Clean up challenge
-        {
-            let mut store = self.challenge_store.write().unwrap();
-            store.remove(&format!("reg:{}", challenge_b64));
-        }
+        self.db.create_credential(new_credential).await
+            .map_err(|e| {
+                error!("Failed to store credential in database: {}", e);
+                e
+            })?;
 
         Ok(ServerResponse {
             status: "ok".to_string(),
@@ -214,35 +222,81 @@ impl WebAuthnService {
             .ok_or(AppError::UserNotFound)?;
 
         // Get user credentials
-        let credentials = self.db.get_credentials_by_user_id(user.id).await?;
+        let stored_credentials = self.db.get_credentials_by_user_id(user.id).await?;
 
-        if credentials.is_empty() {
+        if stored_credentials.is_empty() {
             return Err(AppError::CredentialNotFound);
         }
 
-        // Generate challenge
-        let challenge_bytes = Uuid::new_v4().as_bytes().to_vec();
-        let challenge_b64 = BASE64_URL_SAFE_NO_PAD.encode(&challenge_bytes);
-
-        // Store challenge state
-        let challenge_state = serde_json::json!({
-            "user_id": user.id.to_string(),
-            "username": user.username,
-            "created_at": Utc::now().to_rfc3339(),
-            "expires_at": (Utc::now() + Duration::seconds(60)).to_rfc3339(),
-            "credentials": credentials.iter().map(|c| BASE64_URL_SAFE_NO_PAD.encode(&c.credential_id)).collect::<Vec<_>>()
-        });
-
-        {
-            let mut store = self.challenge_store.write().unwrap();
-            store.insert(format!("auth:{}", challenge_b64), challenge_state);
+        // Convert stored credentials to webauthn-rs Passkey format
+        let mut passkeys = Vec::new();
+        for stored_cred in &stored_credentials {
+            match serde_json::from_slice::<Credential>(&stored_cred.public_key) {
+                Ok(cred) => {
+                    // Create passkey from stored credential
+                    let passkey = Passkey::new(
+                        stored_cred.credential_id.clone().into(),
+                        cred,
+                        stored_cred.user_id,
+                        stored_cred.sign_count as u32,
+                    );
+                    passkeys.push(passkey);
+                },
+                Err(e) => {
+                    warn!("Failed to deserialize stored credential {}: {}", 
+                          BASE64_URL_SAFE_NO_PAD.encode(&stored_cred.credential_id), e);
+                    continue;
+                }
+            }
         }
 
-        let allow_credentials: Vec<AllowCredential> = credentials
+        if passkeys.is_empty() {
+            return Err(AppError::CredentialNotFound);
+        }
+
+        // Convert UserVerification
+        let user_verification_policy = match user_verification.as_deref() {
+            Some("required") => UserVerificationPolicy::Required,
+            Some("preferred") => UserVerificationPolicy::Preferred, 
+            Some("discouraged") => UserVerificationPolicy::Discouraged,
+            _ => UserVerificationPolicy::Preferred,
+        };
+
+        // Start authentication with webauthn-rs
+        let (request_challenge_response, passkey_authentication) = self
+            .webauthn
+            .start_passkey_authentication(&passkeys)
+            .map_err(|e| {
+                error!("Failed to start passkey authentication: {}", e);
+                AppError::WebAuthn(e.to_string())
+            })?;
+
+        let challenge_b64 = BASE64_URL_SAFE_NO_PAD.encode(request_challenge_response.public_key.challenge.as_ref());
+        
+        debug!("Storing authentication challenge for user: {} with challenge: {}", username, &challenge_b64[..8]);
+
+        {
+            let mut store = self.authentication_challenges.write().unwrap();
+            store.insert(challenge_b64.clone(), passkey_authentication);
+        }
+
+        // Set expiry and schedule cleanup
+        let auth_challenges = self.authentication_challenges.clone();
+        let challenge_key = challenge_b64.clone();
+        tokio::spawn(async move {
+            tokio::time::sleep(tokio::time::Duration::from_secs(60)).await;
+            let mut store = auth_challenges.write().unwrap();
+            store.remove(&challenge_key);
+        });
+
+        let allow_credentials: Vec<AllowCredential> = request_challenge_response
+            .public_key
+            .allow_credentials
+            .unwrap_or_default()
             .iter()
             .map(|c| AllowCredential {
                 type_: "public-key".to_string(),
-                id: BASE64_URL_SAFE_NO_PAD.encode(&c.credential_id),
+                id: BASE64_URL_SAFE_NO_PAD.encode(c.id.as_ref()),
             })
             .collect();
 
@@ -250,8 +304,8 @@ impl WebAuthnService {
             status: "ok".to_string(),
             error_message: "".to_string(),
             challenge: challenge_b64,
-            timeout: 20000,
-            rp_id: "localhost".to_string(),
+            timeout: request_challenge_response.public_key.timeout.unwrap_or(20000),
+            rp_id: self.rp_id.clone(),
             allow_credentials,
             user_verification,
         })
@@ -261,57 +315,69 @@ impl WebAuthnService {
         &self,
         credential: &ServerPublicKeyCredentialAssertion,
     ) -> Result<ServerResponse> {
-        // Decode client data to get challenge
-        let client_data_bytes = BASE64_URL_SAFE_NO_PAD.decode(&credential.response.client_data_json)?;
-        let client_data: serde_json::Value = serde_json::from_slice(&client_data_bytes)?;
+        // Convert ServerPublicKeyCredentialAssertion to PublicKeyCredential
+        let client_data_bytes = BASE64_URL_SAFE_NO_PAD.decode(&credential.response.client_data_json)
+            .map_err(|_| AppError::AssertionVerificationFailed)?;
+        let authenticator_data_bytes = BASE64_URL_SAFE_NO_PAD.decode(&credential.response.authenticator_data)
+            .map_err(|_| AppError::AssertionVerificationFailed)?;
+        let signature_bytes = BASE64_URL_SAFE_NO_PAD.decode(&credential.response.signature)
+            .map_err(|_| AppError::AssertionVerificationFailed)?;
+
+        // Parse client data to get challenge
+        let client_data: serde_json::Value = serde_json::from_slice(&client_data_bytes)
+            .map_err(|_| AppError::AssertionVerificationFailed)?;
 
         let challenge_b64 = client_data
             .get("challenge")
             .and_then(|c| c.as_str())
             .ok_or_else(|| AppError::InvalidInput("Missing challenge in clientDataJSON".to_string()))?;
 
-        // Get and validate challenge state
-        let challenge_state = {
-            let store = self.challenge_store.read().unwrap();
-            store.get(&format!("auth:{}", challenge_b64)).cloned()
+        debug!("Finishing authentication with challenge: {}", &challenge_b64[..8]);
+
+        // Get and remove challenge state (single use)
+        let passkey_authentication = {
+            let mut store = self.authentication_challenges.write().unwrap();
+            store.remove(challenge_b64)
         }.ok_or(AppError::ChallengeNotFound)?;
 
-        // Check if challenge is expired
-        let expires_at_str = challenge_state.get("expires_at")
-            .and_then(|e| e.as_str())
-            .ok_or_else(|| AppError::Internal("Invalid challenge state".to_string()))?;
-        
-        let expires_at = chrono::DateTime::parse_from_rfc3339(expires_at_str)
-            .map_err(|_| AppError::Internal("Invalid expires_at format".to_string()))?
-            .with_timezone(&chrono::Utc);
+        // Create PublicKeyCredential for webauthn-rs
+        let user_handle = credential.response.user_handle
+            .as_ref()
+            .and_then(|uh| if uh.is_empty() { None } else { Some(BASE64_URL_SAFE_NO_PAD.decode(uh).ok()?) })
+            .unwrap_or_default();
 
-        if expires_at < Utc::now() {
-            return Err(AppError::ChallengeExpired);
-        }
+        let auth_credential = PublicKeyCredential {
+            id: credential.id.clone(),
+            raw_id: BASE64_URL_SAFE_NO_PAD.decode(&credential.id)?
+                .into(),
+            response: AuthenticatorAssertionResponseRaw {
+                authenticator_data: authenticator_data_bytes.into(),
+                client_data_json: client_data_bytes.into(),
+                signature: signature_bytes.into(),
+                user_handle: if user_handle.is_empty() { None } else { Some(user_handle.into()) },
+            },
+            type_: "public-key".to_string(),
+        };
 
-        // Validate credential exists in our records
+        // Complete authentication with webauthn-rs verification
+        let auth_result = self.webauthn
+            .finish_passkey_authentication(&auth_credential, &passkey_authentication)
+            .map_err(|e| {
+                error!("WebAuthn authentication verification failed: {}", e);
+                AppError::AssertionVerificationFailed
+            })?;
+
+        info!("Successfully verified authentication for credential: {}", credential.id);
+
+        // Update credential counter in database
         let credential_id_bytes = BASE64_URL_SAFE_NO_PAD.decode(&credential.id)?;
-        let stored_credential = self.db.get_credential_by_id(&credential_id_bytes).await?
-            .ok_or(AppError::CredentialNotFound)?;
-
-        // Basic validation - check that required fields are present
-        if credential.response.authenticator_data.is_empty() || credential.response.signature.is_empty() {
-            return Err(AppError::AssertionVerificationFailed);
-        }
-
-        // For conformance testing, we'll simulate signature validation
-        // In production, you would use webauthn-rs's full verification flow
-
-        // Update credential sign count
         self.db
-            .update_credential_sign_count(&credential_id_bytes, stored_credential.sign_count + 1)
-            .await?;
-
-        // Clean up challenge
-        {
-            let mut store = self.challenge_store.write().unwrap();
-            store.remove(&format!("auth:{}", challenge_b64));
-        }
+            .update_credential_sign_count(&credential_id_bytes, auth_result.counter() as i64)
+            .await
+            .map_err(|e| {
+                error!("Failed to update credential counter: {}", e);
+                e
+            })?;
 
         Ok(ServerResponse {
             status: "ok".to_string(),
