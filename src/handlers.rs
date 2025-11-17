@@ -1,7 +1,7 @@
 use crate::{
     error::{AppError, Result},
     types::*,
-    simple_webauthn::SimpleWebAuthnService,
+    webauthn::WebAuthnService,
 };
 use axum::{
     extract::State,
