@@ -57,15 +57,9 @@ impl fmt::Display for AppError {
 
 impl std::error::Error for AppError {}
 
-impl From<sqlx::Error> for AppError {
-    fn from(err: sqlx::Error) -> Self {
-        AppError::Database(err)
-    }
-}
-
 impl From<webauthn_rs::error::WebauthnError> for AppError {
     fn from(err: webauthn_rs::error::WebauthnError) -> Self {
-        AppError::WebAuthn(err)
+        AppError::WebAuthn(err.to_string())
     }
 }
 
