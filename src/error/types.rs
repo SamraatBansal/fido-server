@@ -8,7 +8,7 @@ pub type Result<T> = std::result::Result<T, AppError>;
 #[derive(Debug, Error)]
 pub enum AppError {
     #[error("WebAuthn error: {0}")]
-    WebAuthn(#[from] webauthn_rs::error::WebauthnError),
+    WebAuthn(#[from] webauthn_rs::WebauthnError),
     
     #[error("Database error: {0}")]
     Database(#[from] diesel::result::Error),
