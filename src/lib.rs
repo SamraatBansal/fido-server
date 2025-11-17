@@ -12,4 +12,5 @@ pub mod schema;
 pub mod services;
 pub mod utils;
 
+pub use crate::schema::*;
 pub use error::{AppError, Result};
