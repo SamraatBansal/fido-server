@@ -74,7 +74,7 @@ async fn main() -> anyhow::Result<()> {
     let origin = url::Url::parse("http://localhost:8080")?;
     let rp_name = "Example Corporation";
 
-    let webauthn_service = WebAuthnService::new(rp_id, &origin, rp_name, db)?;
+    let webauthn_service = SimpleWebAuthnService::new(rp_id, &origin, rp_name, db)?;
 
     let app_state = AppState {
         webauthn: webauthn_service,
