@@ -175,7 +175,7 @@ impl WebAuthnService {
                 transports: None,
             },
             type_: "public-key".to_string(),
-            extensions: None,
+            extensions: RegistrationExtensionsClientOutputs::default(),
         };
 
         // Complete registration with webauthn-rs verification
