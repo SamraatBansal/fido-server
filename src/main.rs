@@ -66,20 +66,8 @@ async fn main() -> anyhow::Result<()> {
 
     info!("Starting FIDO2/WebAuthn Relying Party Server...");
 
-    // Database setup
-    let database_url = std::env::var("DATABASE_URL")
-        .unwrap_or_else(|_| "postgresql://localhost/fido_server".to_string());
-    
-    let pool = PgPoolOptions::new()
-        .max_connections(10)
-        .acquire_timeout(Duration::from_secs(3))
-        .connect(&database_url)
-        .await?;
-
-    // Run migrations
-    sqlx::migrate!("./migrations").run(&pool).await?;
-
-    let db = Database::new(pool);
+    // Database setup (using in-memory for now)
+    let db = MemoryDatabase::new();
 
     // WebAuthn setup
     let rp_id = "localhost";
