@@ -77,8 +77,8 @@ impl From<sqlx::Error> for AppError {
     }
 }
 
-impl From<webauthn_rs::WebauthnError> for AppError {
-    fn from(err: webauthn_rs::WebauthnError) -> Self {
+impl From<webauthn_rs::prelude::WebauthnError> for AppError {
+    fn from(err: webauthn_rs::prelude::WebauthnError) -> Self {
         AppError::WebAuthn(err.to_string())
     }
 }
