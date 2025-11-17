@@ -1,62 +1,106 @@
-//! Custom error types for the FIDO server
-
-use actix_web::{error::ResponseError, http::StatusCode, HttpResponse};
+use actix_web::{HttpResponse, ResponseError};
+use serde::{Deserialize, Serialize};
 use std::fmt;
+use thiserror::Error;
 
-/// Application result type
 pub type Result<T> = std::result::Result<T, AppError>;
 
-/// Application error types
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum AppError {
-    /// Database error
-    DatabaseError(String),
-    /// WebAuthn error
-    WebAuthnError(String),
-    /// Validation error
-    ValidationError(String),
-    /// Not found error
-    NotFound(String),
-    /// Internal server error
-    InternalError(String),
-    /// Bad request error
-    BadRequest(String),
+    #[error("WebAuthn error: {0}")]
+    WebAuthn(#[from] webauthn_rs::error::WebauthnError),
+    
+    #[error("Database error: {0}")]
+    Database(#[from] diesel::result::Error),
+    
+    #[error("Connection pool error: {0}")]
+    Pool(#[from] r2d2::Error),
+    
+    #[error("Serialization error: {0}")]
+    Serialization(#[from] serde_json::Error),
+    
+    #[error("Validation error: {message}")]
+    Validation { message: String },
+    
+    #[error("Challenge expired or invalid")]
+    ChallengeExpired,
+    
+    #[error("User not found")]
+    UserNotFound,
+    
+    #[error("Credential not found")]
+    CredentialNotFound,
+    
+    #[error("Username already exists")]
+    UsernameExists,
+    
+    #[error("Invalid signature")]
+    InvalidSignature,
+    
+    #[error("Counter regression detected")]
+    CounterRegression,
+    
+    #[error("Invalid request: {message}")]
+    InvalidRequest { message: String },
+    
+    #[error("Internal server error")]
+    Internal,
 }
 
-impl fmt::Display for AppError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::DatabaseError(msg) => write!(f, "Database error: {msg}"),
-            Self::WebAuthnError(msg) => write!(f, "WebAuthn error: {msg}"),
-            Self::ValidationError(msg) => write!(f, "Validation error: {msg}"),
-            Self::NotFound(msg) => write!(f, "Not found: {msg}"),
-            Self::InternalError(msg) => write!(f, "Internal error: {msg}"),
-            Self::BadRequest(msg) => write!(f, "Bad request: {msg}"),
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ServerResponse {
+    pub status: String,
+    #[serde(rename = "errorMessage")]
+    pub error_message: String,
+}
+
+impl ServerResponse {
+    pub fn ok() -> Self {
+        Self {
+            status: "ok".to_string(),
+            error_message: "".to_string(),
+        }
+    }
+    
+    pub fn error(message: &str) -> Self {
+        Self {
+            status: "failed".to_string(),
+            error_message: message.to_string(),
         }
     }
 }
 
 impl ResponseError for AppError {
     fn error_response(&self) -> HttpResponse {
-        let status_code = self.status_code();
-        let error_message = self.to_string();
-
-        HttpResponse::build(status_code).json(serde_json::json!({
-            "error": error_message,
-            "status": status_code.as_u16()
-        }))
+        let (status_code, message) = match self {
+            AppError::Validation { message } => (actix_web::http::StatusCode::BAD_REQUEST, message.clone()),
+            AppError::InvalidRequest { message } => (actix_web::http::StatusCode::BAD_REQUEST, message.clone()),
+            AppError::ChallengeExpired => (actix_web::http::StatusCode::BAD_REQUEST, "Challenge expired or invalid".to_string()),
+            AppError::UserNotFound => (actix_web::http::StatusCode::NOT_FOUND, "User not found".to_string()),
+            AppError::CredentialNotFound => (actix_web::http::StatusCode::NOT_FOUND, "Credential not found".to_string()),
+            AppError::UsernameExists => (actix_web::http::StatusCode::CONFLICT, "Username already exists".to_string()),
+            AppError::InvalidSignature => (actix_web::http::StatusCode::BAD_REQUEST, "Invalid signature".to_string()),
+            AppError::CounterRegression => (actix_web::http::StatusCode::BAD_REQUEST, "Counter regression detected".to_string()),
+            AppError::WebAuthn(e) => (actix_web::http::StatusCode::BAD_REQUEST, format!("WebAuthn error: {}", e)),
+            _ => (actix_web::http::StatusCode::INTERNAL_SERVER_ERROR, "Internal server error".to_string()),
+        };
+        
+        HttpResponse::build(status_code).json(ServerResponse::error(&message))
     }
-
-    fn status_code(&self) -> StatusCode {
+    
+    fn status_code(&self) -> actix_web::http::StatusCode {
         match self {
-            Self::DatabaseError(_) | Self::InternalError(_) => {
-                StatusCode::INTERNAL_SERVER_ERROR
+            AppError::Validation { .. } | AppError::InvalidRequest { .. } | AppError::ChallengeExpired 
+            | AppError::InvalidSignature | AppError::CounterRegression | AppError::WebAuthn(_) => {
+                actix_web::http::StatusCode::BAD_REQUEST
             }
-            Self::WebAuthnError(_) => StatusCode::BAD_REQUEST,
-            Self::ValidationError(_) | Self::BadRequest(_) => StatusCode::BAD_REQUEST,
-            Self::NotFound(_) => StatusCode::NOT_FOUND,
+            AppError::UserNotFound | AppError::CredentialNotFound => {
+                actix_web::http::StatusCode::NOT_FOUND
+            }
+            AppError::UsernameExists => {
+                actix_web::http::StatusCode::CONFLICT
+            }
+            _ => actix_web::http::StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
 }
-
-impl std::error::Error for AppError {}
