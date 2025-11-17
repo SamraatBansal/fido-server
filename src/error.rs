@@ -78,7 +78,6 @@ impl From<base64::DecodeError> for AppError {
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         let (status, error_message) = match &self {
-            AppError::Database(_) => (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error".to_string()),
             AppError::WebAuthn(_) => (StatusCode::BAD_REQUEST, "WebAuthn processing failed".to_string()),
             AppError::Serialization(_) => (StatusCode::BAD_REQUEST, "Invalid request format".to_string()),
             AppError::Base64Decode(_) => (StatusCode::BAD_REQUEST, "Invalid base64 encoding".to_string()),
