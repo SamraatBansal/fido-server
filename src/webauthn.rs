@@ -15,7 +15,7 @@ pub struct WebAuthnService {
 }
 
 impl WebAuthnService {
-    pub fn new(rp_id: &str, origin: &url::Url, rp_name: &str, db: Database) -> Result<Self> {
+    pub fn new(rp_id: &str, origin: &url::Url, rp_name: &str, db: MemoryDatabase) -> Result<Self> {
         let webauthn = WebauthnBuilder::new(rp_id, origin)?
             .rp_name(rp_name)
             .build()?;
