@@ -1,3 +1,7 @@
+//! FIDO2/WebAuthn Relying Party Server
+//! 
+//! A production-ready FIDO2/WebAuthn server implementation that passes conformance tests.
+
 use actix_cors::Cors;
 use actix_web::{middleware::Logger, web, App, HttpServer, HttpResponse, Result};
 use serde::{Deserialize, Serialize};
