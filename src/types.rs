@@ -129,7 +129,7 @@ pub struct ServerResponse {
 }
 
 // Database models
-#[derive(Debug, Clone, FromRow)]
+#[derive(Debug, Clone)]
 pub struct User {
     pub id: Uuid,
     pub username: String,
