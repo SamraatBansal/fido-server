@@ -32,7 +32,6 @@ pub enum AppError {
 impl fmt::Display for AppError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            AppError::Database(e) => write!(f, "Database error: {}", e),
             AppError::WebAuthn(e) => write!(f, "WebAuthn error: {}", e),
             AppError::Serialization(e) => write!(f, "Serialization error: {}", e),
             AppError::Base64Decode(e) => write!(f, "Base64 decode error: {}", e),
