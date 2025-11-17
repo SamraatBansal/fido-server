@@ -65,7 +65,7 @@ impl SimpleWebAuthnService {
             .map_err(|e| AppError::Internal(format!("Invalid user handle UUID: {}", e)))?;
 
         // Start registration - simplified call
-        let (creation_challenge_response, passkey_registration) = self
+        let (creation_challenge_response, _passkey_registration) = self
             .webauthn
             .start_passkey_registration(
                 user_uuid,
