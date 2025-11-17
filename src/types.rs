@@ -164,7 +164,7 @@ pub struct RegistrationChallenge {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, FromRow)]
+#[derive(Debug, Clone)]
 pub struct AuthenticationChallenge {
     pub id: Uuid,
     pub user_id: Option<Uuid>,
