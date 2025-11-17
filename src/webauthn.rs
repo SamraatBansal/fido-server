@@ -11,7 +11,7 @@ use webauthn_rs::{prelude::*, Webauthn, WebauthnBuilder};
 #[derive(Clone)]
 pub struct WebAuthnService {
     webauthn: Webauthn,
-    db: Database,
+    db: MemoryDatabase,
 }
 
 impl WebAuthnService {
