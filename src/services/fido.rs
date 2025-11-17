@@ -253,48 +253,21 @@ impl WebAuthnService {
                 message: "Invalid challenge in client data".to_string(),
             })?;
 
-        let challenge_record = self
-            .challenge_repo
-            .get_authentication_challenge(&challenge_bytes)?
-            .or_else(|| {
-                // Try to find in registration challenges
-                self.user_repo
-                    .find_by_username(&"unknown") // We need to extract from somewhere
-                    .ok()
-                    .flatten()
-                    .and_then(|user| {
-                        self.challenge_repo
-                            .get_registration_challenge(user.id)
-                            .ok()
-                            .flatten()
-                    })
-                    .map(|reg_challenge| {
-                        // Convert registration to auth challenge format for processing
-                        crate::schema::AuthenticationChallenge {
-                            id: Uuid::new_v4(),
-                            user_id: Some(reg_challenge.user_id),
-                            challenge: reg_challenge.challenge,
-                            state_data: reg_challenge.state_data,
-                            expires_at: reg_challenge.expires_at,
-                            created_at: reg_challenge.created_at,
-                        }
-                    })
-            })
-            .ok_or(AppError::ChallengeExpired)?;
+        // Find the matching registration challenge across all users
+        let mut matching_challenge = None;
+        let mut matching_user_id = None;
 
-        let user_id = challenge_record
-            .user_id
-            .ok_or(AppError::UserNotFound)?;
+        // Search through all recent registration challenges to find the matching one
+        // This is a simplified approach - in production you might want to store challenge->user mapping
+        for user_result in [/* we need a different approach */].iter() {
+            // Skip this complex lookup for now
+        }
 
-        let user = self
-            .user_repo
-            .find_by_username(&"unknown") // Need to get from challenge
-            .map_err(|_| AppError::UserNotFound)?
-            .ok_or(AppError::UserNotFound)?;
-
-        // For simplicity in registration, let's look up user by trying to deserialize state
-        let reg_state: PasskeyRegistration = serde_json::from_slice(&challenge_record.state_data)
-            .map_err(|_| AppError::ChallengeExpired)?;
+        // Simplified: find any registration challenge with matching challenge bytes
+        // In practice, we'd need to iterate through users or have a better indexing strategy
+        
+        // For now, let's extract user info from the client data if possible
+        // and use a different strategy
 
         let register_pk_cred = RegisterPublicKeyCredential {
             id: credential.id.clone(),
@@ -306,13 +279,24 @@ impl WebAuthnService {
             type_: "public-key".to_string(),
         };
 
+        // We need to find the user and challenge state
+        // For now, let's implement a basic approach that stores challenge with user info
+        let challenge_b64 = BASE64_URL_SAFE_NO_PAD.encode(&challenge_bytes);
+        
+        // Try to find registration challenge by iterating (not efficient, but works for demo)
+        let challenge_and_user = self.find_registration_challenge_by_bytes(&challenge_bytes)?;
+        let (reg_challenge, user_id) = challenge_and_user;
+
+        let reg_state: PasskeyRegistration = serde_json::from_slice(&reg_challenge.state_data)
+            .map_err(|_| AppError::ChallengeExpired)?;
+
         let passkey = self
             .webauthn
             .finish_passkey_registration(&register_pk_cred, &reg_state)
             .map_err(AppError::WebAuthn)?;
 
         let new_credential = NewCredential {
-            user_id: user_id,
+            user_id,
             credential_id: passkey.cred_id().clone(),
             public_key: serde_json::to_vec(passkey.cred())
                 .map_err(|_| AppError::Validation {
@@ -330,6 +314,15 @@ impl WebAuthnService {
         self.challenge_repo.delete_registration_challenge(user_id)?;
 
         Ok(crate::error::ServerResponse::ok())
+    }
+
+    fn find_registration_challenge_by_bytes(&self, challenge_bytes: &[u8]) -> Result<(crate::schema::RegistrationChallenge, Uuid)> {
+        // This is a helper method to find registration challenges
+        // In a production system, you'd want better indexing
+        
+        // For now, we'll have to implement a database query that finds by challenge bytes
+        // This requires adding a method to ChallengeRepository
+        self.challenge_repo.find_registration_challenge_by_bytes(challenge_bytes)
     }
 
     pub fn start_authentication(
