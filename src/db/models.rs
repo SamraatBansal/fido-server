@@ -1,9 +1,4 @@
-use crate::schema::{
-    users, credentials, registration_challenges, authentication_challenges,
-    User, NewUser, Credential, NewCredential, UpdateCredential,
-    RegistrationChallenge, NewRegistrationChallenge,
-    AuthenticationChallenge, NewAuthenticationChallenge,
-};
+use crate::schema::*;
 use crate::{AppError, Result};
 use chrono::{NaiveDateTime, Utc};
 use diesel::prelude::*;
