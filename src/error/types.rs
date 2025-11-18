@@ -69,11 +69,11 @@ impl AppError {
 impl ResponseError for AppError {
     fn error_response(&self) -> HttpResponse {
         let status_code = self.status_code();
-        let error_message = self.to_string();
+        let error_message = self.sanitized_message();
 
         HttpResponse::build(status_code).json(serde_json::json!({
-            "error": error_message,
-            "status": status_code.as_u16()
+            "status": "failed",
+            "errorMessage": error_message
         }))
     }
 
@@ -82,7 +82,9 @@ impl ResponseError for AppError {
             Self::DatabaseError(_) | Self::InternalError(_) => {
                 StatusCode::INTERNAL_SERVER_ERROR
             }
-            Self::WebAuthnError(_) => StatusCode::BAD_REQUEST,
+            Self::WebAuthnError(_) | Self::SecurityError(_) | Self::ChallengeError(_) | Self::CredentialError(_) => {
+                StatusCode::BAD_REQUEST
+            }
             Self::ValidationError(_) | Self::BadRequest(_) => StatusCode::BAD_REQUEST,
             Self::NotFound(_) => StatusCode::NOT_FOUND,
         }
