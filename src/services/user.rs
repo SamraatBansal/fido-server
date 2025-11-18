@@ -10,6 +10,7 @@ use crate::{
     AppError, Result,
 };
 
+#[derive(Clone)]
 pub struct UserService {
     db_pool: Arc<DbPool>,
 }
