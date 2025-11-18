@@ -5,7 +5,7 @@ use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::schema::{users, credentials, challenge_states};
+use crate::schema_db::{users, credentials, challenge_states};
 
 #[derive(Queryable, Identifiable, Serialize, Deserialize, Debug, Clone)]
 #[diesel(table_name = users)]
