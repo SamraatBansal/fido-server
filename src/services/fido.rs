@@ -171,7 +171,7 @@ impl FidoService {
             .and_then(|o| o.as_str())
             .ok_or_else(|| AppError::ValidationError("Missing origin in clientDataJSON".to_string()))?;
 
-        if origin != self.webauthn.rp_origin().as_str() {
+        if origin != self.rp_origin {
             return Err(AppError::ValidationError("Invalid origin".to_string()));
         }
 
@@ -320,7 +320,7 @@ impl FidoService {
             .and_then(|o| o.as_str())
             .ok_or_else(|| AppError::ValidationError("Missing origin in clientDataJSON".to_string()))?;
 
-        if origin != self.webauthn.rp_origin().as_str() {
+        if origin != self.rp_origin {
             return Err(AppError::ValidationError("Invalid origin".to_string()));
         }
 
