@@ -9,9 +9,9 @@ use uuid::Uuid;
 use webauthn_rs::prelude::*;
 
 use crate::{
-    config::WebAuthnSettings,
+    config::settings::WebAuthnSettings,
     db::{models::*, DbPool},
-    schema_db::{challenge_states, credentials, users},
+    schema_diesel::{challenge_states, credentials, users},
     schema::{
         ChallengeData, ChallengeOperation, ServerPublicKeyCredentialCreationOptionsRequest,
         ServerPublicKeyCredentialCreationOptionsResponse, ServerPublicKeyCredentialGetOptionsRequest,
