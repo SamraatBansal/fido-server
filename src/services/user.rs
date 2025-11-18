@@ -6,7 +6,7 @@ use uuid::Uuid;
 
 use crate::{
     db::{models::*, DbPool},
-    schema_db::{users, credentials},
+    schema_diesel::{users, credentials},
     AppError, Result,
 };
 
