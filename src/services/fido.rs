@@ -252,7 +252,7 @@ impl FidoService {
             status: "ok".to_string(),
             error_message: "".to_string(),
             challenge: base64::engine::general_purpose::URL_SAFE_NO_PAD
-                .encode(challenge.as_ref()),
+                .encode(&challenge_bytes),
             timeout: Some(20000), // 20 seconds
             rp_id: self.webauthn.rp_id().to_string(),
             allow_credentials: user_credentials
