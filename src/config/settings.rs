@@ -49,22 +49,17 @@ impl Settings {
     ///
     /// Returns an error if configuration cannot be loaded
     pub fn new() -> Result<Self, config::ConfigError> {
-        // TODO: Implement proper configuration loading
-        // This is a placeholder implementation
-        Ok(Self {
-            server: ServerSettings {
-                host: "127.0.0.1".to_string(),
-                port: 8080,
-            },
-            database: DatabaseSettings {
-                url: "postgres://localhost/fido_server".to_string(),
-                max_pool_size: 10,
-            },
-            webauthn: WebAuthnSettings {
-                rp_id: "localhost".to_string(),
-                rp_name: "FIDO Server".to_string(),
-                origin: "http://localhost:8080".to_string(),
-            },
-        })
+        let settings = config::Config::builder()
+            .add_source(config::Environment::with_prefix("FIDO_SERVER"))
+            .set_default("server.host", "127.0.0.1")?
+            .set_default("server.port", 8080)?
+            .set_default("database.url", "postgres://localhost/fido_server")?
+            .set_default("database.max_pool_size", 10)?
+            .set_default("webauthn.rp_id", "localhost")?
+            .set_default("webauthn.rp_name", "FIDO Server")?
+            .set_default("webauthn.origin", "http://localhost:8080")?
+            .build()?;
+
+        settings.try_deserialize()
     }
 }
