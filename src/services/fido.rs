@@ -48,6 +48,9 @@ impl FidoService {
         Ok(Self {
             webauthn: Arc::new(webauthn),
             db_pool,
+            rp_name: config.rp_name.clone(),
+            rp_id: config.rp_id.clone(),
+            rp_origin: config.origin.clone(),
         })
     }
 
