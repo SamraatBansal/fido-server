@@ -1,1 +1,3 @@
-//! Middleware module
+//! HTTP middleware
+
+pub mod cors;
