@@ -11,7 +11,7 @@ use webauthn_rs::prelude::*;
 use crate::{
     config::WebAuthnSettings,
     db::{models::*, DbPool},
-    schema::{challenge_states, credentials, users},
+    schema_db::{challenge_states, credentials, users},
     schema::{
         ChallengeData, ChallengeOperation, ServerPublicKeyCredentialCreationOptionsRequest,
         ServerPublicKeyCredentialCreationOptionsResponse, ServerPublicKeyCredentialGetOptionsRequest,
