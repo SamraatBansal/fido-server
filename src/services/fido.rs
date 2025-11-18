@@ -23,6 +23,7 @@ use crate::{
     AppError, Result,
 };
 
+#[derive(Clone)]
 pub struct FidoService {
     webauthn: Arc<Webauthn>,
     db_pool: Arc<DbPool>,
