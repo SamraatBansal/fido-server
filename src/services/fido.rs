@@ -95,7 +95,7 @@ impl FidoService {
                 display_name: user.display_name.clone(),
             },
             challenge: base64::engine::general_purpose::URL_SAFE_NO_PAD
-                .encode(challenge.as_ref()),
+                .encode(&challenge_bytes),
             pub_key_cred_params: vec![
                 PublicKeyCredentialParameters {
                     type_: "public-key".to_string(),
