@@ -47,15 +47,21 @@ pub enum AppError {
     CredentialError(String),
 }
 
-impl fmt::Display for AppError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::DatabaseError(msg) => write!(f, "Database error: {msg}"),
-            Self::WebAuthnError(msg) => write!(f, "WebAuthn error: {msg}"),
-            Self::ValidationError(msg) => write!(f, "Validation error: {msg}"),
-            Self::NotFound(msg) => write!(f, "Not found: {msg}"),
-            Self::InternalError(msg) => write!(f, "Internal error: {msg}"),
-            Self::BadRequest(msg) => write!(f, "Bad request: {msg}"),
+impl AppError {
+    pub fn is_security_sensitive(&self) -> bool {
+        matches!(
+            self,
+            Self::SecurityError(_) | 
+            Self::ChallengeError(_) |
+            Self::WebAuthnError(_)
+        )
+    }
+    
+    pub fn sanitized_message(&self) -> String {
+        if self.is_security_sensitive() {
+            "Authentication failed".to_string()
+        } else {
+            self.to_string()
         }
     }
 }
