@@ -25,7 +25,8 @@ impl UserService {
         
         users::table
             .filter(users::id.eq(user_id))
-            .first::<User>(&mut conn)
+            .select(User::as_select())
+            .first(&mut conn)
             .map_err(|_| AppError::NotFound("User not found".to_string()))
     }
 
@@ -34,7 +35,8 @@ impl UserService {
         
         users::table
             .filter(users::username.eq(username))
-            .first::<User>(&mut conn)
+            .select(User::as_select())
+            .first(&mut conn)
             .map_err(|_| AppError::NotFound("User not found".to_string()))
     }
 
@@ -43,8 +45,9 @@ impl UserService {
         
         credentials::table
             .filter(credentials::user_id.eq(user_id))
-            .load::<Credential>(&mut conn)
-            .map_err(AppError::DatabaseError)
+            .select(Credential::as_select())
+            .load(&mut conn)
+            .map_err(|e| AppError::DatabaseError(e.to_string()))
     }
 
     pub async fn create_user(&self, new_user: &NewUser) -> Result<User> {
@@ -53,6 +56,6 @@ impl UserService {
         diesel::insert_into(users::table)
             .values(new_user)
             .get_result::<User>(&mut conn)
-            .map_err(AppError::DatabaseError)
+            .map_err(|e| AppError::DatabaseError(e.to_string()))
     }
 }
