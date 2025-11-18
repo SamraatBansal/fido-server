@@ -13,3 +13,8 @@ pub mod services;
 pub mod utils;
 
 pub use error::{AppError, Result};
+
+// Make sure schema is available for Diesel
+pub mod schema_db {
+    include!("schema.rs");
+}
