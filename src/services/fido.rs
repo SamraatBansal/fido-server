@@ -227,7 +227,6 @@ impl FidoService {
         // Generate challenge for authentication
         let mut challenge_bytes = [0u8; 32];
         rand::thread_rng().fill_bytes(&mut challenge_bytes);
-        let challenge = Challenge::new(challenge_bytes.to_vec());
 
         // Store challenge state
         let state_data = serde_json::json!({
