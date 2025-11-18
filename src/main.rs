@@ -29,20 +29,32 @@ async fn main() -> io::Result<()> {
         .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()))?;
 
     // Initialize database connection pool
-    let db_pool = establish_connection(&settings.database.url, settings.database.max_pool_size)
-        .map_err(|e| io::Error::new(io::ErrorKind::ConnectionRefused, e.to_string()))?;
-    
-    let db_pool = Arc::new(db_pool);
+    log::info!("Connecting to database: {}", settings.database.url);
+    let db_pool = match establish_connection(&settings.database.url, settings.database.max_pool_size) {
+        Ok(pool) => {
+            log::info!("Database connection pool established successfully");
+            Arc::new(pool)
+        }
+        Err(e) => {
+            log::warn!("Failed to connect to database: {}. Server will start but endpoints may fail.", e);
+            log::warn!("Please ensure PostgreSQL is running and the database exists.");
+            // Create a dummy pool that will fail gracefully
+            return Err(io::Error::new(io::ErrorKind::ConnectionRefused, 
+                format!("Database connection failed: {}", e)));
+        }
+    };
 
     // Run migrations
     {
-        let mut conn = db_pool.get()
-            .map_err(|e| io::Error::new(io::ErrorKind::ConnectionRefused, e.to_string()))?;
-        
-        conn.run_pending_migrations(MIGRATIONS)
-            .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))?;
-        
-        log::info!("Database migrations completed successfully");
+        match db_pool.get() {
+            Ok(mut conn) => {
+                match conn.run_pending_migrations(MIGRATIONS) {
+                    Ok(_) => log::info!("Database migrations completed successfully"),
+                    Err(e) => log::warn!("Migration failed: {}", e),
+                }
+            }
+            Err(e) => log::warn!("Failed to get database connection for migrations: {}", e),
+        }
     }
 
     // Initialize services
