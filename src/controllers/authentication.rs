@@ -5,12 +5,10 @@ use actix_web::{web, HttpResponse, Result as ActixResult};
 use crate::{
     schema::{
         ServerPublicKeyCredentialGetOptionsRequest,
-        ServerPublicKeyCredentialGetOptionsResponse,
         ServerPublicKeyCredentialAssertion,
         ServerResponse,
     },
     services::FidoService,
-    AppError,
 };
 
 pub async fn assertion_options(
