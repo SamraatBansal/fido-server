@@ -236,7 +236,7 @@ impl FidoService {
         });
 
         let challenge_state = NewChallengeState {
-            challenge: challenge.as_ref().to_vec(),
+            challenge: challenge_bytes.to_vec(),
             user_id: Some(user.id),
             operation: ChallengeOperation::Authentication.to_string(),
             state_data,
