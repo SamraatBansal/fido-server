@@ -26,6 +26,9 @@ use crate::{
 pub struct FidoService {
     webauthn: Arc<Webauthn>,
     db_pool: Arc<DbPool>,
+    rp_name: String,
+    rp_id: String,
+    rp_origin: String,
 }
 
 impl FidoService {
