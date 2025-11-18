@@ -260,7 +260,7 @@ impl FidoService {
             challenge: base64::engine::general_purpose::URL_SAFE_NO_PAD
                 .encode(&challenge_bytes),
             timeout: Some(20000), // 20 seconds
-            rp_id: self.webauthn.rp_id().to_string(),
+            rp_id: self.rp_id.clone(),
             allow_credentials: user_credentials
                 .iter()
                 .map(|cred| ServerPublicKeyCredentialDescriptor {
