@@ -69,7 +69,7 @@ impl FidoService {
             .collect();
 
         // Convert user to WebAuthn user
-        let webauthn_user = webauthn_rs::prelude::User::new(
+        let webauthn_user = webauthn_rs_proto::User::new(
             user.user_id.clone(),
             user.username.clone(),
             user.display_name.clone(),
