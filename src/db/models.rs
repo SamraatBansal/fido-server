@@ -7,8 +7,9 @@ use uuid::Uuid;
 
 use crate::schema_diesel::{users, credentials, challenge_states};
 
-#[derive(Queryable, Identifiable, Serialize, Deserialize, Debug, Clone)]
+#[derive(Queryable, Identifiable, Serialize, Deserialize, Debug, Clone, Selectable)]
 #[diesel(table_name = users)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct User {
     pub id: Uuid,
     pub username: String,
@@ -26,8 +27,9 @@ pub struct NewUser {
     pub user_id: Vec<u8>,
 }
 
-#[derive(Queryable, Identifiable, Serialize, Deserialize, Debug, Clone)]
+#[derive(Queryable, Identifiable, Serialize, Deserialize, Debug, Clone, Selectable)]
 #[diesel(table_name = credentials, primary_key(id))]
+#[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Credential {
     pub id: Vec<u8>,
     pub user_id: Uuid,
@@ -58,8 +60,9 @@ pub struct NewCredential {
     pub attestation_trust_path: Option<serde_json::Value>,
 }
 
-#[derive(Queryable, Identifiable, Serialize, Deserialize, Debug, Clone)]
+#[derive(Queryable, Identifiable, Serialize, Deserialize, Debug, Clone, Selectable)]
 #[diesel(table_name = challenge_states)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct ChallengeState {
     pub id: Uuid,
     pub challenge: Vec<u8>,
