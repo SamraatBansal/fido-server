@@ -91,4 +91,16 @@ impl ResponseError for AppError {
     }
 }
 
-impl std::error::Error for AppError {}
+// Convert from Diesel errors
+impl From<diesel::result::Error> for AppError {
+    fn from(err: diesel::result::Error) -> Self {
+        Self::DatabaseError(err.to_string())
+    }
+}
+
+// Convert from r2d2 errors
+impl From<r2d2::Error> for AppError {
+    fn from(err: r2d2::Error) -> Self {
+        Self::DatabaseError(err.to_string())
+    }
+}
