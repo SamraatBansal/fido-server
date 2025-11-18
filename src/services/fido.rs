@@ -17,7 +17,7 @@ use crate::{
         ServerPublicKeyCredentialGetOptionsResponse, ServerPublicKeyCredential,
         ServerPublicKeyCredentialAssertion, PublicKeyCredentialRpEntity,
         ServerPublicKeyCredentialUserEntity, PublicKeyCredentialParameters,
-        ServerPublicKeyCredentialDescriptor, AuthenticatorSelectionCriteria,
+        ServerPublicKeyCredentialDescriptor,
     },
     AppError, Result,
 };
