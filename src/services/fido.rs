@@ -92,8 +92,8 @@ impl FidoService {
             status: "ok".to_string(),
             error_message: "".to_string(),
             rp: PublicKeyCredentialRpEntity {
-                name: self.webauthn.rp_name().to_string(),
-                id: Some(self.webauthn.rp_id().to_string()),
+                name: self.rp_name.clone(),
+                id: Some(self.rp_id.clone()),
             },
             user: ServerPublicKeyCredentialUserEntity {
                 id: base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(&user.user_id),
