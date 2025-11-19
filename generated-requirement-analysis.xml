@@ -1,0 +1,725 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<AgentTasks>
+  <Goal>
+    Implement a production-ready FIDO2/WebAuthn Relying Party Server in Rust that fully complies with FIDO Alliance specifications.
+    The server will provide complete passwordless authentication capabilities using the **webauthn-rs** crate (v0.5+) for all WebAuthn-specific operations.
+    
+    **Core Functionality:**
+    - Registration/Attestation Flow: `/webauthn/attestation/options` and `/webauthn/attestation/result`
+    - Authentication/Assertion Flow: `/webauthn/assertion/options` and `/webauthn/assertion/result`
+    - User management with secure credential binding
+    - PostgreSQL persistence with in-memory caching
+    - Full FIDO2 compliance testing and validation
+    - Production security controls (TLS, replay protection, rate limiting)
+    
+    **Security Goals:**
+    - Prevent credential replay attacks
+    - Secure user verification and authentication
+    - Protect against timing attacks
+    - Implement proper session management
+    - FIDO Alliance conformance test suite compatibility
+    
+    Execute tasks sequentially with confirmation gates between major milestones.
+  </Goal>
+
+  <TechStack>
+    <Language>Rust 1.70+</Language>
+    <Framework>Axum 0.7+ (async web framework)</Framework>
+    <Runtime>Tokio 1.0+ (async runtime)</Runtime>
+    <JSON>serde 1.0+ / serde_json 1.0+</JSON>
+    <WeAuthnLibrary>webauthn-rs 0.5+ (safe public API only)</WeAuthnLibrary>
+    <Database>PostgreSQL 15+ with sqlx 0.7+ (async driver)</Database>
+    <Caching>In-memory HashMap with RwLock for session management</Caching>
+    <ErrorHandling>thiserror 1.0+ (structured error types)</ErrorHandling>
+    <Logging>tracing + tracing-subscriber (structured logging)</Logging>
+    <Security>tower-http (CORS, TLS), tower-governor (rate limiting)</Security>
+    <Configuration>config 0.14+ (environment-based configuration)</Configuration>
+    <Testing>tokio-test, sqlx-test, wiremock (integration testing)</Testing>
+    <Serialization>base64url, hex (credential encoding)</Serialization>
+  </TechStack>
+
+  <References>
+    <Spec url="https://www.w3.org/TR/webauthn-2/" title="WebAuthn Level 2 W3C Recommendation"/>
+    <Spec url="https://fidoalliance.org/specs/fido-v2.0-ps-20190130/fido-client-to-authenticator-protocol-v2.0-ps-20190130.html" title="FIDO2 CTAP2 Specification"/>
+    <Spec url="https://fidoalliance.org/specs/fido-v2.0-ps-20190130/fido-server-requirements-v2.0-ps-20190130.html" title="FIDO Server Requirements"/>
+    <Spec url="https://github.com/fido-alliance/conformance-test-tools-resources/blob/main/docs/FIDO2/Server/Conformance-Test-API.md" title="FIDO Alliance Conformance Test API"/>
+    <Crate url="https://docs.rs/webauthn-rs/latest/webauthn_rs/" title="webauthn-rs Documentation"/>
+    <Crate url="https://docs.rs/sqlx/latest/sqlx/" title="SQLx Async Database Driver"/>
+    <Crate url="https://docs.rs/axum/latest/axum/" title="Axum Web Framework"/>
+  </References>
+
+  <!-- TASK 1: Project Foundation & Architecture -->
+  <Task id="1">
+    <Title>Project Structure & Core Dependencies</Title>
+    <Steps>
+      <Step>Initialize Rust project with proper Cargo.toml configuration including all required dependencies.</Step>
+      <Step>Create modular architecture with clear separation of concerns:</Step>
+      <ModuleStructure>
+        <Module name="main.rs">Application entry point and server configuration</Module>
+        <Module name="config.rs">Environment-based configuration management</Module>
+        <Module name="error.rs">Centralized error types and handling</Module>
+        <Module name="models/">Domain models and database entities</Module>
+        <Module name="handlers/">HTTP request handlers and API endpoints</Module>
+        <Module name="services/">Business logic and WebAuthn operations</Module>
+        <Module name="storage/">Database operations and in-memory caching</Module>
+        <Module name="middleware/">Security middleware and request validation</Module>
+        <Module name="utils/">Utility functions and helpers</Module>
+      </ModuleStructure>
+      <Step>Configure structured logging with tracing and environment-specific log levels.</Step>
+      <Step>Set up database connection pool with proper error handling and retry logic.</Step>
+    </Steps>
+    <SecurityConsiderations>
+      <Item>Secure configuration management (no secrets in code)</Item>
+      <Item>Proper dependency pinning for security updates</Item>
+      <Item>Structured logging without sensitive data exposure</Item>
+    </SecurityConsiderations>
+  </Task>
+
+  <!-- TASK 2: Domain Models & Database Schema -->
+  <Task id="2">
+    <Title>Define Domain Models & Database Schema</Title>
+    <Steps>
+      <Step>Design PostgreSQL database schema with proper indexing and constraints.</Step>
+      <Step>Define core domain structs with proper validation:</Step>
+      <Structs>
+        <Struct name="UserAccount">
+          <Field name="user_id" type="Uuid" constraints="PRIMARY KEY"/>
+          <Field name="username" type="String" constraints="UNIQUE, NOT NULL"/>
+          <Field name="display_name" type="String" constraints="NOT NULL"/>
+          <Field name="email" type="Option&lt;String&gt;" constraints="UNIQUE"/>
+          <Field name="created_at" type="DateTime&lt;Utc&gt;" constraints="NOT NULL"/>
+          <Field name="updated_at" type="DateTime&lt;Utc&gt;" constraints="NOT NULL"/>
+        </Struct>
+        <Struct name="StoredCredential">
+          <Field name="credential_id" type="Vec&lt;u8&gt;" constraints="PRIMARY KEY"/>
+          <Field name="user_id" type="Uuid" constraints="FOREIGN KEY REFERENCES users(user_id)"/>
+          <Field name="public_key" type="Vec&lt;u8&gt;" constraints="NOT NULL"/>
+          <Field name="sign_count" type="u32" constraints="NOT NULL DEFAULT 0"/>
+          <Field name="transports" type="Option&lt;Vec&lt;String&gt;&gt;"/>
+          <Field name="backup_eligible" type="bool" constraints="NOT NULL DEFAULT false"/>
+          <Field name="backup_state" type="bool" constraints="NOT NULL DEFAULT false"/>
+          <Field name="attestation_object" type="Option&lt;Vec&lt;u8&gt;&gt;"/>
+          <Field name="created_at" type="DateTime&lt;Utc&gt;" constraints="NOT NULL"/>
+          <Field name="last_used" type="Option&lt;DateTime&lt;Utc&gt;&gt;"/>
+        </Struct>
+        <Struct name="PendingRegistration">
+          <Field name="session_id" type="Uuid" constraints="PRIMARY KEY"/>
+          <Field name="user_id" type="Uuid" constraints="FOREIGN KEY REFERENCES users(user_id)"/>
+          <Field name="challenge" type="Vec&lt;u8&gt;" constraints="NOT NULL"/>
+          <Field name="state" type="Vec&lt;u8&gt;" constraints="NOT NULL, ENCRYPTED"/>
+          <Field name="created_at" type="DateTime&lt;Utc&gt;" constraints="NOT NULL"/>
+          <Field name="expires_at" type="DateTime&lt;Utc&gt;" constraints="NOT NULL"/>
+        </Struct>
+        <Struct name="PendingAuthentication">
+          <Field name="session_id" type="Uuid" constraints="PRIMARY KEY"/>
+          <Field name="user_id" type="Uuid" constraints="FOREIGN KEY REFERENCES users(user_id)"/>
+          <Field name="challenge" type="Vec&lt;u8&gt;" constraints="NOT NULL"/>
+          <Field name="state" type="Vec&lt;u8&gt;" constraints="NOT NULL, ENCRYPTED"/>
+          <Field name="created_at" type="DateTime&lt;Utc&gt;" constraints="NOT NULL"/>
+          <Field name="expires_at" type="DateTime&lt;Utc&gt;" constraints="NOT NULL"/>
+        </Struct>
+      </Structs>
+      <Step>Create migration scripts with proper rollback support.</Step>
+      <Step>Implement database connection management with health checks.</Step>
+    </Steps>
+    <SecurityConsiderations>
+      <Item>Encrypted storage of sensitive session state data</Item>
+      <Item>Proper credential ID indexing for performance</Item>
+      <Item>Session expiration and cleanup mechanisms</Item>
+      <Item>User data protection and GDPR compliance considerations</Item>
+    </SecurityConsiderations>
+  </Task>
+
+  <!-- TASK 3: Error Handling & Validation -->
+  <Task id="3">
+    <Title>Comprehensive Error Handling & Input Validation</Title>
+    <Steps>
+      <Step>Define structured error hierarchy using thiserror:</Step>
+      <ErrorTypes>
+        <ErrorType name="WebAuthnError">WebAuthn-specific errors from webauthn-rs</ErrorType>
+        <ErrorType name="DatabaseError">Database connection and query errors</ErrorType>
+        <ErrorType name="ValidationError">Input validation and constraint violations</ErrorType>
+        <ErrorType name="SessionError">Session management and expiration errors</ErrorType>
+        <ErrorType name="SecurityError">Security policy violations and attacks</ErrorType>
+        <ErrorType name="ConfigurationError">Configuration and initialization errors</ErrorType>
+      </ErrorTypes>
+      <Step>Implement HTTP status code mapping for each error type.</Step>
+      <Step>Create comprehensive input validation for all API endpoints.</Step>
+      <Step>Implement security-aware error responses (no information leakage).</Step>
+    </Steps>
+    <Functions>
+      <Function signature="fn map_webauthn_error(err: webauthn_rs::error::WebauthnError) -> ApiError"/>
+      <Function signature="fn validate_username(username: &str) -> Result&lt;(), ValidationError&gt;"/>
+      <Function signature="fn validate_display_name(display_name: &str) -> Result&lt;(), ValidationError&gt;"/>
+      <Function signature="fn sanitize_error_response(err: ApiError) -> ErrorResponse"/>
+    </Functions>
+    <SecurityConsiderations>
+      <Item>Prevent information disclosure through error messages</Item>
+      <Item>Rate limiting on validation failures</Item>
+      <Item>Structured logging for security monitoring</Item>
+    </SecurityConsiderations>
+  </Task>
+
+  <!-- TASK 4: WebAuthn Service Initialization -->
+  <Task id="4">
+    <Title>Initialize WebAuthn Relying Party Service</Title>
+    <Steps>
+      <Step>Create configuration structure for Relying Party settings.</Step>
+      <Step>Initialize webauthn-rs with production-ready configuration:</Step>
+      <WebAuthnConfig>
+        <Setting name="rp_id">Relying Party identifier (domain)</Setting>
+        <Setting name="rp_origin">Full origin URL with HTTPS enforcement</Setting>
+        <Setting name="rp_name">Human-readable service name</Setting>
+        <Setting name="timeout">Challenge timeout (120-300 seconds)</Setting>
+        <Setting name="algorithms">Supported COSE algorithms (ES256, RS256, EdDSA)</Setting>
+        <Setting name="attestation_preference">Attestation conveyance preference</Setting>
+        <Setting name="authenticator_attachment">Platform vs cross-platform preference</Setting>
+        <Setting name="user_verification">Required vs preferred vs discouraged</Setting>
+      </WebAuthnConfig>
+      <Step>Implement WebAuthn service wrapper with proper error handling.</Step>
+      <Step>Create health check endpoint for WebAuthn service status.</Step>
+    </Steps>
+    <Functions>
+      <Function signature="fn create_webauthn_service(config: &WebAuthnConfig) -> Result&lt;Webauthn, WebAuthnError&gt;"/>
+      <Function signature="fn validate_rp_configuration(config: &WebAuthnConfig) -> Result&lt;(), ConfigurationError&gt;"/>
+      <Function signature="fn health_check_webauthn(webauthn: &Webauthn) -> HealthStatus"/>
+    </Functions>
+    <WeAuthnTypesUsed>
+      <Type>webauthn_rs::WebauthnBuilder</Type>
+      <Type>webauthn_rs::Webauthn</Type>
+      <Type>webauthn_rs::WebauthnConfig</Type>
+      <Type>webauthn_rs::COSEAlgorithm</Type>
+    </WeAuthnTypesUsed>
+    <SecurityConsiderations>
+      <Item>HTTPS-only origin validation</Item>
+      <Item>Secure algorithm selection (avoid deprecated algorithms)</Item>
+      <Item>Proper timeout configuration to prevent DoS</Item>
+    </SecurityConsiderations>
+  </Task>
+
+  <!-- TASK 5: Registration Flow - Options Endpoint -->
+  <Task id="5">
+    <Title>Implement Registration Options Endpoint (/webauthn/attestation/options)</Title>
+    <RequestFormat>
+      {
+        "username": "alice@example.com",
+        "displayName": "Alice Smith",
+        "authenticatorSelection": {
+          "authenticatorAttachment": "platform",
+          "userVerification": "required",
+          "residentKey": "preferred"
+        },
+        "attestation": "direct"
+      }
+    </RequestFormat>
+    <Steps>
+      <Step>Create HTTP handler with comprehensive input validation.</Step>
+      <Step>Check for existing user account or create new one.</Step>
+      <Step>Retrieve user's existing credentials for exclusion list.</Step>
+      <Step>Call webauthn-rs start_passkey_registration with proper parameters:</Step>
+      <WebAuthnCall>
+        <Parameter name="user_unique_id">UUID derived from username</Parameter>
+        <Parameter name="user_name">Validated username</Parameter>
+        <Parameter name="user_display_name">Sanitized display name</Parameter>
+        <Parameter name="exclude_credentials">Existing user credentials</Parameter>
+      </WebAuthnCall>
+      <Step>Store registration state securely with expiration.</Step>
+      <Step>Return challenge options to client with proper CORS headers.</Step>
+    </Steps>
+    <ResponseFormat>
+      {
+        "rp": {
+          "name": "Example Corp WebAuthn Service",
+          "id": "example.com"
+        },
+        "user": {
+          "id": "dXNlci1pZC1oZXJl",
+          "name": "alice@example.com",
+          "displayName": "Alice Smith"
+        },
+        "challenge": "Y2hhbGxlbmdlLWhlcmU",
+        "pubKeyCredParams": [
+          {"type": "public-key", "alg": -7},
+          {"type": "public-key", "alg": -257}
+        ],
+        "timeout": 300000,
+        "authenticatorSelection": {
+          "authenticatorAttachment": "platform",
+          "userVerification": "required",
+          "residentKey": "preferred"
+        },
+        "attestation": "direct",
+        "excludeCredentials": []
+      }
+    </ResponseFormat>
+    <Functions>
+      <Function signature="async fn handle_attestation_options(req: AttestationOptionsRequest) -> Result&lt;CreationChallengeResponse, ApiError&gt;"/>
+      <Function signature="async fn get_or_create_user(username: &str, display_name: &str) -> Result&lt;UserAccount, DatabaseError&gt;"/>
+      <Function signature="async fn get_user_credentials(user_id: Uuid) -> Result&lt;Vec&lt;Passkey&gt;, DatabaseError&gt;"/>
+      <Function signature="async fn store_registration_state(session_id: Uuid, state: PasskeyRegistration) -> Result&lt;(), DatabaseError&gt;"/>
+    </Functions>
+    <WeAuthnTypesUsed>
+      <Type>webauthn_rs::CreationChallengeResponse</Type>
+      <Type>webauthn_rs::PasskeyRegistration</Type>
+      <Type>webauthn_rs::Passkey</Type>
+    </WeAuthnTypesUsed>
+    <SecurityConsiderations>
+      <Item>Username normalization and validation</Item>
+      <Item>Rate limiting per IP and per user</Item>
+      <Item>Session state encryption and secure storage</Item>
+      <Item>Proper CORS configuration</Item>
+      <Item>Challenge uniqueness and entropy validation</Item>
+    </SecurityConsiderations>
+  </Task>
+
+  <!-- TASK 6: Registration Flow - Result Endpoint -->
+  <Task id="6">
+    <Title>Implement Registration Result Endpoint (/webauthn/attestation/result)</Title>
+    <RequestFormat>
+      {
+        "id": "Y3JlZGVudGlhbC1pZA",
+        "rawId": "Y3JlZGVudGlhbC1pZA",
+        "type": "public-key",
+        "response": {
+          "clientDataJSON": "eyJ0eXBlIjoid2ViYXV0aG4uY3JlYXRlIiwi...",
+          "attestationObject": "o2NmbXRkbm9uZWdhdHRTdG10oGhhdXRoRGF0YVjE..."
+        },
+        "clientExtensionResults": {}
+      }
+    </RequestFormat>
+    <Steps>
+      <Step>Validate and deserialize RegisterPublicKeyCredential from request.</Step>
+      <Step>Extract session ID from request context and validate session state.</Step>
+      <Step>Retrieve and decrypt stored PasskeyRegistration state.</Step>
+      <Step>Call webauthn-rs finish_passkey_registration with credential and state.</Step>
+      <Step>Validate attestation according to FIDO Alliance requirements.</Step>
+      <Step>Store the verified credential in database with proper metadata.</Step>
+      <Step>Clean up expired registration sessions.</Step>
+      <Step>Return success response with credential metadata.</Step>
+    </Steps>
+    <ResponseFormat>
+      {
+        "status": "ok",
+        "credential": {
+          "id": "Y3JlZGVudGlhbC1pZA",
+          "transports": ["internal", "hybrid"],
+          "backupEligible": true,
+          "backupState": false
+        }
+      }
+    </ResponseFormat>
+    <Functions>
+      <Function signature="async fn handle_attestation_result(req: AttestationResultRequest) -> Result&lt;AttestationResultResponse, ApiError&gt;"/>
+      <Function signature="async fn retrieve_registration_state(session_id: Uuid) -> Result&lt;PasskeyRegistration, SessionError&gt;"/>
+      <Function signature="async fn validate_attestation_policy(passkey: &Passkey) -> Result&lt;(), SecurityError&gt;"/>
+      <Function signature="async fn store_verified_credential(user_id: Uuid, passkey: Passkey) -> Result&lt;(), DatabaseError&gt;"/>
+      <Function signature="async fn cleanup_expired_sessions() -> Result&lt;usize, DatabaseError&gt;"/>
+    </Functions>
+    <WeAuthnTypesUsed>
+      <Type>webauthn_rs::RegisterPublicKeyCredential</Type>
+      <Type>webauthn_rs::Passkey</Type>
+      <Type>webauthn_rs::AttestationObject</Type>
+    </WeAuthnTypesUsed>
+    <SecurityConsiderations>
+      <Item>Attestation statement validation</Item>
+      <Item>Credential ID uniqueness enforcement</Item>
+      <Item>Session replay attack prevention</Item>
+      <Item>Timing attack mitigation</Item>
+      <Item>Proper credential metadata storage</Item>
+    </SecurityConsiderations>
+  </Task>
+
+  <!-- TASK 7: Authentication Flow - Options Endpoint -->
+  <Task id="7">
+    <Title>Implement Authentication Options Endpoint (/webauthn/assertion/options)</Title>
+    <RequestFormat>
+      {
+        "username": "alice@example.com",
+        "userVerification": "required"
+      }
+    </RequestFormat>
+    <Steps>
+      <Step>Validate username and lookup user account.</Step>
+      <Step>Retrieve all registered credentials for the user.</Step>
+      <Step>Call webauthn-rs start_passkey_authentication with user credentials.</Step>
+      <Step>Store authentication challenge state securely with expiration.</Step>
+      <Step>Return challenge options with allowed credentials list.</Step>
+    </Steps>
+    <ResponseFormat>
+      {
+        "challenge": "Y2hhbGxlbmdlLWZvci1hdXRo",
+        "timeout": 300000,
+        "rpId": "example.com",
+        "allowCredentials": [
+          {
+            "type": "public-key",
+            "id": "Y3JlZGVudGlhbC1pZA",
+            "transports": ["internal", "hybrid"]
+          }
+        ],
+        "userVerification": "required"
+      }
+    </ResponseFormat>
+    <Functions>
+      <Function signature="async fn handle_assertion_options(req: AssertionOptionsRequest) -> Result&lt;RequestChallengeResponse, ApiError&gt;"/>
+      <Function signature="async fn lookup_user_by_username(username: &str) -> Result&lt;UserAccount, DatabaseError&gt;"/>
+      <Function signature="async fn load_user_passkeys(user_id: Uuid) -> Result&lt;Vec&lt;Passkey&gt;, DatabaseError&gt;"/>
+      <Function signature="async fn store_authentication_state(session_id: Uuid, state: PasskeyAuthentication) -> Result&lt;(), DatabaseError&gt;"/>
+    </Functions>
+    <WeAuthnTypesUsed>
+      <Type>webauthn_rs::RequestChallengeResponse</Type>
+      <Type>webauthn_rs::PasskeyAuthentication</Type>
+    </WeAuthnTypesUsed>
+    <SecurityConsiderations>
+      <Item>User enumeration attack prevention</Item>
+      <Item>Credential discovery limitations</Item>
+      <Item>Challenge entropy and uniqueness</Item>
+      <Item>Session state protection</Item>
+    </SecurityConsiderations>
+  </Task>
+
+  <!-- TASK 8: Authentication Flow - Result Endpoint -->
+  <Task id="8">
+    <Title>Implement Authentication Result Endpoint (/webauthn/assertion/result)</Title>
+    <RequestFormat>
+      {
+        "id": "Y3JlZGVudGlhbC1pZA",
+        "rawId": "Y3JlZGVudGlhbC1pZA",
+        "type": "public-key",
+        "response": {
+          "clientDataJSON": "eyJ0eXBlIjoid2ViYXV0aG4uZ2V0Iiwi...",
+          "authenticatorData": "SZYN5YgOjGh0NBcPZHZgW4/krrmihjLHmVzzuoMdl2MFAAAAAQ",
+          "signature": "MEUCIQCdE4..."
+        },
+        "clientExtensionResults": {}
+      }
+    </RequestFormat>
+    <Steps>
+      <Step>Validate and deserialize PublicKeyCredential from request.</Step>
+      <Step>Retrieve authentication challenge state and validate session.</Step>
+      <Step>Call webauthn-rs finish_passkey_authentication with credential and state.</Step>
+      <Step>Validate signature and authenticator data according to WebAuthn spec.</Step>
+      <Step>Update credential sign count and usage timestamp.</Step>
+      <Step>Create authenticated session for the user.</Step>
+      <Step>Return authentication success response.</Step>
+    </Steps>
+    <ResponseFormat>
+      {
+        "status": "ok",
+        "user": {
+          "id": "dXNlci1pZC1oZXJl",
+          "name": "alice@example.com",
+          "displayName": "Alice Smith"
+        },
+        "credential": {
+          "id": "Y3JlZGVudGlhbC1pZA",
+          "signCount": 42
+        }
+      }
+    </ResponseFormat>
+    <Functions>
+      <Function signature="async fn handle_assertion_result(req: AssertionResultRequest) -> Result&lt;AssertionResultResponse, ApiError&gt;"/>
+      <Function signature="async fn retrieve_authentication_state(session_id: Uuid) -> Result&lt;PasskeyAuthentication, SessionError&gt;"/>
+      <Function signature="async fn update_credential_usage(credential_id: &[u8], sign_count: u32) -> Result&lt;(), DatabaseError&gt;"/>
+      <Function signature="async fn create_user_session(user_id: Uuid) -> Result&lt;SessionToken, SessionError&gt;"/>
+      <Function signature="async fn validate_sign_count(credential_id: &[u8], new_count: u32) -> Result&lt;(), SecurityError&gt;"/>
+    </Functions>
+    <WeAuthnTypesUsed>
+      <Type>webauthn_rs::PublicKeyCredential</Type>
+      <Type>webauthn_rs::AuthenticationResult</Type>
+      <Type>webauthn_rs::AuthenticatorData</Type>
+    </WeAuthnTypesUsed>
+    <SecurityConsiderations>
+      <Item>Sign count validation and rollback protection</Item>
+      <Item>Credential usage tracking and anomaly detection</Item>
+      <Item>Session management and token security</Item>
+      <Item>Authentication result validation</Item>
+    </SecurityConsiderations>
+  </Task>
+
+  <!-- TASK 9: Security Middleware & Protection -->
+  <Task id="9">
+    <Title>Implement Security Middleware & Attack Protection</Title>
+    <Steps>
+      <Step>Implement rate limiting middleware using tower-governor:</Step>
+      <RateLimiting>
+        <Endpoint path="/webauthn/attestation/options" limit="10 requests per minute per IP"/>
+        <Endpoint path="/webauthn/attestation/result" limit="5 requests per minute per IP"/>
+        <Endpoint path="/webauthn/assertion/options" limit="20 requests per minute per IP"/>
+        <Endpoint path="/webauthn/assertion/result" limit="10 requests per minute per IP"/>
+      </RateLimiting>
+      <Step>Create CORS middleware with strict origin validation.</Step>
+      <Step>Implement request size limits and timeout enforcement.</Step>
+      <Step>Add security headers middleware (CSP, HSTS, etc.).</Step>
+      <Step>Implement request ID tracking and audit logging.</Step>
+    </Steps>
+    <Functions>
+      <Function signature="fn create_rate_limiter() -> Governor&lt;NotKeyed, InMemoryStore, DefaultClock&gt;"/>
+      <Function signature="fn validate_origin(origin: &str) -> Result&lt;(), SecurityError&gt;"/>
+      <Function signature="fn security_headers_middleware() -> SecurityHeadersLayer"/>
+      <Function signature="fn audit_log_middleware() -> AuditLogLayer"/>
+    </Functions>
+    <SecurityControls>
+      <Control name="TLS Enforcement">Reject all non-HTTPS requests in production</Control>
+      <Control name="Origin Validation">Strict CORS policy with allowed origins</Control>
+      <Control name="Rate Limiting">Per-IP and per-user rate limiting</Control>
+      <Control name="Request Size Limits">Maximum payload size enforcement</Control>
+      <Control name="Security Headers">CSP, HSTS, X-Frame-Options, etc.</Control>
+      <Control name="Audit Logging">Comprehensive security event logging</Control>
+    </SecurityControls>
+  </Task>
+
+  <!-- TASK 10: Database Operations & Storage -->
+  <Task id="10">
+    <Title>Implement Database Operations & Secure Storage</Title>
+    <Steps>
+      <Step>Create comprehensive database migration system.</Step>
+      <Step>Implement user management operations with proper transactions.</Step>
+      <Step>Create credential storage operations with encryption at rest.</Step>
+      <Step>Implement session state management with automatic cleanup.</Step>
+      <Step>Add database health monitoring and connection pooling.</Step>
+    </Steps>
+    <DatabaseOperations>
+      <Operation name="create_user" returns="UserAccount">Insert new user with validation</Operation>
+      <Operation name="get_user_by_username" returns="Option&lt;UserAccount&gt;">Lookup user by username</Operation>
+      <Operation name="store_credential" returns="()">Store verified WebAuthn credential</Operation>
+      <Operation name="get_user_credentials" returns="Vec&lt;StoredCredential&gt;">Retrieve all user credentials</Operation>
+      <Operation name="update_credential_usage" returns="()">Update sign count and last used</Operation>
+      <Operation name="store_registration_session" returns="()">Store pending registration state</Operation>
+      <Operation name="get_registration_session" returns="Option&lt;PendingRegistration&gt;">Retrieve registration state</Operation>
+      <Operation name="cleanup_expired_sessions" returns="usize">Remove expired sessions</Operation>
+    </DatabaseOperations>
+    <Functions>
+      <Function signature="async fn initialize_database(database_url: &str) -> Result&lt;PgPool, DatabaseError&gt;"/>
+      <Function signature="async fn run_migrations(pool: &PgPool) -> Result&lt;(), MigrationError&gt;"/>
+      <Function signature="async fn health_check_database(pool: &PgPool) -> HealthStatus"/>
+      <Function signature="async fn encrypt_session_state(state: &[u8]) -> Result&lt;Vec&lt;u8&gt;, CryptoError&gt;"/>
+    </Functions>
+    <SecurityConsiderations>
+      <Item>Encrypted storage of sensitive session data</Item>
+      <Item>Proper transaction handling and rollback</Item>
+      <Item>Database connection security and TLS</Item>
+      <Item>Query parameterization to prevent SQL injection</Item>
+      <Item>Automatic session cleanup and garbage collection</Item>
+    </SecurityConsiderations>
+  </Task>
+
+  <!-- TASK 11: Configuration & Environment Management -->
+  <Task id="11">
+    <Title>Configuration Management & Environment Setup</Title>
+    <Steps>
+      <Step>Create comprehensive configuration structure using config crate.</Step>
+      <Step>Support multiple configuration sources (files, environment variables, CLI args).</Step>
+      <Step>Implement secure secret management (no secrets in config files).</Step>
+      <Step>Create environment-specific configurations (dev, staging, prod).</Step>
+      <Step>Add configuration validation and startup health checks.</Step>
+    </Steps>
+    <ConfigurationStructure>
+      <Section name="server">
+        <Setting name="host" default="127.0.0.1" env="SERVER_HOST"/>
+        <Setting name="port" default="3000" env="SERVER_PORT"/>
+        <Setting name="tls_cert_path" env="TLS_CERT_PATH"/>
+        <Setting name="tls_key_path" env="TLS_KEY_PATH"/>
+      </Section>
+      <Section name="database">
+        <Setting name="url" env="DATABASE_URL"/>
+        <Setting name="max_connections" default="20" env="DB_MAX_CONNECTIONS"/>
+        <Setting name="connection_timeout" default="30" env="DB_TIMEOUT"/>
+      </Section>
+      <Section name="webauthn">
+        <Setting name="rp_id" env="WEBAUTHN_RP_ID"/>
+        <Setting name="rp_origin" env="WEBAUTHN_RP_ORIGIN"/>
+        <Setting name="rp_name" env="WEBAUTHN_RP_NAME"/>
+        <Setting name="timeout_ms" default="300000" env="WEBAUTHN_TIMEOUT"/>
+      </Section>
+      <Section name="security">
+        <Setting name="session_encryption_key" env="SESSION_ENCRYPTION_KEY"/>
+        <Setting name="allowed_origins" env="ALLOWED_ORIGINS"/>
+        <Setting name="rate_limit_per_minute" default="60" env="RATE_LIMIT"/>
+      </Section>
+    </ConfigurationStructure>
+    <Functions>
+      <Function signature="fn load_configuration() -> Result&lt;AppConfig, ConfigurationError&gt;"/>
+      <Function signature="fn validate_configuration(config: &AppConfig) -> Result&lt;(), ValidationError&gt;"/>
+      <Function signature="fn setup_environment(env: Environment) -> Result&lt;(), SetupError&gt;"/>
+    </Functions>
+  </Task>
+
+  <!-- TASK 12: Comprehensive Testing Strategy -->
+  <Task id="12">
+    <Title>Testing Strategy & FIDO2 Compliance Validation</Title>
+    <Steps>
+      <Step>Create unit tests for all core components:</Step>
+      <UnitTests>
+        <Test name="webauthn_initialization">Validate WebAuthn service setup</Test>
+        <Test name="user_account_validation">Test user creation and validation</Test>
+        <Test name="credential_storage">Test credential CRUD operations</Test>
+        <Test name="session_management">Test session lifecycle</Test>
+        <Test name="error_handling">Test all error conditions</Test>
+      </UnitTests>
+      <Step>Implement integration tests for complete flows:</Step>
+      <IntegrationTests>
+        <Test name="registration_flow">Complete registration from options to result</Test>
+        <Test name="authentication_flow">Complete authentication from options to result</Test>
+        <Test name="error_scenarios">Test malformed requests and error handling</Test>
+        <Test name="security_scenarios">Test attack vectors and security controls</Test>
+      </IntegrationTests>
+      <Step>Create FIDO2 conformance test compatibility layer.</Step>
+      <Step>Implement performance and load testing scenarios.</Step>
+      <Step>Add security testing for common attack vectors.</Step>
+    </Steps>
+    <TestingFramework>
+      <Tool name="tokio-test">Async testing framework</Tool>
+      <Tool name="sqlx-test">Database testing with rollback</Tool>
+      <Tool name="wiremock">HTTP mocking for external services</Tool>
+      <Tool name="criterion">Performance benchmarking</Tool>
+    </TestingFramework>
+    <SecurityTesting>
+      <Test name="replay_attacks">Test challenge replay protection</Test>
+      <Test name="timing_attacks">Verify constant-time operations</Test>
+      <Test name="rate_limiting">Test rate limiting effectiveness</Test>
+      <Test name="input_validation">Test malformed input handling</Test>
+      <Test name="session_security">Test session management security</Test>
+    </SecurityTesting>
+  </Task>
+
+  <!-- TASK 13: Monitoring, Logging & Observability -->
+  <Task id="13">
+    <Title>Monitoring, Logging & Observability Implementation</Title>
+    <Steps>
+      <Step>Implement structured logging with tracing and correlation IDs.</Step>
+      <Step>Create comprehensive metrics collection for Prometheus.</Step>
+      <Step>Add health check endpoints for service monitoring.</Step>
+      <Step>Implement security event logging and alerting.</Step>
+      <Step>Create performance monitoring and SLA tracking.</Step>
+    </Steps>
+    <MetricsCollection>
+      <Metric name="webauthn_registrations_total">Counter of successful registrations</Metric>
+      <Metric name="webauthn_authentications_total">Counter of successful authentications</Metric>
+      <Metric name="webauthn_errors_total">Counter of errors by type</Metric>
+      <Metric name="webauthn_request_duration_seconds">Request processing time histogram</Metric>
+      <Metric name="webauthn_active_sessions">Gauge of active user sessions</Metric>
+    </MetricsCollection>
+    <SecurityEvents>
+      <Event name="failed_authentication">Log failed authentication attempts</Event>
+      <Event name="suspicious_activity">Log potential attack patterns</Event>
+      <Event name="rate_limit_exceeded">Log rate limiting triggers</Event>
+      <Event name="configuration_changes">Log configuration modifications</Event>
+    </SecurityEvents>
+    <Functions>
+      <Function signature="fn setup_telemetry() -> Result&lt;(), TelemetryError&gt;"/>
+      <Function signature="fn log_security_event(event_type: SecurityEventType, details: EventDetails)"/>
+      <Function signature="fn record_metric(name: &str, value: f64, labels: &[(&str, &str)])"/>
+    </Functions>
+  </Task>
+
+  <!-- TASK 14: FIDO2 Conformance & Compliance -->
+  <Task id="14">
+    <Title>FIDO2 Specification Compliance & Conformance Testing</Title>
+    <Steps>
+      <Step>Implement FIDO Alliance conformance test API compatibility.</Step>
+      <Step>Validate compliance with WebAuthn Level 2 specification.</Step>
+      <Step>Test against FIDO2 CTAP2 specification requirements.</Step>
+      <Step>Implement conformance test endpoints matching official test suite.</Step>
+      <Step>Create compliance validation checklist and documentation.</Step>
+    </Steps>
+    <ComplianceChecklist>
+      <Requirement id="FIDO-REQ-1">Relying Party ID validation</Requirement>
+      <Requirement id="FIDO-REQ-2">Challenge entropy and uniqueness</Requirement>
+      <Requirement id="FIDO-REQ-3">Credential ID uniqueness enforcement</Requirement>
+      <Requirement id="FIDO-REQ-4">Attestation statement validation</Requirement>
+      <Requirement id="FIDO-REQ-5">Sign count validation and rollback protection</Requirement>
+      <Requirement id="FIDO-REQ-6">User verification policy enforcement</Requirement>
+      <Requirement id="FIDO-REQ-7">Timeout and session management</Requirement>
+      <Requirement id="FIDO-REQ-8">Origin and CORS policy validation</Requirement>
+      <Requirement id="FIDO-REQ-9">Credential backup state handling</Requirement>
+      <Requirement id="FIDO-REQ-10">Algorithm support and validation</Requirement>
+    </ComplianceChecklist>
+    <ConformanceEndpoints>
+      <Endpoint path="/fido2/conformance/register/begin" spec="FIDO Conformance API"/>
+      <Endpoint path="/fido2/conformance/register/complete" spec="FIDO Conformance API"/>
+      <Endpoint path="/fido2/conformance/authenticate/begin" spec="FIDO Conformance API"/>
+      <Endpoint path="/fido2/conformance/authenticate/complete" spec="FIDO Conformance API"/>
+    </ConformanceEndpoints>
+    <Functions>
+      <Function signature="fn validate_fido2_compliance() -> ComplianceReport"/>
+      <Function signature="fn run_conformance_tests() -> Result&lt;TestResults, TestError&gt;"/>
+      <Function signature="fn generate_compliance_report() -> ComplianceReport"/>
+    </Functions>
+  </Task>
+
+  <!-- TASK 15: Production Deployment & Operations -->
+  <Task id="15">
+    <Title>Production Deployment & Operational Readiness</Title>
+    <Steps>
+      <Step>Create Docker containerization with multi-stage build.</Step>
+      <Step>Implement graceful shutdown and signal handling.</Step>
+      <Step>Create deployment scripts and infrastructure as code.</Step>
+      <Step>Implement backup and disaster recovery procedures.</Step>
+      <Step>Create operational runbooks and troubleshooting guides.</Step>
+    </Steps>
+    <DeploymentArtifacts>
+      <Artifact name="Dockerfile">Multi-stage Docker build configuration</Artifact>
+      <Artifact name="docker-compose.yml">Development and testing setup</Artifact>
+      <Artifact name="kubernetes.yaml">Kubernetes deployment manifests</Artifact>
+      <Artifact name="helm-chart">Helm chart for Kubernetes deployment</Artifact>
+    </DeploymentArtifacts>
+    <OperationalProcedures>
+      <Procedure name="Database Migration">Safe database schema updates</Procedure>
+      <Procedure name="Configuration Updates">Rolling configuration changes</Procedure>
+      <Procedure name="Security Updates">Security patch deployment process</Procedure>
+      <Procedure name="Backup and Recovery">Data backup and restoration procedures</Procedure>
+      <Procedure name="Incident Response">Security incident handling procedures</Procedure>
+    </OperationalProcedures>
+    <Functions>
+      <Function signature="async fn graceful_shutdown(server: Server) -> Result&lt;(), ShutdownError&gt;"/>
+      <Function signature="fn setup_signal_handlers() -> Result&lt;(), SignalError&gt;"/>
+      <Function signature="fn validate_deployment_readiness() -> ReadinessReport"/>
+    </Functions>
+  </Task>
+
+  <!-- TASK 16: Documentation & Security Review -->
+  <Task id="16">
+    <Title>Documentation & Final Security Review</Title>
+    <Steps>
+      <Step>Create comprehensive API documentation with OpenAPI 3.0 specification.</Step>
+      <Step>Document security model and threat analysis.</Step>
+      <Step>Create deployment and operation guides.</Step>
+      <Step>Conduct final security review and penetration testing.</Step>
+      <Step>Create compliance certification documentation.</Step>
+    </Steps>
+    <DocumentationDeliverables>
+      <Document name="API Documentation">Complete OpenAPI specification</Document>
+      <Document name="Security Model">Threat model and security controls</Document>
+      <Document name="Deployment Guide">Production deployment instructions</Document>
+      <Document name="Operations Manual">Day-to-day operational procedures</Document>
+      <Document name="Compliance Report">FIDO2 specification compliance verification</Document>
+    </DocumentationDeliverables>
+    <SecurityReview>
+      <Review name="Code Security Audit">Static and dynamic code analysis</Review>
+      <Review name="Penetration Testing">External security testing</Review>
+      <Review name="Compliance Validation">FIDO Alliance specification verification</Review>
+      <Review name="Threat Model Review">Security architecture validation</Review>
+    </SecurityReview>
+  </Task>
+
+  <!-- TASK 17: Final Integration & Handoff -->
+  <Task id="17">
+    <Title>Final Integration Testing & Project Handoff</Title>
+    <Description>
+      Complete final integration testing across all components, validate production readiness,
+      and prepare for operational handoff. Ensure all FIDO2/WebAuthn specifications are met
+      and the system is ready for production deployment with full security controls.
+      
+      **Final Validation Criteria:**
+      - All FIDO2 conformance tests passing
+      - Security controls validated and tested
+      - Performance requirements met
+      - Operational procedures documented and tested
+      - Compliance certification completed
+      
+      **Project Completion Checkpoint:**
+      System is production-ready with full FIDO2/WebAuthn specification compliance.
+    </Description>
+  </Task>
+</AgentTasks>
