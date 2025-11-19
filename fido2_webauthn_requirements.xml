@@ -1,0 +1,615 @@
+<AgentTasks>
+  <Goal>
+    Implement a production-ready FIDO2/WebAuthn Relying Party Server in Rust that provides complete passwordless authentication capabilities.
+    The server must support both **Registration (Attestation)** and **Authentication (Assertion)** flows with full FIDO Alliance specification compliance.
+    Key endpoints to implement:
+      1. `POST /webauthn/attestation/options` — Start credential registration
+      2. `POST /webauthn/attestation/result` — Complete credential registration  
+      3. `POST /webauthn/assertion/options` — Start authentication challenge
+      4. `POST /webauthn/assertion/result` — Complete authentication verification
+      5. `GET /webauthn/status` — Health check and server capabilities
+    The implementation must use **webauthn-rs 0.5+** for all WebAuthn operations, support PostgreSQL for credential storage,
+    provide comprehensive security controls (TLS enforcement, replay protection, rate limiting), and pass FIDO2 conformance tests.
+    Architecture should support high availability, horizontal scaling, and enterprise deployment requirements.
+    Execute tasks sequentially with confirmation checkpoints for quality assurance.
+  </Goal>
+
+  <TechStack>
+    <Language>Rust</Language>
+    <Framework>Axum (async web framework)</Framework>
+    <Runtime>Tokio (async runtime)</Runtime>
+    <JSON>serde / serde_json</JSON>
+    <WebAuthnLibrary>webauthn-rs 0.5+</WebAuthnLibrary>
+    <Database>PostgreSQL with sqlx async driver</Database>
+    <Migration>sqlx-cli for schema management</Migration>
+    <Configuration>config crate with environment override</Configuration>
+    <Logging>tracing + tracing-subscriber</Logging>
+    <ErrorHandling>thiserror + anyhow</ErrorHandling>
+    <Security>tower-http (CORS, rate limiting), rustls (TLS)</Security>
+    <Validation>validator crate for input validation</Validation>
+    <UUID>uuid crate for unique identifiers</UUID>
+    <Base64>base64url for WebAuthn data encoding</Base64>
+    <DateTime>chrono for timestamp management</DateTime>
+    <Testing>tokio-test, sqlx-test for integration tests</Testing>
+  </TechStack>
+
+  <References>
+    <Spec url="https://www.w3.org/TR/webauthn-3/" description="WebAuthn Level 3 Specification"/>
+    <Spec url="https://fidoalliance.org/specs/fido2/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html" description="CTAP 2.1 Specification"/>
+    <Spec url="https://fidoalliance.org/specs/fido-v2.0-ps-20190130/fido-server-v2.0-ps-20190130.html" description="FIDO2 Server Requirements"/>
+    <Spec url="https://docs.rs/webauthn-rs/latest/webauthn_rs/" description="webauthn-rs Documentation"/>
+    <Spec url="https://github.com/fido-alliance/conformance-test-tools-resources/blob/main/docs/FIDO2/Server/Conformance-Test-API.md" description="FIDO2 Conformance Test API"/>
+    <Spec url="https://www.rfc-editor.org/rfc/rfc8152.html" description="CBOR Object Signing and Encryption (COSE)"/>
+  </References>
+
+  <!-- TASK 1: Project Architecture & Foundation -->
+  <Task id="1">
+    <Title>Project Foundation & Dependency Setup</Title>
+    <SecurityRequirement>Establish secure development foundation with proper dependency management</SecurityRequirement>
+    <Steps>
+      <Step>Initialize Rust workspace with proper Cargo.toml structure</Step>
+      <Step>Add core dependencies with specific version constraints for security</Step>
+      <Step>Create modular architecture with clear separation of concerns:</Step>
+      <Modules>
+        <Module name="domain" description="Core business logic and entities"/>
+        <Module name="infrastructure" description="Database, external integrations"/>
+        <Module name="api" description="HTTP handlers and routing"/>
+        <Module name="config" description="Configuration management"/>
+        <Module name="error" description="Centralized error handling"/>
+        <Module name="security" description="Security controls and middleware"/>
+      </Modules>
+      <Step>Setup development tooling: rustfmt, clippy, cargo-audit</Step>
+      <Step>Configure CI/CD pipeline with security scanning</Step>
+    </Steps>
+    <ComplianceCheck>FIDO2-REQ-1: Secure development practices and dependency management</ComplianceCheck>
+  </Task>
+
+  <!-- TASK 2: Core Domain Models -->
+  <Task id="2">
+    <Title>Define Core Domain Types & Data Models</Title>
+    <SecurityRequirement>Establish type-safe domain models with proper validation</SecurityRequirement>
+    <Steps>
+      <Step>Define primary domain entities with comprehensive validation:</Step>
+      <Structs>
+        <Struct name="User">
+          <Field name="id" type="Uuid" validation="Required, unique"/>
+          <Field name="username" type="String" validation="Required, 3-64 chars, alphanumeric"/>
+          <Field name="display_name" type="String" validation="Required, 1-64 chars"/>
+          <Field name="email" type="Option&lt;String&gt;" validation="Valid email format"/>
+          <Field name="created_at" type="chrono::DateTime&lt;Utc&gt;"/>
+          <Field name="updated_at" type="chrono::DateTime&lt;Utc&gt;"/>
+          <Field name="is_active" type="bool" validation="Default true"/>
+        </Struct>
+        <Struct name="Credential">
+          <Field name="id" type="String" validation="Base64URL encoded credential ID"/>
+          <Field name="user_id" type="Uuid" validation="Foreign key to User"/>
+          <Field name="passkey" type="webauthn_rs::Passkey" validation="Validated WebAuthn credential"/>
+          <Field name="name" type="Option&lt;String&gt;" validation="User-friendly name"/>
+          <Field name="created_at" type="chrono::DateTime&lt;Utc&gt;"/>
+          <Field name="last_used" type="Option&lt;chrono::DateTime&lt;Utc&gt;&gt;"/>
+          <Field name="usage_count" type="u32" validation="Non-negative counter"/>
+        </Struct>
+        <Struct name="RegistrationSession">
+          <Field name="session_id" type="Uuid" validation="Unique session identifier"/>
+          <Field name="user_id" type="Uuid" validation="Associated user"/>
+          <Field name="state" type="webauthn_rs::PasskeyRegistration" validation="WebAuthn registration state"/>
+          <Field name="challenge_response" type="webauthn_rs::CreationChallengeResponse"/>
+          <Field name="created_at" type="chrono::DateTime&lt;Utc&gt;"/>
+          <Field name="expires_at" type="chrono::DateTime&lt;Utc&gt;" validation="Must be future timestamp"/>
+        </Struct>
+        <Struct name="AuthenticationSession">
+          <Field name="session_id" type="Uuid" validation="Unique session identifier"/>
+          <Field name="user_id" type="Option&lt;Uuid&gt;" validation="Optional for usernameless auth"/>
+          <Field name="state" type="webauthn_rs::PasskeyAuthentication" validation="WebAuthn auth state"/>
+          <Field name="challenge_response" type="webauthn_rs::RequestChallengeResponse"/>
+          <Field name="created_at" type="chrono::DateTime&lt;Utc&gt;"/>
+          <Field name="expires_at" type="chrono::DateTime&lt;Utc&gt;" validation="Must be future timestamp"/>
+        </Struct>
+      </Structs>
+      <Step>Define comprehensive error types using thiserror</Step>
+      <Step>Implement validation traits for all input types</Step>
+      <Step>Create type-safe configuration structures</Step>
+    </Steps>
+    <ComplianceCheck>FIDO2-REQ-2: Proper data modeling with credential lifecycle management</ComplianceCheck>
+  </Task>
+
+  <!-- TASK 3: Database Layer & Persistence -->
+  <Task id="3">
+    <Title>PostgreSQL Integration & Schema Design</Title>
+    <SecurityRequirement>Implement secure database layer with proper indexing and constraints</SecurityRequirement>
+    <Steps>
+      <Step>Design PostgreSQL schema with security best practices:</Step>
+      <Schema>
+        <Table name="users">
+          <Column name="id" type="UUID PRIMARY KEY"/>
+          <Column name="username" type="VARCHAR(64) UNIQUE NOT NULL"/>
+          <Column name="display_name" type="VARCHAR(64) NOT NULL"/>
+          <Column name="email" type="VARCHAR(255) UNIQUE"/>
+          <Column name="created_at" type="TIMESTAMPTZ DEFAULT NOW()"/>
+          <Column name="updated_at" type="TIMESTAMPTZ DEFAULT NOW()"/>
+          <Column name="is_active" type="BOOLEAN DEFAULT TRUE"/>
+          <Index name="idx_users_username" columns="username"/>
+          <Index name="idx_users_email" columns="email"/>
+        </Table>
+        <Table name="credentials">
+          <Column name="id" type="TEXT PRIMARY KEY"/> <!-- Base64URL credential ID -->
+          <Column name="user_id" type="UUID REFERENCES users(id) ON DELETE CASCADE"/>
+          <Column name="passkey_data" type="JSONB NOT NULL"/> <!-- Serialized Passkey -->
+          <Column name="name" type="VARCHAR(255)"/>
+          <Column name="created_at" type="TIMESTAMPTZ DEFAULT NOW()"/>
+          <Column name="last_used" type="TIMESTAMPTZ"/>
+          <Column name="usage_count" type="INTEGER DEFAULT 0"/>
+          <Index name="idx_credentials_user_id" columns="user_id"/>
+          <Index name="idx_credentials_last_used" columns="last_used"/>
+        </Table>
+        <Table name="registration_sessions">
+          <Column name="session_id" type="UUID PRIMARY KEY"/>
+          <Column name="user_id" type="UUID REFERENCES users(id) ON DELETE CASCADE"/>
+          <Column name="state_data" type="JSONB NOT NULL"/>
+          <Column name="challenge_data" type="JSONB NOT NULL"/>
+          <Column name="created_at" type="TIMESTAMPTZ DEFAULT NOW()"/>
+          <Column name="expires_at" type="TIMESTAMPTZ NOT NULL"/>
+          <Index name="idx_reg_sessions_expires" columns="expires_at"/>
+          <Index name="idx_reg_sessions_user" columns="user_id"/>
+        </Table>
+        <Table name="authentication_sessions">
+          <Column name="session_id" type="UUID PRIMARY KEY"/>
+          <Column name="user_id" type="UUID REFERENCES users(id) ON DELETE SET NULL"/>
+          <Column name="state_data" type="JSONB NOT NULL"/>
+          <Column name="challenge_data" type="JSONB NOT NULL"/>
+          <Column name="created_at" type="TIMESTAMPTZ DEFAULT NOW()"/>
+          <Column name="expires_at" type="TIMESTAMPTZ NOT NULL"/>
+          <Index name="idx_auth_sessions_expires" columns="expires_at"/>
+        </Table>
+      </Schema>
+      <Step>Implement sqlx-based repository pattern with async traits</Step>
+      <Step>Create migration scripts with proper rollback support</Step>
+      <Step>Implement connection pooling and health checks</Step>
+      <Step>Add database-level audit logging for credential operations</Step>
+    </Steps>
+    <ComplianceCheck>FIDO2-REQ-3: Secure credential storage with proper data protection</ComplianceCheck>
+  </Task>
+
+  <!-- TASK 4: WebAuthn Configuration & Initialization -->
+  <Task id="4">
+    <Title>WebAuthn Service Configuration</Title>
+    <SecurityRequirement>Configure WebAuthn with security-first settings and proper RP configuration</SecurityRequirement>
+    <Steps>
+      <Step>Implement comprehensive WebAuthn configuration:</Step>
+      <Configuration>
+        <Setting name="rp_id" type="String" validation="Valid domain name" example="example.com"/>
+        <Setting name="rp_name" type="String" validation="Human readable name" example="MyApp"/>
+        <Setting name="rp_origin" type="Url" validation="HTTPS URL" example="https://example.com"/>
+        <Setting name="timeout" type="Duration" validation="30-300 seconds" default="60s"/>
+        <Setting name="challenge_size" type="u32" validation="32-128 bytes" default="32"/>
+        <Setting name="require_resident_key" type="bool" default="false"/>
+        <Setting name="user_verification" type="UserVerificationPolicy" default="Preferred"/>
+        <Setting name="attestation_preference" type="AttestationConveyancePreference" default="None"/>
+        <Setting name="algorithms" type="Vec&lt;COSEAlgorithm&gt;" default="[ES256, RS256, EdDSA]"/>
+      </Configuration>
+      <Step>Initialize WebAuthn instance with builder pattern</Step>
+      <Step>Implement attestation format validation for security</Step>
+      <Step>Configure authenticator attachment preferences</Step>
+      <Step>Setup proper error handling for WebAuthn operations</Step>
+    </Steps>
+    <Functions>
+      <Function signature="async fn create_webauthn_service(config: &WebAuthnConfig) -> Result&lt;Webauthn, ConfigError&gt;"/>
+      <Function signature="fn validate_rp_config(config: &WebAuthnConfig) -> Result&lt;(), ValidationError&gt;"/>
+    </Functions>
+    <ComplianceCheck>FIDO2-REQ-4: Proper Relying Party configuration with security controls</ComplianceCheck>
+  </Task>
+
+  <!-- TASK 5: Registration Flow Implementation -->
+  <Task id="5">
+    <Title>Credential Registration (Attestation) Flow</Title>
+    <SecurityRequirement>Implement secure credential registration with proper validation and attestation verification</SecurityRequirement>
+    <Steps>
+      <Step>Implement `POST /webauthn/attestation/options` endpoint:</Step>
+      <RequestFormat>
+        {
+          "username": "string (required, 3-64 chars)",
+          "displayName": "string (required, 1-64 chars)", 
+          "authenticatorSelection": {
+            "authenticatorAttachment": "platform|cross-platform|null",
+            "requireResidentKey": "boolean",
+            "userVerification": "required|preferred|discouraged"
+          },
+          "attestation": "none|indirect|direct|enterprise",
+          "extensions": {}
+        }
+      </RequestFormat>
+      <Step>Validate input parameters and check for existing users</Step>
+      <Step>Generate registration options using webauthn-rs</Step>
+      <Step>Store registration session with proper expiration</Step>
+      <Step>Return CreationChallengeResponse with security headers</Step>
+      <Step>Implement `POST /webauthn/attestation/result` endpoint:</Step>
+      <RequestFormat>
+        {
+          "id": "string (credential ID, base64url)",
+          "rawId": "string (raw credential ID, base64url)",
+          "type": "public-key",
+          "response": {
+            "clientDataJSON": "string (base64url)",
+            "attestationObject": "string (base64url)",
+            "transports": ["usb", "nfc", "ble", "internal"]
+          }
+        }
+      </RequestFormat>
+      <Step>Validate registration response and verify attestation</Step>
+      <Step>Store verified credential with proper metadata</Step>
+      <Step>Clean up registration session</Step>
+      <Step>Return success response with credential metadata</Step>
+    </Steps>
+    <Functions>
+      <Function signature="async fn start_registration(username: String, display_name: String, options: RegistrationOptions) -> Result&lt;CreationChallengeResponse, RegistrationError&gt;"/>
+      <Function signature="async fn finish_registration(session_id: Uuid, credential: RegisterPublicKeyCredential) -> Result&lt;CredentialRegistrationResult, RegistrationError&gt;"/>
+      <Function signature="async fn validate_registration_session(session_id: Uuid) -> Result&lt;RegistrationSession, SessionError&gt;"/>
+    </Functions>
+    <ComplianceCheck>FIDO2-REQ-5: Complete attestation flow with proper credential validation</ComplianceCheck>
+  </Task>
+
+  <!-- TASK 6: Authentication Flow Implementation -->
+  <Task id="6">
+    <Title>User Authentication (Assertion) Flow</Title>
+    <SecurityRequirement>Implement secure authentication with replay protection and proper signature verification</SecurityRequirement>
+    <Steps>
+      <Step>Implement `POST /webauthn/assertion/options` endpoint:</Step>
+      <RequestFormat>
+        {
+          "username": "string (optional for usernameless auth)",
+          "userVerification": "required|preferred|discouraged",
+          "extensions": {},
+          "timeout": 60000
+        }
+      </RequestFormat>
+      <Step>Generate authentication challenge for user's credentials</Step>
+      <Step>Support both username-based and usernameless authentication</Step>
+      <Step>Store authentication session with replay protection</Step>
+      <Step>Return RequestChallengeResponse with allowed credentials</Step>
+      <Step>Implement `POST /webauthn/assertion/result` endpoint:</Step>
+      <RequestFormat>
+        {
+          "id": "string (credential ID, base64url)",
+          "rawId": "string (raw credential ID, base64url)", 
+          "type": "public-key",
+          "response": {
+            "clientDataJSON": "string (base64url)",
+            "authenticatorData": "string (base64url)",
+            "signature": "string (base64url)",
+            "userHandle": "string (base64url, optional)"
+          }
+        }
+      </RequestFormat>
+      <Step>Validate assertion response and verify signature</Step>
+      <Step>Update credential usage statistics</Step>
+      <Step>Generate authentication token/session</Step>
+      <Step>Clean up authentication session</Step>
+      <Step>Return authentication result with user info</Step>
+    </Steps>
+    <Functions>
+      <Function signature="async fn start_authentication(username: Option&lt;String&gt;, options: AuthenticationOptions) -> Result&lt;RequestChallengeResponse, AuthenticationError&gt;"/>
+      <Function signature="async fn finish_authentication(session_id: Uuid, credential: PublicKeyCredential) -> Result&lt;AuthenticationResult, AuthenticationError&gt;"/>
+      <Function signature="async fn validate_authentication_session(session_id: Uuid) -> Result&lt;AuthenticationSession, SessionError&gt;"/>
+    </Functions>
+    <ComplianceCheck>FIDO2-REQ-6: Complete assertion flow with signature verification and replay protection</ComplianceCheck>
+  </Task>
+
+  <!-- TASK 7: Security Controls & Middleware -->
+  <Task id="7">
+    <Title>Security Controls & Protective Middleware</Title>
+    <SecurityRequirement>Implement comprehensive security controls for production deployment</SecurityRequirement>
+    <Steps>
+      <Step>Implement rate limiting middleware:</Step>
+      <RateLimit>
+        <Endpoint path="/webauthn/attestation/options" limit="5 requests per minute per IP"/>
+        <Endpoint path="/webauthn/attestation/result" limit="10 requests per minute per IP"/>
+        <Endpoint path="/webauthn/assertion/options" limit="20 requests per minute per IP"/>
+        <Endpoint path="/webauthn/assertion/result" limit="30 requests per minute per IP"/>
+      </RateLimit>
+      <Step>Implement CORS middleware with strict origin validation</Step>
+      <Step>Add security headers middleware (HSTS, CSP, X-Frame-Options)</Step>
+      <Step>Implement request/response logging with PII redaction</Step>
+      <Step>Add input validation middleware with comprehensive sanitization</Step>
+      <Step>Implement session cleanup service for expired sessions</Step>
+      <Step>Add TLS certificate validation for client connections</Step>
+      <Step>Implement comprehensive audit logging for security events</Step>
+    </Steps>
+    <SecurityControls>
+      <Control name="TLS Enforcement" description="Require TLS 1.2+ for all connections"/>
+      <Control name="Origin Validation" description="Strict CORS policy matching RP configuration"/>
+      <Control name="Challenge Expiration" description="Automatic cleanup of expired challenges"/>
+      <Control name="Replay Protection" description="One-time use enforcement for challenges"/>
+      <Control name="Input Sanitization" description="Comprehensive validation of all inputs"/>
+      <Control name="Audit Logging" description="Security event logging with retention policy"/>
+    </SecurityControls>
+    <ComplianceCheck>FIDO2-REQ-7: Security controls and attack surface reduction</ComplianceCheck>
+  </Task>
+
+  <!-- TASK 8: Error Handling & Response Management -->
+  <Task id="8">
+    <Title>Comprehensive Error Handling System</Title>
+    <SecurityRequirement>Implement secure error handling that doesn't leak sensitive information</SecurityRequirement>
+    <Steps>
+      <Step>Define comprehensive error taxonomy:</Step>
+      <ErrorTypes>
+        <Error name="ValidationError" code="400" description="Input validation failures"/>
+        <Error name="AuthenticationError" code="401" description="Authentication failures"/>
+        <Error name="AuthorizationError" code="403" description="Authorization failures"/>
+        <Error name="NotFoundError" code="404" description="Resource not found"/>
+        <Error name="ConflictError" code="409" description="Resource conflicts"/>
+        <Error name="UnprocessableEntityError" code="422" description="Semantic errors"/>
+        <Error name="TooManyRequestsError" code="429" description="Rate limit exceeded"/>
+        <Error name="InternalServerError" code="500" description="Server errors"/>
+      </ErrorTypes>
+      <Step>Map webauthn-rs errors to domain errors safely</Step>
+      <Step>Implement error response sanitization (no stack traces in production)</Step>
+      <Step>Add structured logging for error analysis</Step>
+      <Step>Implement error metrics collection for monitoring</Step>
+      <Step>Create user-friendly error messages that don't expose internals</Step>
+    </Steps>
+    <ErrorHandling>
+      <Pattern name="WebAuthn Error Mapping" description="Convert webauthn-rs errors to safe user messages"/>
+      <Pattern name="Database Error Handling" description="Handle connection and constraint errors gracefully"/>
+      <Pattern name="Validation Error Collection" description="Collect and return multiple validation errors"/>
+      <Pattern name="Security Event Logging" description="Log security-relevant errors with context"/>
+    </ErrorHandling>
+    <ComplianceCheck>FIDO2-REQ-8: Secure error handling without information disclosure</ComplianceCheck>
+  </Task>
+
+  <!-- TASK 9: Configuration Management -->
+  <Task id="9">
+    <Title>Production Configuration Management</Title>
+    <SecurityRequirement>Implement secure configuration with proper secret management</SecurityRequirement>
+    <Steps>
+      <Step>Create layered configuration system:</Step>
+      <ConfigurationLayers>
+        <Layer name="Default" source="embedded defaults" precedence="1"/>
+        <Layer name="File" source="config.toml" precedence="2"/>
+        <Layer name="Environment" source="ENV vars" precedence="3"/>
+        <Layer name="CLI" source="command line args" precedence="4"/>
+      </ConfigurationLayers>
+      <Step>Define configuration structure with validation:</Step>
+      <ConfigSections>
+        <Section name="server">
+          <Setting name="host" type="String" default="0.0.0.0"/>
+          <Setting name="port" type="u16" default="8080"/>
+          <Setting name="tls_cert_path" type="Option&lt;PathBuf&gt;"/>
+          <Setting name="tls_key_path" type="Option&lt;PathBuf&gt;"/>
+        </Section>
+        <Section name="database">
+          <Setting name="url" type="String" sensitive="true"/>
+          <Setting name="max_connections" type="u32" default="10"/>
+          <Setting name="connection_timeout" type="Duration" default="30s"/>
+        </Section>
+        <Section name="webauthn">
+          <Setting name="rp_id" type="String" required="true"/>
+          <Setting name="rp_name" type="String" required="true"/>
+          <Setting name="rp_origin" type="Url" required="true"/>
+          <Setting name="session_timeout" type="Duration" default="300s"/>
+        </Section>
+        <Section name="security">
+          <Setting name="rate_limit_enabled" type="bool" default="true"/>
+          <Setting name="cors_origins" type="Vec&lt;String&gt;" default="[]"/>
+          <Setting name="require_tls" type="bool" default="true"/>
+        </Section>
+      </ConfigSections>
+      <Step>Implement configuration validation at startup</Step>
+      <Step>Add configuration reload capability for non-sensitive settings</Step>
+      <Step>Implement secure secret injection from environment/vault</Step>
+    </Steps>
+    <ComplianceCheck>FIDO2-REQ-9: Secure configuration management with secret protection</ComplianceCheck>
+  </Task>
+
+  <!-- TASK 10: Comprehensive Testing Strategy -->
+  <Task id="10">
+    <Title>Testing Framework & Test Suite</Title>
+    <SecurityRequirement>Implement comprehensive testing including security test cases</SecurityRequirement>
+    <Steps>
+      <Step>Unit tests for core domain logic:</Step>
+      <UnitTests>
+        <Test name="user_validation" description="Test user input validation rules"/>
+        <Test name="credential_serialization" description="Test credential data handling"/>
+        <Test name="session_expiration" description="Test session lifecycle management"/>
+        <Test name="error_mapping" description="Test error handling and mapping"/>
+      </UnitTests>
+      <Step>Integration tests for WebAuthn flows:</Step>
+      <IntegrationTests>
+        <Test name="full_registration_flow" description="End-to-end registration with mock authenticator"/>
+        <Test name="full_authentication_flow" description="End-to-end authentication with stored credentials"/>
+        <Test name="usernameless_authentication" description="Test usernameless authentication flow"/>
+        <Test name="expired_session_handling" description="Test expired session cleanup"/>
+        <Test name="concurrent_sessions" description="Test concurrent session handling"/>
+      </IntegrationTests>
+      <Step>Security tests:</Step>
+      <SecurityTests>
+        <Test name="replay_attack_prevention" description="Test challenge replay protection"/>
+        <Test name="origin_validation" description="Test strict origin validation"/>
+        <Test name="rate_limiting" description="Test rate limiting enforcement"/>
+        <Test name="input_fuzzing" description="Fuzz test input validation"/>
+        <Test name="error_information_leakage" description="Test error message sanitization"/>
+      </SecurityTests>
+      <Step>Performance tests:</Step>
+      <PerformanceTests>
+        <Test name="concurrent_registrations" description="Test system under registration load"/>
+        <Test name="concurrent_authentications" description="Test system under auth load"/>
+        <Test name="database_performance" description="Test database query performance"/>
+        <Test name="memory_usage" description="Test memory usage under load"/>
+      </PerformanceTests>
+      <Step>FIDO2 conformance tests integration</Step>
+      <Step>Setup continuous integration with security scanning</Step>
+    </Steps>
+    <ComplianceCheck>FIDO2-REQ-10: Comprehensive testing including conformance validation</ComplianceCheck>
+  </Task>
+
+  <!-- TASK 11: API Documentation & Monitoring -->
+  <Task id="11">
+    <Title>API Documentation & Observability</Title>
+    <SecurityRequirement>Implement comprehensive monitoring and documentation for production operations</SecurityRequirement>
+    <Steps>
+      <Step>Generate OpenAPI 3.0 specification with security schemas</Step>
+      <Step>Implement comprehensive metrics collection:</Step>
+      <Metrics>
+        <Metric name="registration_attempts_total" type="counter" labels="outcome,error_type"/>
+        <Metric name="authentication_attempts_total" type="counter" labels="outcome,error_type"/>
+        <Metric name="session_duration_seconds" type="histogram" labels="session_type"/>
+        <Metric name="credential_usage_total" type="counter" labels="credential_type"/>
+        <Metric name="rate_limit_hits_total" type="counter" labels="endpoint,reason"/>
+        <Metric name="database_query_duration_seconds" type="histogram" labels="query_type"/>
+      </Metrics>
+      <Step>Implement health check endpoints with detailed status</Step>
+      <Step>Add distributed tracing for request correlation</Step>
+      <Step>Implement log aggregation with structured logging</Step>
+      <Step>Create operational dashboards and alerts</Step>
+      <Step>Document security procedures and incident response</Step>
+    </Steps>
+    <HealthChecks>
+      <Check name="database_connectivity" description="Verify database connection and query performance"/>
+      <Check name="webauthn_service" description="Verify WebAuthn service configuration"/>
+      <Check name="session_cleanup" description="Verify expired session cleanup service"/>
+      <Check name="security_controls" description="Verify security middleware status"/>
+    </HealthChecks>
+    <ComplianceCheck>FIDO2-REQ-11: Production readiness with monitoring and documentation</ComplianceCheck>
+  </Task>
+
+  <!-- TASK 12: Deployment & Production Hardening -->
+  <Task id="12">
+    <Title>Production Deployment Configuration</Title>
+    <SecurityRequirement>Configure production deployment with enterprise security standards</SecurityRequirement>
+    <Steps>
+      <Step>Create production Docker configuration:</Step>
+      <DockerConfig>
+        <Setting name="base_image" value="rust:1.75-alpine"/>
+        <Setting name="user" value="nonroot user with minimal privileges"/>
+        <Setting name="exposed_ports" value="8080 (HTTP), 8443 (HTTPS)"/>
+        <Setting name="health_check" value="/health endpoint"/>
+        <Setting name="resource_limits" value="CPU and memory constraints"/>
+      </DockerConfig>
+      <Step>Configure Kubernetes deployment with security context</Step>
+      <Step>Implement database migration strategy for production</Step>
+      <Step>Configure TLS termination and certificate management</Step>
+      <Step>Setup backup and recovery procedures</Step>
+      <Step>Implement graceful shutdown handling</Step>
+      <Step>Configure log rotation and retention policies</Step>
+      <Step>Setup monitoring and alerting infrastructure</Step>
+    </Steps>
+    <ProductionChecklist>
+      <Check item="TLS certificates valid and properly configured"/>
+      <Check item="Database connections secured with TLS"/>
+      <Check item="Rate limiting configured for production load"/>
+      <Check item="CORS policies restrict to known origins"/>
+      <Check item="Logging configured with appropriate retention"/>
+      <Check item="Monitoring and alerting operational"/>
+      <Check item="Backup and recovery procedures tested"/>
+      <Check item="Security scanning integrated in CI/CD"/>
+    </ProductionChecklist>
+    <ComplianceCheck>FIDO2-REQ-12: Production security hardening and operational readiness</ComplianceCheck>
+  </Task>
+
+  <!-- TASK 13: FIDO2 Conformance Validation -->
+  <Task id="13">
+    <Title>FIDO2 Specification Compliance Validation</Title>
+    <SecurityRequirement>Ensure complete FIDO2/WebAuthn specification compliance</SecurityRequirement>
+    <Steps>
+      <Step>Implement FIDO2 conformance test endpoints:</Step>
+      <ConformanceEndpoints>
+        <Endpoint path="/fido2/conformance/attestation/options" method="POST"/>
+        <Endpoint path="/fido2/conformance/attestation/result" method="POST"/>
+        <Endpoint path="/fido2/conformance/assertion/options" method="POST"/>
+        <Endpoint path="/fido2/conformance/assertion/result" method="POST"/>
+      </ConformanceEndpoints>
+      <Step>Validate algorithm support:</Step>
+      <AlgorithmSupport>
+        <Algorithm name="ES256" status="required" description="ECDSA P-256 with SHA-256"/>
+        <Algorithm name="RS256" status="required" description="RSASSA-PKCS1-v1_5 with SHA-256"/>
+        <Algorithm name="EdDSA" status="optional" description="EdDSA signature algorithms"/>
+      </AlgorithmSupport>
+      <Step>Validate attestation format support:</Step>
+      <AttestationFormats>
+        <Format name="packed" status="required" description="WebAuthn packed attestation"/>
+        <Format name="fido-u2f" status="optional" description="FIDO U2F attestation"/>
+        <Format name="none" status="required" description="None attestation"/>
+      </AttestationFormats>
+      <Step>Run FIDO Alliance conformance test suite</Step>
+      <Step>Validate WebAuthn Level 3 compliance</Step>
+      <Step>Test with real authenticators (platform and roaming)</Step>
+      <Step>Generate conformance report and certification documentation</Step>
+    </Steps>
+    <ComplianceValidation>
+      <Requirement id="FIDO2-CONF-1" description="Support required cryptographic algorithms"/>
+      <Requirement id="FIDO2-CONF-2" description="Proper attestation statement validation"/>
+      <Requirement id="FIDO2-CONF-3" description="Correct assertion signature verification"/>
+      <Requirement id="FIDO2-CONF-4" description="Proper challenge and origin validation"/>
+      <Requirement id="FIDO2-CONF-5" description="User presence and verification handling"/>
+      <Requirement id="FIDO2-CONF-6" description="Credential ID uniqueness and binding"/>
+    </ComplianceValidation>
+    <ComplianceCheck>FIDO2-REQ-13: Full FIDO2 specification compliance with test validation</ComplianceCheck>
+  </Task>
+
+  <!-- TASK 14: Performance Optimization & Scalability -->
+  <Task id="14">
+    <Title>Performance Optimization & Horizontal Scaling</Title>
+    <SecurityRequirement>Optimize performance while maintaining security guarantees</SecurityRequirement>
+    <Steps>
+      <Step>Implement connection pooling optimization</Step>
+      <Step>Add database query optimization and indexing</Step>
+      <Step>Implement async processing for non-critical operations</Step>
+      <Step>Add caching layer for frequently accessed data (with security considerations)</Step>
+      <Step>Optimize credential lookup performance</Step>
+      <Step>Implement horizontal scaling support:</Step>
+      <ScalingConsiderations>
+        <Consideration name="stateless_design" description="Ensure server instances are stateless"/>
+        <Consideration name="session_storage" description="Use external session store for multi-instance deployment"/>
+        <Consideration name="database_scaling" description="Support read replicas and connection pooling"/>
+        <Consideration name="load_balancing" description="Support sticky sessions if needed"/>
+      </ScalingConsiderations>
+      <Step>Add performance monitoring and profiling</Step>
+      <Step>Implement graceful degradation for high load scenarios</Step>
+      <Step>Optimize memory usage and garbage collection</Step>
+    </Steps>
+    <PerformanceTargets>
+      <Target metric="registration_latency_p95" value="500ms" description="95th percentile registration completion"/>
+      <Target metric="authentication_latency_p95" value="200ms" description="95th percentile authentication completion"/>
+      <Target metric="throughput_registrations" value="100 rps" description="Concurrent registrations per second"/>
+      <Target metric="throughput_authentications" value="500 rps" description="Concurrent authentications per second"/>
+      <Target metric="memory_usage_max" value="512MB" description="Maximum memory usage per instance"/>
+    </PerformanceTargets>
+    <ComplianceCheck>FIDO2-REQ-14: Performance optimization with maintained security</ComplianceCheck>
+  </Task>
+
+  <!-- TASK 15: Final Integration & Quality Assurance -->
+  <Task id="15">
+    <Title>Final Integration Testing & Production Readiness</Title>
+    <SecurityRequirement>Comprehensive final validation of all security and functional requirements</SecurityRequirement>
+    <Steps>
+      <Step>Execute end-to-end integration test suite</Step>
+      <Step>Perform security penetration testing</Step>
+      <Step>Conduct load testing under production scenarios</Step>
+      <Step>Validate FIDO2 conformance test suite passes</Step>
+      <Step>Review all security controls and configurations</Step>
+      <Step>Validate backup and recovery procedures</Step>
+      <Step>Test deployment and rollback procedures</Step>
+      <Step>Conduct security code review and audit</Step>
+      <Step>Generate production deployment documentation</Step>
+      <Step>Create operational runbooks and troubleshooting guides</Step>
+    </Steps>
+    <QualityGates>
+      <Gate name="security_scan" description="All security scans pass with no high/critical issues"/>
+      <Gate name="conformance_tests" description="FIDO2 conformance test suite passes 100%"/>
+      <Gate name="performance_tests" description="Performance targets met under load"/>
+      <Gate name="integration_tests" description="All integration tests pass"/>
+      <Gate name="code_coverage" description="Code coverage above 90% for critical paths"/>
+      <Gate name="documentation_review" description="All documentation complete and reviewed"/>
+    </QualityGates>
+    <ProductionReadinessChecklist>
+      <Item name="Security hardening complete"/>
+      <Item name="Monitoring and alerting configured"/>
+      <Item name="Backup and recovery tested"/>
+      <Item name="Performance optimization validated"/>
+      <Item name="FIDO2 compliance verified"/>
+      <Item name="Documentation complete"/>
+      <Item name="Operational procedures defined"/>
+      <Item name="Incident response plan ready"/>
+    </ProductionReadinessChecklist>
+    <ComplianceCheck>FIDO2-REQ-15: Production readiness validation with complete quality assurance</ComplianceCheck>
+  </Task>
+</AgentTasks>
