@@ -1,0 +1,400 @@
+<AgentTasks>
+  <Goal>
+    Implement a complete FIDO2 / WebAuthn "assertion / authentication" server in Rust,
+    using the **webauthn-rs** crate for all WebAuthn-specific logic (challenge generation, validation, assertion verification, COSE key handling, AuthenticatorData parsing, etc.).
+    The server should expose two primary endpoints for user authentication:
+      1. `POST /webauthn/assertion/options` — to initiate authentication ceremony  
+      2. `POST /webauthn/assertion/result` — to complete authentication ceremony
+    Use the safe public API of webauthn-rs (not low-level core) with proper FIDO2 Alliance specification compliance.
+    Implement robust security measures, proper error handling, and comprehensive test coverage.
+    Do tasks one-by-one; after each task, wait for confirmation before proceeding.
+  </Goal>
+
+  <SecurityRequirements>
+    <Requirement id="SR-001">Challenge Generation: Use cryptographically secure random challenges (minimum 32 bytes)</Requirement>
+    <Requirement id="SR-002">Origin Validation: Strict validation of request origins against configured allowed origins</Requirement>
+    <Requirement id="SR-003">Signature Verification: Proper ECDSA/EdDSA signature validation using stored public keys</Requirement>
+    <Requirement id="SR-004">Replay Protection: Challenge-response mechanism with time-based expiration (max 5 minutes)</Requirement>
+    <Requirement id="SR-005">User Verification: Support for both user verification required and preferred modes</Requirement>
+    <Requirement id="SR-006">Counter Validation: Authenticator counter anti-rollback protection</Requirement>
+    <Requirement id="SR-007">Transport Security: All endpoints must use HTTPS in production</Requirement>
+  </SecurityRequirements>
+
+  <TechStack>
+    <Language>Rust (Edition 2021)</Language>
+    <Framework>Axum (0.7.x)</Framework>
+    <Runtime>Tokio (1.x)</Runtime>
+    <JSON>serde (1.x) / serde_json (1.x)</JSON>
+    <WeAuthnLibrary>webauthn-rs (0.5.x)</WeAuthnLibrary>
+    <Storage>In-memory HashMap + persistent storage adapter interface</Storage>
+    <ErrorHandling>thiserror (1.x)</ErrorHandling>
+    <Logging>tracing (0.1.x)</Logging>
+    <UUID>uuid (1.x)</UUID>
+    <Time>chrono (0.4.x)</Time>
+    <Testing>tokio-test, mockall</Testing>
+  </TechStack>
+
+  <References>
+    <Spec url="https://www.w3.org/TR/webauthn-3/" description="W3C WebAuthn Level 3 Specification"/>
+    <Spec url="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-errata-20220621.html" description="FIDO2 CTAP2.1 Specification"/>
+    <Spec url="https://fidoalliance.org/specs/fido-v2.0-ps-20190130/fido-server-requirements-v2.0-ps-20190130.html" description="FIDO2 Server Requirements"/>
+    <Spec url="https://docs.rs/webauthn-rs/latest/webauthn_rs/" description="webauthn-rs Crate Documentation"/>
+    <Reference url="https://github.com/fido-alliance/conformance-test-tools-resources/blob/main/docs/FIDO2/Server/Conformance-Test-API.md" description="FIDO2 Conformance Test API"/>
+  </References>
+
+  <!-- TASK 1: Foundation & Domain Types -->
+  <Task id="1">
+    <Title>Define Core Domain Types & Project Structure</Title>
+    <Steps>
+      <Step>Create Rust project with proper module structure (lib.rs, domains/, handlers/, errors/)</Step>
+      <Step>Add dependencies: axum, tokio, webauthn-rs, serde, uuid, chrono, thiserror, tracing</Step>
+      <Step>Define core domain structs for authentication flow:</Step>
+      <Structs>
+        <Struct name="UserAccount">
+          <Field name="user_id" type="Uuid" description="Unique user identifier"/>
+          <Field name="username" type="String" description="Human-readable username"/>
+          <Field name="display_name" type="String" description="User display name"/>
+          <Field name="passkeys" type="Vec&lt;Passkey&gt;" description="Registered FIDO2 credentials"/>
+          <Field name="last_login" type="Option&lt;DateTime&lt;Utc&gt;&gt;" description="Last successful authentication"/>
+        </Struct>
+        <Struct name="PendingAuthentication">
+          <Field name="state" type="PasskeyAuthentication" description="WebAuthn auth state from webauthn-rs"/>
+          <Field name="challenge_response" type="RequestChallengeResponse" description="Challenge data from webauthn-rs"/>
+          <Field name="user_id" type="Uuid" description="Associated user ID"/>
+          <Field name="expires_at" type="DateTime&lt;Utc&gt;" description="Challenge expiration timestamp"/>
+          <Field name="created_at" type="DateTime&lt;Utc&gt;" description="Challenge creation timestamp"/>
+        </Struct>
+        <Struct name="AuthenticationRequest">
+          <Field name="username" type="Option&lt;String&gt;" description="Optional username for usernameless flow"/>
+          <Field name="user_verification" type="Option&lt;UserVerificationPolicy&gt;" description="UV policy preference"/>
+        </Struct>
+        <Struct name="AuthenticationResult">
+          <Field name="user_id" type="Uuid" description="Authenticated user ID"/>
+          <Field name="credential_id" type="String" description="Used credential ID"/>
+          <Field name="timestamp" type="DateTime&lt;Utc&gt;" description="Authentication timestamp"/>
+        </Struct>
+      </Structs>
+      <Step>Define comprehensive error enum using `thiserror` for domain-level error handling</Step>
+    </Steps>
+    <SecurityConsiderations>
+      <Item>Ensure user_id uses cryptographically secure UUID generation</Item>
+      <Item>Implement proper data validation for all input fields</Item>
+      <Item>Design error types to prevent information leakage</Item>
+    </SecurityConsiderations>
+  </Task>
+
+  <!-- TASK 2: WebAuthn Relying Party Setup -->
+  <Task id="2">
+    <Title>Initialize WebAuthn Relying Party Configuration</Title>
+    <Steps>
+      <Step>Use `webauthn_rs::WebauthnBuilder` to configure Relying Party settings</Step>
+      <Step>Set RP ID to match your domain (e.g., "example.com" for https://example.com)</Step>
+      <Step>Configure allowed origins with proper URL validation</Step>
+      <Step>Set appropriate timeout values (default 60 seconds for challenges)</Step>
+      <Step>Configure authenticator attachment preferences (platform, cross-platform, both)</Step>
+      <Step>Set user verification requirements based on security policy</Step>
+    </Steps>
+    <Functions>
+      <Function signature="fn create_webauthn_config(rp_id: &str, origin: &str, rp_name: &str) -> Result&lt;Webauthn, WebAuthnError&gt;"/>
+      <Function signature="fn validate_origin(origin: &str) -> Result&lt;Url, ValidationError&gt;"/>
+    </Functions>
+    <WeAuthnTypesUsed>
+      <Type>webauthn_rs::WebauthnBuilder</Type>
+      <Type>webauthn_rs::Webauthn</Type>
+      <Type>webauthn_rs::WebauthnConfig</Type>
+      <Type>url::Url</Type>
+    </WeAuthnTypesUsed>
+    <SecurityConsiderations>
+      <Item>Validate RP ID matches actual domain to prevent subdomain attacks</Item>
+      <Item>Restrict origins to HTTPS in production environments</Item>
+      <Item>Implement proper certificate validation for origin checking</Item>
+    </SecurityConsiderations>
+  </Task>
+
+  <!-- TASK 3: Authentication Options Endpoint -->
+  <Task id="3">
+    <Title>Implement POST /webauthn/assertion/options</Title>
+    <InputExample>
+      {
+        "username": "alice@example.com",
+        "userVerification": "preferred"
+      }
+    </InputExample>
+    <OutputExample>
+      {
+        "challenge": "base64url-encoded-challenge",
+        "timeout": 60000,
+        "rpId": "example.com",
+        "allowCredentials": [
+          {
+            "type": "public-key",
+            "id": "credential-id-base64url"
+          }
+        ],
+        "userVerification": "preferred"
+      }
+    </OutputExample>
+    <Steps>
+      <Step>Parse and validate incoming JSON request</Step>
+      <Step>Lookup user account by username if provided (support usernameless flow)</Step>
+      <Step>Extract user's registered passkeys for allowCredentials</Step>
+      <Step>Call `webauthn.start_passkey_authentication(user_credentials)` with user's passkeys</Step>
+      <Step>Store returned `PasskeyAuthentication` state with challenge expiration</Step>
+      <Step>Return `RequestChallengeResponse` as JSON to client</Step>
+      <Step>Implement proper cleanup of expired challenges</Step>
+    </Steps>
+    <Functions>
+      <Function signature="async fn authentication_options_handler(req: AuthenticationRequest) -> Result&lt;Json&lt;RequestChallengeResponse&gt;, ApiError&gt;"/>
+      <Function signature="fn start_authentication(username: &str) -> Result&lt;(RequestChallengeResponse, PasskeyAuthentication), DomainError&gt;"/>
+      <Function signature="fn store_pending_auth(challenge_id: &str, auth: PendingAuthentication)"/>
+      <Function signature="fn cleanup_expired_challenges()"/>
+    </Functions>
+    <WeAuthnTypesUsed>
+      <Type>webauthn_rs::RequestChallengeResponse</Type>
+      <Type>webauthn_rs::PasskeyAuthentication</Type>
+      <Type>webauthn_rs::Passkey</Type>
+    </WeAuthnTypesUsed>
+    <SecurityConsiderations>
+      <Item>Generate cryptographically secure challenges (32+ bytes entropy)</Item>
+      <Item>Implement challenge expiration (max 5 minutes)</Item>
+      <Item>Prevent username enumeration through timing attacks</Item>
+      <Item>Rate limit challenge generation per IP/user</Item>
+    </SecurityConsiderations>
+  </Task>
+
+  <!-- TASK 4: Authentication Result Endpoint -->
+  <Task id="4">
+    <Title>Implement POST /webauthn/assertion/result</Title>
+    <InputExample>
+      {
+        "id": "credential-id-base64url",
+        "rawId": "credential-id-base64url", 
+        "type": "public-key",
+        "response": {
+          "clientDataJSON": "client-data-base64url",
+          "authenticatorData": "auth-data-base64url",
+          "signature": "signature-base64url",
+          "userHandle": "user-handle-base64url"
+        }
+      }
+    </InputExample>
+    <OutputExample>
+      {
+        "status": "ok",
+        "userId": "user-uuid",
+        "credentialId": "credential-id",
+        "timestamp": "2023-12-07T10:00:00Z"
+      }
+    </OutputExample>
+    <Steps>
+      <Step>Deserialize client response into `PublicKeyCredential` (webauthn-rs type)</Step>
+      <Step>Extract challenge from clientDataJSON and lookup stored authentication state</Step>
+      <Step>Validate challenge hasn't expired and hasn't been used</Step>
+      <Step>Call `webauthn.finish_passkey_authentication(&credential, &auth_state)`</Step>
+      <Step>Validate authenticator counter progression (anti-replay protection)</Step>
+      <Step>Update user's last login timestamp</Step>
+      <Step>Return success response with authenticated user info</Step>
+      <Step>Clean up used authentication state</Step>
+    </Steps>
+    <Functions>
+      <Function signature="async fn authentication_result_handler(cred: PublicKeyCredential) -> Result&lt;Json&lt;AuthenticationResult&gt;, ApiError&gt;"/>
+      <Function signature="fn finish_authentication(credential: PublicKeyCredential, challenge_id: &str) -> Result&lt;AuthenticationResult, DomainError&gt;"/>
+      <Function signature="fn validate_and_consume_challenge(challenge_id: &str) -> Result&lt;PendingAuthentication, ValidationError&gt;"/>
+      <Function signature="fn update_user_login(user_id: Uuid, credential_id: &str)"/>
+    </Functions>
+    <WeAuthnTypesUsed>
+      <Type>webauthn_rs::PublicKeyCredential</Type>
+      <Type>webauthn_rs::AuthenticatorData</Type>
+      <Type>webauthn_rs::AuthenticationResult</Type>
+    </WeAuthnTypesUsed>
+    <SecurityConsiderations>
+      <Item>Verify signature against stored public key</Item>
+      <Item>Validate RP ID hash in authenticator data</Item>
+      <Item>Check user presence and verification flags</Item>
+      <Item>Enforce counter progression (prevent replay attacks)</Item>
+      <Item>Validate challenge origin and timing</Item>
+    </SecurityConsiderations>
+  </Task>
+
+  <!-- TASK 5: Storage & State Management -->
+  <Task id="5">
+    <Title>Implement Secure Storage Layer</Title>
+    <Steps>
+      <Step>Design storage traits for dependency injection and testing</Step>
+      <Step>Implement in-memory storage with proper concurrent access (Arc&lt;RwLock&gt;)</Step>
+      <Step>Add storage methods for users, passkeys, and pending authentications</Step>
+      <Step>Implement automatic cleanup of expired challenges and sessions</Step>
+      <Step>Add storage metrics and monitoring capabilities</Step>
+    </Steps>
+    <Functions>
+      <Function signature="trait UserStorage: Send + Sync"/>
+      <Function signature="trait AuthenticationStorage: Send + Sync"/>
+      <Function signature="fn cleanup_expired_data(&self) -> Result&lt;usize, StorageError&gt;"/>
+    </Functions>
+    <SecurityConsiderations>
+      <Item>Encrypt sensitive data at rest where applicable</Item>
+      <Item>Implement secure deletion of expired challenges</Item>
+      <Item>Prevent concurrent access race conditions</Item>
+      <Item>Add audit logging for authentication events</Item>
+    </SecurityConsiderations>
+  </Task>
+
+  <!-- TASK 6: Error Handling & Validation -->
+  <Task id="6">
+    <Title>Implement Comprehensive Error Handling</Title>
+    <Steps>
+      <Step>Define error hierarchy mapping webauthn-rs errors to domain errors</Step>
+      <Step>Implement proper HTTP status code mapping (400, 401, 422, 500)</Step>
+      <Step>Add structured logging for security events</Step>
+      <Step>Implement error response sanitization to prevent information leakage</Step>
+      <Step>Add request validation middleware</Step>
+    </Steps>
+    <ErrorMappings>
+      <Mapping from="InvalidChallenge" to="401 Unauthorized"/>
+      <Mapping from="ExpiredChallenge" to="401 Unauthorized"/>
+      <Mapping from="InvalidSignature" to="401 Unauthorized"/>
+      <Mapping from="ValidationError" to="422 Unprocessable Entity"/>
+      <Mapping from="StorageError" to="500 Internal Server Error"/>
+    </ErrorMappings>
+    <SecurityConsiderations>
+      <Item>Sanitize error messages to prevent information disclosure</Item>
+      <Item>Log security events for monitoring and audit</Item>
+      <Item>Implement rate limiting for error responses</Item>
+    </SecurityConsiderations>
+  </Task>
+
+  <!-- TASK 7: Security Middleware & Headers -->
+  <Task id="7">
+    <Title>Implement Security Middleware</Title>
+    <Steps>
+      <Step>Add CORS middleware with strict origin validation</Step>
+      <Step>Implement security headers (HSTS, CSP, X-Frame-Options)</Step>
+      <Step>Add request rate limiting per IP and per user</Step>
+      <Step>Implement request size limits and timeout handling</Step>
+      <Step>Add security event logging and monitoring</Step>
+    </Steps>
+    <SecurityHeaders>
+      <Header name="Strict-Transport-Security" value="max-age=31536000; includeSubDomains"/>
+      <Header name="X-Content-Type-Options" value="nosniff"/>
+      <Header name="X-Frame-Options" value="DENY"/>
+      <Header name="Content-Security-Policy" value="default-src 'self'"/>
+    </SecurityHeaders>
+  </Task>
+
+  <!-- TASK 8: Testing & Validation -->
+  <Task id="8">
+    <Title>Comprehensive Testing Suite</Title>
+    <Steps>
+      <Step>Write unit tests for all domain logic and validation functions</Step>
+      <Step>Create integration tests for complete authentication flows</Step>
+      <Step>Implement property-based testing for input validation</Step>
+      <Step>Add security-focused tests (timing attacks, replay protection)</Step>
+      <Step>Create mock authenticator responses for testing</Step>
+      <Step>Test error handling and edge cases</Step>
+    </Steps>
+    <TestCases>
+      <TestCase name="successful_authentication_flow">Complete happy path test</TestCase>
+      <TestCase name="expired_challenge_rejection">Test challenge expiration handling</TestCase>
+      <TestCase name="invalid_signature_rejection">Test signature validation</TestCase>
+      <TestCase name="replay_attack_prevention">Test counter validation</TestCase>
+      <TestCase name="origin_validation">Test origin mismatch detection</TestCase>
+      <TestCase name="rate_limiting">Test request rate limiting</TestCase>
+    </TestCases>
+  </Task>
+
+  <!-- TASK 9: FIDO2 Compliance Validation -->
+  <Task id="9">
+    <Title>FIDO2 Alliance Compliance Verification</Title>
+    <Steps>
+      <Step>Validate against FIDO2 Server Requirements specification</Step>
+      <Step>Test authenticator attachment handling (platform vs. roaming)</Step>
+      <Step>Verify user verification policy enforcement</Step>
+      <Step>Test credential counter anti-rollback protection</Step>
+      <Step>Validate proper client data JSON processing</Step>
+      <Step>Test edge cases and error conditions per FIDO2 spec</Step>
+    </Steps>
+    <ComplianceChecklist>
+      <Item id="FIDO2-SRV-001">Challenge generation uses secure random</Item>
+      <Item id="FIDO2-SRV-002">Origin validation enforced</Item>
+      <Item id="FIDO2-SRV-003">Signature verification implemented</Item>
+      <Item id="FIDO2-SRV-004">Counter validation prevents replay</Item>
+      <Item id="FIDO2-SRV-005">User verification policy respected</Item>
+      <Item id="FIDO2-SRV-006">Authenticator data validated</Item>
+    </ComplianceChecklist>
+  </Task>
+
+  <!-- TASK 10: Documentation & Deployment -->
+  <Task id="10">
+    <Title>Documentation & Production Readiness</Title>
+    <Steps>
+      <Step>Create comprehensive API documentation with OpenAPI/Swagger spec</Step>
+      <Step>Document security considerations and deployment guidelines</Step>
+      <Step>Add configuration management for different environments</Step>
+      <Step>Create Docker containerization with security best practices</Step>
+      <Step>Add health check endpoints for monitoring</Step>
+      <Step>Document backup and disaster recovery procedures</Step>
+    </Steps>
+    <Documentation>
+      <Item>API Reference with examples</Item>
+      <Item>Security Architecture Document</Item>
+      <Item>Deployment Guide</Item>
+      <Item>Troubleshooting Guide</Item>
+      <Item>Integration Examples</Item>
+    </Documentation>
+  </Task>
+
+  <ComplianceChecklist>
+    <FIDO2Requirements>
+      <Requirement id="CR-001" spec="FIDO2-SRV">Cryptographically secure challenge generation</Requirement>
+      <Requirement id="CR-002" spec="FIDO2-SRV">Proper origin validation and allowlist management</Requirement>
+      <Requirement id="CR-003" spec="WebAuthn-L3">Signature verification using ECDSA/EdDSA algorithms</Requirement>
+      <Requirement id="CR-004" spec="FIDO2-SRV">Counter-based replay attack prevention</Requirement>
+      <Requirement id="CR-005" spec="WebAuthn-L3">User verification policy enforcement</Requirement>
+      <Requirement id="CR-006" spec="FIDO2-CTAP">Authenticator data structure validation</Requirement>
+      <Requirement id="CR-007" spec="WebAuthn-L3">Client data JSON origin and type validation</Requirement>
+      <Requirement id="CR-008" spec="FIDO2-SRV">Challenge timeout and cleanup mechanisms</Requirement>
+    </FIDO2Requirements>
+  </ComplianceChecklist>
+
+  <RiskAssessment>
+    <SecurityRisk id="RISK-001" severity="High">
+      <Description>Insufficient challenge entropy could enable prediction attacks</Description>
+      <Mitigation>Use cryptographically secure random number generation with minimum 32 bytes</Mitigation>
+    </SecurityRisk>
+    <SecurityRisk id="RISK-002" severity="High">
+      <Description>Origin validation bypass could enable cross-site attacks</Description>
+      <Mitigation>Strict allowlist validation and HTTPS enforcement</Mitigation>
+    </SecurityRisk>
+    <SecurityRisk id="RISK-003" severity="Medium">
+      <Description>Timing attacks during username lookup</Description>
+      <Mitigation>Constant-time operations and rate limiting</Mitigation>
+    </SecurityRisk>
+    <SecurityRisk id="RISK-004" severity="Medium">
+      <Description>Challenge replay attacks</Description>
+      <Mitigation>One-time use challenges with expiration</Mitigation>
+    </SecurityRisk>
+    <SecurityRisk id="RISK-005" severity="Low">
+      <Description>Information disclosure through error messages</Description>
+      <Mitigation>Sanitized error responses and security logging</Mitigation>
+    </SecurityRisk>
+  </RiskAssessment>
+
+  <ArchitectureDecisions>
+    <Decision id="AD-001">
+      <Title>Use webauthn-rs Public API</Title>
+      <Rationale>Safer than low-level core, handles FIDO2 complexity, battle-tested</Rationale>
+    </Decision>
+    <Decision id="AD-002">
+      <Title>Axum for HTTP Framework</Title>
+      <Rationale>Excellent async performance, type safety, middleware ecosystem</Rationale>
+    </Decision>
+    <Decision id="AD-003">
+      <Title>In-Memory Storage with Interface</Title>
+      <Rationale>Simple for initial implementation, easily replaceable with database</Rationale>
+    </Decision>
+    <Decision id="AD-004">
+      <Title>Structured Error Handling</Title>
+      <Rationale>Better debugging, security event correlation, API consistency</Rationale>
+    </Decision>
+  </ArchitectureDecisions>
+</AgentTasks>
