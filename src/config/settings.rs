@@ -85,7 +85,7 @@ impl Settings {
 
         let database = DatabaseSettings {
             url: env::var("DATABASE_URL")
-                .map_err(|_| config::ConfigError::Message("DATABASE_URL environment variable is required".to_string()))?,
+                .unwrap_or_else(|_| "postgres://postgres:postgres@localhost:5432/fido_server".to_string()),
             max_pool_size: env::var("DATABASE_MAX_POOL_SIZE")
                 .unwrap_or_else(|_| "10".to_string())
                 .parse()
