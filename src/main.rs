@@ -1,7 +1,8 @@
 //! FIDO Server Main Entry Point
 
 use actix_cors::Cors;
-use actix_web::{middleware::Logger, App, HttpServer};
+use actix_web::{middleware::Logger, web, App, HttpServer};
+use fido_server::{AppState, config::Settings};
 use std::io;
 
 #[actix_web::main]
@@ -11,11 +12,20 @@ async fn main() -> io::Result<()> {
 
     log::info!("Starting FIDO Server...");
 
-    // TODO: Load configuration from config file
-    let host = "127.0.0.1";
-    let port = 8080;
+    // Load configuration
+    let config = Settings::new().map_err(|e| {
+        log::error!("Failed to load configuration: {}", e);
+        io::Error::new(io::ErrorKind::InvalidInput, e.to_string())
+    })?;
+    
+    let host = config.server.host.clone();
+    let port = config.server.port;
 
-    // TODO: Initialize database connection pool
+    // Initialize application state (database and Redis connections)
+    let app_state = AppState::new(config).await.map_err(|e| {
+        log::error!("Failed to initialize application state: {}", e);
+        io::Error::new(io::ErrorKind::Other, e.to_string())
+    })?;
 
     log::info!("Server running at http://{}:{}", host, port);
 
@@ -28,6 +38,7 @@ async fn main() -> io::Result<()> {
             .max_age(3600);
 
         App::new()
+            .app_data(web::Data::new(app_state.clone()))
             .wrap(Logger::default())
             .wrap(cors)
             .configure(fido_server::routes::api::configure)
