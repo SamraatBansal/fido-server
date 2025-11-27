@@ -1,7 +1,5 @@
 //! Integration tests for FIDO Server
 
-use fido_server::state::ServiceStatus;
-
 /// Test health endpoint returns 200 when all services are healthy
 #[actix_web::test]
 async fn test_health_endpoint_success() {
