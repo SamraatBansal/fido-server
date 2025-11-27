@@ -34,6 +34,10 @@ diesel = { version = "2.1", features = ["postgres", "r2d2", "chrono", "uuid"] }
 diesel_migrations = "2.1"
 r2d2 = "0.8"
 
+# Redis
+deadpool-redis = "0.14"
+redis = "0.24"
+
 # Async
 tokio = { version = "1.40", features = ["full"] }
 futures = "0.3"
