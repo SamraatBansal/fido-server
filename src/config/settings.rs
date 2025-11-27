@@ -2,7 +2,7 @@
 
 use serde::Deserialize;
 use std::env;
-use log;
+
 
 /// Application settings
 #[derive(Debug, Deserialize, Clone)]
