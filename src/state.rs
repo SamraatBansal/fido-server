@@ -1,7 +1,7 @@
 //! Application state management
 
 use crate::config::Settings;
-use crate::db::{establish_connection_pool, SharedDbPool};
+use crate::db::{establish_connection_pool, SharedDbPool, get_connection, test_connection, DbConnection};
 use crate::error::{AppError, Result};
 use crate::redis::{establish_redis_pool, SharedRedisPool};
 use std::sync::Arc;
