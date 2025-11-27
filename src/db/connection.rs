@@ -1,6 +1,6 @@
 //! Database connection management
 
-use crate::config::DatabaseSettings;
+use crate::config::settings::DatabaseSettings;
 use crate::error::{AppError, Result};
 use diesel::r2d2::{self, ConnectionManager, Pool, PooledConnection};
 use diesel::PgConnection;
