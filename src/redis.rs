@@ -1,10 +1,9 @@
 //! Redis connection management
 
 use deadpool_redis::{Config, Pool, Runtime};
-use redis::aio::ConnectionManager;
 use redis::{AsyncCommands, RedisResult};
 use std::time::Duration;
-use crate::config::RedisSettings;
+use crate::config::settings::RedisSettings;
 use crate::error::AppError;
 
 /// Type alias for Redis connection pool
@@ -24,6 +23,7 @@ pub fn create_pool(config: &RedisSettings) -> Result<RedisPool, AppError> {
     
     let pool = cfg
         .builder()
+        .map_err(|e| AppError::RedisError(format!("Failed to create Redis config builder: {:?}", e)))?
         .max_size(config.max_pool_size)
         .timeouts(deadpool_redis::Timeouts {
             wait: Some(Duration::from_secs(config.connection_timeout)),
@@ -80,7 +80,7 @@ pub async fn store_session_data(
     let mut conn = pool.get().await
         .map_err(|e| AppError::RedisError(format!("Failed to get Redis connection: {:?}", e)))?;
     
-    conn.set_ex(key, data, ttl_seconds as usize).await
+    conn.set_ex::<_, _, ()>(key, data, ttl_seconds).await
         .map_err(|e| AppError::RedisError(format!("Failed to store session data: {:?}", e)))?;
     
     Ok(())
@@ -126,7 +126,7 @@ pub async fn delete_session_data(
     let mut conn = pool.get().await
         .map_err(|e| AppError::RedisError(format!("Failed to get Redis connection: {:?}", e)))?;
     
-    conn.del(key).await
+    conn.del::<_, ()>(key).await
         .map_err(|e| AppError::RedisError(format!("Failed to delete session data: {:?}", e)))?;
     
     Ok(())
