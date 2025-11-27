@@ -102,7 +102,7 @@ impl Settings {
 
         let redis = RedisSettings {
             url: env::var("REDIS_URL")
-                .map_err(|_| config::ConfigError::Message("REDIS_URL environment variable is required".to_string()))?,
+                .unwrap_or_else(|_| "redis://localhost:6379".to_string()),
             max_pool_size: env::var("REDIS_MAX_POOL_SIZE")
                 .unwrap_or_else(|_| "5".to_string())
                 .parse()
