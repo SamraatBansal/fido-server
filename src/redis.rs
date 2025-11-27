@@ -1,6 +1,6 @@
 //! Redis connection management
 
-use crate::config::RedisSettings;
+use crate::config::settings::RedisSettings;
 use crate::error::{AppError, Result};
 use deadpool_redis::{Config, Connection, Pool, Runtime};
 use redis::AsyncCommands;
