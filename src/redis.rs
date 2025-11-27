@@ -126,7 +126,7 @@ pub async fn store_challenge_state(
         "timestamp": chrono::Utc::now().timestamp()
     });
 
-    conn.set_ex(&key, value.to_string(), ttl_seconds as usize)
+    conn.set_ex::<_, _, ()>(&key, value.to_string(), ttl_seconds as usize)
         .await
         .map_err(|e| {
             log::error!("Failed to store challenge state: {}", e);
