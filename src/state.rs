@@ -84,7 +84,7 @@ impl AppState {
         let mut status = HealthStatus::default();
 
         // Check database connection
-        match crate::db::test_connection(&self.db_pool) {
+        match test_connection(&self.db_pool) {
             Ok(()) => {
                 status.database = ServiceStatus::Connected;
                 log::debug!("Database health check: OK");
