@@ -11,6 +11,7 @@ pub mod redis;
 pub mod routes;
 pub mod schema;
 pub mod services;
+pub mod state;
 pub mod utils;
 
 pub use error::{AppError, Result};
