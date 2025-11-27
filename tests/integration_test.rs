@@ -1,37 +1,6 @@
 //! Integration tests for FIDO Server
 
-use actix_web::{test, web, App};
-use fido_server::controllers::health;
-use fido_server::state::{AppState, HealthStatus, ServiceStatus};
-use serde_json::Value;
-use std::sync::Arc;
-
-/// Mock AppState for testing without real database/Redis connections
-struct MockAppState {
-    health_status: HealthStatus,
-}
-
-impl MockAppState {
-    fn new(db_healthy: bool, redis_healthy: bool) -> Self {
-        let mut status = HealthStatus::default();
-        
-        if db_healthy {
-            status.database = ServiceStatus::Connected;
-        } else {
-            status.database = ServiceStatus::Error("Connection failed".to_string());
-            status.overall_healthy = false;
-        }
-        
-        if redis_healthy {
-            status.redis = ServiceStatus::Connected;
-        } else {
-            status.redis = ServiceStatus::Error("Connection failed".to_string());
-            status.overall_healthy = false;
-        }
-        
-        Self { health_status: status }
-    }
-}
+use fido_server::state::ServiceStatus;
 
 /// Test health endpoint returns 200 when all services are healthy
 #[actix_web::test]
