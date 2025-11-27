@@ -15,3 +15,4 @@ pub mod state;
 pub mod utils;
 
 pub use error::{AppError, Result};
+pub use state::AppState;
