@@ -7,6 +7,7 @@ pub mod controllers;
 pub mod db;
 pub mod error;
 pub mod middleware;
+pub mod redis;
 pub mod routes;
 pub mod schema;
 pub mod services;
