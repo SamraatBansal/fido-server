@@ -3,12 +3,11 @@
 use actix_cors::Cors;
 use actix_web::{
     middleware::{DefaultHeaders, Logger, NormalizePath}, 
-    web, App, HttpServer, Result
+    web, App, HttpServer
 };
 use fido_server::{
     config::Settings,
     state::AppState,
-    error::AppError,
 };
 use std::io;
 
