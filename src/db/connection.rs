@@ -2,7 +2,7 @@
 
 use crate::config::settings::DatabaseSettings;
 use crate::error::{AppError, Result};
-use diesel::r2d2::{self, ConnectionManager, Pool, PooledConnection};
+use diesel::r2d2::{ConnectionManager, Pool, PooledConnection};
 use diesel::PgConnection;
 use std::sync::Arc;
 use std::time::Duration;
