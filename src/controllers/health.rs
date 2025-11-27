@@ -63,7 +63,7 @@ pub async fn health_check(app_state: web::Data<AppState>) -> Result<HttpResponse
         Ok(HttpResponse::Ok().json(response))
     } else {
         // Determine which service failed for the error message
-        let error_message = match (&database_status, &redis_status) {
+        let error_message = match (database_status.as_str(), redis_status.as_str()) {
             ("disconnected", "connected") => "Service unavailable - database connection failed",
             ("connected", "disconnected") => "Service unavailable - redis connection failed", 
             ("disconnected", "disconnected") => "Service unavailable - database and redis connections failed",
