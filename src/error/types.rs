@@ -2,7 +2,7 @@
 
 use actix_web::{error::ResponseError, http::StatusCode, HttpResponse};
 use serde_json::json;
-use std::fmt;
+
 use thiserror::Error;
 
 /// Application result type
