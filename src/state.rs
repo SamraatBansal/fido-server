@@ -62,8 +62,8 @@ impl AppState {
     /// # Errors
     ///
     /// Returns an error if connection cannot be acquired
-    pub fn get_db_connection(&self) -> Result<crate::db::DbConnection> {
-        crate::db::get_connection(&self.db_pool)
+    pub fn get_db_connection(&self) -> Result<DbConnection> {
+        get_connection(&self.db_pool)
     }
 
     /// Get Redis connection from pool
