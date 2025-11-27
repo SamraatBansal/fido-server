@@ -44,9 +44,13 @@ uuid = { version = "1.10", features = ["v4", "serde"] }
 rand = "0.8"
 sha2 = "0.10"
 
+# Redis
+deadpool-redis = "0.13"
+redis = { version = "0.23", features = ["tokio-comp"] }
+
 # Configuration
 config = "0.14"
-dotenv = "0.15"
+dotenvy = "0.15"
 
 # Logging
 log = "0.4"
