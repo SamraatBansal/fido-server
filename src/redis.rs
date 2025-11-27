@@ -69,7 +69,7 @@ pub async fn test_redis_connection(pool: &RedisPool) -> Result<()> {
     let mut conn = get_redis_connection(pool).await?;
     
     // Test with PING command
-    let pong: String = conn.ping().await.map_err(|e| {
+    let pong: String = redis::cmd("PING").query_async(&mut *conn).await.map_err(|e| {
         log::error!("Redis PING failed: {}", e);
         AppError::RedisError("Redis health check failed".to_string())
     })?;
