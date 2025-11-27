@@ -3,7 +3,7 @@
 use diesel::r2d2::{self, ConnectionManager};
 use diesel::PgConnection;
 use std::time::Duration;
-use crate::config::DatabaseSettings;
+use crate::config::settings::DatabaseSettings;
 use crate::error::AppError;
 
 /// Type alias for database connection pool
