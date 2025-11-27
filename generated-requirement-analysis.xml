@@ -1,0 +1,469 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fido2_requirement_analysis>
+    <objective>
+        You are guiding the implementation of a mission-critical FIDO2 / WebAuthn Server. Your goal is to provide detailed, implementation-ready specifications for the Base Framework implementation, ensuring strict adherence to security standards and the FIDO Conformance Test Suite.
+    </objective>
+
+    <core_responsibilities>
+        <responsibility>
+            <name>Context Awareness</name>
+            <description>Always apply the "Global Project Context" (e.g., Challenge-Based Lookup, JSON Error Formats) to every task, no matter how small.</description>
+        </responsibility>
+        <responsibility>
+            <name>Adaptive Output</name>
+            <description>
+                Provide Code Structure, Schema Changes, Library Configuration, and Implementation Steps for Base Framework setup with Actix-web, Database, and Redis integration.
+            </description>
+        </responsibility>
+        <responsibility>
+            <name>Guardrails</name>
+            <rules>
+                <rule>Security First: Never compromise on security (e.g., never suggest storing secrets in plain text).</rule>
+                <rule>Strict Typing: Enforce strict type usage (e.g., Uuid vs String, Base64Url vs Vec&lt;u8&gt;).</rule>
+                <rule>Error Handling: Mandate {"status": "error", "errorMessage": "..."} for ALL failures.</rule>
+            </rules>
+        </responsibility>
+    </core_responsibilities>
+
+    <output_style>
+        <format>XML</format>
+        <guidelines>
+            <guideline>Be technical and concise.</guideline>
+            <guideline>Use appropriate XML tags for sections (e.g., &lt;code_snippet&gt;, &lt;schema&gt;, &lt;steps&gt;).</guideline>
+            <guideline>Highlight "Critical Implementation Details" (the "gotchas").</guideline>
+        </guidelines>
+    </output_style>
+
+    <global_project_context>
+        <project_name>FIDO2 Compliant Server in Rust</project_name>
+        <tech_stack>Actix-web, webauthn-rs v0.5+, Postgres, Redis</tech_stack>
+        <critical_constraints>
+            <constraint>
+                <name>State Management</name>
+                <details>
+                    <item>Challenge-Based Lookup: In finish_auth, we CANNOT rely on User ID. You MUST look up session state using the challenge (Base64URL encoded) from clientDataJSON.</item>
+                    <item>Redis: Store ephemeral state (Challenge, UserID, Origin) in Redis with a TTL (e.g., 5 mins). Key format: auth:challenge:&lt;base64_challenge&gt;.</item>
+                </details>
+            </constraint>
+            <constraint>
+                <name>API and Data Formats</name>
+                <details>
+                    <item>Base64URL: All binary fields (IDs, Challenges, Keys) in JSON APIs must be Base64URL strings.</item>
+                    <item>Flattened Responses: finish_auth JSON payload must be flattened (top-level id, rawId, response, type).</item>
+                </details>
+            </constraint>
+            <constraint>
+                <name>Conformance and Errors</name>
+                <details>
+                    <item>JSON Errors: ALL errors (4xx/5xx) must return {"status": "error", "errorMessage": "&lt;reason&gt;"}. Never return plain text.</item>
+                    <item>Validation: Explicitly validate X.509 cert dates, reject self-signed roots, and enforce userVerification policy.</item>
+                </details>
+            </constraint>
+            <constraint>
+                <name>Database</name>
+                <details>
+                    <item>Credentials: Store credential_id as raw bytes (BYTEA) but expose as Base64URL. Store passkey blob as JSONB.</item>
+                </details>
+            </constraint>
+        </critical_constraints>
+    </global_project_context>
+
+    <!-- Base Framework Implementation Requirements -->
+    <feature_specification>
+        <feature_name>Base Framework (Actix-web, Database, Redis)</feature_name>
+        <feature_scope>Initialize core FIDO2 server application with proper connection pooling and error handling</feature_scope>
+
+        <security_requirements>
+            <requirement>
+                <name>Secure Configuration Management</name>
+                <description>Environment variables must be used for all sensitive configuration (database URLs, Redis URLs)</description>
+                <testable_criteria>
+                    <criterion>Configuration parsing fails gracefully with proper error messages</criterion>
+                    <criterion>No hardcoded secrets in source code</criterion>
+                    <criterion>Database connection strings use SSL/TLS in production</criterion>
+                </testable_criteria>
+            </requirement>
+            <requirement>
+                <name>Connection Security</name>
+                <description>All database and Redis connections must use secure channels</description>
+                <testable_criteria>
+                    <criterion>PostgreSQL connections enforce SSL in production mode</criterion>
+                    <criterion>Redis connections use AUTH when configured</criterion>
+                    <criterion>Connection pools have proper timeout and retry mechanisms</criterion>
+                </testable_criteria>
+            </requirement>
+            <requirement>
+                <name>Error Information Disclosure</name>
+                <description>Error responses must not leak sensitive system information</description>
+                <testable_criteria>
+                    <criterion>Database connection errors return generic JSON error format</criterion>
+                    <criterion>Redis connection errors return generic JSON error format</criterion>
+                    <criterion>Internal system paths are not exposed in error messages</criterion>
+                </testable_criteria>
+            </requirement>
+        </security_requirements>
+
+        <technical_scope>
+            <core_operations>
+                <operation>
+                    <name>Health Check Endpoint</name>
+                    <endpoint>/health</endpoint>
+                    <method>GET</method>
+                    <success_condition>Returns 200 OK with JSON status</success_condition>
+                    <failure_condition>Returns 503 Service Unavailable with JSON error format</failure_condition>
+                </operation>
+                <operation>
+                    <name>Database Connection Pool</name>
+                    <description>PostgreSQL connection pool using Diesel and r2d2</description>
+                    <success_condition>Connections acquired within timeout, proper error handling</success_condition>
+                    <failure_condition>Connection failures return structured errors</failure_condition>
+                </operation>
+                <operation>
+                    <name>Redis Connection Pool</name>
+                    <description>Redis connection pool using deadpool-redis</description>
+                    <success_condition>Connections acquired within timeout, proper error handling</success_condition>
+                    <failure_condition>Connection failures return structured errors</failure_condition>
+                </operation>
+            </core_operations>
+        </technical_scope>
+
+        <rust_architecture>
+            <project_structure>
+                <directory_structure>
+                    <item>src/main.rs - Application entry point and server setup</item>
+                    <item>src/config.rs - Configuration management and validation</item>
+                    <item>src/state.rs - AppState definition and thread-safety</item>
+                    <item>src/handlers/mod.rs - HTTP handlers module</item>
+                    <item>src/handlers/health.rs - Health check handler</item>
+                    <item>src/error.rs - Error types and JSON formatting</item>
+                    <item>src/database.rs - Database connection setup</item>
+                    <item>src/redis.rs - Redis connection setup</item>
+                </directory_structure>
+            </project_structure>
+
+            <dependency_management>
+                <core_dependencies>
+                    <dependency>actix-web = "4.4"</dependency>
+                    <dependency>tokio = { version = "1.0", features = ["full"] }</dependency>
+                    <dependency>serde = { version = "1.0", features = ["derive"] }</dependency>
+                    <dependency>serde_json = "1.0"</dependency>
+                    <dependency>env_logger = "0.10"</dependency>
+                    <dependency>log = "0.4"</dependency>
+                </core_dependencies>
+                <database_dependencies>
+                    <dependency>diesel = { version = "2.1", features = ["postgres", "r2d2", "chrono", "uuid"] }</dependency>
+                    <dependency>r2d2 = "0.8"</dependency>
+                    <dependency>uuid = { version = "1.0", features = ["v4", "serde"] }</dependency>
+                    <dependency>chrono = { version = "0.4", features = ["serde"] }</dependency>
+                </database_dependencies>
+                <redis_dependencies>
+                    <dependency>deadpool-redis = "0.13"</dependency>
+                    <dependency>redis = { version = "0.23", features = ["tokio-comp"] }</dependency>
+                </redis_dependencies>
+                <config_dependencies>
+                    <dependency>config = "0.13"</dependency>
+                    <dependency>dotenvy = "0.15"</dependency>
+                </config_dependencies>
+            </dependency_management>
+
+            <testing_considerations>
+                <test_dependencies>
+                    <dependency>actix-web-test = "0.1"</dependency>
+                    <dependency>tokio-test = "0.4"</dependency>
+                </test_dependencies>
+            </testing_considerations>
+        </rust_architecture>
+
+        <api_design>
+            <rest_endpoints>
+                <endpoint>
+                    <name>Health Check</name>
+                    <path>/health</path>
+                    <method>GET</method>
+                    <request_specification>
+                        <headers>No specific headers required</headers>
+                        <body>Empty</body>
+                    </request_specification>
+                    <response_specification>
+                        <success_response>
+                            <status_code>200</status_code>
+                            <content_type>application/json</content_type>
+                            <body_schema>
+                                <![CDATA[
+{
+  "status": "ok",
+  "timestamp": "2024-01-01T00:00:00Z",
+  "version": "1.0.0",
+  "database": "connected",
+  "redis": "connected"
+}
+                                ]]>
+                            </body_schema>
+                        </success_response>
+                        <error_response>
+                            <status_code>503</status_code>
+                            <content_type>application/json</content_type>
+                            <body_schema>
+                                <![CDATA[
+{
+  "status": "error",
+  "errorMessage": "Database connection failed"
+}
+                                ]]>
+                            </body_schema>
+                        </error_response>
+                    </response_specification>
+                    <curl_examples>
+                        <example>
+                            <description>Basic health check</description>
+                            <command>curl -X GET http://localhost:8080/health</command>
+                        </example>
+                        <example>
+                            <description>Health check with verbose output</description>
+                            <command>curl -v -X GET http://localhost:8080/health</command>
+                        </example>
+                    </curl_examples>
+                </endpoint>
+            </rest_endpoints>
+
+            <data_flow>
+                <flow_description>
+                    <step>1. HTTP request received by Actix-web router</step>
+                    <step>2. Request routed to health check handler</step>
+                    <step>3. Handler attempts to ping database connection pool</step>
+                    <step>4. Handler attempts to ping Redis connection pool</step>
+                    <step>5. Handler returns JSON response with service status</step>
+                </flow_description>
+            </data_flow>
+        </api_design>
+
+        <storage_requirements>
+            <database_configuration>
+                <connection_pool>
+                    <pool_size>10</pool_size>
+                    <max_overflow>20</max_overflow>
+                    <timeout_seconds>30</timeout_seconds>
+                    <idle_timeout_seconds>600</idle_timeout_seconds>
+                </connection_pool>
+                <ssl_configuration>
+                    <production_mode>require</production_mode>
+                    <development_mode>prefer</development_mode>
+                </ssl_configuration>
+            </database_configuration>
+
+            <redis_configuration>
+                <connection_pool>
+                    <max_size>10</max_size>
+                    <timeout_seconds>30</timeout_seconds>
+                    <recycle_timeout_seconds>300</recycle_timeout_seconds>
+                </connection_pool>
+                <security_configuration>
+                    <auth_required>true</auth_required>
+                    <ssl_enabled>true</ssl_enabled>
+                </security_configuration>
+            </redis_configuration>
+
+            <data_validation>
+                <requirement>
+                    <name>Connection String Validation</name>
+                    <description>All database and Redis URLs must be validated at startup</description>
+                </requirement>
+                <requirement>
+                    <name>Pool Health Monitoring</name>
+                    <description>Connection pools must provide health status for monitoring</description>
+                </requirement>
+            </data_validation>
+        </storage_requirements>
+
+        <compliance_checklist>
+            <fido2_points>
+                <point>
+                    <name>Secure Transport</name>
+                    <description>All connections use secure channels (SSL/TLS)</description>
+                    <verification>Test SSL certificate validation in connection setup</verification>
+                </point>
+                <point>
+                    <name>Error Response Format</name>
+                    <description>All error responses follow FIDO2 JSON error format</description>
+                    <verification>Verify error responses contain status and errorMessage fields</verification>
+                </point>
+                <point>
+                    <name>Service Availability</name>
+                    <description>Health check endpoint provides service status information</description>
+                    <verification>Health endpoint returns proper status codes and JSON format</verification>
+                </point>
+            </fido2_points>
+        </compliance_checklist>
+
+        <risk_assessment>
+            <security_considerations>
+                <risk>
+                    <name>Configuration Exposure</name>
+                    <description>Database credentials or Redis passwords exposed in logs or error messages</description>
+                    <mitigation>Use environment variables, sanitize error messages, implement secure logging practices</mitigation>
+                    <severity>High</severity>
+                </risk>
+                <risk>
+                    <name>Connection Pool Exhaustion</name>
+                    <description>DoS attacks could exhaust connection pools</description>
+                    <mitigation>Implement connection timeouts, pool size limits, and request rate limiting</mitigation>
+                    <severity>Medium</severity>
+                </risk>
+                <risk>
+                    <name>Insecure Transport</name>
+                    <description>Database or Redis connections without SSL/TLS</description>
+                    <mitigation>Enforce SSL/TLS for all connections, validate certificates</mitigation>
+                    <severity>High</severity>
+                </risk>
+            </security_considerations>
+
+            <vulnerabilities_and_mitigations>
+                <vulnerability>
+                    <name>Information Disclosure in Error Messages</name>
+                    <impact>System internals exposed through detailed error messages</impact>
+                    <mitigation>Implement generic error responses, log detailed errors server-side only</mitigation>
+                </vulnerability>
+                <vulnerability>
+                    <name>Unhandled Panic Conditions</name>
+                    <impact>Server crashes on unexpected inputs or connection failures</impact>
+                    <mitigation>Implement comprehensive error handling, use Result types, add panic hooks</mitigation>
+                </vulnerability>
+            </vulnerabilities_and_mitigations>
+        </risk_assessment>
+
+        <implementation_steps>
+            <steps>
+                <step>
+                    <number>1</number>
+                    <title>Initialize Rust Project and Dependencies</title>
+                    <details>
+                        <item>Create new Cargo project with proper directory structure</item>
+                        <item>Add all required dependencies to Cargo.toml</item>
+                        <item>Set up development and production feature flags</item>
+                    </details>
+                </step>
+                <step>
+                    <number>2</number>
+                    <title>Configuration Management Setup</title>
+                    <details>
+                        <item>Create config.rs with environment variable parsing</item>
+                        <item>Define configuration structs with proper validation</item>
+                        <item>Implement secure defaults and environment-specific overrides</item>
+                    </details>
+                </step>
+                <step>
+                    <number>3</number>
+                    <title>Database Connection Pool Implementation</title>
+                    <details>
+                        <item>Configure Diesel with PostgreSQL backend</item>
+                        <item>Set up r2d2 connection pool with proper timeouts</item>
+                        <item>Implement connection health checking</item>
+                    </details>
+                </step>
+                <step>
+                    <number>4</number>
+                    <title>Redis Connection Pool Implementation</title>
+                    <details>
+                        <item>Configure deadpool-redis with connection parameters</item>
+                        <item>Set up Redis authentication and SSL if required</item>
+                        <item>Implement Redis health checking</item>
+                    </details>
+                </step>
+                <step>
+                    <number>5</number>
+                    <title>AppState and Thread Safety</title>
+                    <details>
+                        <item>Define AppState struct with Arc-wrapped pools</item>
+                        <item>Implement Clone trait for easy sharing across workers</item>
+                        <item>Add proper error handling for pool access</item>
+                    </details>
+                </step>
+                <step>
+                    <number>6</number>
+                    <title>Error Handling Framework</title>
+                    <details>
+                        <item>Define custom error types with proper Display implementation</item>
+                        <item>Implement JSON error response formatting</item>
+                        <item>Create error middleware for consistent error handling</item>
+                    </details>
+                </step>
+                <step>
+                    <number>7</number>
+                    <title>Health Check Endpoint Implementation</title>
+                    <details>
+                        <item>Create health check handler with database ping</item>
+                        <item>Add Redis connectivity check</item>
+                        <item>Implement proper JSON response formatting</item>
+                    </details>
+                </step>
+                <step>
+                    <number>8</number>
+                    <title>Actix-web Server Setup</title>
+                    <details>
+                        <item>Configure Actix-web application with proper middleware</item>
+                        <item>Set up structured logging with env_logger</item>
+                        <item>Configure server binding and worker settings</item>
+                    </details>
+                </step>
+                <step>
+                    <number>9</number>
+                    <title>Testing and Validation</title>
+                    <details>
+                        <item>Create integration tests for health endpoint</item>
+                        <item>Test connection pool behavior under load</item>
+                        <item>Validate error response formats with curl commands</item>
+                    </details>
+                </step>
+            </steps>
+        </implementation_steps>
+
+        <critical_implementation_details>
+            <detail>
+                <name>AppState Thread Safety</name>
+                <description>AppState must use Arc&lt;DbPool&gt; and Arc&lt;RedisPool&gt; to ensure safe sharing across Actix workers. Never use Rc or raw pointers.</description>
+                <gotcha>Actix-web uses multiple worker threads. Non-thread-safe types will cause runtime panics.</gotcha>
+            </detail>
+            <detail>
+                <name>Error Response Consistency</name>
+                <description>ALL error responses must return JSON with {"status": "error", "errorMessage": "..."} format. Never return plain text or HTML error pages.</description>
+                <gotcha>Default Actix-web error handlers return HTML. Must override with custom error middleware.</gotcha>
+            </detail>
+            <detail>
+                <name>Connection Pool Configuration</name>
+                <description>Database and Redis pools must have proper timeouts and size limits to prevent resource exhaustion under load.</description>
+                <gotcha>Default pool settings may be too aggressive for production. Test under realistic load conditions.</gotcha>
+            </detail>
+            <detail>
+                <name>Environment Variable Security</name>
+                <description>Never log or expose database URLs or Redis passwords in error messages. Use masked logging for configuration debugging.</description>
+                <gotcha>Diesel error messages may include connection strings. Filter sensitive data in error handlers.</gotcha>
+            </detail>
+        </critical_implementation_details>
+
+        <testing_requirements>
+            <unit_tests>
+                <test>Configuration parsing with valid and invalid environment variables</test>
+                <test>AppState creation and cloning behavior</test>
+                <test>Error type conversions and JSON formatting</test>
+            </unit_tests>
+            <integration_tests>
+                <test>Health endpoint returns 200 OK when services are available</test>
+                <test>Health endpoint returns 503 when database is unavailable</test>
+                <test>Health endpoint returns 503 when Redis is unavailable</test>
+                <test>Error responses follow proper JSON format</test>
+            </integration_tests>
+            <api_validation_tests>
+                <test>
+                    <name>Health Check API Validation</name>
+                    <curl_command>curl -X GET http://localhost:8080/health</curl_command>
+                    <expected_response>{"status": "ok", "timestamp": "...", "version": "1.0.0", "database": "connected", "redis": "connected"}</expected_response>
+                </test>
+                <test>
+                    <name>Health Check with Headers</name>
+                    <curl_command>curl -H "Content-Type: application/json" -X GET http://localhost:8080/health</curl_command>
+                    <expected_response>Same as above with proper Content-Type response header</expected_response>
+                </test>
+            </api_validation_tests>
+        </testing_requirements>
+    </feature_specification>
+</fido2_requirement_analysis>
